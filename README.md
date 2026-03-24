@@ -15,10 +15,10 @@ Then select which plugins to install.
 | Plugin | Category | Description | Env Vars |
 |--------|----------|-------------|----------|
 | **wet-mcp** | Research | Web search, content extraction, media download | `API_KEYS`, `SEARXNG_URL` |
-| **mnemo-mcp** | Productivity | Persistent AI memory across sessions | `API_KEYS`, `MNEMO_DB_PATH` |
+| **mnemo-mcp** | Productivity | Persistent AI memory across sessions | `API_KEYS`, `DB_PATH` |
 | **better-notion-mcp** | Productivity | Notion API — 9 tools, ~95% coverage | `NOTION_TOKEN` |
 | **better-email-mcp** | Communication | Email IMAP/SMTP — multi-account | `EMAIL_CREDENTIALS` |
-| **better-telegram-mcp** | Communication | Telegram Bot API — messages, chats, media | `TELEGRAM_BOT_TOKEN` |
+| **better-telegram-mcp** | Communication | Telegram dual-mode (Bot + MTProto) — messages, chats, media | `TELEGRAM_BOT_TOKEN` |
 | **better-godot-mcp** | Development | Godot Engine — 18 tools for game dev | `GODOT_PATH` |
 | **better-code-review-graph** | Development | Knowledge graph for code reviews | `API_KEYS` |
 
