@@ -14,8 +14,8 @@ Then select which plugins to install.
 
 | Plugin | Category | Description | Env Vars |
 |--------|----------|-------------|----------|
-| **wet-mcp** | Research | Web search, content extraction, media download | `API_KEYS`, `SEARXNG_URL` |
-| **mnemo-mcp** | Productivity | Persistent AI memory across sessions | `API_KEYS`, `DB_PATH` |
+| **wet-mcp** | Research | Web search, content extraction, media download | `API_KEYS` (optional) |
+| **mnemo-mcp** | Productivity | Persistent AI memory across sessions | `API_KEYS` (optional) |
 | **better-notion-mcp** | Productivity | Notion API — 9 tools, ~95% coverage | `NOTION_TOKEN` |
 | **better-email-mcp** | Communication | Email IMAP/SMTP — multi-account | `EMAIL_CREDENTIALS` |
 | **better-telegram-mcp** | Communication | Telegram dual-mode (Bot + MTProto) — messages, chats, media | `TELEGRAM_BOT_TOKEN` |
@@ -24,7 +24,7 @@ Then select which plugins to install.
 
 ## Configuration
 
-After installing, configure env vars in Claude Code settings. All are optional — plugins work without them in degraded mode.
+After installing, configure env vars in `~/.claude/settings.local.json` under the `env` block, or `export` in your shell profile. Plugins that need credentials (email, telegram, notion stdio) require them to function. Others (wet, mnemo, CRG) work in local mode without API keys.
 
 ### Cloud Embedding (wet-mcp, mnemo-mcp, better-code-review-graph)
 
