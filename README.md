@@ -4,11 +4,12 @@
 
 ## Install
 
-```
-/plugins add n24q02m/claude-plugins
+```bash
+/plugin marketplace add n24q02m/claude-plugins
+/plugin install <plugin-name>@claude-plugins
 ```
 
-Then select which plugins to install.
+Or browse all plugins: run `/plugin` and go to the **Discover** tab.
 
 ## Plugins
 
