@@ -1,0 +1,28 @@
+{
+  "name": "wet-mcp",
+  "description": "Web search, content extraction, and media download",
+  "version": "2.15.0",
+  "author": {
+    "name": "n24q02m",
+    "url": "https://github.com/n24q02m"
+  },
+  "homepage": "https://github.com/n24q02m/wet-mcp",
+  "mcpServers": {
+    "wet": {
+      "command": "uvx",
+      "args": [
+        "--python",
+        "3.13",
+        "wet-mcp"
+      ],
+      "env": {
+        "API_KEYS": "",
+        "LITELLM_PROXY_URL": "",
+        "SEARXNG_URL": "",
+        "RERANK_ENABLED": "true",
+        "GITHUB_TOKEN": ""
+      }
+    }
+  },
+  "skills": "./skills/"
+}

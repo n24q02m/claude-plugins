@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "better-mcp-suite",
+  "name": "claude-plugins",
   "version": "1.0.0",
-  "description": "Curated collection of better-* MCP servers for web search, memory, Notion, email, Telegram, Godot, and code review",
+  "description": "7 MCP servers: web search, memory, Notion, email, Telegram, Godot, code review",
   "owner": {
     "name": "n24q02m",
     "url": "https://github.com/n24q02m"
@@ -10,44 +10,44 @@
   "plugins": [
     {
       "name": "wet-mcp",
-      "description": "Web search, content extraction, and media download",
-      "source": "https://github.com/n24q02m/wet-mcp",
+      "description": "Web search, content extraction, media download",
+      "source": "./plugins/wet-mcp",
       "category": "research"
     },
     {
       "name": "mnemo-mcp",
-      "description": "Persistent AI memory — store, search, and recall knowledge across sessions",
-      "source": "https://github.com/n24q02m/mnemo-mcp",
+      "description": "Persistent AI memory across sessions",
+      "source": "./plugins/mnemo-mcp",
       "category": "productivity"
     },
     {
+      "name": "better-telegram-mcp",
+      "description": "Telegram Bot API — messages, chats, media, contacts",
+      "source": "./plugins/better-telegram-mcp",
+      "category": "communication"
+    },
+    {
+      "name": "better-code-review-graph",
+      "description": "Knowledge graph for token-efficient code reviews",
+      "source": "./plugins/better-code-review-graph",
+      "category": "development"
+    },
+    {
       "name": "better-notion-mcp",
-      "description": "Comprehensive Notion API integration — 9 composite tools covering ~95% of Notion API surface",
-      "source": "https://github.com/n24q02m/better-notion-mcp",
+      "description": "Notion API — 9 composite tools, ~95% coverage",
+      "source": "./plugins/better-notion-mcp",
       "category": "productivity"
     },
     {
       "name": "better-email-mcp",
-      "description": "Email management via IMAP/SMTP — search, read, send, organize across multiple accounts",
-      "source": "https://github.com/n24q02m/better-email-mcp",
-      "category": "communication"
-    },
-    {
-      "name": "better-telegram-mcp",
-      "description": "Telegram Bot API integration — messages, chats, media, contacts management",
-      "source": "https://github.com/n24q02m/better-telegram-mcp",
+      "description": "Email IMAP/SMTP — multi-account management",
+      "source": "./plugins/better-email-mcp",
       "category": "communication"
     },
     {
       "name": "better-godot-mcp",
-      "description": "Comprehensive Godot Engine integration — 18 tools for scenes, nodes, scripts, physics, UI, and more",
-      "source": "https://github.com/n24q02m/better-godot-mcp",
-      "category": "development"
-    },
-    {
-      "name": "better-code-review-graph",
-      "description": "Persistent incremental knowledge graph for token-efficient, context-aware code reviews",
-      "source": "https://github.com/n24q02m/better-code-review-graph",
+      "description": "Godot Engine — 18 tools for game development",
+      "source": "./plugins/better-godot-mcp",
       "category": "development"
     }
   ]

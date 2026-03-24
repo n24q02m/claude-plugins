@@ -1,22 +1,99 @@
-# better-mcp-suite
+# n24q02m Claude Plugins
 
-Curated collection of 7 **better-\*** MCP servers for Claude Code, Codex, Gemini CLI, and other AI coding agents.
-
-## Servers
-
-| Server | Category | Description |
-|--------|----------|-------------|
-| [wet-mcp](https://github.com/n24q02m/wet-mcp) | Research | Web search, content extraction, media download |
-| [mnemo-mcp](https://github.com/n24q02m/mnemo-mcp) | Productivity | Persistent AI memory across sessions |
-| [better-notion-mcp](https://github.com/n24q02m/better-notion-mcp) | Productivity | Notion API — 9 composite tools, ~95% API coverage |
-| [better-email-mcp](https://github.com/n24q02m/better-email-mcp) | Communication | Email via IMAP/SMTP — multi-account |
-| [better-telegram-mcp](https://github.com/n24q02m/better-telegram-mcp) | Communication | Telegram Bot API — messages, media, contacts |
-| [better-godot-mcp](https://github.com/n24q02m/better-godot-mcp) | Development | Godot Engine — 18 tools across 4 tiers |
-| [better-code-review-graph](https://github.com/n24q02m/better-code-review-graph) | Development | Knowledge graph for code reviews |
+7 MCP servers for Claude Code, Codex, Gemini CLI, and other AI coding agents.
 
 ## Install
 
-Each server can be installed individually — see their respective repositories for setup instructions.
+```
+/plugins add n24q02m/claude-plugins
+```
+
+Then select which plugins to install.
+
+## Plugins
+
+| Plugin | Category | Description | Env Vars |
+|--------|----------|-------------|----------|
+| **wet-mcp** | Research | Web search, content extraction, media download | `API_KEYS`, `SEARXNG_URL` |
+| **mnemo-mcp** | Productivity | Persistent AI memory across sessions | `API_KEYS`, `MNEMO_DB_PATH` |
+| **better-notion-mcp** | Productivity | Notion API — 9 tools, ~95% coverage | `NOTION_TOKEN` |
+| **better-email-mcp** | Communication | Email IMAP/SMTP — multi-account | `EMAIL_CREDENTIALS` |
+| **better-telegram-mcp** | Communication | Telegram Bot API — messages, chats, media | `TELEGRAM_BOT_TOKEN` |
+| **better-godot-mcp** | Development | Godot Engine — 18 tools for game dev | `GODOT_PATH` |
+| **better-code-review-graph** | Development | Knowledge graph for code reviews | `API_KEYS` |
+
+## Configuration
+
+After installing, configure env vars in Claude Code settings. All are optional — plugins work without them in degraded mode.
+
+### Cloud Embedding (wet-mcp, mnemo-mcp, better-code-review-graph)
+
+```
+API_KEYS=GOOGLE_API_KEY:xxx,COHERE_API_KEY:yyy
+```
+
+Or use a LiteLLM proxy:
+
+```
+LITELLM_PROXY_URL=http://your-litellm:4000
+```
+
+### Telegram
+
+```
+TELEGRAM_BOT_TOKEN=123456:ABC-DEF...
+```
+
+### Email
+
+```
+EMAIL_CREDENTIALS=user@gmail.com:app-password
+```
+
+Multiple accounts: `user1@gmail.com:pass1,user2@outlook.com:pass2`
+
+### Notion
+
+```
+NOTION_TOKEN=ntn_xxx
+```
+
+Get your token from [notion.so/my-integrations](https://www.notion.so/my-integrations).
+
+## Skills
+
+Each plugin includes skills (slash commands):
+
+| Plugin | Skills |
+|--------|--------|
+| wet-mcp | `/fact-check`, `/compare` |
+| mnemo-mcp | `/session-handoff`, `/knowledge-audit` |
+| better-telegram-mcp | `/setup-bot`, `/channel-post` |
+| better-code-review-graph | `/review-delta`, `/review-pr`, `/refactor-check` |
+| better-notion-mcp | `/organize-database`, `/bulk-update` |
+| better-email-mcp | `/inbox-review`, `/follow-up` |
+| better-godot-mcp | `/build-scene`, `/debug-issue`, `/add-mechanic` |
+
+## Alternative Install Methods
+
+Each plugin can also be installed individually via their source repos, or run directly:
+
+**Python plugins** (uvx / pipx / docker):
+
+```bash
+uvx --python 3.13 wet-mcp
+uvx --python 3.13 mnemo-mcp
+uvx --python 3.13 better-telegram-mcp
+uvx --python 3.13 better-code-review-graph
+```
+
+**TypeScript plugins** (npx / bunx / docker):
+
+```bash
+npx -y @n24q02m/better-notion-mcp
+npx -y @n24q02m/better-email-mcp
+npx -y @n24q02m/better-godot-mcp
+```
 
 ## License
 

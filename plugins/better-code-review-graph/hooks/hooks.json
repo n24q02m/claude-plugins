@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uvx --from better-code-review-graph python -c \"from better_code_review_graph.incremental import incremental_update_from_hook; incremental_update_from_hook()\" 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}
