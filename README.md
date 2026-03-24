@@ -74,9 +74,23 @@ Each plugin includes skills (slash commands):
 | better-email-mcp | `/inbox-review`, `/follow-up` |
 | better-godot-mcp | `/build-scene`, `/debug-issue`, `/add-mechanic` |
 
-## Alternative Install Methods
+## Gemini CLI
 
-Each plugin can also be installed individually via their source repos, or run directly:
+Each plugin is also a Gemini CLI extension. Install individually:
+
+```bash
+gemini extensions install https://github.com/n24q02m/wet-mcp
+gemini extensions install https://github.com/n24q02m/mnemo-mcp
+gemini extensions install https://github.com/n24q02m/better-telegram-mcp
+gemini extensions install https://github.com/n24q02m/better-code-review-graph
+gemini extensions install https://github.com/n24q02m/better-notion-mcp
+gemini extensions install https://github.com/n24q02m/better-email-mcp
+gemini extensions install https://github.com/n24q02m/better-godot-mcp
+```
+
+## Other MCP Clients
+
+Each plugin works with any MCP client. Run directly:
 
 **Python plugins** (uvx / pipx / docker):
 
@@ -93,6 +107,19 @@ uvx --python 3.13 better-code-review-graph
 npx -y @n24q02m/better-notion-mcp
 npx -y @n24q02m/better-email-mcp
 npx -y @n24q02m/better-godot-mcp
+```
+
+Add to any MCP client's `settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "wet": {
+      "command": "uvx",
+      "args": ["--python", "3.13", "wet-mcp"]
+    }
+  }
+}
 ```
 
 ## License
