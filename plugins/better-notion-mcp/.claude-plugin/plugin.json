@@ -8,46 +8,9 @@
   },
   "homepage": "https://github.com/n24q02m/better-notion-mcp",
   "mcpServers": {
-    "better-notion-mcp-http": {
+    "better-notion-mcp": {
       "type": "http",
       "url": "https://better-notion-mcp.n24q02m.com/mcp"
-    },
-    "better-notion-mcp": {
-      "command": "npx",
-      "args": ["-y", "@n24q02m/better-notion-mcp"],
-      "env": {
-        "NOTION_TOKEN": ""
-      }
-    },
-    "better-notion-mcp-bunx": {
-      "command": "bunx",
-      "args": ["--bun", "@n24q02m/better-notion-mcp"],
-      "env": {
-        "NOTION_TOKEN": ""
-      }
-    },
-    "better-notion-mcp-pnpx": {
-      "command": "pnpx",
-      "args": ["@n24q02m/better-notion-mcp"],
-      "env": {
-        "NOTION_TOKEN": ""
-      }
-    },
-    "better-notion-mcp-yarn": {
-      "command": "yarn",
-      "args": ["dlx", "@n24q02m/better-notion-mcp"],
-      "env": {
-        "NOTION_TOKEN": ""
-      }
-    },
-    "better-notion-mcp-docker": {
-      "command": "docker",
-      "args": ["run", "--rm", "-i", "-p", "8080:8080", "n24q02m/better-notion-mcp:latest"],
-      "env": {
-        "NOTION_TOKEN": "",
-        "TRANSPORT_MODE": "http",
-        "PORT": "8080"
-      }
     }
   },
   "skills": "./skills/"
