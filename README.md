@@ -19,8 +19,8 @@ Then select which plugins to install.
 | **better-notion-mcp** | Productivity | Notion API — 9 tools, ~95% coverage | `NOTION_TOKEN` |
 | **better-email-mcp** | Communication | Email IMAP/SMTP — multi-account | `EMAIL_CREDENTIALS` |
 | **better-telegram-mcp** | Communication | Telegram dual-mode (Bot + MTProto) — messages, chats, media | `TELEGRAM_BOT_TOKEN` |
-| **better-godot-mcp** | Development | Godot Engine — 18 tools for game dev | `GODOT_PATH` |
-| **better-code-review-graph** | Development | Knowledge graph for code reviews | `API_KEYS` |
+| **better-godot-mcp** | Development | Godot Engine — 18 tools for game dev | `GODOT_PATH` (optional) |
+| **better-code-review-graph** | Development | Knowledge graph for code reviews | `API_KEYS` (optional) |
 
 ## Configuration
 
