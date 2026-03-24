@@ -1,22 +1,19 @@
 {
   "name": "better-notion-mcp",
-  "description": "Comprehensive Notion API integration — 9 composite tools, ~95% coverage",
+  "description": "Comprehensive Notion API integration \u2014 9 composite tools covering ~95% of Notion's API surface",
   "version": "2.20.0",
   "author": {
     "name": "n24q02m",
     "url": "https://github.com/n24q02m"
   },
   "homepage": "https://github.com/n24q02m/better-notion-mcp",
+  "repository": "https://github.com/n24q02m/better-notion-mcp",
+  "license": "MIT",
+  "keywords": ["notion", "knowledge-management", "documentation", "mcp", "claude-code"],
   "mcpServers": {
-    "better-notion": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@n24q02m/better-notion-mcp"
-      ],
-      "env": {
-        "NOTION_TOKEN": ""
-      }
+    "better-notion-mcp": {
+      "type": "http",
+      "url": "https://better-notion-mcp.n24q02m.com/mcp"
     }
   },
   "skills": "./skills/"
