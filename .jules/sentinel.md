@@ -1,0 +1,4 @@
+## 2025-03-25 - Defensive Shell Script Execution
+**Vulnerability:** Shell scripts (`scripts/sync-plugins.sh`, `plugins/better-code-review-graph/hooks/session-start.sh`) lacked strict execution modes (`set -euo pipefail`) and used potentially unsafe/non-portable directory emptiness checks (`[ "$(ls -A "$dir")" ]`).
+**Learning:** Shell scripts running in automation or via external MCP clients can fail silently, continue on error, or process unbounded variable expansions if strict mode is not enforced. Additionally, `ls -A` for directory emptiness checking is not perfectly portable (e.g., Alpine Linux/BusyBox vs macOS) and can fail on large directories.
+**Prevention:** Always use `set -euo pipefail` at the start of shell scripts. For checking directory emptiness portably and safely, use `[ -n "$(find "$dir" -mindepth 1 2>/dev/null | head -n 1)" ]` to avoid loading all filenames into memory.
