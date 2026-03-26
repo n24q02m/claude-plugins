@@ -1,14 +1,11 @@
 {
   "name": "better-notion-mcp",
-  "version": "2.21.0-beta.1",
+  "version": "2.21.0",
   "description": "Comprehensive Notion API integration — 9 composite tools, ~95% coverage",
   "mcpServers": {
     "better-notion-mcp": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@n24q02m/better-notion-mcp"
-      ]
+      "args": ["-y", "@n24q02m/better-notion-mcp"]
     }
   },
   "settings": [
