@@ -5,8 +5,18 @@
   "mcpServers": {
     "better-notion-mcp": {
       "command": "npx",
-      "args": ["-y", "@n24q02m/better-notion-mcp"]
+      "args": [
+        "-y",
+        "@n24q02m/better-notion-mcp"
+      ]
     }
   },
-  "contextFileName": "GEMINI.md"
+  "settings": [
+    {
+      "name": "Notion Token",
+      "description": "Notion integration token from notion.so/my-integrations",
+      "envVar": "NOTION_TOKEN",
+      "sensitive": true
+    }
+  ]
 }

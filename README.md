@@ -6,7 +6,7 @@
 
 ```bash
 /plugin marketplace add n24q02m/claude-plugins
-/plugin install <plugin-name>@claude-plugins
+/plugin install <plugin-name>@n24q02m-plugins
 ```
 
 Or browse all plugins: run `/plugin` and go to the **Discover** tab.
