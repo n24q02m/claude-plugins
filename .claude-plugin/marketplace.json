@@ -11,43 +11,64 @@
     {
       "name": "wet-mcp",
       "description": "Web search, content extraction, media download",
-      "source": "./plugins/wet-mcp",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/n24q02m/wet-mcp.git"
+      },
       "category": "research"
     },
     {
       "name": "mnemo-mcp",
       "description": "Persistent AI memory across sessions",
-      "source": "./plugins/mnemo-mcp",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/n24q02m/mnemo-mcp.git"
+      },
       "category": "productivity"
     },
     {
       "name": "better-telegram-mcp",
       "description": "Telegram Bot API — messages, chats, media, contacts",
-      "source": "./plugins/better-telegram-mcp",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/n24q02m/better-telegram-mcp.git"
+      },
       "category": "communication"
     },
     {
       "name": "better-code-review-graph",
       "description": "Knowledge graph for token-efficient code reviews",
-      "source": "./plugins/better-code-review-graph",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/n24q02m/better-code-review-graph.git"
+      },
       "category": "development"
     },
     {
       "name": "better-notion-mcp",
       "description": "Notion API — 9 composite tools, ~95% coverage",
-      "source": "./plugins/better-notion-mcp",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/n24q02m/better-notion-mcp.git"
+      },
       "category": "productivity"
     },
     {
       "name": "better-email-mcp",
       "description": "Email IMAP/SMTP — multi-account management",
-      "source": "./plugins/better-email-mcp",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/n24q02m/better-email-mcp.git"
+      },
       "category": "communication"
     },
     {
       "name": "better-godot-mcp",
       "description": "Godot Engine — 18 tools for game development",
-      "source": "./plugins/better-godot-mcp",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/n24q02m/better-godot-mcp.git"
+      },
       "category": "development"
     }
   ]
