@@ -13,6 +13,5 @@
       "args": ["--python", "3.13", "better-code-review-graph"]
     }
   },
-  "skills": "./skills/",
-  "hooks": "./hooks/hooks.json"
+  "skills": "./skills/"
 }
