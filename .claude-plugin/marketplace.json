@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "claude-plugins",
+  "name": "n24q02m-plugins",
   "metadata": {
     "description": "7 MCP servers: web search, memory, Notion, email, Telegram, Godot, code review",
     "version": "1.0.0",
