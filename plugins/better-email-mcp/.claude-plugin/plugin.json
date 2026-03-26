@@ -1,7 +1,6 @@
 {
   "name": "better-email-mcp",
   "description": "Email management via IMAP/SMTP — multi-account",
-  "version": "1.14.0",
   "author": {
     "name": "n24q02m",
     "url": "https://github.com/n24q02m"
@@ -10,8 +9,10 @@
   "mcpServers": {
     "better-email-mcp": {
       "command": "npx",
-      "args": ["-y", "@n24q02m/better-email-mcp"]
+      "args": [
+        "-y",
+        "@n24q02m/better-email-mcp"
+      ]
     }
-  },
-  "skills": "./skills/"
+  }
 }

@@ -1,7 +1,6 @@
 {
   "name": "wet-mcp",
   "description": "Web search, content extraction, and media download",
-  "version": "2.15.0",
   "author": {
     "name": "n24q02m",
     "url": "https://github.com/n24q02m"
@@ -19,8 +18,11 @@
   "mcpServers": {
     "wet": {
       "command": "uvx",
-      "args": ["--python", "3.13", "wet-mcp"]
+      "args": [
+        "--python",
+        "3.13",
+        "wet-mcp"
+      ]
     }
-  },
-  "skills": "./skills/"
+  }
 }

@@ -1,7 +1,6 @@
 {
   "name": "mnemo-mcp",
   "description": "Persistent AI memory — store, search, and recall knowledge across sessions",
-  "version": "1.10.0",
   "author": {
     "name": "n24q02m",
     "url": "https://github.com/n24q02m"
@@ -10,8 +9,11 @@
   "mcpServers": {
     "mnemo": {
       "command": "uvx",
-      "args": ["--python", "3.13", "mnemo-mcp"]
+      "args": [
+        "--python",
+        "3.13",
+        "mnemo-mcp"
+      ]
     }
-  },
-  "skills": "./skills/"
+  }
 }

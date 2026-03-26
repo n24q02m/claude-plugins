@@ -1,7 +1,6 @@
 {
   "name": "better-code-review-graph",
   "description": "Persistent incremental knowledge graph for token-efficient code reviews",
-  "version": "3.0.1",
   "author": {
     "name": "n24q02m",
     "url": "https://github.com/n24q02m"
@@ -10,8 +9,11 @@
   "mcpServers": {
     "better-code-review-graph": {
       "command": "uvx",
-      "args": ["--python", "3.13", "better-code-review-graph"]
+      "args": [
+        "--python",
+        "3.13",
+        "better-code-review-graph"
+      ]
     }
-  },
-  "skills": "./skills/"
+  }
 }

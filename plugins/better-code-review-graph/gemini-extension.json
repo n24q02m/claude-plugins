@@ -1,6 +1,6 @@
 {
   "name": "better-code-review-graph",
-  "version": "3.0.0",
+  "version": "3.2.0-beta.1",
   "description": "Persistent incremental knowledge graph for token-efficient code reviews",
   "mcpServers": {
     "better-code-review-graph": {
@@ -9,11 +9,7 @@
         "--python",
         "3.13",
         "better-code-review-graph"
-      ],
-      "env": {
-        "API_KEYS": "",
-        "LITELLM_PROXY_URL": ""
-      }
+      ]
     }
   },
   "contextFileName": "GEMINI.md"
