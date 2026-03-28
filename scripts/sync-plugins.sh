@@ -2,6 +2,14 @@
 # Sync plugin configs, skills, and hooks from source repos
 set -euo pipefail
 
+is_dir_not_empty() {
+  local dir="$1"
+  shopt -s nullglob dotglob
+  local files=("$dir"/*)
+  shopt -u nullglob dotglob
+  [ ${#files[@]} -gt 0 ]
+}
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(dirname "$SCRIPT_DIR")"
 REPOS_DIR="${REPOS_DIR:-$HOME/projects}"
@@ -23,13 +31,13 @@ for repo in "${PLUGINS[@]}"; do
   fi
 
   # Sync skills
-  if [ -d "$src/skills" ] && [ -n "$(find "$src/skills" -mindepth 1 2>/dev/null | head -n 1)" ]; then
+  if [ -d "$src/skills" ] && is_dir_not_empty "$src/skills"; then
     rm -rf "$dst/skills"
     cp -r "$src/skills" "$dst/skills"
   fi
 
   # Sync hooks
-  if [ -d "$src/hooks" ] && [ -n "$(find "$src/hooks" -mindepth 1 2>/dev/null | head -n 1)" ]; then
+  if [ -d "$src/hooks" ] && is_dir_not_empty "$src/hooks"; then
     rm -rf "$dst/hooks"
     cp -r "$src/hooks" "$dst/hooks"
   fi
