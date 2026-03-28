@@ -1,6 +1,6 @@
 #!/bin/bash
 # Sync plugin configs, skills, and hooks from source repos
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(dirname "$SCRIPT_DIR")"
@@ -23,13 +23,13 @@ for repo in "${PLUGINS[@]}"; do
   fi
 
   # Sync skills
-  if [ -d "$src/skills" ] && [ "$(ls -A "$src/skills" 2>/dev/null)" ]; then
+  if [ -d "$src/skills" ] && [ -n "$(find "$src/skills" -mindepth 1 2>/dev/null | head -n 1)" ]; then
     rm -rf "$dst/skills"
     cp -r "$src/skills" "$dst/skills"
   fi
 
   # Sync hooks
-  if [ -d "$src/hooks" ] && [ "$(ls -A "$src/hooks" 2>/dev/null)" ]; then
+  if [ -d "$src/hooks" ] && [ -n "$(find "$src/hooks" -mindepth 1 2>/dev/null | head -n 1)" ]; then
     rm -rf "$dst/hooks"
     cp -r "$src/hooks" "$dst/hooks"
   fi
