@@ -2,6 +2,15 @@
 # Sync plugin configs, skills, and hooks from source repos
 set -euo pipefail
 
+# Faster directory emptiness check using Bash globbing
+# Replaces slow subshells spawning find | head
+has_files() {
+  shopt -s nullglob dotglob
+  local files=("$1"/*)
+  shopt -u nullglob dotglob
+  [ ${#files[@]} -gt 0 ]
+}
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(dirname "$SCRIPT_DIR")"
 REPOS_DIR="${REPOS_DIR:-$HOME/projects}"
@@ -23,13 +32,13 @@ for repo in "${PLUGINS[@]}"; do
   fi
 
   # Sync skills
-  if [ -d "$src/skills" ] && [ -n "$(find "$src/skills" -mindepth 1 2>/dev/null | head -n 1)" ]; then
+  if [ -d "$src/skills" ] && has_files "$src/skills"; then
     rm -rf "$dst/skills"
     cp -r "$src/skills" "$dst/skills"
   fi
 
   # Sync hooks
-  if [ -d "$src/hooks" ] && [ -n "$(find "$src/hooks" -mindepth 1 2>/dev/null | head -n 1)" ]; then
+  if [ -d "$src/hooks" ] && has_files "$src/hooks"; then
     rm -rf "$dst/hooks"
     cp -r "$src/hooks" "$dst/hooks"
   fi
