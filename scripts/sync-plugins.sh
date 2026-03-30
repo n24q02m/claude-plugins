@@ -6,6 +6,15 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(dirname "$SCRIPT_DIR")"
 REPOS_DIR="${REPOS_DIR:-$HOME/projects}"
 
+# Faster directory check using native bash globbing instead of subshells + find
+has_files() {
+  local dir="$1"
+  shopt -s nullglob dotglob
+  local files=("$dir"/*)
+  shopt -u nullglob dotglob
+  [ ${#files[@]} -gt 0 ]
+}
+
 PLUGINS=(wet-mcp mnemo-mcp better-telegram-mcp better-code-review-graph better-notion-mcp better-email-mcp better-godot-mcp)
 
 for repo in "${PLUGINS[@]}"; do
@@ -23,13 +32,13 @@ for repo in "${PLUGINS[@]}"; do
   fi
 
   # Sync skills
-  if [ -d "$src/skills" ] && [ -n "$(find "$src/skills" -mindepth 1 2>/dev/null | head -n 1)" ]; then
+  if [ -d "$src/skills" ] && has_files "$src/skills"; then
     rm -rf "$dst/skills"
     cp -r "$src/skills" "$dst/skills"
   fi
 
   # Sync hooks
-  if [ -d "$src/hooks" ] && [ -n "$(find "$src/hooks" -mindepth 1 2>/dev/null | head -n 1)" ]; then
+  if [ -d "$src/hooks" ] && has_files "$src/hooks"; then
     rm -rf "$dst/hooks"
     cp -r "$src/hooks" "$dst/hooks"
   fi
