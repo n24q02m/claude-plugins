@@ -6,13 +6,18 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(dirname "$SCRIPT_DIR")"
 REPOS_DIR="${REPOS_DIR:-$HOME/projects}"
 
-# Faster directory check using native bash globbing instead of subshells + find
+# Faster directory check using native bash globbing instead of subshells + find.
+# An early-return loop avoids the secondary O(N) memory allocation of creating
+# a massive Bash array if the directory contains thousands of files.
 has_files() {
   local dir="$1"
   shopt -s nullglob dotglob
-  local files=("$dir"/*)
+  for _ in "$dir"/*; do
+    shopt -u nullglob dotglob
+    return 0
+  done
   shopt -u nullglob dotglob
-  [ ${#files[@]} -gt 0 ]
+  return 1
 }
 
 PLUGINS=(wet-mcp mnemo-mcp better-telegram-mcp better-code-review-graph better-notion-mcp better-email-mcp better-godot-mcp)
