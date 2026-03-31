@@ -1,0 +1,148 @@
+name: CD
+
+on:
+  repository_dispatch:
+    types: [plugin-sync]
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: "Source repo name (e.g., wet-mcp)"
+        required: true
+        type: choice
+        options:
+          - wet-mcp
+          - mnemo-mcp
+          - better-telegram-mcp
+          - better-code-review-graph
+          - better-notion-mcp
+          - better-email-mcp
+          - better-godot-mcp
+      tag:
+        description: "Release tag (e.g., v2.18.1)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: plugin-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Sync Plugin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2
+        with:
+          egress-policy: audit
+
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3
+        with:
+          app-id: ${{ vars.CI_APP_ID }}
+          private-key: ${{ secrets.CI_APP_KEY }}
+
+      - name: Resolve inputs
+        id: inputs
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            echo "repo=${{ github.event.client_payload.repo }}" >> "$GITHUB_OUTPUT"
+            echo "tag=${{ github.event.client_payload.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "repo=${{ inputs.repo }}" >> "$GITHUB_OUTPUT"
+            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate inputs
+        run: |
+          REPO="${{ steps.inputs.outputs.repo }}"
+          TAG="${{ steps.inputs.outputs.tag }}"
+          VALID_REPOS="wet-mcp mnemo-mcp better-telegram-mcp better-code-review-graph better-notion-mcp better-email-mcp better-godot-mcp"
+          if ! echo "$VALID_REPOS" | grep -wq "$REPO"; then
+            echo "::error::Invalid repo: $REPO"
+            exit 1
+          fi
+          if ! echo "$TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+'; then
+            echo "::error::Invalid tag format: $TAG (expected vX.Y.Z)"
+            exit 1
+          fi
+          echo "Syncing $REPO @ $TAG"
+
+      - name: Checkout marketplace
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          path: marketplace
+
+      - name: Checkout source repo at tag
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          repository: n24q02m/${{ steps.inputs.outputs.repo }}
+          ref: ${{ steps.inputs.outputs.tag }}
+          path: source
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Sync plugin files
+        env:
+          REPO: ${{ steps.inputs.outputs.repo }}
+          TAG: ${{ steps.inputs.outputs.tag }}
+        run: |
+          PLUGIN_DIR="marketplace/plugins/$REPO"
+          VERSION="${TAG#v}"
+
+          # Sync plugin.json
+          if [ -f "source/.claude-plugin/plugin.json" ]; then
+            mkdir -p "$PLUGIN_DIR/.claude-plugin"
+            cp "source/.claude-plugin/plugin.json" "$PLUGIN_DIR/.claude-plugin/plugin.json"
+            echo "Synced plugin.json"
+          fi
+
+          # Sync gemini-extension.json (update version)
+          if [ -f "source/gemini-extension.json" ]; then
+            python3 -c "
+          import json
+          with open('source/gemini-extension.json') as f:
+              data = json.load(f)
+          data['version'] = '$VERSION'
+          with open('$PLUGIN_DIR/gemini-extension.json', 'w') as f:
+              json.dump(data, f, indent=2)
+              f.write('\n')
+          "
+            echo "Synced gemini-extension.json (version: $VERSION)"
+          fi
+
+          # Sync skills
+          if [ -d "source/skills" ] && ls source/skills/*/SKILL.md >/dev/null 2>&1; then
+            rm -rf "$PLUGIN_DIR/skills"
+            cp -r "source/skills" "$PLUGIN_DIR/skills"
+            echo "Synced skills/"
+          fi
+
+          # Sync hooks
+          if [ -d "source/hooks" ] && ls source/hooks/* >/dev/null 2>&1; then
+            rm -rf "$PLUGIN_DIR/hooks"
+            cp -r "source/hooks" "$PLUGIN_DIR/hooks"
+            echo "Synced hooks/"
+          fi
+
+      - name: Commit and push
+        env:
+          REPO: ${{ steps.inputs.outputs.repo }}
+          TAG: ${{ steps.inputs.outputs.tag }}
+        working-directory: marketplace
+        run: |
+          VERSION="${TAG#v}"
+          git config user.name "n24q02m-ci[bot]"
+          git config user.email "n24q02m-ci[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to sync"
+          else
+            git commit -m "chore(plugins): sync $REPO to $VERSION"
+            git push
+            echo "Pushed sync for $REPO $VERSION"
+          fi
