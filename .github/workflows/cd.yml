@@ -48,25 +48,37 @@ jobs:
 
       - name: Resolve inputs
         id: inputs
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REPO_PAYLOAD: ${{ github.event.client_payload.repo }}
+          TAG_PAYLOAD: ${{ github.event.client_payload.tag }}
+          REPO_INPUT: ${{ inputs.repo }}
+          TAG_INPUT: ${{ inputs.tag }}
         run: |
-          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
-            echo "repo=${{ github.event.client_payload.repo }}" >> "$GITHUB_OUTPUT"
-            echo "tag=${{ github.event.client_payload.tag }}" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "repository_dispatch" ]; then
+            echo "repo=$REPO_PAYLOAD" >> "$GITHUB_OUTPUT"
+            echo "tag=$TAG_PAYLOAD" >> "$GITHUB_OUTPUT"
           else
-            echo "repo=${{ inputs.repo }}" >> "$GITHUB_OUTPUT"
-            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+            echo "repo=$REPO_INPUT" >> "$GITHUB_OUTPUT"
+            echo "tag=$TAG_INPUT" >> "$GITHUB_OUTPUT"
           fi
-
       - name: Validate inputs
+        env:
+          REPO: ${{ steps.inputs.outputs.repo }}
+          TAG: ${{ steps.inputs.outputs.tag }}
         run: |
-          REPO="${{ steps.inputs.outputs.repo }}"
-          TAG="${{ steps.inputs.outputs.tag }}"
-          VALID_REPOS="wet-mcp mnemo-mcp better-telegram-mcp better-code-review-graph better-notion-mcp better-email-mcp better-godot-mcp"
-          if ! echo "$VALID_REPOS" | grep -wq "$REPO"; then
-            echo "::error::Invalid repo: $REPO"
-            exit 1
-          fi
-          if ! echo "$TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+'; then
+          set -euo pipefail
+          case "$REPO" in
+            wet-mcp|mnemo-mcp|better-telegram-mcp|better-code-review-graph|better-notion-mcp|better-email-mcp|better-godot-mcp)
+              ;;
+            *)
+              echo "::error::Invalid repo: $REPO"
+              exit 1
+              ;;
+          esac
+
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::Invalid tag format: $TAG (expected vX.Y.Z)"
             exit 1
           fi
@@ -91,6 +103,7 @@ jobs:
           REPO: ${{ steps.inputs.outputs.repo }}
           TAG: ${{ steps.inputs.outputs.tag }}
         run: |
+          set -euo pipefail
           PLUGIN_DIR="marketplace/plugins/$REPO"
           VERSION="${TAG#v}"
 
@@ -103,15 +116,16 @@ jobs:
 
           # Sync gemini-extension.json (update version)
           if [ -f "source/gemini-extension.json" ]; then
+            export VERSION PLUGIN_DIR
             python3 -c "
-          import json
-          with open('source/gemini-extension.json') as f:
-              data = json.load(f)
-          data['version'] = '$VERSION'
-          with open('$PLUGIN_DIR/gemini-extension.json', 'w') as f:
-              json.dump(data, f, indent=2)
-              f.write('\n')
-          "
+import json, os
+with open('source/gemini-extension.json') as f:
+    data = json.load(f)
+data['version'] = os.environ['VERSION']
+with open(os.path.join(os.environ['PLUGIN_DIR'], 'gemini-extension.json'), 'w') as f:
+    json.dump(data, f, indent=2)
+    f.write('\n')
+"
             echo "Synced gemini-extension.json (version: $VERSION)"
           fi
 
@@ -135,6 +149,7 @@ jobs:
           TAG: ${{ steps.inputs.outputs.tag }}
         working-directory: marketplace
         run: |
+          set -euo pipefail
           VERSION="${TAG#v}"
           git config user.name "n24q02m-ci[bot]"
           git config user.email "n24q02m-ci[bot]@users.noreply.github.com"

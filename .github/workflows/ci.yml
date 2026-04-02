@@ -235,6 +235,60 @@ jobs:
         env:
           SMTP_CREDENTIAL: ${{ secrets.SMTP_CREDENTIAL }}
 
+      - name: Prepare email content
+        id: prepare
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
+          EVENT_NAME: ${{ github.event_name }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          REPOSITORY: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          ACTION: ${{ github.event.action }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+          TYPE="PR"
+          NUMBER="${PR_NUMBER:-}"
+          TITLE="${PR_TITLE:-}"
+          URL="${PR_URL:-}"
+          BODY="${PR_BODY:-}"
+          if [ "$EVENT_NAME" = "issues" ]; then
+            TYPE="Issue"
+            NUMBER="${ISSUE_NUMBER:-}"
+            TITLE="${ISSUE_TITLE:-}"
+            URL="${ISSUE_URL:-}"
+            BODY="${ISSUE_BODY:-}"
+          fi
+
+          SUBJECT="[$REPO_NAME] $TYPE #$NUMBER: $TITLE"
+          EMAIL_BODY=$(cat <<EOM
+          New $TYPE in $REPOSITORY
+
+          Title: $TITLE
+          Author: $ACTOR
+          URL: $URL
+          Action: $ACTION
+
+          ---
+          ${BODY:-No description provided.}
+EOM
+          )
+
+          # Use delimiter for multi-line output
+          EOF_DELIM=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "subject=$SUBJECT" >> "$GITHUB_OUTPUT"
+          {
+            echo "body<<$EOF_DELIM"
+            echo "$EMAIL_BODY"
+            echo "$EOF_DELIM"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Send email notification
         uses: dawidd6/action-send-mail@d38f3f7cd391cdebfe0d38efc3998b935e951c4f # v16
         with:
@@ -242,20 +296,7 @@ jobs:
           server_port: 587
           username: ${{ env.SMTP_USER }}
           password: ${{ env.SMTP_PASS }}
-          subject: >-
-            [${{ github.event.repository.name }}]
-            ${{ github.event_name == 'issues' && 'Issue' || 'PR' }}
-            #${{ github.event.issue.number || github.event.pull_request.number }}:
-            ${{ github.event.issue.title || github.event.pull_request.title }}
+          subject: ${{ steps.prepare.outputs.subject }}
           to: ${{ env.SMTP_USER }}
           from: GitHub Notify <${{ env.SMTP_USER }}>
-          body: |
-            ${{ github.event_name == 'issues' && 'New issue' || 'New pull request' }} in ${{ github.repository }}
-
-            Title: ${{ github.event.issue.title || github.event.pull_request.title }}
-            Author: ${{ github.actor }}
-            URL: ${{ github.event.issue.html_url || github.event.pull_request.html_url }}
-            Action: ${{ github.event.action }}
-
-            ---
-            ${{ github.event.issue.body || github.event.pull_request.body || 'No description provided.' }}
+          body: ${{ steps.prepare.outputs.body }}
