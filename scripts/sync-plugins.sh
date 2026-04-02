@@ -7,12 +7,25 @@ ROOT="$(dirname "$SCRIPT_DIR")"
 REPOS_DIR="${REPOS_DIR:-$HOME/projects}"
 
 # Faster directory check using native bash globbing instead of subshells + find
+# Using O(1) memory efficiency approach as recommended
 has_files() {
   local dir="$1"
   shopt -s nullglob dotglob
-  local files=("$dir"/*)
+  for _ in "$dir"/*; do
+    shopt -u nullglob dotglob
+    return 0
+  done
   shopt -u nullglob dotglob
-  [ ${#files[@]} -gt 0 ]
+  return 1
+}
+
+# Sync a directory from source to destination if it contains files
+sync_dir() {
+  local dir_name="$1"
+  if [ -d "$src/$dir_name" ] && has_files "$src/$dir_name"; then
+    rm -rf "$dst/$dir_name"
+    cp -r "$src/$dir_name" "$dst/$dir_name"
+  fi
 }
 
 PLUGINS=(wet-mcp mnemo-mcp better-telegram-mcp better-code-review-graph better-notion-mcp better-email-mcp better-godot-mcp)
@@ -28,20 +41,13 @@ for repo in "${PLUGINS[@]}"; do
 
   # Sync plugin.json
   if [ -f "$src/.claude-plugin/plugin.json" ]; then
+    mkdir -p "$dst/.claude-plugin"
     cp "$src/.claude-plugin/plugin.json" "$dst/.claude-plugin/plugin.json"
   fi
 
-  # Sync skills
-  if [ -d "$src/skills" ] && has_files "$src/skills"; then
-    rm -rf "$dst/skills"
-    cp -r "$src/skills" "$dst/skills"
-  fi
-
-  # Sync hooks
-  if [ -d "$src/hooks" ] && has_files "$src/hooks"; then
-    rm -rf "$dst/hooks"
-    cp -r "$src/hooks" "$dst/hooks"
-  fi
+  # Sync skills and hooks
+  sync_dir "skills"
+  sync_dir "hooks"
 
   echo "OK $repo"
 done
