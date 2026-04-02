@@ -103,15 +103,8 @@ jobs:
 
           # Sync gemini-extension.json (update version)
           if [ -f "source/gemini-extension.json" ]; then
-            python3 -c "
-          import json
-          with open('source/gemini-extension.json') as f:
-              data = json.load(f)
-          data['version'] = '$VERSION'
-          with open('$PLUGIN_DIR/gemini-extension.json', 'w') as f:
-              json.dump(data, f, indent=2)
-              f.write('\n')
-          "
+            mkdir -p "$PLUGIN_DIR"
+            jq --arg v "$VERSION" '.version = $v' source/gemini-extension.json > "$PLUGIN_DIR/gemini-extension.json"
             echo "Synced gemini-extension.json (version: $VERSION)"
           fi
 
