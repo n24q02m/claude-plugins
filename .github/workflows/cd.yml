@@ -66,7 +66,7 @@ jobs:
             echo "::error::Invalid repo: $REPO"
             exit 1
           fi
-          if ! echo "$TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+'; then
+          if ! echo "$TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
             echo "::error::Invalid tag format: $TAG (expected vX.Y.Z)"
             exit 1
           fi
@@ -91,8 +91,8 @@ jobs:
           REPO: ${{ steps.inputs.outputs.repo }}
           TAG: ${{ steps.inputs.outputs.tag }}
         run: |
-          PLUGIN_DIR="marketplace/plugins/$REPO"
-          VERSION="${TAG#v}"
+          export PLUGIN_DIR="marketplace/plugins/$REPO"
+          export VERSION="${TAG#v}"
 
           # Sync plugin.json
           if [ -f "source/.claude-plugin/plugin.json" ]; then
@@ -104,11 +104,11 @@ jobs:
           # Sync gemini-extension.json (update version)
           if [ -f "source/gemini-extension.json" ]; then
             python3 -c "
-          import json
+          import json, os
           with open('source/gemini-extension.json') as f:
               data = json.load(f)
-          data['version'] = '$VERSION'
-          with open('$PLUGIN_DIR/gemini-extension.json', 'w') as f:
+          data['version'] = os.environ['VERSION']
+          with open(os.path.join(os.environ['PLUGIN_DIR'], 'gemini-extension.json'), 'w') as f:
               json.dump(data, f, indent=2)
               f.write('\n')
           "

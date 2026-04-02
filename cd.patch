@@ -1,0 +1,42 @@
+<<<<<<< SEARCH
+        run: |
+          PLUGIN_DIR="marketplace/plugins/"
+          VERSION=""
+
+          # Sync plugin.json
+=======
+        run: |
+          export PLUGIN_DIR="marketplace/plugins/"
+          export VERSION=""
+
+          # Sync plugin.json
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+          # Sync gemini-extension.json (update version)
+          if [ -f "source/gemini-extension.json" ]; then
+            python3 -c "
+          import json
+          with open('source/gemini-extension.json') as f:
+              data = json.load(f)
+          data['version'] = ''
+          with open('/gemini-extension.json', 'w') as f:
+              json.dump(data, f, indent=2)
+              f.write('\n')
+          "
+            echo "Synced gemini-extension.json (version: )"
+          fi
+=======
+          # Sync gemini-extension.json (update version)
+          if [ -f "source/gemini-extension.json" ]; then
+            python3 -c "
+          import json, os
+          with open('source/gemini-extension.json') as f:
+              data = json.load(f)
+          data['version'] = os.environ['VERSION']
+          with open(os.path.join(os.environ['PLUGIN_DIR'], 'gemini-extension.json'), 'w') as f:
+              json.dump(data, f, indent=2)
+              f.write('\n')
+          "
+            echo "Synced gemini-extension.json (version: )"
+          fi
+>>>>>>> REPLACE
