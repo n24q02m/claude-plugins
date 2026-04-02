@@ -5,8 +5,9 @@ set -euo pipefail
 
 DB_PATH=".code-review-graph/graph.db"
 
-if [ -f "$DB_PATH" ]; then
-    cat <<'INSTRUCTIONS'
+main() {
+    if [ -f "$DB_PATH" ]; then
+        cat <<'INSTRUCTIONS'
 [better-code-review-graph] Knowledge graph is available.
 
 When answering questions about this codebase, prefer using the better-code-review-graph MCP tools before scanning files manually:
@@ -18,6 +19,11 @@ When answering questions about this codebase, prefer using the better-code-revie
 
 This saves significant tokens by avoiding full codebase scans.
 INSTRUCTIONS
-else
-    echo "[better-code-review-graph] No knowledge graph found. Use the graph tool with action='build' to parse this codebase and enable graph-powered queries."
+    else
+        echo "[better-code-review-graph] No knowledge graph found. Use the graph tool with action='build' to parse this codebase and enable graph-powered queries."
+    fi
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
 fi
