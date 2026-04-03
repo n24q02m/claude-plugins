@@ -48,25 +48,35 @@ jobs:
 
       - name: Resolve inputs
         id: inputs
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PAYLOAD_REPO: ${{ github.event.client_payload.repo }}
+          PAYLOAD_TAG: ${{ github.event.client_payload.tag }}
+          INPUT_REPO: ${{ inputs.repo }}
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
-          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
-            echo "repo=${{ github.event.client_payload.repo }}" >> "$GITHUB_OUTPUT"
-            echo "tag=${{ github.event.client_payload.tag }}" >> "$GITHUB_OUTPUT"
+          if [ "$EVENT_NAME" = "repository_dispatch" ]; then
+            echo "repo=$PAYLOAD_REPO" >> "$GITHUB_OUTPUT"
+            echo "tag=$PAYLOAD_TAG" >> "$GITHUB_OUTPUT"
           else
-            echo "repo=${{ inputs.repo }}" >> "$GITHUB_OUTPUT"
-            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+            echo "repo=$INPUT_REPO" >> "$GITHUB_OUTPUT"
+            echo "tag=$INPUT_TAG" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Validate inputs
+        env:
+          REPO: ${{ steps.inputs.outputs.repo }}
+          TAG: ${{ steps.inputs.outputs.tag }}
         run: |
-          REPO="${{ steps.inputs.outputs.repo }}"
-          TAG="${{ steps.inputs.outputs.tag }}"
-          VALID_REPOS="wet-mcp mnemo-mcp better-telegram-mcp better-code-review-graph better-notion-mcp better-email-mcp better-godot-mcp"
-          if ! echo "$VALID_REPOS" | grep -wq "$REPO"; then
-            echo "::error::Invalid repo: $REPO"
-            exit 1
-          fi
-          if ! echo "$TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+'; then
+          case "$REPO" in
+            wet-mcp|mnemo-mcp|better-telegram-mcp|better-code-review-graph|better-notion-mcp|better-email-mcp|better-godot-mcp)
+              ;;
+            *)
+              echo "::error::Invalid repo: $REPO"
+              exit 1
+              ;;
+          esac
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::Invalid tag format: $TAG (expected vX.Y.Z)"
             exit 1
           fi
@@ -103,15 +113,8 @@ jobs:
 
           # Sync gemini-extension.json (update version)
           if [ -f "source/gemini-extension.json" ]; then
-            python3 -c "
-          import json
-          with open('source/gemini-extension.json') as f:
-              data = json.load(f)
-          data['version'] = '$VERSION'
-          with open('$PLUGIN_DIR/gemini-extension.json', 'w') as f:
-              json.dump(data, f, indent=2)
-              f.write('\n')
-          "
+            mkdir -p "$PLUGIN_DIR"
+            jq --arg v "$VERSION" '.version = $v' source/gemini-extension.json > "$PLUGIN_DIR/gemini-extension.json"
             echo "Synced gemini-extension.json (version: $VERSION)"
           fi
 
