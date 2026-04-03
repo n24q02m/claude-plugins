@@ -47,10 +47,15 @@ class TestValidateMarketplace(unittest.TestCase):
         # Should not raise any exception
         validate_marketplace()
 
+    def test_missing_gemini_is_ok(self):
+        self.create_marketplace([{"name": "test-plugin", "source": "./plugins/test-plugin"}])
+        self.create_plugin("test-plugin", gemini_json=False)
+        # Should not raise any exception
+        validate_marketplace()
+
     def test_missing_plugin_json(self):
         self.create_marketplace([{"name": "test-plugin", "source": "./plugins/test-plugin"}])
         os.makedirs("plugins/test-plugin/.claude-plugin")
-        # Gemeni extension is still needed or it will fail on that first if pjson doesn't exist
         with self.assertRaises(SystemExit):
              validate_marketplace()
 
