@@ -40,6 +40,8 @@ sync_plugins() {
       continue
     fi
 
+    mkdir -p "$dst"
+
     # Sync plugin.json
     if [ -f "$src/.claude-plugin/plugin.json" ]; then
       mkdir -p "$dst/.claude-plugin"
@@ -49,6 +51,11 @@ sync_plugins() {
     # Sync skills and hooks
     sync_dir "skills"
     sync_dir "hooks"
+
+    # Sync gemini-extension.json
+    if [ -f "$src/gemini-extension.json" ]; then
+      cp "$src/gemini-extension.json" "$dst/gemini-extension.json"
+    fi
 
     echo "OK $repo"
   done
