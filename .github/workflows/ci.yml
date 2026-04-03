@@ -34,6 +34,7 @@ jobs:
 
       - name: Validate marketplace.json
         run: |
+          set -euo pipefail
           echo "Validating marketplace.json..."
           python3 scripts/validate_marketplace.py
 
@@ -42,6 +43,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           echo "Checking marketplace versions against latest releases..."
           python3 scripts/check_version_freshness.py
 
@@ -87,6 +89,7 @@ jobs:
 
       - name: Load custom instructions
         run: |
+          set -euo pipefail
           if [ -f ".github/best_practices.md" ]; then
             INSTRUCTIONS=$(cat .github/best_practices.md)
             RANDOM_EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
@@ -130,6 +133,7 @@ jobs:
 
       - name: Parse SMTP credential
         run: |
+          set -euo pipefail
           echo "SMTP_USER=${SMTP_CREDENTIAL%%:*}" >> $GITHUB_ENV
           echo "SMTP_PASS=${SMTP_CREDENTIAL#*:}" >> $GITHUB_ENV
         env:
