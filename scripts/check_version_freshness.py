@@ -3,28 +3,25 @@
 import json
 import subprocess
 import sys
+import concurrent.futures
 
 
-def check_version_freshness():
-    """Compare marketplace versions with latest stable releases."""
-    with open(".claude-plugin/marketplace.json") as f:
-        marketplace = json.load(f)
+def check_plugin(plugin):
+    """Check a single plugin's version against its latest GitHub release."""
+    name = plugin["name"]
+    source = plugin["source"].lstrip("./")
+    gext_path = f"{source}/gemini-extension.json"
 
-    stale = []
-    for plugin in marketplace["plugins"]:
-        name = plugin["name"]
-        source = plugin["source"].lstrip("./")
-        gext_path = f"{source}/gemini-extension.json"
+    # Get marketplace version
+    try:
+        with open(gext_path) as f:
+            gdata = json.load(f)
+        marketplace_ver = gdata.get("version", "unknown")
+    except Exception:
+        marketplace_ver = "missing"
 
-        # Get marketplace version
-        try:
-            with open(gext_path) as f:
-                gdata = json.load(f)
-            marketplace_ver = gdata.get("version", "unknown")
-        except Exception:
-            marketplace_ver = "missing"
-
-        # Get latest stable release from source repo
+    # Get latest stable release from source repo
+    try:
         result = subprocess.run(
             [
                 "gh",
@@ -39,20 +36,51 @@ def check_version_freshness():
             ],
             capture_output=True,
             text=True,
+            timeout=30,
         )
         if result.returncode == 0:
             latest_tag = result.stdout.strip().lstrip("v")
             if marketplace_ver != latest_tag:
+                return {"status": "stale", "name": name, "marketplace_ver": marketplace_ver, "latest_tag": latest_tag}
+            else:
+                return {"status": "up-to-date", "name": name, "marketplace_ver": marketplace_ver}
+        else:
+            return {"status": "no-release", "name": name, "marketplace_ver": marketplace_ver}
+    except subprocess.TimeoutExpired:
+        return {"status": "timeout", "name": name, "marketplace_ver": marketplace_ver}
+
+
+def check_version_freshness():
+    """Compare marketplace versions with latest stable releases concurrently."""
+    with open(".claude-plugin/marketplace.json") as f:
+        marketplace = json.load(f)
+
+    stale = []
+
+    # Use ThreadPoolExecutor to run GitHub CLI network calls concurrently
+    # This reduces total execution time from O(N) to O(1) w.r.t network latency
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        futures = {executor.submit(check_plugin, p): p for p in marketplace["plugins"]}
+        for future in concurrent.futures.as_completed(futures):
+            res = future.result()
+            name = res["name"]
+            status = res["status"]
+            marketplace_ver = res["marketplace_ver"]
+
+            if status == "stale":
+                latest_tag = res["latest_tag"]
                 stale.append(
                     f"{name}: marketplace={marketplace_ver}, latest={latest_tag}"
                 )
                 print(
                     f"::warning ::{name} is stale: marketplace={marketplace_ver}, latest={latest_tag}"
                 )
-            else:
+            elif status == "up-to-date":
                 print(f"{name}: up-to-date ({marketplace_ver})")
-        else:
-            print(f"{name}: no release found (marketplace={marketplace_ver})")
+            elif status == "no-release":
+                print(f"{name}: no release found (marketplace={marketplace_ver})")
+            elif status == "timeout":
+                print(f"::error ::{name} timed out checking release (marketplace={marketplace_ver})")
 
     if stale:
         print(f"\n{len(stale)} plugin(s) need sync")
