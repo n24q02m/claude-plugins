@@ -102,19 +102,19 @@ jobs:
           TAG: ${{ steps.inputs.outputs.tag }}
         run: |
           PLUGIN_DIR="marketplace/plugins/$REPO"
-          VERSION="${TAG#v}"
+          export VERSION="${TAG#v}"
 
-          # Sync plugin.json
+          # Sync plugin.json (update version)
           if [ -f "source/.claude-plugin/plugin.json" ]; then
             mkdir -p "$PLUGIN_DIR/.claude-plugin"
-            cp "source/.claude-plugin/plugin.json" "$PLUGIN_DIR/.claude-plugin/plugin.json"
-            echo "Synced plugin.json"
+            jq ".version = env.VERSION" source/.claude-plugin/plugin.json > "$PLUGIN_DIR/.claude-plugin/plugin.json"
+            echo "Synced plugin.json (version: $VERSION)"
           fi
 
           # Sync gemini-extension.json (update version)
           if [ -f "source/gemini-extension.json" ]; then
             mkdir -p "$PLUGIN_DIR"
-            jq --arg v "$VERSION" '.version = $v' source/gemini-extension.json > "$PLUGIN_DIR/gemini-extension.json"
+            jq ".version = env.VERSION" source/gemini-extension.json > "$PLUGIN_DIR/gemini-extension.json"
             echo "Synced gemini-extension.json (version: $VERSION)"
           fi
 
