@@ -10,13 +10,13 @@ def check_plugin(plugin):
     """Check a single plugin's version against its latest GitHub release."""
     name = plugin["name"]
     source = plugin["source"].lstrip("./")
-    gext_path = f"{source}/gemini-extension.json"
+    plugin_json_path = f"{source}/.claude-plugin/plugin.json"
 
     # Get marketplace version
     try:
-        with open(gext_path) as f:
-            gdata = json.load(f)
-        marketplace_ver = gdata.get("version", "unknown")
+        with open(plugin_json_path) as f:
+            pdata = json.load(f)
+        marketplace_ver = pdata.get("version", "unknown")
     except Exception:
         marketplace_ver = "missing"
 
