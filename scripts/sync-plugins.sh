@@ -10,12 +10,9 @@ REPOS_DIR="${REPOS_DIR:-$HOME/projects}"
 # Avoids both subshell overhead (find|head) and O(N) array allocation.
 has_files() {
   local dir="$1"
-  shopt -s nullglob dotglob
   for _ in "$dir"/*; do
-    shopt -u nullglob dotglob
     return 0
   done
-  shopt -u nullglob dotglob
   return 1
 }
 
@@ -31,6 +28,7 @@ sync_dir() {
 PLUGINS=(wet-mcp mnemo-mcp better-telegram-mcp better-code-review-graph better-notion-mcp better-email-mcp better-godot-mcp)
 
 sync_plugins() {
+  shopt -s nullglob dotglob
   for repo in "${PLUGINS[@]}"; do
     src="$REPOS_DIR/$repo"
     dst="$ROOT/plugins/$repo"
@@ -53,6 +51,7 @@ sync_plugins() {
     echo "OK $repo"
   done
 
+  shopt -u nullglob dotglob
   echo "Sync complete."
 }
 

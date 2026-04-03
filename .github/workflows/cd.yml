@@ -119,14 +119,14 @@ jobs:
           fi
 
           # Sync skills
-          if [ -d "source/skills" ] && ls source/skills/*/SKILL.md >/dev/null 2>&1; then
+          if [ -d "source/skills" ] && { shopt -s nullglob; found=1; for _ in source/skills/*/SKILL.md; do found=0; break; done; shopt -u nullglob; [ $found -eq 0 ]; }; then
             rm -rf "$PLUGIN_DIR/skills"
             cp -r "source/skills" "$PLUGIN_DIR/skills"
             echo "Synced skills/"
           fi
 
           # Sync hooks
-          if [ -d "source/hooks" ] && ls source/hooks/* >/dev/null 2>&1; then
+          if [ -d "source/hooks" ] && { shopt -s nullglob dotglob; found=1; for _ in source/hooks/*; do found=0; break; done; shopt -u nullglob; [ $found -eq 0 ]; }; then
             rm -rf "$PLUGIN_DIR/hooks"
             cp -r "source/hooks" "$PLUGIN_DIR/hooks"
             echo "Synced hooks/"
