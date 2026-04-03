@@ -1,20 +1,36 @@
 """Check marketplace plugin versions against latest GitHub releases."""
 
 import json
+import os
 import subprocess
 import sys
 
 
 def check_version_freshness():
     """Compare marketplace versions with latest stable releases."""
-    with open(".claude-plugin/marketplace.json") as f:
+    marketplace_path = ".claude-plugin/marketplace.json"
+    if not os.path.exists(marketplace_path):
+        print(f"Error: {marketplace_path} not found", file=sys.stderr)
+        sys.exit(1)
+
+    with open(marketplace_path) as f:
         marketplace = json.load(f)
 
+    owner = marketplace.get("owner", {}).get("name", "n24q02m")
+    plugins = marketplace.get("plugins", [])
+
+    if not plugins:
+        print("No plugins found in marketplace.json")
+        return
+
     stale = []
-    for plugin in marketplace["plugins"]:
-        name = plugin["name"]
-        source = plugin["source"].lstrip("./")
-        gext_path = f"{source}/gemini-extension.json"
+    for plugin in plugins:
+        name = plugin.get("name")
+        source = plugin.get("source", "").lstrip("./")
+        if not name or not source:
+            continue
+
+        gext_path = os.path.join(source, "gemini-extension.json")
 
         # Get marketplace version
         try:
@@ -25,39 +41,47 @@ def check_version_freshness():
             marketplace_ver = "missing"
 
         # Get latest stable release from source repo
-        result = subprocess.run(
-            [
-                "gh",
-                "release",
-                "view",
-                "--repo",
-                f"n24q02m/{name}",
-                "--json",
-                "tagName",
-                "-q",
-                ".tagName",
-            ],
-            capture_output=True,
-            text=True,
-        )
-        if result.returncode == 0:
-            latest_tag = result.stdout.strip().lstrip("v")
-            if marketplace_ver != latest_tag:
-                stale.append(
-                    f"{name}: marketplace={marketplace_ver}, latest={latest_tag}"
-                )
-                print(
-                    f"::warning ::{name} is stale: marketplace={marketplace_ver}, latest={latest_tag}"
-                )
+        try:
+            result = subprocess.run(
+                [
+                    "gh",
+                    "release",
+                    "view",
+                    "--repo",
+                    f"{owner}/{name}",
+                    "--json",
+                    "tagName",
+                    "-q",
+                    ".tagName",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            if result.returncode == 0:
+                latest_tag = result.stdout.strip().lstrip("v")
+                if marketplace_ver != latest_tag:
+                    stale.append(
+                        f"{name}: marketplace={marketplace_ver}, latest={latest_tag}"
+                    )
+                    print(
+                        f"::error ::{name} is stale: marketplace={marketplace_ver}, latest={latest_tag}"
+                    )
+                else:
+                    print(f"{name}: up-to-date ({marketplace_ver})")
             else:
-                print(f"{name}: up-to-date ({marketplace_ver})")
-        else:
-            print(f"{name}: no release found (marketplace={marketplace_ver})")
+                print(f"{name}: no release found or error (marketplace={marketplace_ver})")
+        except subprocess.TimeoutExpired:
+            print(f"{name}: timeout while checking latest release", file=sys.stderr)
+        except Exception as e:
+            print(f"Error checking {name}: {e}", file=sys.stderr)
 
     if stale:
         print(f"\n{len(stale)} plugin(s) need sync")
+        sys.exit(1)
     else:
         print("\nAll plugins up-to-date")
+        sys.exit(0)
 
 
 if __name__ == "__main__":
