@@ -56,11 +56,29 @@ jobs:
           INPUT_TAG: ${{ inputs.tag }}
         run: |
           if [ "$EVENT_NAME" = "repository_dispatch" ]; then
-            echo "repo=$PAYLOAD_REPO" >> "$GITHUB_OUTPUT"
-            echo "tag=$PAYLOAD_TAG" >> "$GITHUB_OUTPUT"
+            {
+              echo "repo<<EOF"
+              echo "$PAYLOAD_REPO"
+              echo "EOF"
+              echo "tag<<EOF"
+              echo "$PAYLOAD_TAG"
+              echo "EOF"
+              echo "version<<EOF"
+              echo "${PAYLOAD_TAG#v}"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
           else
-            echo "repo=$INPUT_REPO" >> "$GITHUB_OUTPUT"
-            echo "tag=$INPUT_TAG" >> "$GITHUB_OUTPUT"
+            {
+              echo "repo<<EOF"
+              echo "$INPUT_REPO"
+              echo "EOF"
+              echo "tag<<EOF"
+              echo "$INPUT_TAG"
+              echo "EOF"
+              echo "version<<EOF"
+              echo "${INPUT_TAG#v}"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
           fi
 
       - name: Validate inputs
@@ -136,6 +154,7 @@ jobs:
         env:
           REPO: ${{ steps.inputs.outputs.repo }}
           TAG: ${{ steps.inputs.outputs.tag }}
+          COMMIT_MSG: "chore(plugins): sync ${{ steps.inputs.outputs.repo }} to ${{ steps.inputs.outputs.version }}"
         working-directory: marketplace
         run: |
           VERSION="${TAG#v}"
@@ -145,7 +164,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to sync"
           else
-            git commit -m "chore(plugins): sync $REPO to $VERSION"
+            git commit -m "$COMMIT_MSG"
             git push
             echo "Pushed sync for $REPO $VERSION"
           fi
