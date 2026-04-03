@@ -35,7 +35,7 @@ jobs:
       - name: Validate marketplace.json
         run: |
           echo "Validating marketplace.json..."
-          python3 scripts/validate_marketplace.py
+          ./scripts/validate_marketplace.py
 
       - name: Check version freshness
         if: github.event_name == 'push'
@@ -43,7 +43,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           echo "Checking marketplace versions against latest releases..."
-          python3 scripts/check_version_freshness.py
+          ./scripts/check_version_freshness.py
 
   dependency-review:
     name: Dependency Review

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Validate marketplace.json structure and plugin integrity."""
 
 import json
