@@ -1,6 +1,7 @@
 """Check marketplace plugin versions against latest GitHub releases."""
 
 import json
+import os
 import subprocess
 import sys
 
@@ -14,15 +15,24 @@ def check_version_freshness():
     for plugin in marketplace["plugins"]:
         name = plugin["name"]
         source = plugin["source"].lstrip("./")
-        gext_path = f"{source}/gemini-extension.json"
 
-        # Get marketplace version
-        try:
-            with open(gext_path) as f:
-                gdata = json.load(f)
-            marketplace_ver = gdata.get("version", "unknown")
-        except Exception:
-            marketplace_ver = "missing"
+        # Get marketplace version (try gemini-extension.json then plugin.json)
+        marketplace_ver = "unknown"
+        gext_path = f"{source}/gemini-extension.json"
+        pjson_path = f"{source}/.claude-plugin/plugin.json"
+
+        if os.path.exists(gext_path):
+            try:
+                with open(gext_path) as f:
+                    marketplace_ver = json.load(f).get("version", "unknown")
+            except Exception:
+                pass
+        elif os.path.exists(pjson_path):
+            try:
+                with open(pjson_path) as f:
+                    marketplace_ver = json.load(f).get("version", "unknown")
+            except Exception:
+                pass
 
         # Get latest stable release from source repo
         result = subprocess.run(
