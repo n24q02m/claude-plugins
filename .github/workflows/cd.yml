@@ -55,12 +55,25 @@ jobs:
           INPUT_REPO: ${{ inputs.repo }}
           INPUT_TAG: ${{ inputs.tag }}
         run: |
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           if [ "$EVENT_NAME" = "repository_dispatch" ]; then
-            echo "repo=$PAYLOAD_REPO" >> "$GITHUB_OUTPUT"
-            echo "tag=$PAYLOAD_TAG" >> "$GITHUB_OUTPUT"
+            {
+              echo "repo<<$EOF"
+              echo "$PAYLOAD_REPO"
+              echo "$EOF"
+              echo "tag<<$EOF"
+              echo "$PAYLOAD_TAG"
+              echo "$EOF"
+            } >> "$GITHUB_OUTPUT"
           else
-            echo "repo=$INPUT_REPO" >> "$GITHUB_OUTPUT"
-            echo "tag=$INPUT_TAG" >> "$GITHUB_OUTPUT"
+            {
+              echo "repo<<$EOF"
+              echo "$INPUT_REPO"
+              echo "$EOF"
+              echo "tag<<$EOF"
+              echo "$INPUT_TAG"
+              echo "$EOF"
+            } >> "$GITHUB_OUTPUT"
           fi
 
       - name: Validate inputs
@@ -80,7 +93,7 @@ jobs:
             echo "::error::Invalid tag format: $TAG (expected vX.Y.Z)"
             exit 1
           fi
-          echo "Syncing $REPO @ $TAG"
+          echo "Syncing \"$REPO\" @ \"$TAG\""
 
       - name: Checkout marketplace
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -145,7 +158,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to sync"
           else
-            git commit -m "chore(plugins): sync $REPO to $VERSION"
+            git commit -m "chore(plugins): sync \"$REPO\" to \"$VERSION\""
             git push
-            echo "Pushed sync for $REPO $VERSION"
+            echo "Pushed sync for \"$REPO\" \"$VERSION\""
           fi
