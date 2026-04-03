@@ -37,7 +37,7 @@ sync_item() {
   fi
 }
 
-PLUGINS=(wet-mcp mnemo-mcp better-telegram-mcp better-code-review-graph better-notion-mcp better-email-mcp better-godot-mcp)
+PLUGINS=(plugin-a plugin-b)
 
 sync_plugins() {
   for repo in "${PLUGINS[@]}"; do

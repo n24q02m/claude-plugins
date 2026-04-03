@@ -118,19 +118,15 @@ jobs:
             echo "Synced gemini-extension.json (version: $VERSION)"
           fi
 
-          # Sync skills
-          if [ -d "source/skills" ] && ls source/skills/*/SKILL.md >/dev/null 2>&1; then
-            rm -rf "$PLUGIN_DIR/skills"
-            cp -r "source/skills" "$PLUGIN_DIR/skills"
-            echo "Synced skills/"
-          fi
-
-          # Sync hooks
-          if [ -d "source/hooks" ] && ls source/hooks/* >/dev/null 2>&1; then
-            rm -rf "$PLUGIN_DIR/hooks"
-            cp -r "source/hooks" "$PLUGIN_DIR/hooks"
-            echo "Synced hooks/"
-          fi
+          # Sync skills and hooks
+          for dir in skills hooks; do
+            if [ "$dir" = "skills" ]; then pattern="*/SKILL.md"; else pattern="*"; fi
+            if [ -d "source/$dir" ] && ls source/$dir/$pattern >/dev/null 2>&1; then
+              rm -rf "$PLUGIN_DIR/$dir"
+              cp -r "source/$dir" "$PLUGIN_DIR/$dir"
+              echo "Synced $dir/"
+            fi
+          done
 
       - name: Commit and push
         env:
