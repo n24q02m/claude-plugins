@@ -38,13 +38,13 @@
     {
       "name": "better-godot-mcp",
       "source": "./plugins/better-godot-mcp",
-      "description": "Godot Engine — 18 tools for game development",
+      "description": "Godot Engine — 17 composite tools for game development",
       "category": "development"
     },
     {
       "name": "better-telegram-mcp",
       "source": "./plugins/better-telegram-mcp",
-      "description": "Telegram Bot API — messages, chats, media, contacts",
+      "description": "Telegram dual-mode (Bot API + MTProto) — messages, chats, media, contacts",
       "category": "communication"
     },
     {

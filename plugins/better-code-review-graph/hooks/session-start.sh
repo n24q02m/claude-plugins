@@ -1,5 +1,4 @@
 #!/bin/bash
-set -euo pipefail
 # Checks for the better-code-review-graph knowledge graph and outputs
 # guidance for Claude Code at the start of every session.
 

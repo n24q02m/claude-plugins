@@ -1,6 +1,6 @@
 # n24q02m Claude Plugins
 
-7 MCP servers for Claude Code, Codex, Gemini CLI, and other AI coding agents.
+7 MCP servers for Claude Code, Codex, and other AI coding agents.
 
 ## Install
 
@@ -20,7 +20,7 @@ Or browse all plugins: run `/plugin` and go to the **Discover** tab.
 | **better-notion-mcp** | Productivity | Notion API — 9 tools, ~95% coverage | `NOTION_TOKEN` |
 | **better-email-mcp** | Communication | Email IMAP/SMTP — multi-account | `EMAIL_CREDENTIALS` |
 | **better-telegram-mcp** | Communication | Telegram dual-mode (Bot + MTProto) — messages, chats, media | `TELEGRAM_BOT_TOKEN` |
-| **better-godot-mcp** | Development | Godot Engine — 18 tools for game dev | `GODOT_PATH` (optional) |
+| **better-godot-mcp** | Development | Godot Engine — 17 composite tools for game dev | `GODOT_PATH` (optional) |
 | **better-code-review-graph** | Development | Knowledge graph for code reviews | `API_KEYS` (optional) |
 
 ## Configuration
@@ -74,20 +74,6 @@ Each plugin includes skills (slash commands):
 | better-notion-mcp | `/organize-database`, `/bulk-update` |
 | better-email-mcp | `/inbox-review`, `/follow-up` |
 | better-godot-mcp | `/build-scene`, `/debug-issue`, `/add-mechanic` |
-
-## Gemini CLI
-
-Each plugin is also a Gemini CLI extension. Install individually:
-
-```bash
-gemini extensions install https://github.com/n24q02m/wet-mcp
-gemini extensions install https://github.com/n24q02m/mnemo-mcp
-gemini extensions install https://github.com/n24q02m/better-telegram-mcp
-gemini extensions install https://github.com/n24q02m/better-code-review-graph
-gemini extensions install https://github.com/n24q02m/better-notion-mcp
-gemini extensions install https://github.com/n24q02m/better-email-mcp
-gemini extensions install https://github.com/n24q02m/better-godot-mcp
-```
 
 ## Other MCP Clients
 
