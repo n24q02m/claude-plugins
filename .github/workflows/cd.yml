@@ -107,14 +107,14 @@ jobs:
           # Sync plugin.json (update version)
           if [ -f "source/.claude-plugin/plugin.json" ]; then
             mkdir -p "$PLUGIN_DIR/.claude-plugin"
-            jq ".version = env.VERSION" source/.claude-plugin/plugin.json > "$PLUGIN_DIR/.claude-plugin/plugin.json"
+            jq --arg v "$VERSION" '.version = $v' source/.claude-plugin/plugin.json > "$PLUGIN_DIR/.claude-plugin/plugin.json"
             echo "Synced plugin.json (version: $VERSION)"
           fi
 
           # Sync gemini-extension.json (update version)
           if [ -f "source/gemini-extension.json" ]; then
             mkdir -p "$PLUGIN_DIR"
-            jq ".version = env.VERSION" source/gemini-extension.json > "$PLUGIN_DIR/gemini-extension.json"
+            jq --arg v "$VERSION" '.version = $v' source/gemini-extension.json > "$PLUGIN_DIR/gemini-extension.json"
             echo "Synced gemini-extension.json (version: $VERSION)"
           fi
 
