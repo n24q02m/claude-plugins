@@ -30,13 +30,13 @@ def check_version_freshness():
         if not name or not source:
             continue
 
-        gext_path = os.path.join(source, "gemini-extension.json")
+        pjson_path = os.path.join(source, ".claude-plugin", "plugin.json")
 
-        # Get marketplace version
+        # Get marketplace version from plugin.json
         try:
-            with open(gext_path) as f:
-                gdata = json.load(f)
-            marketplace_ver = gdata.get("version", "unknown")
+            with open(pjson_path) as f:
+                pdata = json.load(f)
+            marketplace_ver = pdata.get("version", "unknown")
         except Exception:
             marketplace_ver = "missing"
 
