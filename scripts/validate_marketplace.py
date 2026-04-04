@@ -34,15 +34,13 @@ def validate_marketplace():
             if req not in pdata:
                 errors.append(f"{name}: plugin.json missing {req}")
 
-        # Check gemini-extension.json exists and has version
+        # Check gemini-extension.json has version (optional file)
         gext = os.path.join(plugin_dir, "gemini-extension.json")
         if os.path.exists(gext):
             with open(gext) as f:
                 gdata = json.load(f)
             if "version" not in gdata:
                 errors.append(f"{name}: gemini-extension.json missing version")
-        else:
-            errors.append(f"{name}: missing gemini-extension.json")
 
         # Check skills have frontmatter
         skills_dir = os.path.join(plugin_dir, "skills")

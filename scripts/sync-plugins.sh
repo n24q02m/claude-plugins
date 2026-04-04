@@ -46,6 +46,12 @@ sync_plugins() {
       cp "$src/.claude-plugin/plugin.json" "$dst/.claude-plugin/plugin.json"
     fi
 
+    # Sync gemini-extension.json
+    if [ -f "$src/gemini-extension.json" ]; then
+      mkdir -p "$dst"
+      cp "$src/gemini-extension.json" "$dst/gemini-extension.json"
+    fi
+
     # Sync skills and hooks
     sync_dir "skills"
     sync_dir "hooks"
