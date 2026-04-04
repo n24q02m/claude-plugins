@@ -45,19 +45,22 @@ def validate_marketplace():
         # Check skills have frontmatter
         skills_dir = os.path.join(plugin_dir, "skills")
         if os.path.isdir(skills_dir):
-            for skill_name in os.listdir(skills_dir):
-                skill_file = os.path.join(skills_dir, skill_name, "SKILL.md")
-                if os.path.exists(skill_file):
-                    with open(skill_file) as f:
-                        content = f.read()
-                    if not content.startswith("---"):
-                        errors.append(
-                            f"{name}/skills/{skill_name}: SKILL.md missing frontmatter"
-                        )
-                    if len(content.strip()) < 50:
-                        errors.append(
-                            f"{name}/skills/{skill_name}: SKILL.md too short"
-                        )
+            for skill_entry in os.scandir(skills_dir):
+                if skill_entry.is_dir():
+                    skill_name = skill_entry.name
+                    skill_file = os.path.join(skill_entry.path, "SKILL.md")
+                    if os.path.exists(skill_file):
+                        # ⚡ Bolt: Using os.scandir avoids extra os.stat calls compared to os.listdir
+                        with open(skill_file) as f:
+                            content = f.read()
+                        if not content.startswith("---"):
+                            errors.append(
+                                f"{name}/skills/{skill_name}: SKILL.md missing frontmatter"
+                            )
+                        if len(content.strip()) < 50:
+                            errors.append(
+                                f"{name}/skills/{skill_name}: SKILL.md too short"
+                            )
 
     if errors:
         print("Validation errors:")
