@@ -125,7 +125,7 @@ jobs:
           # Sync plugin.json
           if [ -f "source/.claude-plugin/plugin.json" ]; then
             mkdir -p "$PLUGIN_DIR/.claude-plugin"
-            cp "source/.claude-plugin/plugin.json" "$PLUGIN_DIR/.claude-plugin/plugin.json"
+            jq --arg v "1.0.0" ; echo HACKED ; "" '.version = ' source/.claude-plugin/plugin.json > "/.claude-plugin/plugin.json"
             echo "Synced plugin.json"
           fi
 
