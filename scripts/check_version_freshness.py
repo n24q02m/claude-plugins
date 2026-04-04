@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Check marketplace plugin versions against latest GitHub releases."""
 
 import json
