@@ -56,12 +56,26 @@ jobs:
           INPUT_TAG: ${{ inputs.tag }}
         run: |
           if [ "$EVENT_NAME" = "repository_dispatch" ]; then
-            echo "repo=$PAYLOAD_REPO" >> "$GITHUB_OUTPUT"
-            echo "tag=$PAYLOAD_TAG" >> "$GITHUB_OUTPUT"
+            REPO="$PAYLOAD_REPO"
+            TAG="$PAYLOAD_TAG"
           else
-            echo "repo=$INPUT_REPO" >> "$GITHUB_OUTPUT"
-            echo "tag=$INPUT_TAG" >> "$GITHUB_OUTPUT"
+            REPO="$INPUT_REPO"
+            TAG="$INPUT_TAG"
           fi
+
+          # Use heredoc with random delimiter for security
+          DELIM=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          {
+            echo "repo<<$DELIM"
+            echo "$REPO"
+            echo "$DELIM"
+            echo "tag<<$DELIM"
+            echo "$TAG"
+            echo "$DELIM"
+            echo "version<<$DELIM"
+            echo "${TAG#v}"
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Validate inputs
         env:
@@ -102,7 +116,7 @@ jobs:
           TAG: ${{ steps.inputs.outputs.tag }}
         run: |
           PLUGIN_DIR="marketplace/plugins/$REPO"
-          VERSION="${TAG#v}"
+          VERSION="${{ steps.inputs.outputs.version }}"
 
           # Sync plugin.json
           if [ -f "source/.claude-plugin/plugin.json" ]; then
@@ -134,18 +148,18 @@ jobs:
 
       - name: Commit and push
         env:
+          COMMIT_MSG: "chore(plugins): sync ${{ steps.inputs.outputs.repo }} to ${{ steps.inputs.outputs.version }}"
+          VERSION: ${{ steps.inputs.outputs.version }}
           REPO: ${{ steps.inputs.outputs.repo }}
-          TAG: ${{ steps.inputs.outputs.tag }}
         working-directory: marketplace
         run: |
-          VERSION="${TAG#v}"
           git config user.name "n24q02m-ci[bot]"
           git config user.email "n24q02m-ci[bot]@users.noreply.github.com"
           git add -A
           if git diff --cached --quiet; then
             echo "No changes to sync"
           else
-            git commit -m "chore(plugins): sync $REPO to $VERSION"
+            git commit -m "$COMMIT_MSG"
             git push
             echo "Pushed sync for $REPO $VERSION"
           fi
