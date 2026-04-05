@@ -97,6 +97,13 @@ test_sync_plugins() {
     FAIL=$((FAIL + 1))
   fi
 
+  # Additional test for sync_item with a specific file
+  echo "content" > "$repos/test-plugin/random-file.txt"
+  src="$repos/test-plugin"
+  dst="$ROOT/plugins/test-plugin"
+  sync_item "random-file.txt"
+  assert "random-file.txt synced via sync_item" test -f "$ROOT/plugins/test-plugin/random-file.txt"
+
   # Restore globals
   PLUGINS=("${old_plugins[@]}")
   REPOS_DIR="$old_repos_dir"
@@ -112,4 +119,4 @@ test_sync_plugins
 
 echo ""
 echo "Results: $PASS passed, $FAIL failed"
-[ "$FAIL" -eq 0 ] || exit 1
+[ "$FAIL" -eq 0 ] || return 1
