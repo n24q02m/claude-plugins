@@ -45,19 +45,25 @@ def validate_marketplace():
         # Check skills have frontmatter
         skills_dir = os.path.join(plugin_dir, "skills")
         if os.path.isdir(skills_dir):
-            for skill_name in os.listdir(skills_dir):
-                skill_file = os.path.join(skills_dir, skill_name, "SKILL.md")
-                if os.path.exists(skill_file):
-                    with open(skill_file) as f:
-                        content = f.read()
-                    if not content.startswith("---"):
-                        errors.append(
-                            f"{name}/skills/{skill_name}: SKILL.md missing frontmatter"
-                        )
-                    if len(content.strip()) < 50:
-                        errors.append(
-                            f"{name}/skills/{skill_name}: SKILL.md too short"
-                        )
+            # Performance optimization: Use os.scandir instead of os.listdir
+            # It returns an iterator of DirEntry objects, reducing system calls
+            # by caching file attributes and avoiding extra os.path evaluations.
+            with os.scandir(skills_dir) as entries:
+                for entry in entries:
+                    if entry.is_dir():
+                        skill_name = entry.name
+                        skill_file = os.path.join(entry.path, "SKILL.md")
+                        if os.path.exists(skill_file):
+                            with open(skill_file) as f:
+                                content = f.read()
+                            if not content.startswith("---"):
+                                errors.append(
+                                    f"{name}/skills/{skill_name}: SKILL.md missing frontmatter"
+                                )
+                            if len(content.strip()) < 50:
+                                errors.append(
+                                    f"{name}/skills/{skill_name}: SKILL.md too short"
+                                )
 
     if errors:
         print("Validation errors:")
