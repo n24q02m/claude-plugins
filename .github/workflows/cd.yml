@@ -119,17 +119,29 @@ jobs:
           fi
 
           # Sync skills
-          if [ -d "source/skills" ] && ls source/skills/*/SKILL.md >/dev/null 2>&1; then
-            rm -rf "$PLUGIN_DIR/skills"
-            cp -r "source/skills" "$PLUGIN_DIR/skills"
-            echo "Synced skills/"
+          if [ -d "source/skills" ]; then
+            has_skills=0
+            shopt -s nullglob
+            for _ in source/skills/*/SKILL.md; do has_skills=1; break; done
+            shopt -u nullglob
+            if [ "$has_skills" -eq 1 ]; then
+              rm -rf "$PLUGIN_DIR/skills"
+              cp -r "source/skills" "$PLUGIN_DIR/skills"
+              echo "Synced skills/"
+            fi
           fi
 
           # Sync hooks
-          if [ -d "source/hooks" ] && ls source/hooks/* >/dev/null 2>&1; then
-            rm -rf "$PLUGIN_DIR/hooks"
-            cp -r "source/hooks" "$PLUGIN_DIR/hooks"
-            echo "Synced hooks/"
+          if [ -d "source/hooks" ]; then
+            has_hooks=0
+            shopt -s nullglob dotglob
+            for _ in source/hooks/*; do has_hooks=1; break; done
+            shopt -u nullglob dotglob
+            if [ "$has_hooks" -eq 1 ]; then
+              rm -rf "$PLUGIN_DIR/hooks"
+              cp -r "source/hooks" "$PLUGIN_DIR/hooks"
+              echo "Synced hooks/"
+            fi
           fi
 
       - name: Commit and push
