@@ -10,6 +10,7 @@ REPOS_DIR="${REPOS_DIR:-$HOME/projects}"
 # Avoids both subshell overhead (find|head) and O(N) array allocation.
 has_files() {
   local dir="$1"
+  [[ -d "$dir" ]] || return 1
   shopt -s nullglob dotglob
   for _ in "$dir"/*; do
     shopt -u nullglob dotglob

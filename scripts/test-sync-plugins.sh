@@ -52,6 +52,12 @@ test_has_files() {
 
   # Non-existent directory
   assert_not "non-existent dir has no files" has_files "/tmp/nonexistent-$$"
+  # Empty string argument
+  assert_not "empty string has no files" has_files ""
+
+  # File instead of directory
+  touch "$tmp/regular-file"
+  assert_not "regular file is not a directory with files" has_files "$tmp/regular-file"
 }
 
 # --- sync integration test ---
