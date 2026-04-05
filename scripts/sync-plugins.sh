@@ -23,6 +23,7 @@ has_files() {
 sync_dir() {
   local dir_name="$1"
   if [ -d "$src/$dir_name" ] && has_files "$src/$dir_name"; then
+    mkdir -p "$(dirname "$dst/$dir_name")"
     rm -rf "$dst/$dir_name"
     cp -r "$src/$dir_name" "$dst/$dir_name"
   fi

@@ -70,13 +70,17 @@ test_sync_plugins() {
   echo '{"version":"1.0.0"}' > "$repos/test-plugin/gemini-extension.json"
 
   # Setup mock missing repo
+  # Setup a repo that only has skills (to test sync_dir creating destination parent)
+  mkdir -p "$repos/only-skills/skills/demo"
+  echo "test" > "$repos/only-skills/skills/demo/test.txt"
+
   # (test-missing does not exist)
 
   # Override globals
   local old_plugins=("${PLUGINS[@]}")
   local old_repos_dir="$REPOS_DIR"
   local old_root="$ROOT"
-  PLUGINS=("test-plugin" "test-missing")
+  PLUGINS=("test-plugin" "only-skills" "test-missing")
   REPOS_DIR="$repos"
   ROOT="$tmp/root"
   mkdir -p "$ROOT/plugins"
@@ -89,6 +93,11 @@ test_sync_plugins() {
   assert "plugin.json synced" test -f "$ROOT/plugins/test-plugin/.claude-plugin/plugin.json"
   assert "gemini-extension.json synced" test -f "$ROOT/plugins/test-plugin/gemini-extension.json"
   assert "skills synced" test -d "$ROOT/plugins/test-plugin/skills"
+
+  # Assertions for only-skills (the fix verification)
+  assert "only-skills plugin dir created" test -d "$ROOT/plugins/only-skills"
+  assert "only-skills skills synced" test -d "$ROOT/plugins/only-skills/skills"
+  assert "only-skills content synced" test -f "$ROOT/plugins/only-skills/skills/demo/test.txt"
   if echo "$output" | grep -q "SKIP test-missing"; then
     echo "PASS: missing repo skipped"
     PASS=$((PASS + 1))
