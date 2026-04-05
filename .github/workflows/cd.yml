@@ -55,13 +55,20 @@ jobs:
           INPUT_REPO: ${{ inputs.repo }}
           INPUT_TAG: ${{ inputs.tag }}
         run: |
+          DELIMITER=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           if [ "$EVENT_NAME" = "repository_dispatch" ]; then
-            echo "repo=$PAYLOAD_REPO" >> "$GITHUB_OUTPUT"
-            echo "tag=$PAYLOAD_TAG" >> "$GITHUB_OUTPUT"
+            REPO="$PAYLOAD_REPO"
+            TAG="$PAYLOAD_TAG"
           else
-            echo "repo=$INPUT_REPO" >> "$GITHUB_OUTPUT"
-            echo "tag=$INPUT_TAG" >> "$GITHUB_OUTPUT"
+            REPO="$INPUT_REPO"
+            TAG="$INPUT_TAG"
           fi
+          echo "repo<<$DELIMITER" >> "$GITHUB_OUTPUT"
+          echo "$REPO" >> "$GITHUB_OUTPUT"
+          echo "$DELIMITER" >> "$GITHUB_OUTPUT"
+          echo "tag<<$DELIMITER" >> "$GITHUB_OUTPUT"
+          echo "$TAG" >> "$GITHUB_OUTPUT"
+          echo "$DELIMITER" >> "$GITHUB_OUTPUT"
 
       - name: Validate inputs
         env:
