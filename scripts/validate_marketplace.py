@@ -45,8 +45,10 @@ def validate_marketplace():
         # Check skills have frontmatter
         skills_dir = os.path.join(plugin_dir, "skills")
         if os.path.isdir(skills_dir):
-            for skill_name in os.listdir(skills_dir):
-                skill_file = os.path.join(skills_dir, skill_name, "SKILL.md")
+            # ⚡ Bolt optimization: use os.scandir to reduce system calls by caching file attributes
+            for entry in os.scandir(skills_dir):
+                skill_name = entry.name
+                skill_file = os.path.join(entry.path, "SKILL.md")
                 if os.path.exists(skill_file):
                     with open(skill_file) as f:
                         content = f.read()
