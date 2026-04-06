@@ -1,8 +1,21 @@
 # Implementation Plan: Production Hardening & Relay Redesign
 
 **Spec**: `specs/2026-04-05-relay-redesign-and-production-hardening-design.md`
-**Date**: 2026-04-05
+**Date**: 2026-04-05 (updated 2026-04-06)
 **Objectives**: 11 (O1-O11)
+
+---
+
+## Design Principles (locked, updated 2026-04-06)
+
+These constraints override any earlier assumptions in T0-T6:
+
+1. **Relay is primary** — the correct and default path for all new users. Never remove, never mark BETA, never demote to secondary.
+2. **Env vars are backward compat only** — kept so existing users don't break. Not advertised as preferred.
+3. **No `set_env` MCP action anywhere** — credentials must never pass through LLM chat context to a tool call. Relay browser form is the only credential-setting UI.
+4. **No auto-fallback to local ONNX** — wet-mcp, mnemo-mcp, crg must not silently fall back when no credentials are configured. AWAITING_SETUP = block (not degrade). LOCAL state (via explicit `skip`) = local OK.
+5. **Hook-based automatic credential check** — LLM must automatically (not user manually) call status then open_relay before first tool use per MCP server per session. Implemented via claude-plugins PreToolUse hooks + session state files.
+6. **Tool queuing via LLM retry** — hooks deny the original tool call with clear instructions; Claude retries after relay completes. No actual queuing mechanism needed.
 
 ---
 
@@ -18,13 +31,13 @@ Legend: `[S]` small (<2h), `[M]` medium (2-8h), `[L]` large (>8h)
 
 **Goal**: Close out pending work from previous session (2026-04-05), verify baseline state before new work.
 
-### T0.1 [S] Commit pending doc changes (BETA markers)
+### T0.1 [S] Commit pending doc changes (relay as primary)
 Uncommitted in 6 MCP repos from previous session:
-- `docs/setup-manual.md` + `docs/setup-with-agent.md`: swapped env vars to primary, marked relay as BETA
-- `uv.lock`: version sync to released versions (wet 2.21.0, mnemo 1.16.0, crg 3.6.0, telegram 4.1.0)
+- `docs/setup-manual.md` + `docs/setup-with-agent.md`: **DO NOT** commit the "swap env vars to primary, mark relay as BETA" direction — that was wrong. Relay is primary.
+- `uv.lock`: version sync to released versions (wet 2.22.0, mnemo 1.17.0, crg 3.7.0, telegram 4.2.0)
 Repos: wet-mcp, mnemo-mcp, better-code-review-graph, better-telegram-mcp, better-email-mcp, better-notion-mcp
-- Commit each per-repo with message: `fix: mark relay as BETA, promote env vars as primary setup method`
-- claude-plugins: commit new spec + plan files
+- If setup-manual.md/setup-with-agent.md were changed: revert them to relay-as-primary framing, or update to accurately reflect new design
+- claude-plugins: commit updated spec + plan files
 
 ### T0.2 [M] Diagnose wet-mcp Claude Code connection failure
 Previous session found: wet-mcp fails Claude Code connect 5+ times while mnemo/crg succeed 1 try, even though direct `uvx --python 3.13 wet-mcp` works in <100ms with env vars.
@@ -112,20 +125,49 @@ Verify core tool works for each server (not just connection):
 - Add `local_mode_marker` support in storage (Python + TS)
 - Release v1.3.0 (stable channel)
 
-### T2.3 [L] Refactor wet-mcp relay (O11)
-- Replace blocking `await ensure_config()` in lifespan with fast `resolve_credential_state()`
-- Add `requires_credentials` decorator on cloud-requiring tools
-- Extend `setup` tool with `status | start | skip | reset | complete` actions
-- Update tests to cover new state machine
-- Release v2.22.0 (stable)
+### T2.3 [L] Refactor wet-mcp relay (O11) [PARTIALLY DONE — needs cleanup]
+Done in previous session: replace blocking lifespan, add `_require_credentials()` on cloud tools, add `open_relay` action, non-blocking credential state.
+Remaining (updated per Design Principles):
+- Remove `set_env` action and `set_env_var()` function entirely
+- Remove auto-fallback in `_init_embedding_backend()` + `_init_reranker_backend()`:
+  - AWAITING_SETUP → init nothing (backend = None)
+  - CONFIGURED → cloud only, no local fallback if cloud fails
+  - LOCAL → local only
+- Update `_require_credentials()` error message: remove set_env option, only mention `open_relay` + `skip`
+- Remove `set_env` from valid_actions list and tool description
+- Update tests for new behavior (auto-fallback removal, no set_env)
+- Release v2.23.0 (stable)
 
-### T2.4 [L] Refactor mnemo-mcp relay (O11)
-- Mirror T2.3 pattern
-- Release v1.17.0 (stable)
+### T2.4 [L] Refactor mnemo-mcp relay (O11) [PARTIALLY DONE — needs same cleanup]
+Done in previous session: non-blocking lifespan, credential state, basic blocking.
+Remaining (mirror T2.3 remaining work):
+- Remove `set_env` action if present
+- Remove auto-fallback in embedding/reranking init
+- Add `_require_credentials()` to all cloud-requiring tools (memory, config) if not already
+- Update tests
+- Release v1.18.0 (stable)
 
-### T2.5 [L] Refactor better-code-review-graph relay (O11)
-- Mirror T2.3 pattern
-- Release v3.7.0 (stable)
+### T2.5 [L] Refactor better-code-review-graph relay (O11) [PARTIALLY DONE — needs same cleanup]
+Done in previous session: same as mnemo-mcp.
+Remaining (mirror T2.3 remaining work):
+- Remove `set_env` action if present
+- Remove auto-fallback in embedding/reranking init
+- Add `_require_credentials()` to all cloud-requiring tools
+- Update tests
+- Release v3.8.0 (stable)
+
+### T2.3b [M] Hook scripts for automated credential check (claude-plugins)
+Implements Design Principle #5/#6 — automatic LLM behavior, no manual user action.
+- Add hook scripts to `plugins/{wet-mcp,mnemo-mcp,better-code-review-graph}/hooks/`
+  - `check-credentials.sh`: reads session state file + checks config.enc/env vars
+  - PreToolUse: fires for all credential-requiring tools (not setup/help)
+    - If session verified: allow
+    - If config.enc exists or cloud env vars present: allow + write session state
+    - Otherwise: deny with reason = "Call setup(action='open_relay'), retry after configuration"
+  - PostToolUse for setup tool: if response state = configured/local, write session state file
+- Add `hooks/hooks.json` per plugin registering the hooks
+- Session state dir: `~/.claude/mcp-state/<session_id>/<server>-credentials`
+- Test: simulate first-call flow on clean state
 
 ### T2.6 [L] Refactor better-telegram-mcp relay (O11)
 - Mirror T2.3 pattern (stdio + HTTP modes)
@@ -336,5 +378,6 @@ Phase 0 (handoff: commits + diagnosis + smoke test)
 
 - Building klprism.com or getaiora.com (those are separate projects, only referenced)
 - Migrating existing user credentials (zero-impact contract)
-- Deprecating env var auth (always kept as primary stable path)
+- Deprecating env var auth (kept as backward-compat secondary path; never primary)
 - Changing plugin.json schema beyond setup tool action additions
+- Adding `set_env` or any credential-passing MCP action to any server (permanently excluded)

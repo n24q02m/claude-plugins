@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""PreToolUse hook: block when better-telegram-mcp credentials are not configured.
+
+Blocking -- Telegram tools cannot function without credentials.
+Allows config and help tools through so the user can initiate setup.
+"""
+import json
+import os
+import sys
+
+SERVER_NAME = "better-telegram-mcp"
+# Either TELEGRAM_PHONE (user mode) or TELEGRAM_BOT_TOKEN (bot mode) is required.
+# TELEGRAM_API_ID / TELEGRAM_API_HASH have built-in defaults and are not checked here.
+CREDENTIAL_KEYS = ["TELEGRAM_PHONE", "TELEGRAM_BOT_TOKEN"]
+# Tools that work without credentials
+EXEMPT_SUFFIXES = ("__setup", "__help", "__config")
+
+
+def _is_configured() -> bool:
+    if any(os.environ.get(k) for k in CREDENTIAL_KEYS):
+        return True
+    local_app_data = os.environ.get("LOCALAPPDATA", "")
+    app_data = os.environ.get("APPDATA", "")
+    home = os.path.expanduser("~")
+    paths = [p for p in [
+        os.path.join(local_app_data, SERVER_NAME, "config.enc") if local_app_data else "",
+        os.path.join(app_data, SERVER_NAME, "config.enc") if app_data else "",
+        os.path.join(home, ".config", SERVER_NAME, "config.enc"),
+    ] if p]
+    return any(os.path.exists(p) for p in paths)
+
+
+def main() -> None:
+    try:
+        data = json.load(sys.stdin)
+    except Exception:
+        sys.exit(0)
+
+    tool_name = data.get("tool_name", "")
+    if any(tool_name.endswith(s) for s in EXEMPT_SUFFIXES):
+        sys.exit(0)
+
+    if not _is_configured():
+        print(json.dumps({
+            "decision": "block",
+            "reason": (
+                "better-telegram-mcp credentials not configured. "
+                "Set TELEGRAM_PHONE (user mode) or TELEGRAM_BOT_TOKEN (bot mode) "
+                "in your MCP server environment, "
+                "or use the config tool with action='status' for setup instructions."
+            ),
+        }))
+        sys.exit(2)
+
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
