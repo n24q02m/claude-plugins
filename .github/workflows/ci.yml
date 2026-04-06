@@ -130,8 +130,14 @@ jobs:
 
       - name: Parse SMTP credential
         run: |
-          echo "SMTP_USER=${SMTP_CREDENTIAL%%:*}" >> $GITHUB_ENV
-          echo "SMTP_PASS=${SMTP_CREDENTIAL#*:}" >> $GITHUB_ENV
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "SMTP_USER<<$EOF" >> "$GITHUB_ENV"
+          echo "${SMTP_CREDENTIAL%%:*}" >> "$GITHUB_ENV"
+          echo "$EOF" >> "$GITHUB_ENV"
+
+          echo "SMTP_PASS<<$EOF" >> "$GITHUB_ENV"
+          echo "${SMTP_CREDENTIAL#*:}" >> "$GITHUB_ENV"
+          echo "$EOF" >> "$GITHUB_ENV"
         env:
           SMTP_CREDENTIAL: ${{ secrets.SMTP_CREDENTIAL }}
 
