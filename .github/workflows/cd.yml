@@ -55,12 +55,22 @@ jobs:
           INPUT_REPO: ${{ inputs.repo }}
           INPUT_TAG: ${{ inputs.tag }}
         run: |
+          set -euo pipefail
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           if [ "$EVENT_NAME" = "repository_dispatch" ]; then
-            echo "repo=$PAYLOAD_REPO" >> "$GITHUB_OUTPUT"
-            echo "tag=$PAYLOAD_TAG" >> "$GITHUB_OUTPUT"
+            echo "repo<<$EOF" >> "$GITHUB_OUTPUT"
+            echo "$PAYLOAD_REPO" >> "$GITHUB_OUTPUT"
+            echo "$EOF" >> "$GITHUB_OUTPUT"
+            echo "tag<<$EOF" >> "$GITHUB_OUTPUT"
+            echo "$PAYLOAD_TAG" >> "$GITHUB_OUTPUT"
+            echo "$EOF" >> "$GITHUB_OUTPUT"
           else
-            echo "repo=$INPUT_REPO" >> "$GITHUB_OUTPUT"
-            echo "tag=$INPUT_TAG" >> "$GITHUB_OUTPUT"
+            echo "repo<<$EOF" >> "$GITHUB_OUTPUT"
+            echo "$INPUT_REPO" >> "$GITHUB_OUTPUT"
+            echo "$EOF" >> "$GITHUB_OUTPUT"
+            echo "tag<<$EOF" >> "$GITHUB_OUTPUT"
+            echo "$INPUT_TAG" >> "$GITHUB_OUTPUT"
+            echo "$EOF" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Validate inputs
@@ -68,6 +78,7 @@ jobs:
           REPO: ${{ steps.inputs.outputs.repo }}
           TAG: ${{ steps.inputs.outputs.tag }}
         run: |
+          set -euo pipefail
           case "$REPO" in
             wet-mcp|mnemo-mcp|better-telegram-mcp|better-code-review-graph|better-notion-mcp|better-email-mcp|better-godot-mcp)
               ;;
@@ -101,6 +112,7 @@ jobs:
           REPO: ${{ steps.inputs.outputs.repo }}
           TAG: ${{ steps.inputs.outputs.tag }}
         run: |
+          set -euo pipefail
           PLUGIN_DIR="marketplace/plugins/$REPO"
           VERSION="${TAG#v}"
 
@@ -138,6 +150,7 @@ jobs:
           TAG: ${{ steps.inputs.outputs.tag }}
         working-directory: marketplace
         run: |
+          set -euo pipefail
           VERSION="${TAG#v}"
           git config user.name "n24q02m-ci[bot]"
           git config user.email "n24q02m-ci[bot]@users.noreply.github.com"
