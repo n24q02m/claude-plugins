@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""PreToolUse hook: block when better-notion-mcp credentials are not configured.
+"""PreToolUse hook: hint when better-notion-mcp credentials are not configured.
 
-Blocking -- Notion tools cannot function without a NOTION_TOKEN.
-Allows help tool through so the user can read documentation.
+Non-blocking -- server handles unconfigured state internally via lazy relay
+trigger (returns setup instructions with relay URL on first tool call).
+Notion uses OAuth via claude.ai proxy in HTTP mode.
 """
 import json
 import os
@@ -10,8 +11,6 @@ import sys
 
 SERVER_NAME = "better-notion-mcp"
 CREDENTIAL_KEYS = ["NOTION_TOKEN"]
-# Tools that work without credentials
-EXEMPT_SUFFIXES = ("__setup", "__help", "__config")
 
 
 def _is_configured() -> bool:
@@ -30,27 +29,16 @@ def _is_configured() -> bool:
 
 
 def main() -> None:
-    try:
-        data = json.load(sys.stdin)
-    except Exception:
+    if _is_configured():
         sys.exit(0)
 
-    tool_name = data.get("tool_name", "")
-    if any(tool_name.endswith(s) for s in EXEMPT_SUFFIXES):
-        sys.exit(0)
-
-    if not _is_configured():
-        print(json.dumps({
-            "decision": "block",
-            "reason": (
-                "better-notion-mcp credentials not configured. "
-                "Set NOTION_TOKEN in your MCP server environment "
-                "(get a token from https://www.notion.so/my-integrations), "
-                "or restart Claude Code to trigger the relay setup flow."
-            ),
-        }))
-        sys.exit(2)
-
+    # Non-blocking hint: let server handle unconfigured state
+    print(json.dumps({
+        "message": (
+            "better-notion-mcp: credentials not yet configured. "
+            "The server will provide setup instructions."
+        ),
+    }))
     sys.exit(0)
 
 
