@@ -27,10 +27,11 @@ def _is_configured() -> bool:
     local_app_data = os.environ.get("LOCALAPPDATA", "")
     app_data = os.environ.get("APPDATA", "")
     home = os.path.expanduser("~")
+    # mcp-relay-core stores config.enc in a shared 'mcp' directory
     paths = [p for p in [
-        os.path.join(local_app_data, SERVER_NAME, "config.enc") if local_app_data else "",
-        os.path.join(app_data, SERVER_NAME, "config.enc") if app_data else "",
-        os.path.join(home, ".config", SERVER_NAME, "config.enc"),
+        os.path.join(local_app_data, "mcp", "config.enc") if local_app_data else "",
+        os.path.join(app_data, "mcp", "Config", "config.enc") if app_data else "",
+        os.path.join(home, ".config", "mcp", "config.enc"),
     ] if p]
     return any(os.path.exists(p) for p in paths)
 
