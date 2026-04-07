@@ -116,11 +116,11 @@ jobs:
           PLUGIN_DIR="marketplace/plugins/$REPO"
           VERSION="${TAG#v}"
 
-          # Sync plugin.json
+          # Sync plugin.json (update version)
           if [ -f "source/.claude-plugin/plugin.json" ]; then
             mkdir -p "$PLUGIN_DIR/.claude-plugin"
-            cp "source/.claude-plugin/plugin.json" "$PLUGIN_DIR/.claude-plugin/plugin.json"
-            echo "Synced plugin.json"
+            jq --arg v "$VERSION" '.version = $v' source/.claude-plugin/plugin.json > "$PLUGIN_DIR/.claude-plugin/plugin.json"
+            echo "Synced plugin.json (version: $VERSION)"
           fi
 
           # Sync gemini-extension.json (update version)

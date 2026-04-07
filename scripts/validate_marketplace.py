@@ -30,7 +30,7 @@ def validate_marketplace():
             continue
         with open(pjson) as f:
             pdata = json.load(f)
-        for req in ["name", "description", "mcpServers"]:
+        for req in ["name", "description", "version", "mcpServers"]:
             if req not in pdata:
                 errors.append(f"{name}: plugin.json missing {req}")
 
