@@ -23,6 +23,7 @@ has_files() {
 sync_dir() {
   local dir_name="$1"
   if [ -d "$src/$dir_name" ] && has_files "$src/$dir_name"; then
+    mkdir -p "$dst"
     rm -rf "$dst/$dir_name"
     cp -r "$src/$dir_name" "$dst/$dir_name"
   fi
@@ -31,6 +32,11 @@ sync_dir() {
 PLUGINS=(wet-mcp mnemo-mcp better-telegram-mcp better-code-review-graph better-notion-mcp better-email-mcp better-godot-mcp)
 
 sync_plugins() {
+  if [ ! -d "$REPOS_DIR" ]; then
+    echo "ERROR: REPOS_DIR not found at $REPOS_DIR"
+    return 1
+  fi
+
   for repo in "${PLUGINS[@]}"; do
     src="$REPOS_DIR/$repo"
     dst="$ROOT/plugins/$repo"

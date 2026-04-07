@@ -69,6 +69,10 @@ test_sync_plugins() {
   echo -e "---\ntitle: demo\n---\nDemo skill content that is long enough to pass validation checks." > "$repos/test-plugin/skills/demo/SKILL.md"
   echo '{"version":"1.0.0"}' > "$repos/test-plugin/gemini-extension.json"
 
+  # Setup mock plugin with ONLY skills
+  mkdir -p "$repos/only-skills/skills/sub"
+  echo "skill content" > "$repos/only-skills/skills/sub/SKILL.md"
+
   # Setup mock missing repo
   # (test-missing does not exist)
 
@@ -76,7 +80,7 @@ test_sync_plugins() {
   local old_plugins=("${PLUGINS[@]}")
   local old_repos_dir="$REPOS_DIR"
   local old_root="$ROOT"
-  PLUGINS=("test-plugin" "test-missing")
+  PLUGINS=("test-plugin" "only-skills" "test-missing")
   REPOS_DIR="$repos"
   ROOT="$tmp/root"
   mkdir -p "$ROOT/plugins"
@@ -89,6 +93,10 @@ test_sync_plugins() {
   assert "plugin.json synced" test -f "$ROOT/plugins/test-plugin/.claude-plugin/plugin.json"
   assert "gemini-extension.json synced" test -f "$ROOT/plugins/test-plugin/gemini-extension.json"
   assert "skills synced" test -d "$ROOT/plugins/test-plugin/skills"
+
+  assert "only-skills plugin directory created" test -d "$ROOT/plugins/only-skills"
+  assert "only-skills skills synced" test -d "$ROOT/plugins/only-skills/skills"
+
   if echo "$output" | grep -q "SKIP test-missing"; then
     echo "PASS: missing repo skipped"
     PASS=$((PASS + 1))
@@ -96,6 +104,17 @@ test_sync_plugins() {
     echo "FAIL: missing repo skipped"
     FAIL=$((FAIL + 1))
   fi
+
+  # Test missing REPOS_DIR
+  (
+    # Set +e to allow sync_plugins to return 1 without exiting subshell
+    set +e
+    REPOS_DIR="$tmp/non-existent-repos"
+    local sync_out
+    sync_out=$(sync_plugins 2>&1)
+    echo "$sync_out" | grep -q "ERROR: REPOS_DIR not found"
+    return $?
+  ) && { echo "PASS: missing REPOS_DIR handled"; PASS=$((PASS + 1)); } || { echo "FAIL: missing REPOS_DIR handled"; FAIL=$((FAIL + 1)); }
 
   # Restore globals
   PLUGINS=("${old_plugins[@]}")
@@ -112,4 +131,4 @@ test_sync_plugins
 
 echo ""
 echo "Results: $PASS passed, $FAIL failed"
-[ "$FAIL" -eq 0 ] || exit 1
+[[ "$FAIL" -eq 0 ]]
