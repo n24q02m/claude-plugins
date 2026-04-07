@@ -19,10 +19,20 @@ has_files() {
   return 1
 }
 
+# Sync a file from source to destination
+sync_file() {
+  local file_path="$1"
+  if [ -f "$src/$file_path" ]; then
+    mkdir -p "$(dirname "$dst/$file_path")"
+    cp "$src/$file_path" "$dst/$file_path"
+  fi
+}
+
 # Sync a directory (skills or hooks) from source to destination
 sync_dir() {
   local dir_name="$1"
   if [ -d "$src/$dir_name" ] && has_files "$src/$dir_name"; then
+    mkdir -p "$dst"
     rm -rf "$dst/$dir_name"
     cp -r "$src/$dir_name" "$dst/$dir_name"
   fi
@@ -40,17 +50,9 @@ sync_plugins() {
       continue
     fi
 
-    # Sync plugin.json
-    if [ -f "$src/.claude-plugin/plugin.json" ]; then
-      mkdir -p "$dst/.claude-plugin"
-      cp "$src/.claude-plugin/plugin.json" "$dst/.claude-plugin/plugin.json"
-    fi
-
-    # Sync gemini-extension.json
-    if [ -f "$src/gemini-extension.json" ]; then
-      mkdir -p "$dst"
-      cp "$src/gemini-extension.json" "$dst/gemini-extension.json"
-    fi
+    # Sync metadata files
+    sync_file ".claude-plugin/plugin.json"
+    sync_file "gemini-extension.json"
 
     # Sync skills and hooks
     sync_dir "skills"

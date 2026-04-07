@@ -111,5 +111,43 @@ echo "=== sync_plugins integration test ==="
 test_sync_plugins
 
 echo ""
+
+test_sync_only_skills() {
+  local tmp
+  tmp=$(mktemp -d)
+  trap 'rm -rf "$tmp"' RETURN
+
+  # Setup mock source repo with ONLY skills
+  local repos="$tmp/repos"
+  mkdir -p "$repos/only-skills/skills/demo"
+  echo "Skill content" > "$repos/only-skills/skills/demo/SKILL.md"
+
+  # Override globals
+  local old_plugins=("${PLUGINS[@]}")
+  local old_repos_dir="$REPOS_DIR"
+  local old_root="$ROOT"
+  PLUGINS=("only-skills")
+  REPOS_DIR="$repos"
+  ROOT="$tmp/root"
+  mkdir -p "$ROOT/plugins"
+
+  # Run sync
+  sync_plugins
+
+  # Assertions
+  assert "only-skills: skills synced" test -d "$ROOT/plugins/only-skills/skills"
+  assert "only-skills: skill file exists" test -f "$ROOT/plugins/only-skills/skills/demo/SKILL.md"
+
+  # Restore globals
+  PLUGINS=("${old_plugins[@]}")
+  REPOS_DIR="$old_repos_dir"
+  ROOT="$old_root"
+}
+
+echo ""
+echo "=== sync_only_skills test ==="
+test_sync_only_skills
+
+echo ""
 echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1
