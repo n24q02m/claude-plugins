@@ -10,13 +10,17 @@ REPOS_DIR="${REPOS_DIR:-$HOME/projects}"
 # Avoids both subshell overhead (find|head) and O(N) array allocation.
 has_files() {
   local dir="$1"
+  local nst=$(shopt -p nullglob)
+  local dst=$(shopt -p dotglob)
   shopt -s nullglob dotglob
+  local res=1
   for _ in "$dir"/*; do
-    shopt -u nullglob dotglob
-    return 0
+    res=0
+    break
   done
-  shopt -u nullglob dotglob
-  return 1
+  eval "$nst"
+  eval "$dst"
+  return "$res"
 }
 
 # Sync a directory (skills or hooks) from source to destination

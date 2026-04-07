@@ -36,6 +36,12 @@ jobs:
           echo "Validating marketplace.json..."
           python3 scripts/validate_marketplace.py
 
+      - name: Run shell tests
+        run: |
+          set -euo pipefail
+          echo "Running tests for sync-plugins.sh..."
+          bash scripts/test-sync-plugins.sh
+
       - name: Check version freshness
         if: github.event_name == 'push'
         env:

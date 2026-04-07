@@ -52,6 +52,63 @@ test_has_files() {
 
   # Non-existent directory
   assert_not "non-existent dir has no files" has_files "/tmp/nonexistent-$$"
+
+  # Directory with spaces
+  mkdir -p "$tmp/dir with spaces"
+  touch "$tmp/dir with spaces/file.txt"
+  assert "dir with spaces detected" has_files "$tmp/dir with spaces"
+  return 0
+}
+
+
+test_shopt_preservation() {
+  local tmp
+  tmp=$(mktemp -d)
+  trap 'rm -rf "$tmp"' RETURN
+
+  # Test with nullglob OFF
+  shopt -u nullglob
+  has_files "$tmp" > /dev/null || true
+  if shopt -q nullglob; then
+    echo "FAIL: nullglob was changed to ON"
+    FAIL=$((FAIL + 1))
+  else
+    echo "PASS: nullglob state preserved (OFF)"
+    PASS=$((PASS + 1))
+  fi
+
+  # Test with nullglob ON
+  shopt -s nullglob
+  has_files "$tmp" > /dev/null || true
+  if ! shopt -q nullglob; then
+    echo "FAIL: nullglob was changed to OFF"
+    FAIL=$((FAIL + 1))
+  else
+    echo "PASS: nullglob state preserved (ON)"
+    PASS=$((PASS + 1))
+  fi
+
+  # Test with dotglob OFF
+  shopt -u dotglob
+  has_files "$tmp" > /dev/null || true
+  if shopt -q dotglob; then
+    echo "FAIL: dotglob was changed to ON"
+    FAIL=$((FAIL + 1))
+  else
+    echo "PASS: dotglob state preserved (OFF)"
+    PASS=$((PASS + 1))
+  fi
+
+  # Test with dotglob ON
+  shopt -s dotglob
+  has_files "$tmp" > /dev/null || true
+  if ! shopt -q dotglob; then
+    echo "FAIL: dotglob was changed to OFF"
+    FAIL=$((FAIL + 1))
+  else
+    echo "PASS: dotglob state preserved (ON)"
+    PASS=$((PASS + 1))
+  fi
 }
 
 # --- sync integration test ---
@@ -105,6 +162,9 @@ test_sync_plugins() {
 
 echo "=== has_files tests ==="
 test_has_files
+echo ""
+echo "=== shopt preservation tests ==="
+test_shopt_preservation
 
 echo ""
 echo "=== sync_plugins integration test ==="
