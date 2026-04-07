@@ -2,22 +2,42 @@
 
 import concurrent.futures
 import json
+import os
 import subprocess
+import sys
+
+
+def get_marketplace_version(plugin_dir):
+    """Get version from plugin.json (priority) or gemini-extension.json."""
+    # Try .claude-plugin/plugin.json first
+    pjson_path = os.path.join(plugin_dir, ".claude-plugin", "plugin.json")
+    if os.path.exists(pjson_path):
+        try:
+            with open(pjson_path) as f:
+                data = json.load(f)
+            return data.get("version")
+        except Exception:
+            pass
+
+    # Fallback to gemini-extension.json
+    gext_path = os.path.join(plugin_dir, "gemini-extension.json")
+    if os.path.exists(gext_path):
+        try:
+            with open(gext_path) as f:
+                data = json.load(f)
+            return data.get("version")
+        except Exception:
+            pass
+
+    return None
 
 
 def check_plugin(plugin):
     """Check a single plugin's version against its latest GitHub release."""
     name = plugin["name"]
-    source = plugin["source"].lstrip("./")
-    gext_path = f"{source}/gemini-extension.json"
+    source = plugin.get("source", f"plugins/{name}").lstrip("./")
 
-    # Get marketplace version
-    try:
-        with open(gext_path) as f:
-            gdata = json.load(f)
-        marketplace_ver = gdata.get("version", "unknown")
-    except Exception:
-        marketplace_ver = "missing"
+    marketplace_ver = get_marketplace_version(source) or "unknown"
 
     # Get latest stable release from source repo
     try:
@@ -64,18 +84,34 @@ def check_plugin(plugin):
             "name": name,
             "marketplace_ver": marketplace_ver,
         }
+    except Exception as e:
+        return {
+            "status": "error",
+            "name": name,
+            "message": str(e),
+            "marketplace_ver": marketplace_ver,
+        }
 
 
 def check_version_freshness():
     """Compare marketplace versions with latest stable releases concurrently."""
-    with open(".claude-plugin/marketplace.json") as f:
-        marketplace = json.load(f)
+    marketplace_path = os.path.join(".claude-plugin", "marketplace.json")
+    if not os.path.exists(marketplace_path):
+        print(f"::error ::Marketplace file not found: {marketplace_path}")
+        sys.exit(1)
+
+    try:
+        with open(marketplace_path) as f:
+            marketplace = json.load(f)
+    except Exception as e:
+        print(f"::error ::Failed to parse {marketplace_path}: {e}")
+        sys.exit(1)
 
     stale = []
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         futures = {
-            executor.submit(check_plugin, p): p for p in marketplace["plugins"]
+            executor.submit(check_plugin, p): p for p in marketplace.get("plugins", [])
         }
         for future in concurrent.futures.as_completed(futures):
             res = future.result()
@@ -98,6 +134,10 @@ def check_version_freshness():
             elif status == "timeout":
                 print(
                     f"::error ::{name} timed out checking release (marketplace={marketplace_ver})"
+                )
+            elif status == "error":
+                print(
+                    f"::error ::{name} error: {res['message']} (marketplace={marketplace_ver})"
                 )
 
     if stale:
