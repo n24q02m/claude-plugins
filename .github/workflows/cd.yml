@@ -104,40 +104,19 @@ jobs:
           PLUGIN_DIR="marketplace/plugins/$REPO"
           VERSION="${TAG#v}"
 
-          # Sync configuration files (update versions)
-          export PLUGIN_DIR VERSION
-          python3 - <<'EOF_PY'
-import json
-import os
+          # Sync plugin.json
+          if [ -f "source/.claude-plugin/plugin.json" ]; then
+            mkdir -p "$PLUGIN_DIR/.claude-plugin"
+            cp "source/.claude-plugin/plugin.json" "$PLUGIN_DIR/.claude-plugin/plugin.json"
+            echo "Synced plugin.json"
+          fi
 
-version = os.environ['VERSION']
-plugin_dir = os.environ['PLUGIN_DIR']
-
-# Sync plugin.json
-src_pjson = "source/.claude-plugin/plugin.json"
-if os.path.exists(src_pjson):
-    dst_pjson_dir = os.path.join(plugin_dir, ".claude-plugin")
-    os.makedirs(dst_pjson_dir, exist_ok=True)
-    with open(src_pjson, 'r') as f:
-        data = json.load(f)
-    data['version'] = version
-    with open(os.path.join(dst_pjson_dir, "plugin.json"), 'w') as f:
-        json.dump(data, f, indent=2)
-        f.write('\n')
-    print("Synced plugin.json")
-
-# Sync gemini-extension.json
-src_gext = "source/gemini-extension.json"
-if os.path.exists(src_gext):
-    os.makedirs(plugin_dir, exist_ok=True)
-    with open(src_gext, 'r') as f:
-        data = json.load(f)
-    data['version'] = version
-    with open(os.path.join(plugin_dir, "gemini-extension.json"), 'w') as f:
-        json.dump(data, f, indent=2)
-        f.write('\n')
-    print(f"Synced gemini-extension.json (version: {version})")
-EOF_PY
+          # Sync gemini-extension.json (update version)
+          if [ -f "source/gemini-extension.json" ]; then
+            mkdir -p "$PLUGIN_DIR"
+            jq --arg v "$VERSION" '.version = $v' source/gemini-extension.json > "$PLUGIN_DIR/gemini-extension.json"
+            echo "Synced gemini-extension.json (version: $VERSION)"
+          fi
 
           # Sync skills
           if [ -d "source/skills" ] && ls source/skills/*/SKILL.md >/dev/null 2>&1; then
