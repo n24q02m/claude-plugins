@@ -82,11 +82,11 @@ jobs:
           set -euo pipefail
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           echo "SMTP_USER<<$EOF" >> "$GITHUB_ENV"
-          echo "${SMTP_CREDENTIAL%%:*}" >> "$GITHUB_ENV"
+          printf "%s\n" "${SMTP_CREDENTIAL%%:*}" >> "$GITHUB_ENV"
           echo "$EOF" >> "$GITHUB_ENV"
 
           echo "SMTP_PASS<<$EOF" >> "$GITHUB_ENV"
-          echo "${SMTP_CREDENTIAL#*:}" >> "$GITHUB_ENV"
+          printf "%s\n" "${SMTP_CREDENTIAL#*:}" >> "$GITHUB_ENV"
           echo "$EOF" >> "$GITHUB_ENV"
         env:
           SMTP_CREDENTIAL: ${{ secrets.SMTP_CREDENTIAL }}
