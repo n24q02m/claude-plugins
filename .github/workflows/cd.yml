@@ -158,7 +158,8 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to sync"
           else
-            git commit -m "chore(plugins): sync $REPO to $VERSION"
+            COMMIT_MSG=$(printf "chore(plugins): sync %s to %s" "$REPO" "$VERSION")
+            git commit -m "$COMMIT_MSG"
             git push
-            echo "Pushed sync for $REPO $VERSION"
+            printf "Pushed sync for %s %s\n" "$REPO" "$VERSION"
           fi
