@@ -7,6 +7,8 @@ Claude Code plugin marketplace and registry for n24q02m plugins.
 - `plugins/` -- individual plugin directories (synced from source repos)
 - `.claude-plugin/marketplace.json` -- plugin registry manifest
 - `scripts/sync-plugins.sh` -- sync plugins from upstream repos
+- `scripts/validate_marketplace.py` -- validate registry structure and plugin integrity
+- `scripts/test_validate_marketplace.py` -- unit tests for the validation script
 
 ## Plugins
 

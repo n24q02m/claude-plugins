@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Validate marketplace.json structure and plugin integrity."""
 
 import json
@@ -68,7 +69,7 @@ def validate_marketplace():
     if errors:
         print("Validation errors:")
         for e in errors:
-            print(f"  - {e}")
+            print(f"::error ::{e}")
         sys.exit(1)
     else:
         print(f"All {len(plugins)} plugins validated successfully")
