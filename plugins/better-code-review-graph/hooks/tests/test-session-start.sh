@@ -2,7 +2,7 @@
 # Test for better-code-review-graph session-start.sh hook
 set -euo pipefail
 
-HOOK_SCRIPT="$(cd "$(dirname "$0")/.." && pwd)/plugins/better-code-review-graph/hooks/session-start.sh"
+HOOK_SCRIPT="$(cd "$(dirname "$0")/.." && pwd)/session-start.sh"
 PASS=0
 FAIL=0
 
