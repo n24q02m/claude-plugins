@@ -3,7 +3,6 @@
 import concurrent.futures
 import json
 import subprocess
-import sys
 
 
 def check_plugin(plugin):

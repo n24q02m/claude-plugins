@@ -1,8 +1,10 @@
 # Implementation Plan: Production Hardening & Relay Redesign
 
 **Spec**: `specs/2026-04-05-relay-redesign-and-production-hardening-design.md`
-**Date**: 2026-04-05 (updated 2026-04-06)
+**Date**: 2026-04-05 (updated 2026-04-07)
 **Objectives**: 11 (O1-O11)
+
+**Status (2026-04-07)**: Phase 0 DONE, Phase 2 mostly DONE (T2.1/T2.9 pending, T2.11 partial). Phases 1/3/4/5/6 NOT STARTED.
 
 ---
 
@@ -31,7 +33,7 @@ Legend: `[S]` small (<2h), `[M]` medium (2-8h), `[L]` large (>8h)
 
 **Goal**: Close out pending work from previous session (2026-04-05), verify baseline state before new work.
 
-### T0.1 [S] Commit pending doc changes (relay as primary)
+### T0.1 [S] Commit pending doc changes (relay as primary) -- DONE (2026-04-06)
 Uncommitted in 6 MCP repos from previous session:
 - `docs/setup-manual.md` + `docs/setup-with-agent.md`: **DO NOT** commit the "swap env vars to primary, mark relay as BETA" direction — that was wrong. Relay is primary.
 - `uv.lock`: version sync to released versions (wet 2.22.0, mnemo 1.17.0, crg 3.7.0, telegram 4.2.0)
@@ -39,22 +41,17 @@ Repos: wet-mcp, mnemo-mcp, better-code-review-graph, better-telegram-mcp, better
 - If setup-manual.md/setup-with-agent.md were changed: revert them to relay-as-primary framing, or update to accurately reflect new design
 - claude-plugins: commit updated spec + plan files
 
-### T0.2 [M] Diagnose wet-mcp Claude Code connection failure
-Previous session found: wet-mcp fails Claude Code connect 5+ times while mnemo/crg succeed 1 try, even though direct `uvx --python 3.13 wet-mcp` works in <100ms with env vars.
-- Reproduce with `claude --mcp-debug` to capture full MCP stderr
-- Candidates to check:
-  - docs.db file size (1.5GB) causing slow SQLite open on cold filesystem cache
-  - uvx lock contention when multiple servers spawn parallel
-  - FastMCP version mismatch (serverInfo reports 1.27.0)
-  - Zombie process holding resources
-- Document root cause + fix
+### T0.2 [M] Diagnose wet-mcp Claude Code connection failure -- DONE (2026-04-06)
+ROOT CAUSE: settings.local.json env vars NOT propagated to MCP plugin subprocesses. ensure_config() blocks 300s relay > Claude Code 30s timeout.
+- ~~Reproduce with `claude --mcp-debug`~~
+- Fix: non-blocking relay (Phase 2 refactor resolves this)
 
-### T0.3 [S] Verify telegram/godot/email load after reinstall
+### T0.3 [S] Verify telegram/godot/email load after reinstall -- DONE (2026-04-06)
 Previous session reinstalled these 3 plugins (they weren't starting from Claude Code). Need verification:
 - Run `/mcp` after fresh restart, verify all 7 n24q02m MCP servers connect
 - If telegram/godot/email still miss → investigate Claude Code MCP config resolution
 
-### T0.4 [M] E2E tool smoke test across all 7 servers
+### T0.4 [M] E2E tool smoke test across all 7 servers -- PARTIAL (2026-04-06)
 Verify core tool works for each server (not just connection):
 - wet: `search(action="search", query="test")` or `extract`
 - mnemo: `memory(action="search", query="test")`
@@ -118,71 +115,34 @@ Verify core tool works for each server (not just connection):
 - Patch root cause + add regression test
 - Release stable version, sync to marketplace
 
-### T2.2 [M] mcp-relay-core v1.3.0 — new primitives (O11 dependency)
+### T2.2 [M] mcp-relay-core v1.3.0 — new primitives (O11 dependency) -- DONE (2026-04-06)
 - Repo: `mcp-relay-core`
-- Add `SessionLock` (Python + TypeScript mirror)
-- Add `try_open_browser()` with WSL detection (Python + TS)
-- Add `local_mode_marker` support in storage (Python + TS)
-- Release v1.3.0 (stable channel)
+- SessionLock, try_open_browser(), local_mode_marker all added
+- Released v1.3.0
 
-### T2.3 [L] Refactor wet-mcp relay (O11) [PARTIALLY DONE — needs cleanup]
-Done in previous session: replace blocking lifespan, add `_require_credentials()` on cloud tools, add `open_relay` action, non-blocking credential state.
-Remaining (updated per Design Principles):
-- Remove `set_env` action and `set_env_var()` function entirely
-- Remove auto-fallback in `_init_embedding_backend()` + `_init_reranker_backend()`:
-  - AWAITING_SETUP → init nothing (backend = None)
-  - CONFIGURED → cloud only, no local fallback if cloud fails
-  - LOCAL → local only
-- Update `_require_credentials()` error message: remove set_env option, only mention `open_relay` + `skip`
-- Remove `set_env` from valid_actions list and tool description
-- Update tests for new behavior (auto-fallback removal, no set_env)
-- Release v2.23.0 (stable)
+### T2.3 [L] Refactor wet-mcp relay (O11) -- DONE (2026-04-07)
+All items completed: set_env removed, no auto-fallback, CredentialState machine, setup_complete re-init, GDrive sync fix, Docker build fix, SearXNG Windows fix. Released v2.23.5-beta.2+. CI FAILURE needs fix.
 
-### T2.4 [L] Refactor mnemo-mcp relay (O11) [PARTIALLY DONE — needs same cleanup]
-Done in previous session: non-blocking lifespan, credential state, basic blocking.
-Remaining (mirror T2.3 remaining work):
-- Remove `set_env` action if present
-- Remove auto-fallback in embedding/reranking init
-- Add `_require_credentials()` to all cloud-requiring tools (memory, config) if not already
-- Update tests
-- Release v1.18.0 (stable)
+### T2.4 [L] Refactor mnemo-mcp relay (O11) -- DONE (2026-04-07)
+No-fallback applied, GDrive sync fix, setup_complete re-init, cross-server key sharing. 666 tests pass. Released v1.18.4.
 
-### T2.5 [L] Refactor better-code-review-graph relay (O11) [PARTIALLY DONE — needs same cleanup]
-Done in previous session: same as mnemo-mcp.
-Remaining (mirror T2.3 remaining work):
-- Remove `set_env` action if present
-- Remove auto-fallback in embedding/reranking init
-- Add `_require_credentials()` to all cloud-requiring tools
-- Update tests
-- Release v3.8.0 (stable)
+### T2.5 [L] Refactor better-code-review-graph relay (O11) -- DONE (2026-04-07)
+Already clean — resolve_backend() does not fall back. Cross-server key sharing added. Released v3.7.1.
 
-### T2.3b [M] Hook scripts for automated credential check (claude-plugins)
-Implements Design Principle #5/#6 — automatic LLM behavior, no manual user action.
-- Add hook scripts to `plugins/{wet-mcp,mnemo-mcp,better-code-review-graph}/hooks/`
-  - `check-credentials.sh`: reads session state file + checks config.enc/env vars
-  - PreToolUse: fires for all credential-requiring tools (not setup/help)
-    - If session verified: allow
-    - If config.enc exists or cloud env vars present: allow + write session state
-    - Otherwise: deny with reason = "Call setup(action='open_relay'), retry after configuration"
-  - PostToolUse for setup tool: if response state = configured/local, write session state file
-- Add `hooks/hooks.json` per plugin registering the hooks
-- Session state dir: `~/.claude/mcp-state/<session_id>/<server>-credentials`
-- Test: simulate first-call flow on clean state
+### T2.3b [M] Hook scripts for automated credential check (claude-plugins) -- DONE (2026-04-07)
+Implemented as PreToolUse hooks in all 6 plugins (commit 35ecde8).
+- wet/mnemo/CRG: non-blocking hint (local fallback exists)
+- telegram/email/notion: blocking (no local fallback)
+- Session state via config.enc + env var detection
 
-### T2.6 [L] Refactor better-telegram-mcp relay (O11)
-- Mirror T2.3 pattern (stdio + HTTP modes)
-- Release v4.2.0 (stable)
+### T2.6 [L] Refactor better-telegram-mcp relay (O11) -- DONE (2026-04-07)
+Non-blocking relay + state machine + setup tool actions added. 493 tests pass. Released v4.2.0. CI FAILURE needs fix.
 
-### T2.7 [L] Refactor better-email-mcp relay (O11, TypeScript)
-- Refactor `relay-setup.ts` + `init-server.ts`
-- Add `requiresCredentials` middleware in `tools/registry.ts`
-- Extend setup tool actions
-- Release v1.20.0 (stable)
+### T2.7 [L] Refactor better-email-mcp relay (O11, TypeScript) -- DONE (2026-04-06)
+Lazy relay trigger in registry.ts:314. Released v1.20.0.
 
-### T2.8 [L] Refactor better-notion-mcp relay (O11, TypeScript)
-- Same as T2.7 but for notion
-- Combine with T2.1 fix
-- Release stable
+### T2.8 [L] Refactor better-notion-mcp relay (O11, TypeScript) -- DONE (2026-04-06)
+Lazy relay trigger in stdio.ts:48. Released v2.25.0.
 
 ### T2.9 [M] HTTP relay security audit (part of O11)
 - Verify `better-email-mcp/src/auth/per-user-credential-store.ts` uses 600k PBKDF2 + user_id in key derivation
@@ -191,21 +151,14 @@ Implements Design Principle #5/#6 — automatic LLM behavior, no manual user act
 - Add multi-user isolation tests (user A cannot decrypt user B creds)
 - Document master secret rotation procedure
 
-### T2.10 [S] Sync claude-plugins marketplace with new versions
-- Update `marketplace.json` plugin versions
-- Commit + push
-- Verify `claude plugin update --all` pulls latest
+### T2.10 [S] Sync claude-plugins marketplace with new versions -- DONE (2026-04-07)
+Committed 0916b5a in claude-plugins.
 
-### T2.11 [M] E2E verification of relay redesign
-- Fresh machine scenario: no env vars, no config.enc
-- Install each plugin, verify:
-  - MCP connect <1s per server
-  - Tool call returns setup URL (clickable in Claude Code)
-  - Browser auto-opens (or fallback gracefully)
-  - Submit form → config.enc saved → next call uses creds
-  - Skip flow → local mode marker saved → restart skips relay
-  - env var flow → relay never triggered
-  - HTTP relay multi-user flow → user A/B isolated
+### T2.11 [M] E2E verification of relay redesign -- PARTIAL (2026-04-07)
+Code-verified for all 6 servers. Live MCP protocol E2E test still needed (user at keyboard for relay form).
+- stdio relay: verified in code for wet/mnemo/crg/telegram/email/notion
+- HTTP relay: not E2E tested (telegram, email)
+- HTTP OAuth: not E2E tested (notion)
 
 ### Acceptance (Phase 2)
 - better-notion-mcp connects reliably in Claude Code
