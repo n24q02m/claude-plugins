@@ -19,16 +19,12 @@ has_files() {
   return 1
 }
 
-# Sync a file or directory from source to destination
-sync_item() {
-  local item_path="$1"
-  if [ -f "$src/$item_path" ]; then
-    mkdir -p "$(dirname "$dst/$item_path")"
-    cp "$src/$item_path" "$dst/$item_path"
-  elif [ -d "$src/$item_path" ] && has_files "$src/$item_path"; then
-    rm -rf "$dst/$item_path"
-    mkdir -p "$(dirname "$dst/$item_path")"
-    cp -r "$src/$item_path" "$dst/$item_path"
+# Sync a directory (skills or hooks) from source to destination
+sync_dir() {
+  local dir_name="$1"
+  if [ -d "$src/$dir_name" ] && has_files "$src/$dir_name"; then
+    rm -rf "$dst/$dir_name"
+    cp -r "$src/$dir_name" "$dst/$dir_name"
   fi
 }
 
@@ -44,13 +40,21 @@ sync_plugins() {
       continue
     fi
 
-    # Sync configuration files
-    sync_item ".claude-plugin/plugin.json"
-    sync_item "gemini-extension.json"
+    # Sync plugin.json
+    if [ -f "$src/.claude-plugin/plugin.json" ]; then
+      mkdir -p "$dst/.claude-plugin"
+      cp "$src/.claude-plugin/plugin.json" "$dst/.claude-plugin/plugin.json"
+    fi
+
+    # Sync gemini-extension.json
+    if [ -f "$src/gemini-extension.json" ]; then
+      mkdir -p "$dst"
+      cp "$src/gemini-extension.json" "$dst/gemini-extension.json"
+    fi
 
     # Sync skills and hooks
-    sync_item "skills"
-    sync_item "hooks"
+    sync_dir "skills"
+    sync_dir "hooks"
 
     echo "OK $repo"
   done
