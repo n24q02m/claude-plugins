@@ -22,6 +22,7 @@ has_files() {
 # Sync a directory (skills or hooks) from source to destination
 sync_dir() {
   local dir_name="$1"
+  mkdir -p "$dst"
   if [ -d "$src/$dir_name" ] && has_files "$src/$dir_name"; then
     rm -rf "$dst/$dir_name"
     cp -r "$src/$dir_name" "$dst/$dir_name"
