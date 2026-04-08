@@ -49,29 +49,17 @@ jobs:
       - name: Resolve inputs
         id: inputs
         env:
-          EVENT_NAME: ${{ github.event_name }}
-          PAYLOAD_REPO: ${{ github.event.client_payload.repo }}
-          PAYLOAD_TAG: ${{ github.event.client_payload.tag }}
-          INPUT_REPO: ${{ inputs.repo }}
-          INPUT_TAG: ${{ inputs.tag }}
+          REPO: ${{ github.event_name == "repository_dispatch" && github.event.client_payload.repo || inputs.repo }}
+          TAG: ${{ github.event_name == "repository_dispatch" && github.event.client_payload.tag || inputs.tag }}
         run: |
           set -euo pipefail
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          if [ "$EVENT_NAME" = "repository_dispatch" ]; then
-            echo "repo<<$EOF" >> "$GITHUB_OUTPUT"
-            echo "$PAYLOAD_REPO" >> "$GITHUB_OUTPUT"
-            echo "$EOF" >> "$GITHUB_OUTPUT"
-            echo "tag<<$EOF" >> "$GITHUB_OUTPUT"
-            echo "$PAYLOAD_TAG" >> "$GITHUB_OUTPUT"
-            echo "$EOF" >> "$GITHUB_OUTPUT"
-          else
-            echo "repo<<$EOF" >> "$GITHUB_OUTPUT"
-            echo "$INPUT_REPO" >> "$GITHUB_OUTPUT"
-            echo "$EOF" >> "$GITHUB_OUTPUT"
-            echo "tag<<$EOF" >> "$GITHUB_OUTPUT"
-            echo "$INPUT_TAG" >> "$GITHUB_OUTPUT"
-            echo "$EOF" >> "$GITHUB_OUTPUT"
-          fi
+          echo "repo<<$EOF" >> "$GITHUB_OUTPUT"
+          printf "%s\n" "$REPO" >> "$GITHUB_OUTPUT"
+          echo "$EOF" >> "$GITHUB_OUTPUT"
+          echo "tag<<$EOF" >> "$GITHUB_OUTPUT"
+          printf "%s\n" "$TAG" >> "$GITHUB_OUTPUT"
+          echo "$EOF" >> "$GITHUB_OUTPUT"
 
       - name: Validate inputs
         env:
@@ -83,15 +71,15 @@ jobs:
             wet-mcp|mnemo-mcp|better-telegram-mcp|better-code-review-graph|better-notion-mcp|better-email-mcp|better-godot-mcp)
               ;;
             *)
-              echo "::error::Invalid repo: $REPO"
+              printf "::error::Invalid repo: %s\n" "$REPO"
               exit 1
               ;;
           esac
           if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Invalid tag format: $TAG (expected vX.Y.Z)"
+            printf "::error::Invalid tag format: %s (expected vX.Y.Z)\n" "$TAG"
             exit 1
           fi
-          echo "Syncing $REPO @ $TAG"
+          printf "Syncing %s @ %s\n" "$REPO" "$TAG"
 
       - name: Checkout marketplace
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -120,28 +108,28 @@ jobs:
           if [ -f "source/.claude-plugin/plugin.json" ]; then
             mkdir -p "$PLUGIN_DIR/.claude-plugin"
             cp "source/.claude-plugin/plugin.json" "$PLUGIN_DIR/.claude-plugin/plugin.json"
-            echo "Synced plugin.json"
+            printf "Synced plugin.json\n"
           fi
 
           # Sync gemini-extension.json (update version)
           if [ -f "source/gemini-extension.json" ]; then
             mkdir -p "$PLUGIN_DIR"
             jq --arg v "$VERSION" '.version = $v' source/gemini-extension.json > "$PLUGIN_DIR/gemini-extension.json"
-            echo "Synced gemini-extension.json (version: $VERSION)"
+            printf "Synced gemini-extension.json (version: %s)\n" "$VERSION"
           fi
 
           # Sync skills
           if [ -d "source/skills" ] && ls source/skills/*/SKILL.md >/dev/null 2>&1; then
             rm -rf "$PLUGIN_DIR/skills"
             cp -r "source/skills" "$PLUGIN_DIR/skills"
-            echo "Synced skills/"
+            printf "Synced skills/\n"
           fi
 
           # Sync hooks
           if [ -d "source/hooks" ] && ls source/hooks/* >/dev/null 2>&1; then
             rm -rf "$PLUGIN_DIR/hooks"
             cp -r "source/hooks" "$PLUGIN_DIR/hooks"
-            echo "Synced hooks/"
+            printf "Synced hooks/\n"
           fi
 
       - name: Commit and push
@@ -156,9 +144,10 @@ jobs:
           git config user.email "n24q02m-ci[bot]@users.noreply.github.com"
           git add -A
           if git diff --cached --quiet; then
-            echo "No changes to sync"
+            printf "No changes to sync\n"
           else
-            git commit -m "chore(plugins): sync $REPO to $VERSION"
+            COMMIT_MSG="chore(plugins): sync $REPO to $VERSION"
+            git commit -m "$COMMIT_MSG"
             git push
-            echo "Pushed sync for $REPO $VERSION"
+            printf "Pushed sync for %s %s\n" "$REPO" "$VERSION"
           fi
