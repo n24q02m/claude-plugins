@@ -13,8 +13,9 @@ CREDENTIAL_KEYS = ["EMAIL_CREDENTIALS"]
 
 
 def _is_configured() -> bool:
-    if any(os.environ.get(k) for k in CREDENTIAL_KEYS):
-        return True
+    for k in CREDENTIAL_KEYS:
+        if os.environ.get(k):
+            return True
     local_app_data = os.environ.get("LOCALAPPDATA", "")
     app_data = os.environ.get("APPDATA", "")
     home = os.path.expanduser("~")
@@ -24,7 +25,10 @@ def _is_configured() -> bool:
         os.path.join(app_data, "mcp", "Config", "config.enc") if app_data else "",
         os.path.join(home, ".config", "mcp", "config.enc"),
     ] if p]
-    return any(os.path.exists(p) for p in paths)
+    for p in paths:
+        if os.path.exists(p):
+            return True
+    return False
 
 
 def main() -> None:
