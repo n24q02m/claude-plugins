@@ -1,23 +1,36 @@
+#!/usr/bin/env python3
 """Check marketplace plugin versions against latest GitHub releases."""
 
 import concurrent.futures
 import json
 import subprocess
+import os
 
 
 def check_plugin(plugin):
     """Check a single plugin's version against its latest GitHub release."""
     name = plugin["name"]
     source = plugin["source"].lstrip("./")
-    gext_path = f"{source}/gemini-extension.json"
 
-    # Get marketplace version
-    try:
-        with open(gext_path) as f:
-            gdata = json.load(f)
-        marketplace_ver = gdata.get("version", "unknown")
-    except Exception:
-        marketplace_ver = "missing"
+    # Priority: .claude-plugin/plugin.json, fallback: gemini-extension.json
+    pjson_path = os.path.join(source, ".claude-plugin", "plugin.json")
+    gext_path = os.path.join(source, "gemini-extension.json")
+
+    marketplace_ver = "unknown"
+    if os.path.exists(pjson_path):
+        try:
+            with open(pjson_path) as f:
+                pdata = json.load(f)
+            marketplace_ver = pdata.get("version", "unknown")
+        except Exception:
+            pass
+    elif os.path.exists(gext_path):
+        try:
+            with open(gext_path) as f:
+                gdata = json.load(f)
+            marketplace_ver = gdata.get("version", "unknown")
+        except Exception:
+            pass
 
     # Get latest stable release from source repo
     try:
@@ -64,12 +77,23 @@ def check_plugin(plugin):
             "name": name,
             "marketplace_ver": marketplace_ver,
         }
+    except Exception as e:
+        return {
+            "status": "error",
+            "name": name,
+            "marketplace_ver": marketplace_ver,
+            "error": str(e)
+        }
 
 
 def check_version_freshness():
     """Compare marketplace versions with latest stable releases concurrently."""
-    with open(".claude-plugin/marketplace.json") as f:
-        marketplace = json.load(f)
+    try:
+        with open(".claude-plugin/marketplace.json") as f:
+            marketplace = json.load(f)
+    except Exception as e:
+        print(f"::error ::Failed to load marketplace.json: {e}")
+        return
 
     stale = []
 
@@ -98,6 +122,10 @@ def check_version_freshness():
             elif status == "timeout":
                 print(
                     f"::error ::{name} timed out checking release (marketplace={marketplace_ver})"
+                )
+            elif status == "error":
+                print(
+                    f"::error ::{name} error: {res['error']}"
                 )
 
     if stale:
