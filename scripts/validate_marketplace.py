@@ -3,6 +3,7 @@
 
 import json
 import os
+import re
 import sys
 
 
@@ -29,6 +30,10 @@ def validate_marketplace():
 
         for plugin in plugins:
             name = plugin.get("name", "Unknown")
+            if not re.match(r"^[a-zA-Z0-9_-]+$", name):
+                errors.append(f"Plugin {name}: invalid name format (must match ^[a-zA-Z0-9_-]+$)")
+                continue
+
             source = plugin.get("source")
             if not source:
                 errors.append(f"Plugin {name}: missing source")
