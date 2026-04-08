@@ -17,7 +17,7 @@ Or browse all plugins: run `/plugin` and go to the **Discover** tab.
 |--------|----------|-------------|----------|
 | **wet-mcp** | Research | Web search, content extraction, media download | `API_KEYS` (optional) |
 | **mnemo-mcp** | Productivity | Persistent AI memory across sessions | `API_KEYS` (optional) |
-| **better-notion-mcp** | Productivity | Notion API — 9 tools, ~95% coverage | `NOTION_TOKEN` |
+| **better-notion-mcp** | Productivity | Notion API — 10 tools, ~95% coverage | `NOTION_TOKEN` |
 | **better-email-mcp** | Communication | Email IMAP/SMTP — multi-account | `EMAIL_CREDENTIALS` |
 | **better-telegram-mcp** | Communication | Telegram dual-mode (Bot + MTProto) — messages, chats, media | `TELEGRAM_BOT_TOKEN` |
 | **better-godot-mcp** | Development | Godot Engine — 17 composite tools for game dev | `GODOT_PATH` (optional) |
@@ -31,12 +31,6 @@ After installing, configure env vars in `~/.claude/settings.local.json` under th
 
 ```
 API_KEYS=GOOGLE_API_KEY:xxx,COHERE_API_KEY:yyy
-```
-
-Or use a LiteLLM proxy:
-
-```
-LITELLM_PROXY_URL=http://your-litellm:4000
 ```
 
 ### Telegram
