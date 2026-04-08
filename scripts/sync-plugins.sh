@@ -2,6 +2,9 @@
 # Sync plugin configs, skills, and hooks from source repos
 set -euo pipefail
 
+# Enable globbing options globally for performance and hidden file support
+shopt -s nullglob dotglob
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="${ROOT:-$(dirname "$SCRIPT_DIR")}"
 REPOS_DIR="${REPOS_DIR:-$HOME/projects}"
@@ -10,12 +13,9 @@ REPOS_DIR="${REPOS_DIR:-$HOME/projects}"
 # Avoids both subshell overhead (find|head) and O(N) array allocation.
 has_files() {
   local dir="$1"
-  shopt -s nullglob dotglob
   for _ in "$dir"/*; do
-    shopt -u nullglob dotglob
     return 0
   done
-  shopt -u nullglob dotglob
   return 1
 }
 
@@ -23,6 +23,7 @@ has_files() {
 sync_dir() {
   local dir_name="$1"
   if [ -d "$src/$dir_name" ] && has_files "$src/$dir_name"; then
+    mkdir -p "$dst"
     rm -rf "$dst/$dir_name"
     cp -r "$src/$dir_name" "$dst/$dir_name"
   fi
