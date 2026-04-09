@@ -4,3 +4,6 @@
 ## 2025-02-12 - Replacing Python generator expressions with native evaluation
 **Learning:** Using `str.endswith(tuple)` or `str.startswith(tuple)` is significantly more efficient and idiomatic in Python than using `any()` with a generator expression for multiple suffix or prefix matching. Replacing generator expressions within `any()` calls with explicit `for` loops improves performance for repeated `os.environ.get()` and `os.path.exists()` checks by avoiding generator overhead in Python hot paths.
 **Action:** Always prefer explicit loop iterations or tuple support for string evaluations over `any(...)` or `all(...)` with generator expressions for core performance paths, since generator evaluation adds extra latency.
+## 2024-05-30 - EAFP pattern and Regex pre-compilation
+**Learning:** To minimize system `stat` calls and optimize performance when opening files in Python scripts, prefer the EAFP pattern (`try: open(...) except FileNotFoundError:`) over the LBYL approach of checking file existence first with `os.path.exists()`. Also compile regular expressions globally with `re.compile()`.
+**Action:** Always prefer `try: open(...)` blocks and avoid redundant `os.path.exists()` or `os.path.isdir()` checks to reduce system call overhead, especially in loops traversing files.

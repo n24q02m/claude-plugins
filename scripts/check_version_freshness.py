@@ -7,11 +7,14 @@ import subprocess
 import os
 import re
 
+# Compile regex once for performance
+PLUGIN_NAME_REGEX = re.compile(r"^[a-zA-Z0-9_-]+$")
+
 
 def check_plugin(plugin):
     """Check a single plugin's version against its latest GitHub release."""
     name = plugin["name"]
-    if not re.match(r"^[a-zA-Z0-9_-]+$", name):
+    if not PLUGIN_NAME_REGEX.match(name):
         return {
             "status": "error",
             "name": name,
@@ -25,20 +28,20 @@ def check_plugin(plugin):
     gext_path = os.path.join(source, "gemini-extension.json")
 
     marketplace_ver = "unknown"
-    if os.path.exists(pjson_path):
-        try:
-            with open(pjson_path) as f:
-                pdata = json.load(f)
-            marketplace_ver = pdata.get("version", "unknown")
-        except Exception:
-            pass
-    elif os.path.exists(gext_path):
+    # Performance: Use EAFP pattern to avoid redundant stat system calls
+    try:
+        with open(pjson_path) as f:
+            pdata = json.load(f)
+        marketplace_ver = pdata.get("version", "unknown")
+    except FileNotFoundError:
         try:
             with open(gext_path) as f:
                 gdata = json.load(f)
             marketplace_ver = gdata.get("version", "unknown")
         except Exception:
             pass
+    except Exception:
+        pass
 
     # Get latest stable release from source repo
     try:
