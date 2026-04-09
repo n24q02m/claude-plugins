@@ -5,11 +5,19 @@ import concurrent.futures
 import json
 import subprocess
 import os
+import re
 
 
 def check_plugin(plugin):
     """Check a single plugin's version against its latest GitHub release."""
     name = plugin["name"]
+    if not re.match(r"^[a-zA-Z0-9_-]+$", name):
+        return {
+            "status": "error",
+            "name": name,
+            "marketplace_ver": "unknown",
+            "error": "invalid name format"
+        }
     source = plugin["source"].lstrip("./")
 
     # Priority: .claude-plugin/plugin.json, fallback: gemini-extension.json
