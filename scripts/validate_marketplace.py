@@ -6,6 +6,9 @@ import os
 import re
 import sys
 
+# Pre-compile regex for performance
+PLUGIN_NAME_REGEX = re.compile(r"^[a-zA-Z0-9_-]+$")
+
 
 def validate_marketplace():
     """Validate marketplace.json and all referenced plugins."""
@@ -30,7 +33,7 @@ def validate_marketplace():
 
         for plugin in plugins:
             name = plugin.get("name", "Unknown")
-            if not re.match(r"^[a-zA-Z0-9_-]+$", name):
+            if not PLUGIN_NAME_REGEX.match(name):
                 errors.append(f"Plugin {name}: invalid name format (must match ^[a-zA-Z0-9_-]+$)")
                 continue
 
