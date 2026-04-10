@@ -14,21 +14,26 @@ CREDENTIAL_KEYS = ["NOTION_TOKEN"]
 
 
 def _is_configured() -> bool:
-    for k in CREDENTIAL_KEYS:
-        if os.environ.get(k):
-            return True
-    local_app_data = os.environ.get("LOCALAPPDATA", "")
-    app_data = os.environ.get("APPDATA", "")
-    home = os.path.expanduser("~")
+    if any(map(os.environ.get, CREDENTIAL_KEYS)):
+        return True
+
     # mcp-relay-core stores config.enc in a shared 'mcp' directory
-    paths = [p for p in [
-        os.path.join(local_app_data, "mcp", "config.enc") if local_app_data else "",
-        os.path.join(app_data, "mcp", "Config", "config.enc") if app_data else "",
-        os.path.join(home, ".config", "mcp", "config.enc"),
-    ] if p]
-    for p in paths:
-        if os.path.exists(p):
-            return True
+    # Check common locations without intermediate list creation
+    home = os.path.expanduser("~")
+
+    # Linux/macOS default
+    if os.path.exists(os.path.join(home, ".config", "mcp", "config.enc")):
+        return True
+
+    # Windows locations
+    local_app_data = os.environ.get("LOCALAPPDATA")
+    if local_app_data and os.path.exists(os.path.join(local_app_data, "mcp", "config.enc")):
+        return True
+
+    app_data = os.environ.get("APPDATA")
+    if app_data and os.path.exists(os.path.join(app_data, "mcp", "Config", "config.enc")):
+        return True
+
     return False
 
 
