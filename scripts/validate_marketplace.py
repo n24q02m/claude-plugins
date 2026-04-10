@@ -17,6 +17,7 @@ def validate_marketplace():
     except Exception as e:
         print(f"::error ::Failed to load marketplace.json: {e}")
         sys.exit(1)
+        return
 
     required = ["name", "metadata", "owner", "plugins"]
     for field in required:

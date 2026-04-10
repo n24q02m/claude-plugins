@@ -54,6 +54,15 @@ class TestValidateMarketplace(unittest.TestCase):
             validate_marketplace.validate_marketplace()
             mock_exit.assert_not_called()
 
+    def test_invalid_json_format(self):
+        """Should fail if marketplace.json is not valid JSON."""
+        with open(self.marketplace_path, 'w') as f:
+            f.write("{ invalid json }")
+
+        with patch('sys.exit') as mock_exit:
+            validate_marketplace.validate_marketplace()
+            mock_exit.assert_called_with(1)
+
     def test_missing_required_field(self):
         """Should fail if a required field is missing in marketplace.json."""
         del self.valid_marketplace["name"]
