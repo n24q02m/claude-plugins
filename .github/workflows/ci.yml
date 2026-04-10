@@ -33,7 +33,7 @@ jobs:
       - name: Validate marketplace.json
         run: |
           set -euo pipefail
-          echo "Validating marketplace.json..."
+          printf "%s\n" "Validating marketplace.json..."
           python3 scripts/validate_marketplace.py
 
       - name: Check version freshness
@@ -42,7 +42,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          echo "Checking marketplace versions against latest releases..."
+          printf "%s\n" "Checking marketplace versions against latest releases..."
           python3 scripts/check_version_freshness.py
 
   dependency-review:
@@ -81,13 +81,13 @@ jobs:
         run: |
           set -euo pipefail
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "SMTP_USER<<$EOF" >> "$GITHUB_ENV"
-          echo "${SMTP_CREDENTIAL%%:*}" >> "$GITHUB_ENV"
-          echo "$EOF" >> "$GITHUB_ENV"
+          printf "SMTP_USER<<%s\n" "$EOF" >> "$GITHUB_ENV"
+          printf "%s\n" "${SMTP_CREDENTIAL%%:*}" >> "$GITHUB_ENV"
+          printf "%s\n" "$EOF" >> "$GITHUB_ENV"
 
-          echo "SMTP_PASS<<$EOF" >> "$GITHUB_ENV"
-          echo "${SMTP_CREDENTIAL#*:}" >> "$GITHUB_ENV"
-          echo "$EOF" >> "$GITHUB_ENV"
+          printf "SMTP_PASS<<%s\n" "$EOF" >> "$GITHUB_ENV"
+          printf "%s\n" "${SMTP_CREDENTIAL#*:}" >> "$GITHUB_ENV"
+          printf "%s\n" "$EOF" >> "$GITHUB_ENV"
         env:
           SMTP_CREDENTIAL: ${{ secrets.SMTP_CREDENTIAL }}
 

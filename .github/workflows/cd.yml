@@ -54,12 +54,12 @@ jobs:
         run: |
           set -euo pipefail
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "repo<<$EOF" >> "$GITHUB_OUTPUT"
+          printf "repo<<%s\n" "$EOF" >> "$GITHUB_OUTPUT"
           printf "%s\n" "$REPO" >> "$GITHUB_OUTPUT"
-          echo "$EOF" >> "$GITHUB_OUTPUT"
-          echo "tag<<$EOF" >> "$GITHUB_OUTPUT"
+          printf "%s\n" "$EOF" >> "$GITHUB_OUTPUT"
+          printf "tag<<%s\n" "$EOF" >> "$GITHUB_OUTPUT"
           printf "%s\n" "$TAG" >> "$GITHUB_OUTPUT"
-          echo "$EOF" >> "$GITHUB_OUTPUT"
+          printf "%s\n" "$EOF" >> "$GITHUB_OUTPUT"
 
       - name: Validate inputs
         env:
