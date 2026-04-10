@@ -16,18 +16,20 @@ def _is_configured() -> bool:
     for k in CREDENTIAL_KEYS:
         if os.environ.get(k):
             return True
-    local_app_data = os.environ.get("LOCALAPPDATA", "")
-    app_data = os.environ.get("APPDATA", "")
     home = os.path.expanduser("~")
     # mcp-relay-core stores config.enc in a shared 'mcp' directory
-    paths = [p for p in [
-        os.path.join(local_app_data, "mcp", "config.enc") if local_app_data else "",
-        os.path.join(app_data, "mcp", "Config", "config.enc") if app_data else "",
-        os.path.join(home, ".config", "mcp", "config.enc"),
-    ] if p]
-    for p in paths:
-        if os.path.exists(p):
-            return True
+    # Check common paths directly to avoid list allocations and joins
+    path = os.environ.get("LOCALAPPDATA")
+    if path and os.path.exists(os.path.join(path, "mcp", "config.enc")):
+        return True
+
+    path = os.environ.get("APPDATA")
+    if path and os.path.exists(os.path.join(path, "mcp", "Config", "config.enc")):
+        return True
+
+    if os.path.exists(os.path.join(home, ".config", "mcp", "config.enc")):
+        return True
+
     return False
 
 
