@@ -7,32 +7,15 @@ Allows config and help tools through so the user can initiate setup.
 import json
 import os
 import sys
+from pathlib import Path
+
+# Add plugins directory to sys.path to allow importing mcp_common
+sys.path.append(str(Path(__file__).parent.parent.parent))
+from mcp_common import EXEMPT_SUFFIXES, is_configured
 
 SERVER_NAME = "better-telegram-mcp"
 # Either TELEGRAM_PHONE (user mode) or TELEGRAM_BOT_TOKEN (bot mode) is required.
-# TELEGRAM_API_ID / TELEGRAM_API_HASH have built-in defaults and are not checked here.
 CREDENTIAL_KEYS = ["TELEGRAM_PHONE", "TELEGRAM_BOT_TOKEN"]
-# Tools that work without credentials
-EXEMPT_SUFFIXES = ("__setup", "__help", "__config")
-
-
-def _is_configured() -> bool:
-    for k in CREDENTIAL_KEYS:
-        if os.environ.get(k):
-            return True
-    local_app_data = os.environ.get("LOCALAPPDATA", "")
-    app_data = os.environ.get("APPDATA", "")
-    home = os.path.expanduser("~")
-    # mcp-relay-core stores config.enc in a shared 'mcp' directory
-    paths = [p for p in [
-        os.path.join(local_app_data, "mcp", "config.enc") if local_app_data else "",
-        os.path.join(app_data, "mcp", "Config", "config.enc") if app_data else "",
-        os.path.join(home, ".config", "mcp", "config.enc"),
-    ] if p]
-    for p in paths:
-        if os.path.exists(p):
-            return True
-    return False
 
 
 def main() -> None:
@@ -45,7 +28,7 @@ def main() -> None:
     if tool_name.endswith(EXEMPT_SUFFIXES):
         sys.exit(0)
 
-    if not _is_configured():
+    if not is_configured(CREDENTIAL_KEYS):
         print(json.dumps({
             "decision": "block",
             "reason": (

@@ -7,37 +7,13 @@ Only shows a hint so Claude knows cloud embedding is unavailable.
 import json
 import os
 import sys
+from pathlib import Path
+
+# Add plugins directory to sys.path to allow importing mcp_common
+sys.path.append(str(Path(__file__).parent.parent.parent))
+from mcp_common import CLOUD_KEYS, EXEMPT_SUFFIXES, is_configured
 
 SERVER_NAME = "better-code-review-graph"
-CLOUD_KEYS = [
-    "JINA_AI_API_KEY",
-    "GEMINI_API_KEY",
-    "GOOGLE_API_KEY",
-    "OPENAI_API_KEY",
-    "COHERE_API_KEY",
-    "CO_API_KEY",
-]
-# Tools that do not require cloud credentials
-EXEMPT_SUFFIXES = ("__setup", "__help", "__config")
-
-
-def _is_configured() -> bool:
-    for k in CLOUD_KEYS:
-        if os.environ.get(k):
-            return True
-    local_app_data = os.environ.get("LOCALAPPDATA", "")
-    app_data = os.environ.get("APPDATA", "")
-    home = os.path.expanduser("~")
-    # mcp-relay-core stores config.enc in a shared 'mcp' directory
-    paths = [p for p in [
-        os.path.join(local_app_data, "mcp", "config.enc") if local_app_data else "",
-        os.path.join(app_data, "mcp", "Config", "config.enc") if app_data else "",
-        os.path.join(home, ".config", "mcp", "config.enc"),
-    ] if p]
-    for p in paths:
-        if os.path.exists(p):
-            return True
-    return False
 
 
 def main() -> None:
@@ -50,7 +26,7 @@ def main() -> None:
     if tool_name.endswith(EXEMPT_SUFFIXES):
         sys.exit(0)
 
-    if not _is_configured():
+    if not is_configured(CLOUD_KEYS):
         print(
             "Note: better-code-review-graph cloud credentials not configured. "
             "Using local ONNX embedding -- cloud embedding providers are unavailable. "
