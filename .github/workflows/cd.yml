@@ -130,6 +130,12 @@ jobs:
             rm -rf "$PLUGIN_DIR/hooks"
             cp -r "source/hooks" "$PLUGIN_DIR/hooks"
             printf "Synced hooks/\n"
+
+          # Inject shared hook utility
+          if [ -d "$PLUGIN_DIR/hooks" ]; then
+            cp marketplace/scripts/mcp_hooks_util.py "$PLUGIN_DIR/hooks/"
+            printf "Injected shared hook utility\n"
+          fi
           fi
 
       - name: Commit and push

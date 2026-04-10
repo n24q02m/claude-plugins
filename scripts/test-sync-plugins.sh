@@ -65,6 +65,8 @@ test_sync_plugins() {
   local repos="$tmp/repos"
   mkdir -p "$repos/test-plugin/.claude-plugin"
   echo '{"name":"test-plugin","description":"test","mcpServers":{}}' > "$repos/test-plugin/.claude-plugin/plugin.json"
+  mkdir -p "$repos/test-plugin/hooks"
+  touch "$repos/test-plugin/hooks/check-credentials.py"
   mkdir -p "$repos/test-plugin/skills/demo"
   echo -e "---\ntitle: demo\n---\nDemo skill content that is long enough to pass validation checks." > "$repos/test-plugin/skills/demo/SKILL.md"
   echo '{"version":"1.0.0"}' > "$repos/test-plugin/gemini-extension.json"
@@ -92,6 +94,7 @@ test_sync_plugins() {
   assert "plugin.json synced" test -f "$ROOT/plugins/test-plugin/.claude-plugin/plugin.json"
   assert "gemini-extension.json synced" test -f "$ROOT/plugins/test-plugin/gemini-extension.json"
   assert "skills synced" test -d "$ROOT/plugins/test-plugin/skills"
+  assert "shared utility injected" test -f "$ROOT/plugins/test-plugin/hooks/mcp_hooks_util.py"
   assert "only-skills synced" test -d "$ROOT/plugins/only-skills/skills"
   if echo "$output" | grep -q "SKIP test-missing"; then
     echo "PASS: missing repo skipped"

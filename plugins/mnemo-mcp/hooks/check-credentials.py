@@ -5,8 +5,16 @@ Non-blocking -- mnemo-mcp works in FTS5-only mode without cloud credentials.
 Only shows a hint so Claude knows semantic search is unavailable.
 """
 import json
-import os
 import sys
+
+# Shared utility is injected into the hooks directory during sync
+try:
+    from mcp_hooks_util import is_configured
+except ImportError:
+    # Fallback for local development if not in path
+    import os
+    sys.path.append(os.path.dirname(__file__))
+    from mcp_hooks_util import is_configured
 
 SERVER_NAME = "mnemo-mcp"
 CLOUD_KEYS = [
@@ -21,25 +29,6 @@ CLOUD_KEYS = [
 EXEMPT_SUFFIXES = ("__setup", "__help", "__config")
 
 
-def _is_configured() -> bool:
-    for k in CLOUD_KEYS:
-        if os.environ.get(k):
-            return True
-    local_app_data = os.environ.get("LOCALAPPDATA", "")
-    app_data = os.environ.get("APPDATA", "")
-    home = os.path.expanduser("~")
-    # mcp-relay-core stores config.enc in a shared 'mcp' directory
-    paths = [p for p in [
-        os.path.join(local_app_data, "mcp", "config.enc") if local_app_data else "",
-        os.path.join(app_data, "mcp", "Config", "config.enc") if app_data else "",
-        os.path.join(home, ".config", "mcp", "config.enc"),
-    ] if p]
-    for p in paths:
-        if os.path.exists(p):
-            return True
-    return False
-
-
 def main() -> None:
     try:
         data = json.load(sys.stdin)
@@ -50,7 +39,7 @@ def main() -> None:
     if tool_name.endswith(EXEMPT_SUFFIXES):
         sys.exit(0)
 
-    if not _is_configured():
+    if not is_configured(CLOUD_KEYS):
         print(
             "Note: mnemo-mcp cloud credentials not configured. "
             "Running in FTS5-only mode -- semantic (vector) search is unavailable. "

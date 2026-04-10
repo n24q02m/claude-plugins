@@ -58,6 +58,11 @@ sync_plugins() {
     sync_dir "skills"
     sync_dir "hooks"
 
+    # Inject shared hook utility
+    if [ -d "$dst/hooks" ]; then
+      cp "$SCRIPT_DIR/mcp_hooks_util.py" "$dst/hooks/"
+    fi
+
     echo "OK $repo"
   done
 
