@@ -4,3 +4,6 @@
 ## 2025-02-12 - Replacing Python generator expressions with native evaluation
 **Learning:** Using `str.endswith(tuple)` or `str.startswith(tuple)` is significantly more efficient and idiomatic in Python than using `any()` with a generator expression for multiple suffix or prefix matching. Replacing generator expressions within `any()` calls with explicit `for` loops improves performance for repeated `os.environ.get()` and `os.path.exists()` checks by avoiding generator overhead in Python hot paths.
 **Action:** Always prefer explicit loop iterations or tuple support for string evaluations over `any(...)` or `all(...)` with generator expressions for core performance paths, since generator evaluation adds extra latency.
+## 2026-04-10 - Optimizing Environment Variable and Path Lookups
+**Learning:** Binding `os.environ` to a local variable avoids repeated global and attribute lookups in performance-sensitive loops. Additionally, inlining `os.path.exists` checks with early returns is significantly more efficient than constructing intermediate lists of paths via list comprehensions, as it avoids unnecessary string manipulations and system calls once a match is found.
+**Action:** Use `env = os.environ` locally and prefer sequential conditional checks over list-based path iterations in performance-critical code.

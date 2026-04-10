@@ -22,21 +22,24 @@ EXEMPT_SUFFIXES = ("__setup", "__help", "__config")
 
 
 def _is_configured() -> bool:
+    env = os.environ
     for k in CLOUD_KEYS:
-        if os.environ.get(k):
+        if env.get(k):
             return True
-    local_app_data = os.environ.get("LOCALAPPDATA", "")
-    app_data = os.environ.get("APPDATA", "")
+
+    # Check for mcp-relay-core config.enc in shared directories
+    local_app_data = env.get("LOCALAPPDATA")
+    if local_app_data and os.path.exists(os.path.join(local_app_data, "mcp", "config.enc")):
+        return True
+
+    app_data = env.get("APPDATA")
+    if app_data and os.path.exists(os.path.join(app_data, "mcp", "Config", "config.enc")):
+        return True
+
     home = os.path.expanduser("~")
-    # mcp-relay-core stores config.enc in a shared 'mcp' directory
-    paths = [p for p in [
-        os.path.join(local_app_data, "mcp", "config.enc") if local_app_data else "",
-        os.path.join(app_data, "mcp", "Config", "config.enc") if app_data else "",
-        os.path.join(home, ".config", "mcp", "config.enc"),
-    ] if p]
-    for p in paths:
-        if os.path.exists(p):
-            return True
+    if home and os.path.exists(os.path.join(home, ".config", "mcp", "config.enc")):
+        return True
+
     return False
 
 
