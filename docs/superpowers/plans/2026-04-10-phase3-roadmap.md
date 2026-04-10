@@ -1,9 +1,13 @@
-# MCP Core — Unified Transport & Authorization Plan
+# MCP Core — Phase 3 Roadmap (Phases G through M)
 
 **Spec**: `specs/2026-04-10-mcp-core-unified-transport-design.md`
 **Date**: 2026-04-10
-**Status**: Draft for review
+**Status**: Roadmap — NOT a skill-compliant plan
 **Predecessor**: `plans/2026-04-08-production-hardening-phase2.md` (Phase A/D/F DONE, Phase B/C/E revised hoặc subsumed by this plan)
+
+> **NOTE**: Đây là **roadmap**, không phải implementation plan tuân `superpowers:writing-plans` skill. File này liệt kê phase boundaries + acceptance criteria + dependency graph để định hướng. Mỗi phase có skill-compliant plan riêng, được viết **just-in-time** trước khi execute phase đó (lazy strategy). Phase G plan đã viết: `plans/2026-04-11-phase-g-unblock.md`. Phase H-M plans sẽ viết sau khi G pass.
+>
+> **Do NOT execute steps from this file directly** — dùng per-phase plans.
 
 ---
 
