@@ -104,5 +104,15 @@ class TestValidateMarketplace(unittest.TestCase):
             validate_marketplace.validate_marketplace()
             mock_exit.assert_called_with(1)
 
+    def test_missing_source(self):
+        """Should fail if a plugin is missing the source field."""
+        del self.valid_marketplace["plugins"][0]["source"]
+        with open(self.marketplace_path, "w") as f:
+            json.dump(self.valid_marketplace, f)
+
+        with patch("sys.exit") as mock_exit:
+            validate_marketplace.validate_marketplace()
+            mock_exit.assert_called_with(1)
+
 if __name__ == '__main__':
     unittest.main()
