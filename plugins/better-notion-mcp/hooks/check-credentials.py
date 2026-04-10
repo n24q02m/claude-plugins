@@ -14,9 +14,9 @@ CREDENTIAL_KEYS = ["NOTION_TOKEN"]
 
 
 def _is_configured() -> bool:
-    for k in CREDENTIAL_KEYS:
-        if os.environ.get(k):
-            return True
+    # Use any(map(...)) for C-level iteration performance over generators/loops
+    if any(map(os.environ.get, CREDENTIAL_KEYS)):
+        return True
     local_app_data = os.environ.get("LOCALAPPDATA", "")
     app_data = os.environ.get("APPDATA", "")
     home = os.path.expanduser("~")
@@ -26,11 +26,8 @@ def _is_configured() -> bool:
         os.path.join(app_data, "mcp", "Config", "config.enc") if app_data else "",
         os.path.join(home, ".config", "mcp", "config.enc"),
     ] if p]
-    for p in paths:
-        if os.path.exists(p):
-            return True
-    return False
-
+    # Use any(map(...)) to optimize file existence checks
+    return any(map(os.path.exists, paths))
 
 def main() -> None:
     if _is_configured():
