@@ -9,31 +9,16 @@ import json
 import os
 import sys
 
+# Add the plugins directory to sys.path to import shared utils
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from mcp_config_utils import is_configured
+
 SERVER_NAME = "better-notion-mcp"
 CREDENTIAL_KEYS = ["NOTION_TOKEN"]
 
 
-def _is_configured() -> bool:
-    for k in CREDENTIAL_KEYS:
-        if os.environ.get(k):
-            return True
-    local_app_data = os.environ.get("LOCALAPPDATA", "")
-    app_data = os.environ.get("APPDATA", "")
-    home = os.path.expanduser("~")
-    # mcp-relay-core stores config.enc in a shared 'mcp' directory
-    paths = [p for p in [
-        os.path.join(local_app_data, "mcp", "config.enc") if local_app_data else "",
-        os.path.join(app_data, "mcp", "Config", "config.enc") if app_data else "",
-        os.path.join(home, ".config", "mcp", "config.enc"),
-    ] if p]
-    for p in paths:
-        if os.path.exists(p):
-            return True
-    return False
-
-
 def main() -> None:
-    if _is_configured():
+    if is_configured(CREDENTIAL_KEYS):
         sys.exit(0)
 
     # Non-blocking hint: let server handle unconfigured state
