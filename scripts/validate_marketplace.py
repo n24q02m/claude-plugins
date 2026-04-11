@@ -6,6 +6,9 @@ import os
 import re
 import sys
 
+# ⚡ Bolt: Pre-compile regex to avoid cache lookup overhead in loops
+NAME_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
+
 
 def validate_marketplace():
     """Validate marketplace.json and all referenced plugins."""
@@ -30,7 +33,7 @@ def validate_marketplace():
 
         for plugin in plugins:
             name = plugin.get("name", "Unknown")
-            if not re.match(r"^[a-zA-Z0-9_-]+$", name):
+            if not NAME_PATTERN.match(name):
                 errors.append(f"Plugin {name}: invalid name format (must match ^[a-zA-Z0-9_-]+$)")
                 continue
 
