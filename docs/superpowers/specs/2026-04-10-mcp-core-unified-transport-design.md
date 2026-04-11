@@ -1,159 +1,167 @@
 # MCP Core — Unified Transport & Authorization Design
 
-**Date**: 2026-04-10
-**Status**: Draft v2 (gap fixes applied, awaiting user review)
+**Date**: 2026-04-10 (v3 2026-04-11)
+**Status**: Draft v3 (user corrections applied, awaiting final review)
 **Author**: Claude Code session (current)
 **Supersedes (partial)**: `2026-04-08-production-hardening-phase2.md` Phase B (OAuth) + Phase C (redefined scope)
 **Extends**: `2026-04-05-relay-redesign-and-production-hardening-design.md` (O1-O11 locked)
-**Scope**: 12 repos — 7 MCP servers + mcp-core (was mcp-relay-core) + claude-plugins + qwen3-embed + web-core + profile
+**Scope**: 12 repos — 7 MCP servers + mcp-core (was mcp-relay-core, will be archived) + claude-plugins + qwen3-embed + web-core + profile
+**Companion**: `specs/2026-04-11-doc-update-matrix.md` (file-level doc update matrix)
 
 ---
 
 ## 1. Context
 
-### 1.1 Audit evidence (verified 2026-04-10 qua gh API + git + filesystem)
+### 1.1 Audit evidence (verified 2026-04-10/11 qua gh API + git + filesystem)
 
-| Metric | Reality (verified) | Prior session claim (hallucinated) |
-|--------|-------------------|-----------------------------------|
-| Open PRs across 12 repos | **246** | "0" (Antigravity), "453 closed" (cf5ac4a3) |
+| Metric | Reality (verified) | Prior session claim |
+|--------|-------------------|---------------------|
+| Open PRs across 12 repos | **246** | "0" / "453 closed" |
 | Open issues | **16** | — |
-| Open CodeQL alerts | **15** (10 wet, 3 mnemo, 2 web-core) | "0" (Antigravity) |
-| Open Dependabot alerts | **2** (wet: langchain-core, cryptography) | — |
-| CI pass rate last 20 runs | **~50%** (wet-mcp worst: 0/10) | "100%" (Antigravity) |
-| better-telegram-mcp merge conflict | **12 dirty files, DU http_multi_user.py** | "OAuth done" (Antigravity) |
-| GDrive duplicate folders | **4.5 GB wasted, fresh duplicates Apr 10 22:10** | "fixed" (session 3a19aecd) |
+| Open CodeQL alerts | **15** (10 wet + 3 mnemo + 2 web-core) | "0" |
+| Open Dependabot alerts | **2** (wet: langchain-core CVE-2026-40087, cryptography CVE-2026-39892) | — |
+| CI pass rate last 20 runs | **~50%** (wet-mcp main branch 0/10) | "100%" |
+| better-telegram-mcp merge conflict | **DU http_multi_user.py + 11 M/A files** | "OAuth done" |
+| GDrive duplicate folders (rclone lsd) | **mnemo-mcp × 2 (2026-02 + 2026-04), wet-mcp × 2** | "fixed" |
 | Human-authored PRs | **1** (OdinYkt telegram #277) | — |
-| Commit prefix violations | **~30% across repos** | — |
+| Commit prefix violations | **~30%** | — |
 | Rename impact `mcp-relay-core` → `mcp-core` | **481 refs across 6 repos** (godot 0 refs) | — |
-| wet-mcp embedding backend | **ONNX runtime primary + llama-cpp-python GGUF optional** | — |
+| wet/mnemo/crg embedding backend | **Local auto-detect (ONNX + GGUF per qwen3-embed) + cloud 4 providers (Jina/Gemini/OpenAI/Cohere)** — unified across 3 servers | — |
 | mnemo/crg graph backend | **SQLite + sqlite-vec + SQL graph tables** (NOT FalkorDB) | — |
-| Claude Code HTTP transport support | **Verified via ~/.claude backups + microsoft_skills configs: `"type": "http"`** | — |
-| Secrets exposure in `~/.claude/settings.local.json` + `.claude.json` backup | **7 real credentials hardcoded (GitHub PAT, Gemini, Cohere, Google Stitch API, email app passwords for 4 accounts, Telegram API creds)** | — |
+| Claude Code HTTP transport schema | **Verified via ~/.claude backups + better-notion-mcp plugin.json production use** | — |
+| Notion HTTP production deployment | **better-notion-mcp/.claude-plugin/plugin.json already uses `"type": "http"` với `https://better-notion-mcp.n24q02m.com/mcp`** | — |
+| Credential state gate current implementation | **Inline code gate trong `server.py` của 6 repo + `credential_state.py` (hoặc `.ts`) — NOT a Claude Code PreToolUse hook** | — |
+| Pre-existing secrets exposure | **`~/.claude/settings.local.json` + `.claude.json.backup.*` chứa 7 real credentials (GitHub PAT, Gemini, Cohere, Google Stitch, email app passwords × 4 accounts, Telegram API creds)** | — |
+| rclone remote state | **`echovault-gdrive:` configured, gcloud 564.0.0 installed (alpha components not installed)** | — |
+| Current GDrive scope in sync.py | **wet-mcp/sync.py:44 + mnemo-mcp/sync.py:43 = `drive.file`** — Phase J must update to `drive.appdata` | — |
+| OAuth consent screen scope | **Updated to `drive.appdata` by user 2026-04-11** (ahead of code change) | — |
 
-### 1.2 User requirements (locked trong session 2026-04-10)
+### 1.2 User requirements (locked trong session 2026-04-10/11)
 
-Từ các turn trao đổi của user:
+Từ các turn trao đổi của user (bao gồm corrections ngày 2026-04-11):
 
 1. **Best practice, best consolidate** ở mọi quyết định
-2. Support multi-OS (Windows/Linux/macOS) + multi-agent (Claude Code, Codex CLI, Copilot, Antigravity, Cursor, OpenCode)
+2. Support multi-OS (Windows/Linux/macOS) + multi-agent (Claude Code, Codex CLI, Copilot, Antigravity, Cursor, Windsurf, OpenCode)
 3. Shared MCP core để loại bỏ resource waste (N sessions × heavy ONNX model cho wet/mnemo/crg)
 4. Tuân MCP Streamable HTTP 2025-11-25 spec (KHÔNG old HTTP + separate SSE)
 5. Drop stdio mode cho mọi server có credentials — chỉ giữ HTTP mode (local hoặc remote)
-6. Relay form UX giữ nguyên, nhưng underneath là OAuth 2.1 protocol (agent tự động mở browser khi 401)
+6. Relay form UX giữ nguyên, nhưng underneath là OAuth 2.1 protocol
 7. Self-host capable — cùng codebase, flip config → remote multi-user
 8. GDrive single folder invariant — KHÔNG còn duplicate
 9. Rule compliance — `fix:`/`feat:` only từ nay, historical commits accept
 10. Full/real/live E2E test trước release stable (build local, không release sẵn)
-11. CLI subcommands BỎ hoàn toàn — chỉ 1 entry point, management qua MCP tool action
-12. Cả 3 heavy server (wet + mnemo + crg) đều cần daemon mode (không phải chỉ wet)
-13. `mcp-relay-core` rename → `mcp-core` (scope mở rộng)
-14. Notion exception: local dùng self-hosted AS (relay form), remote delegate tới Notion OAuth thật
+11. CLI subcommands BỎ hoàn toàn — chỉ 1 entry point, management qua MCP tool action (chỉ cho secondary expansion)
+12. Cả 3 heavy server (wet + mnemo + crg) đều cần daemon mode
+13. `mcp-relay-core` **archive + tạo mcp-core fresh repo** (không rename in-place)
+14. Notion exception: local self-hosted AS (paste integration token), remote delegate tới Notion OAuth thật
+15. **Remote HTTP bắt buộc chỉ cho telegram/email/notion** (light resources); wet/mnemo/crg default local only, remote opt-in self-host
+16. **credential_state.py + inline gate removal** — OAuth 2.1 transport middleware handles credentials, tool code không check nữa
+17. **Shared embedding daemon** — build từ đầu, không defer. wet/mnemo/crg gọi chung 1 daemon
+18. **Auto-open browser full support** — baseline assumption, remote HTTP mode cũng cần cho claude.ai web client
+19. **PSR commit prefix** — đã config xong, không verify lại
+20. **Không tạo memory mới cho rule/philosophy** — update profile README + skill ref + CLAUDE.md tại chỗ
+21. **Hook migration** — CRG `hooks/hooks.json` PostToolUse hiện dùng stdio subprocess `uvx --from better-code-review-graph python -c ...`, phải đổi sang HTTP POST daemon endpoint
 
-**"Best consolidate" criteria** (định nghĩa cụ thể để đánh giá mọi decision):
-- **Single source of truth** — 1 codebase cho cả local + remote mode, 1 auth path cho cả 2 flavor (self-hosted + delegated), 1 transport implementation cho cả 7 server
-- **Zero duplicate infrastructure** — không có separate HTTP + SSE, không có separate stdio + HTTP handlers, không có per-server auth reimplementation
-- **Minimum surface area** — mỗi server chỉ 1 entry point binary, mỗi operation chỉ 1 code path, mỗi credential store chỉ 1 encryption scheme
-- **Maximum reuse** — chung crypto/transport/auth/lifecycle/install modules qua `mcp-core` library
-- **Rollback safety** — rename + migration có thể revert qua git mà không lose credential state
+**"Best consolidate" criteria** (định nghĩa cụ thể):
+
+- **Single source of truth**: 1 codebase cho cả local + remote mode, 1 auth path cho 2 flavor, 1 transport implementation cho 7 server
+- **Zero duplicate infrastructure**: không separate HTTP + SSE, không separate stdio + HTTP handlers, không per-server auth reimplementation
+- **Minimum surface area**: 1 entry point binary per server, 1 code path per operation, 1 encryption scheme
+- **Maximum reuse**: chung crypto/transport/auth/lifecycle/install modules qua `mcp-core` library
+- **Rollback safety**: archive + rename + migration có thể revert qua git + backup bundle
 
 ### 1.3 Prior design constraints (April 5 spec, vẫn locked)
 
-- Relay là primary credential mechanism
+- Relay là primary credential mechanism (qua OAuth 2.1 Authorization page, bản chất là form)
 - Env vars chỉ backward compat
 - Không có `set_env` MCP action
-- No auto-fallback to local ONNX — AWAITING_SETUP blocks, not degrade
-- Hook-based credential check
+- No auto-fallback to local ONNX — AWAITING_SETUP blocks **(CHANGED v3)**: credential gate không còn ở tool layer, HTTP 401 thay thế
 - Tool queuing via LLM retry
 
 ---
 
 ## 2. Architectural decisions
 
-### 2.1 Decision: Transport unification — Streamable HTTP 2025-11-25 only
+### 2.1 Decision: Transport default philosophy — reference existing locations
 
-**Bỏ stdio mode hoàn toàn cho mọi server có credentials. Chỉ giữ Streamable HTTP transport.**
+Triết lý **"Streamable HTTP 2025-11-25 default, stdio fallback proxy only"** được tuyên bố tại các nơi đã tồn tại, spec này KHÔNG duplicate:
 
-**Timing**: Drop **ngay** trong major version bump (không grace period). Lý do: ecosystem chưa có external user ngoài 1 PR contributor, deprecation warning period chỉ thêm noise và tech debt.
+| Location | Cập nhật gì |
+|----------|-------------|
+| `n24q02m/README.md` principle #6 ("Multi-User HTTP Mode") | Mở rộng: "All MCP servers default to Streamable HTTP 2025-11-25 local. stdio exists only as thin proxy for agents without HTTP support. Godot is exception (no credentials)." |
+| `n24q02m/skills/fullstack-dev/references/mcp-server.md` | Flip examples line 123+132 từ `"transport": {"type": "stdio"}` sang `"type": "http"`. Update agent compatibility matrix (line 315-324) với Streamable HTTP 2025-11-25 column. Add Streamable HTTP code example as primary, stdio as secondary. |
+| `~/.claude/CLAUDE.md` section 3 "E2E TESTING (MCP SERVERS)" | Add HTTP client test path: `httpx.AsyncClient` POST tới `/mcp` endpoint với Bearer token. Giữ stdio_client path làm fallback cho godot. |
 
-**Rationale**:
-- Spec 2025-11-25 định nghĩa Streamable HTTP là canonical transport
-- 1 endpoint `/mcp` duy nhất (POST + GET + DELETE) thay vì HTTP + separate `/sse`
-- stdio phức tạp (EOF, subprocess lifecycle, separate relay trigger)
-- Multi-session trên 1 process (key lợi ích cho heavy servers)
-- Session isolation qua `Mcp-Session-Id` header native từ spec
+Spec §2.1 chỉ cần reference: **"Áp dụng rule từ profile principle #6 + skill mcp-server reference. Không duplicate text ở đây."**
 
-**Exception**: `better-godot-mcp` giữ stdio — không có credentials, process nhẹ, spawn per-session OK, 0 refs tới `mcp-relay-core` (verified qua grep).
-
-**Backward compat cho stdio-only agents**: thin `stdio_proxy` binary trong mcp-core forward JSON-RPC frames từ stdin → HTTP POST → response → stdout. Không phải server, chỉ adapter.
+**Exception**: `better-godot-mcp` giữ stdio native — không có credentials, process nhẹ, spawn per-session OK, 0 refs tới `mcp-relay-core` (verified qua grep).
 
 ### 2.2 Decision: Auth unification — OAuth 2.1 cho mọi credential server
 
 **Mọi credential server dùng OAuth 2.1 Authorization Server pattern. 2 flavor:**
 
-- **Self-hosted AS**: server tự làm Authorization Server. Authorization page render relay form HTML. User paste credentials → submit → server lưu → issue auth code → client exchange → access token.
-- **Delegated AS**: server là OAuth client, redirect `/authorize` tới upstream provider (Notion OAuth). Upstream trả code → server exchange với upstream → wrap trong own JWT cho client.
+- **Self-hosted AS**: server tự làm Authorization Server. Authorization page render relay form HTML. User submit credentials → server lưu → issue auth code → client exchange → access token.
+- **Delegated AS**: server là OAuth client, redirect `/authorize` tới upstream provider (Notion OAuth). Upstream trả code → server exchange → wrap trong own JWT cho client.
 
-**Rationale**:
-- Spec 2025-11-25 requires OAuth 2.1 (RFC 9470)
-- Client tự động handle 401 → `WWW-Authenticate: Bearer resource_metadata=...` → open browser → retry → UX cải thiện so với hiện tại (user không phải copy URL thủ công)
-- 1 auth code path trong `mcp_core.auth.oauth` — reuse across mọi server mọi mode
-- Security standards compliance (PKCE, DCR, token rotation)
+**Mechanism** (changed from v2):
 
-### 2.3 Decision: Local vs Remote mode
+- Tool code KHÔNG còn check credential state (§2.7)
+- Transport middleware của `mcp-core` reject request thiếu/expired Bearer token với HTTP 401 + `WWW-Authenticate: Bearer resource_metadata=http://<host>/.well-known/oauth-protected-resource`
+- Agent tự động mở browser → OAuth 2.1 dance → token issued → retry (baseline assumption, §2.11 detail)
+- Per-session credentials injected vào tool handler qua DI: `credentials: CredStore = Depends(get_session_creds)`
 
-| Mode | Bind | Credential store | User scope | Default |
-|------|------|-----------------|-----------|---------|
-| **Local HTTP** | `127.0.0.1:<port>` | `config.enc` single-user | 1 user (local machine) | Yes |
-| **Remote HTTP** | `0.0.0.0` (hoặc tunnel) | per-user encrypted store | Multi-user always | Opt-in |
+### 2.3 Decision: Local vs Remote mode — 3-tier classification
 
-- Mặc định: Local mode (single-user).
-- Self-host: flip config flag `MCP_CORE_MODE=remote`, thêm reverse proxy, OAuth full login/consent flow.
-- Remote mode **luôn** hỗ trợ multi-user — single-user remote là degenerate case (N=1), không code path riêng.
-- Server CÙNG codebase, cùng Streamable HTTP transport, chỉ khác auth middleware + credential store backend.
+**Heavy servers (wet/mnemo/crg) — Tier A**: Local HTTP default. Remote = **opt-in self-host only** cho user muốn share cross-machine. Resource consumption (ONNX model ~2GB RAM + SQLite GB-scale DB + embedded SearXNG) không scale multi-user tiện trên VPS nhỏ.
+
+**Light servers (telegram/email/notion) — Tier B**: **Both local HTTP và remote HTTP mandatory**. Remote cần cho agent không connect localhost được (claude.ai web, browser-based agents). Deploy lên `oci-vm-prod` qua CF Tunnel + Caddy (không expose port theo rule "No open ports on VM").
+
+**stdio-only (godot) — Tier C**: No credentials, no HTTP. Giữ nguyên.
+
+| Tier | Bind local | Deploy remote | Credential store local | Credential store remote |
+|------|------------|---------------|------------------------|-------------------------|
+| A (wet/mnemo/crg) | `127.0.0.1:<port>` | **Opt-in** (self-host, user quyết) | `config.enc` single-user | per-user encrypted multi-user (if self-hosted) |
+| B (telegram/email/notion) | `127.0.0.1:<port>` | **Mandatory** (n24q02m infra) | `config.enc` single-user | per-user encrypted multi-user |
+| C (godot) | — | — | — | — |
 
 ### 2.4 Decision: Server matrix
 
-**"Heavy state" definition**: resource shared-across-sessions (ONNX model weights, sqlite-vec index, rerank model, DocsDB) — loading once per server process saves 500MB-2GB RAM per additional session. Per-session state (client objects, IMAP pools, Telethon sessions) không phải heavy state — user-bound, không share được.
+**"Heavy state"**: resource shared-across-sessions (ONNX model weights, sqlite-vec index, rerank model, DocsDB/memories.db) — loading once saves 500MB-2GB RAM per additional session.
 
-| Server | Transport | Local auth | Remote auth | Heavy state (shared across sessions) | Remote prereq |
-|--------|-----------|-----------|-------------|--------------------------------------|---------------|
-| **wet-mcp** | HTTP only | Self-hosted AS | Self-hosted AS multi-user | ONNX embedding + reranker + DocsDB SQLite 1.5GB + SearXNG subprocess (+optional llama.cpp GGUF) | Doppler/Infisical master secret, Caddy + CF Tunnel |
-| **mnemo-mcp** | HTTP only | Self-hosted AS | Self-hosted AS multi-user | ONNX embedding + reranker + memories.db SQLite (sqlite-vec + SQL graph tables) | Doppler/Infisical master secret, Caddy + CF Tunnel |
-| **better-code-review-graph** | HTTP only | Self-hosted AS | Self-hosted AS multi-user | ONNX embedding + reranker + graph.db SQLite (sqlite-vec) | Doppler/Infisical master secret, Caddy + CF Tunnel |
-| **better-telegram-mcp** | HTTP only | Self-hosted AS | Self-hosted AS multi-user | Per-session Telethon (NOT shared heavy state) | Doppler/Infisical master secret, Caddy + CF Tunnel |
-| **better-email-mcp** | HTTP only | Self-hosted AS | Self-hosted AS multi-user | Per-session IMAP pool (NOT shared heavy state) | Doppler/Infisical master secret, Caddy + CF Tunnel |
-| **better-notion-mcp** | HTTP only | **Self-hosted AS** (paste Notion integration token) | **Delegated → Notion OAuth** | Per-session Notion client (NOT shared heavy state) | **Notion OAuth app registration (https://www.notion.so/my-integrations) + client_id/client_secret + redirect_uri** whitelist |
-| **better-godot-mcp** | stdio only | — | — | Stateless CLI wrapper | n/a |
+| Server | Tier | Transport | Local auth | Remote auth | Heavy state | Remote prereq |
+|--------|:----:|-----------|-----------|-------------|-------------|---------------|
+| **wet-mcp** | A | HTTP only | Self-hosted AS | **(opt-in)** Self-hosted AS multi-user | ONNX/GGUF embedding + reranker + DocsDB SQLite 1.5GB + SearXNG subprocess. Embedding model **shared via mcp-embedding-daemon** (§2.11) | Doppler/Infisical master, Caddy + CF Tunnel |
+| **mnemo-mcp** | A | HTTP only | Self-hosted AS | **(opt-in)** Self-hosted AS multi-user | ONNX/GGUF embedding + reranker + memories.db SQLite (sqlite-vec + SQL graph tables). Embedding model **shared via mcp-embedding-daemon** | Doppler/Infisical master, Caddy + CF Tunnel |
+| **better-code-review-graph** | A | HTTP only | Self-hosted AS | **(opt-in)** Self-hosted AS multi-user | ONNX/GGUF embedding + reranker + graph.db SQLite (sqlite-vec). Embedding model **shared via mcp-embedding-daemon**. Hook `hooks/hooks.json` PostToolUse migrate sang HTTP POST (§2.10) | Doppler/Infisical master, Caddy + CF Tunnel |
+| **better-telegram-mcp** | B | HTTP only | Self-hosted AS | **Mandatory** Self-hosted AS multi-user | Per-session Telethon (NOT shared heavy state) | Infisical `29457d18-fd82-4942-9330-7da7982e6b1d` TELEGRAM_API_ID/HASH, Caddy + CF Tunnel |
+| **better-email-mcp** | B | HTTP only | Self-hosted AS | **Mandatory** Self-hosted AS multi-user | Per-session IMAP pool (NOT shared heavy state) | Caddy + CF Tunnel, no app-level secret |
+| **better-notion-mcp** | B | HTTP only (**already production**) | Self-hosted AS (paste Notion integration token) | **Mandatory** Delegated → Notion OAuth | Per-session Notion client (NOT shared heavy state) | **Notion OAuth app registration** (https://www.notion.so/my-integrations) + client_id/client_secret + redirect_uri whitelist, Caddy + CF Tunnel |
+| **better-godot-mcp** | C | stdio only | — | — | Stateless CLI wrapper | n/a |
 
-**Notion exception explanation**: Notion có real OAuth provider cho multi-user (`api.notion.com/v1/oauth`). Remote mode bắt buộc delegate để mỗi user authorize với chính Notion account của họ. Local mode vẫn dùng self-hosted AS với relay form paste integration token (đơn giản, không cần OAuth dance cho 1 user). Remote deployment là **blocker** nếu Notion OAuth app chưa register — không thể soft-fail.
+**Notion notes**:
+- `better-notion-mcp/.claude-plugin/plugin.json` đã production với `"type": "http"` + `https://better-notion-mcp.n24q02m.com/mcp`. Đây là reference template cho 5 server khác.
+- Local mode dùng self-hosted AS với paste integration token (đơn giản, 1 user)
+- Remote mode bắt buộc delegate (mỗi user authorize với Notion account riêng)
 
-### 2.5 Decision: mcp-core package (renamed from mcp-relay-core)
+### 2.5 Decision: Archive + create new `mcp-core` (không rename in-place)
 
-**Rename `mcp-relay-core` → `mcp-core`. Mở rộng scope. Base framework: FastMCP Python cho 3 heavy server (wet/mnemo/crg), `@modelcontextprotocol/sdk` TypeScript cho email/notion, stdio native cho godot.**
+**Strategy**: Archive `mcp-relay-core` repo + tạo `mcp-core` fresh repo với layout mới.
 
-**Rename impact** (verified qua grep):
+**Rationale**:
+- Scope mới (transport + auth + lifecycle + install + embedding daemon + stdio proxy) lớn hơn scope cũ (credential encryption helper) 10×
+- Tên `mcp-core` phản ánh đúng bản chất, không mang gánh "relay" legacy
+- Clean semver start (v0.1.0), không inherit v2.0.0 confusion
+- Package layout mới thiết kế clean, không phải grep+delete cruft
+- CI/CD/Renovate secrets phải reconfig dù chọn phương án nào (cost ngang)
 
-| Repo | Refs tới `mcp-relay-core` / `mcp_relay_core` | Action |
-|------|----------------------------------------------|--------|
-| `mcp-relay-core` (self) | — | Rename package directory + pyproject + GitHub repo |
-| `wet-mcp` | ~180 refs | Update imports + pyproject dep + editable path |
-| `mnemo-mcp` | ~120 refs | Update imports + pyproject dep + editable path |
-| `better-code-review-graph` | ~90 refs | Update imports + pyproject dep + editable path |
-| `better-telegram-mcp` | ~50 refs | Update imports + package.json dep |
-| `better-email-mcp` | ~25 refs | Update imports + package.json dep |
-| `better-notion-mcp` | ~16 refs | Update imports + package.json dep |
-| `better-godot-mcp` | **0 refs** | No change |
-| **Total** | **481 refs** | Automated sed + verification grep |
+**Migration plan** (xem Phase I plan):
 
-**Editable path update**: `pyproject.toml` line 120 trong wet-mcp hiện tại:
-```toml
-mcp-relay-core = { path = "../mcp-relay-core/packages/core-py", editable = true }
-```
-Sau rename:
-```toml
-mcp-core = { path = "../mcp-core/packages/core-py", editable = true }
-```
-Giả định user clone `mcp-core` cùng parent directory với các server repo. Document trong AGENTS.md.
+1. Full backup `mcp-relay-core` (git bundle + PR/issue/release export qua `gh api`)
+2. Create `mcp-core` repo via `gh repo create n24q02m/mcp-core --public`
+3. Scaffold layout mới (xem below)
+4. Migrate modules từ old → new theo module mapping
+5. Publish `mcp-core` v0.1.0 beta PyPI + NPM
+6. Archive `mcp-relay-core` với `gh api -X PATCH repos/n24q02m/mcp-relay-core -f archived=true` + README redirect note
 
 **Layout mới**:
 
@@ -162,97 +170,144 @@ mcp-core/
 ├── packages/core-py/src/mcp_core/
 │   ├── transport/
 │   │   ├── streamable_http.py    # 2025-11-25 spec base (FastMCP backed)
-│   │   └── stdio_proxy.py        # thin stdio to HTTP forwarder
+│   │   └── stdio_proxy.py        # thin stdio→HTTP forwarder
 │   ├── auth/
 │   │   ├── oauth/
 │   │   │   ├── provider.py       # self-hosted OAuth 2.1 AS
-│   │   │   ├── delegated.py      # delegated OAuth client (for notion)
-│   │   │   ├── jwt_issuer.py     # access token signing (RS256)
+│   │   │   ├── delegated.py      # delegated OAuth client (notion)
+│   │   │   ├── jwt_issuer.py     # RS256 access token signing
 │   │   │   ├── local_ui.py       # relay form HTML renderer
 │   │   │   └── remote_ui.py      # full login/consent UI
 │   │   ├── user_store/
-│   │   │   ├── single_user.py    # config.enc backed (local mode)
-│   │   │   └── multi_user.py     # per-user encrypted (remote mode)
-│   │   └── middleware.py         # transport auth middleware
+│   │   │   ├── single_user.py    # config.enc backed
+│   │   │   └── multi_user.py     # per-user encrypted PBKDF2 600k
+│   │   └── middleware.py         # transport auth middleware (401 + WWW-Authenticate)
 │   ├── lifecycle/
-│   │   ├── lock.py               # PID + port file lock (fcntl Unix / msvcrt Windows)
+│   │   ├── lock.py               # fcntl/msvcrt file lock + PID + port
 │   │   └── watchdog.py           # idle shutdown + health
 │   ├── crypto/
-│   │   ├── config_enc.py         # AES-GCM machine-key (from old mcp_relay_core.config)
-│   │   ├── session_lock.py       # from old mcp_relay_core.session_lock
+│   │   ├── config_enc.py         # from mcp_relay_core.config
+│   │   ├── session_lock.py       # from mcp_relay_core.session_lock
 │   │   └── key_sharing.py        # cross-server key share
 │   └── install/
 │       ├── agents.py             # detect + write agent config files
 │       └── templates/            # .mcp.json, config.toml, mcp.json per agent
-└── packages/core-ts/src/mcp_core/
-    └── (same structure, TypeScript for email/notion/godot)
+├── packages/core-ts/src/mcp_core/
+│   └── (mirror TypeScript layout cho email/notion)
+├── packages/embedding-daemon/    # §2.11 new
+│   └── src/mcp_embedding_daemon/
+│       ├── server.py             # FastAPI/FastMCP HTTP server
+│       ├── backends/
+│       │   ├── onnx.py           # ONNX runtime
+│       │   └── gguf.py           # llama-cpp-python
+│       └── api.py                # /embed, /rerank endpoints
+└── packages/stdio-proxy/         # §2.1 fallback proxy binary
+    └── src/mcp_stdio_proxy/
+        └── main.py               # forward stdin JSON-RPC → HTTP POST
 ```
 
-**Base framework decision rationale**:
-- **FastMCP Python** đã implement Streamable HTTP 2025-11-25, có built-in session manager, OAuth middleware hook — tiết kiệm weeks viết transport layer
-- **@modelcontextprotocol/sdk TS** cho email/notion có matching feature set
-- godot giữ stdio native vì không cần shared state, 0 credentials, keep it simple
+**Module mapping cũ → mới**:
 
-**Module mapping**: tất cả module của `mcp_relay_core` chuyển thành submodule của `mcp_core.crypto` + `mcp_core.auth.oauth.local_ui`. Không có logic nào bị lost, chỉ reorganize.
+| `mcp_relay_core.*` (Python) | `mcp_core.*` (mới) |
+|------------------------------|--------------------|
+| `config` | `crypto.config_enc` |
+| `session_lock` | `crypto.session_lock` |
+| `relay_client` | `auth.oauth.local_ui` (HTML form portion) |
+| `crypto` (ECDH) | `crypto.key_sharing` |
 
-### 2.6 Decision: GDrive fix — drive.appdata scope
+| `@n24q02m/mcp-relay-core` (TypeScript) | `@n24q02m/mcp-core` (mới) |
+|----------------------------------------|---------------------------|
+| tương tự mapping Python | tương tự |
 
-**wet-mcp + mnemo-mcp chuyển scope từ `drive.file` sang `drive.appdata`.**
+**Base framework**:
+- **FastMCP Python** cho `mcp-core` transport (đã implement Streamable HTTP 2025-11-25 + session manager + OAuth middleware hook)
+- **@modelcontextprotocol/sdk TypeScript** cho email/notion (đã matching feature set)
+- Godot native stdio (không đụng mcp-core)
 
-**Root cause**: `drive.file` scope chỉ cho phép app xem file **do app tạo**. OAuth token rotation (refresh flow, re-consent, credential reset) invalidates prior token's ownership claim — new token không "thấy" folder cũ → `_find_or_create_folder()` tạo folder mới → duplicate. Verified trong `wet-mcp/src/wet_mcp/sync.py:43`.
+**Rename impact** (481 refs cần update trong downstream repos, Phase J):
 
-**Rationale**:
-- `drive.appdata` là scope Google thiết kế riêng cho "app config/data that user doesn't interact with directly"
-- Zero duplicate by architectural design (1 appdata folder per user per OAuth client_id, persistent across tokens)
-- Minimum scope (hẹp nhất trong Drive scopes)
-- Không cần `permissions.create` workaround
-- Không cần manual folder ID
-- Data vẫn private của user (trong their drive nhưng không hiện Drive UI)
+| Repo | Refs | Action |
+|------|-----:|--------|
+| wet-mcp | ~180 | imports + `pyproject.toml` dep (line 55 + editable path line 120) |
+| mnemo-mcp | ~120 | imports + `pyproject.toml` dep |
+| better-code-review-graph | ~90 | imports + `pyproject.toml` dep |
+| better-telegram-mcp | ~50 | imports + `pyproject.toml` dep |
+| better-email-mcp | ~25 | imports + `package.json` dep |
+| better-notion-mcp | ~16 | imports + `package.json` dep |
+| better-godot-mcp | **0** | No change |
+| **Total** | **481** | Automated sed + verification grep |
 
-**Trade-off**: User không browse `docs.db` / `memories.db` trực tiếp. Không phải vấn đề vì không ai mở 1.5GB SQLite file thủ công.
+### 2.6 Decision: GDrive fix — drive.appdata scope + manual web console + rclone cleanup
 
-**Migration**: one-time routine first run after upgrade — detect files trong old folders, upload to appdata, flag migrated. User re-consent OAuth 1 lần.
+**Current state**:
+- User **đã update consent screen scope sang `drive.appdata`** (2026-04-11, manual web console action). Verified via user confirmation.
+- Code vẫn ở `drive.file`: `wet-mcp/src/wet_mcp/sync.py:44`, `mnemo-mcp/src/mnemo_mcp/sync.py:43`.
+- GDrive still has duplicate folders: `mnemo-mcp × 2` (Feb + Apr), `wet-mcp × 2` (Feb + Apr) — verified via `rclone lsd echovault-gdrive:`
 
-**Cleanup** (thực hiện qua rclone trong Phase G trước khi code fix):
-- Xóa `wet-mcp/` + `wet-mcp (2)/` + stale `docs.db` trên GDrive
-- Xóa `mnemo-mcp/` + `mnemo-mcp (1)/` + stale `memories.db` trên GDrive
-- Recovery: nếu duplicate chứa data unique (ví dụ: db newer hơn), download trước khi xóa, merge thủ công sau upload appdata
+**Work split**:
 
-### 2.7 Decision: CLI removal
+| Ai | Việc | Tool |
+|----|------|------|
+| Em | Update `_SCOPE = "https://www.googleapis.com/auth/drive.appdata"` trong 2 sync.py | Edit tool |
+| Em | Replace `_find_or_create_folder()` logic với `appDataFolder` well-known ID | Edit tool |
+| Em | rclone list + download + SQLite analyze + merge duplicate folders (Phase H) | rclone CLI + sqlite3 Python |
+| **User** (đã xong) | Web console: add `drive.appdata` scope vào OAuth consent screen | https://console.cloud.google.com/apis/credentials/consent |
+| **User** (sau Phase J deploy) | OAuth re-consent lần đầu với new scope | Browser |
 
-**KHÔNG có CLI subcommand. Chỉ 1 entry point per server.**
+**rclone cleanup — SQLite-aware merge (Phase H, với user in loop)**:
 
-**Mode detection trong entry point binary**:
-- Nếu env `MCP_CORE_MODE=server` HOẶC được spawn bởi stdio proxy launcher HOẶC file lock indicates server role → chạy HTTP server
-- Nếu stdin là pipe từ agent stdio client (default) → chạy stdio proxy + auto-ensure HTTP server qua lifecycle lock
-- Race condition: 2 agents start cùng lúc → file lock với atomic create + retry (fcntl.flock Unix / msvcrt.locking Windows)
+1. List both folder IDs cho mỗi server pair
+2. Download cả 2 DB về `./_backup/gdrive-audit/<server>-<folder_id>/`
+3. sqlite3 schema analysis + row count + max timestamp per table
+4. Merge decision: **`INSERT OR IGNORE` merge** nếu schema identical + no ID conflict; **schema migration + merge** nếu schema drift; **hỏi user case-by-case** nếu conflict IDs
+5. Upload merged DB tới canonical folder (sẽ migrate to appdata sau Phase J)
+6. `rclone purge` duplicate folder kia
+7. Verify `rclone lsd` chỉ còn 1 folder per server
 
-**Management qua MCP tool action** (mở rộng mega-tool hiện có). Mọi credential server expose matrix actions sau:
+**Migration to appdata** (after Phase J code deploys):
+- First run post-upgrade: code detect old folder, upload files to `appDataFolder` via new scope, flag migrated
+- User re-consent once
+- Old folder rồi cũng xoá được
 
-| Action | wet | mnemo | crg | telegram | email | notion |
-|--------|:---:|:-----:|:---:|:--------:|:-----:|:------:|
-| `status` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `install_agent` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `uninstall_agent` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `reset_credentials` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `shutdown_daemon` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `trigger_relay` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ (local only) |
+### 2.7 Decision: CLI removal + credential_state gate removal
 
-Semantic:
-- `status` — server health, port, connected sessions, memory usage, uptime
-- `install_agent(targets=[...])` — auto detect và write config files
-- `uninstall_agent(targets=[...])` — cleanup
-- `reset_credentials()` — trigger relay form re-submission, clear config.enc
-- `shutdown_daemon()` — clean exit HTTP server (user có thể gọi trước khi upgrade)
-- `trigger_relay()` — returns relay URL + force open in browser
+**(a) CLI removal**: 1 entry point per server. Mode detection trong binary:
 
-Mỗi server expose thêm domain-specific actions (wet: search/extract/media, mnemo: memory, telegram: message/chat/media, etc.) — không thay đổi.
+- `MCP_CORE_MODE=server` env OR spawned bởi stdio proxy launcher OR file lock indicates server role → HTTP server mode
+- stdin là pipe từ agent stdio client (default) → stdio proxy mode + auto-ensure HTTP server qua lifecycle lock
+- Race: fcntl.flock Unix / msvcrt.locking Windows atomic create + retry
+
+**(b) credential_state.py removal** (new v3):
+
+Xoá hoàn toàn `credential_state.py` (hoặc `.ts`) + inline AWAITING_SETUP gate trong 6 repo. OAuth 2.1 transport middleware handle credential check. Tool code giả định credentials present.
+
+**Files cần xoá**:
+
+| Repo | File xoá | Files sửa |
+|------|----------|-----------|
+| wet-mcp | `src/wet_mcp/credential_state.py`, `tests/test_credential_state.py` | `src/wet_mcp/server.py` (bỏ AWAITING_SETUP block line 58-70, 146, 251-333, 1278-1395), `setup_tool.py` (bỏ `trigger_relay_setup`) |
+| mnemo-mcp | `src/mnemo_mcp/credential_state.py`, `tests/test_credential_state.py` | `src/mnemo_mcp/server.py`, `setup_tool.py`, `tests/test_server_setup_actions.py` |
+| better-code-review-graph | `src/better_code_review_graph/credential_state.py`, `tests/test_credential_state.py`, `tests/test_setup_tool.py` | `src/better_code_review_graph/server.py` |
+| better-telegram-mcp | `src/better_telegram_mcp/credential_state.py`, `tests/test_credential_state.py`, `tests/test_relay_setup.py` | `src/better_telegram_mcp/server.py`, `tests/test_server.py` |
+| better-email-mcp | `src/credential-state.ts`, `src/credential-state.test.ts`, `build/src/credential-state.d.ts` | `src/init-server.ts`, `src/tools/composite/setup.ts`, `src/tools/registry.ts`, `init-server.test.ts`, `setup.test.ts` |
+| better-notion-mcp | `src/credential-state.ts`, `build/src/credential-state.d.ts` | `src/init-server.ts`, `src/tools/registry.ts`, `src/transports/stdio.ts`, tests |
+
+**Replacement**: `mcp_core.auth.middleware` global middleware áp vào Streamable HTTP app. Per-session credentials inject qua `Depends(get_session_creds)` trong FastMCP tool handlers.
+
+**(c) Management actions** — **secondary utility only, không phải primary install path**:
+
+Primary install vẫn theo marketplace pattern hiện có (`/plugin install wet-mcp@n24q02m-plugins`) hoặc manual qua `setup-with-agent.md` / `setup-manual.md` updated docs. MCP tool actions là **secondary** cho cross-agent propagation sau khi đã bootstrap 1 agent:
+
+- `<server>(action="status")` — health, port, sessions, memory, uptime
+- `<server>(action="install_agent", targets=[...])` — ghi config files cho agents khác
+- `<server>(action="uninstall_agent", targets=[...])` — cleanup
+- `<server>(action="reset_credentials")` — clear config.enc, trigger new OAuth dance
+- `<server>(action="shutdown_daemon")` — clean exit HTTP server
+- `<server>(action="trigger_relay")` — returns authorization URL, force open browser
 
 ### 2.8 Decision: Agent config auto-write
 
-**`mcp_core.install.agents` module support**. Priority order để test/document trước:
-
-**Tier 1 (primary, must work ngay)**:
+**Tier 1 (primary, must work)**:
 
 | Agent | Config file | Entry format |
 |-------|-------------|-------------|
@@ -262,108 +317,159 @@ Mỗi server expose thêm domain-specific actions (wet: search/extract/media, mn
 
 **Tier 2 (secondary, best-effort)**:
 
-| Agent | Config file | Entry format |
-|-------|-------------|-------------|
-| Antigravity (Gemini CLI) | `~/.gemini/antigravity/mcp_config.json` | tương tự Claude Code |
-| Cursor | `~/.cursor/mcp.json` | tương tự Claude Code |
-| Windsurf | `~/.codeium/windsurf/mcp.json` | tương tự |
-| OpenCode | `~/.config/opencode/opencode.json` (MCP section) | tương tự |
+| Agent | Config file |
+|-------|-------------|
+| Antigravity (Gemini CLI) | `~/.gemini/antigravity/mcp_config.json` |
+| Cursor | `~/.cursor/mcp.json` |
+| Windsurf | `~/.codeium/windsurf/mcp.json` |
+| OpenCode | `~/.config/opencode/opencode.json` |
 
-Tier 1 phải test empirical trong Phase M, Tier 2 có thể defer nếu time boxed. Merge logic: preserve existing entries, add/update entry cho server hiện tại, write back với backup (`.bak` kế bên original).
+Merge logic: preserve existing entries, add/update cho server hiện tại, write back với `.bak`.
 
 ### 2.9 Decision: Commit prefix enforcement
 
-- Pre-commit hook trong 12 repos: regex `^(fix|feat)(\([a-z0-9-]+\))?:` — reject mọi prefix khác
-- Breaking change: dùng footer `BREAKING CHANGE: <description>` trong body, KHÔNG `!` indicator
-- PSR config update: release commit template từ `chore(release): vX.Y.Z` sang `fix(release): vX.Y.Z`
-- Renovate config override: commit message prefix từ `chore(deps):` sang `fix(deps):`
-- Bot PR (Bolt/Sentinel/Palette): nếu tools hỗ trợ config prefix, update template. Nếu không, pre-commit hook reject → user/admin manually rename message
-- Historical bad commits: accept as-is, không force-rewrite history
+- Pre-commit hook trong 12 repos: regex `^(fix|feat)(\([a-z0-9-]+\))?:` — reject khác
+- Breaking change: footer `BREAKING CHANGE: <description>`, KHÔNG `!` indicator
+- PSR config **đã updated** (per user 2026-04-11), không verify lại
+- Renovate config override: prefix `fix(deps):` — cần verify trong Phase K nếu chưa
+- Historical bad commits: accept as-is
+
+### 2.10 Decision: Hook migration (CRG only)
+
+**Current state** (verified `better-code-review-graph/hooks/hooks.json`):
+
+```json
+{
+  "hooks": {
+    "SessionStart": [{ "hooks": [{ "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh" }] }],
+    "PostToolUse": [{
+      "matcher": "Write|Edit|Bash",
+      "hooks": [{
+        "type": "command",
+        "command": "uvx --from better-code-review-graph python -c \"from better_code_review_graph.incremental import incremental_update_from_hook; incremental_update_from_hook()\" 2>/dev/null || true"
+      }]
+    }]
+  }
+}
+```
+
+**Problem**: `PostToolUse` spawn uvx subprocess **mỗi lần** Write/Edit/Bash → load ONNX model lại → RAM spike + latency. Pattern này thiết kế cho stdio era.
+
+**Fix** (Phase J CRG):
+
+```json
+{
+  "hooks": {
+    "SessionStart": [{ "hooks": [{ "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh" }] }],
+    "PostToolUse": [{
+      "matcher": "Write|Edit|Bash",
+      "hooks": [{
+        "type": "command",
+        "command": "curl -sS -X POST http://127.0.0.1:<crg_port>/internal/incremental-update -H 'Authorization: Bearer '${MCP_CORE_TOKEN} -H 'Content-Type: application/json' -d '{\"tool\":\"${CLAUDE_TOOL_NAME}\",\"files\":${CLAUDE_TOOL_FILES}}' 2>/dev/null || true"
+      }]
+    }]
+  }
+}
+```
+
+HTTP POST tới running CRG daemon endpoint thay vì spawn fresh subprocess. Daemon đã load model — incremental update chạy nhanh hơn 10-100x.
+
+`session-start.sh` cũng review — có thể đơn giản hoá nếu nó cũng gọi uvx.
+
+**Other repos**: wet/mnemo/telegram/email/notion chưa có `hooks/hooks.json` — không cần migrate.
+
+### 2.11 Decision: Shared embedding daemon (new in v3)
+
+**Component**: `mcp-embedding-daemon` — standalone process trong `mcp-core/packages/embedding-daemon/`, load model 1 lần, serve wet/mnemo/crg qua localhost HTTP.
+
+**API**:
+
+- `POST /embed` → `{"model": "qwen3-0.6b", "input": ["text1", "text2"], "dims": 768}` → `{"data": [[0.1,...], ...]}`
+- `POST /rerank` → `{"model": "qwen3-rerank-0.6b", "query": "...", "documents": [...]}` → `{"results": [{"index": 0, "score": 0.95}, ...]}`
+- `GET /health` → `{"status": "ok", "model_loaded": true, "backend": "onnx" | "gguf", "memory_mb": 1850}`
+- `GET /.well-known/oauth-protected-resource` → OAuth metadata (cùng pattern với các server khác)
+
+**Backend auto-detect** (reuse qwen3-embed repo logic):
+- CUDA available + model.onnx + weights → ONNX with CUDAExecutionProvider
+- CPU only + quantized GGUF → llama-cpp-python
+- Cloud mode: daemon pass-through tới Jina/Gemini/OpenAI/Cohere (4 providers) — tránh mỗi server tự quản 4 API keys
+
+**Bootstrap**:
+- wet/mnemo/crg khởi động → detect `MCP_EMBEDDING_DAEMON_URL` env → nếu set → client mode (HTTP call). Nếu không set → fallback spawn daemon qua lifecycle lock (tương tự stdio proxy auto-ensure)
+- Default: daemon tự spawn lần đầu server nào đó cần embedding, các server sau share
+
+**Resource save**: 3 × 2GB ONNX = 6GB → 1 × 2GB = 2GB (4GB RAM saved)
+
+**Client side** trong wet/mnemo/crg: thay code load model trực tiếp bằng `mcp_core.embedding.Client(daemon_url)`. Logic fallback Cloud → Local vẫn ở client, daemon chỉ là transport.
 
 ---
 
 ## 3. Security considerations
 
-### 3.1 Local mode
+### 3.1 Local mode (Tier A + Tier B local)
 
-- Bind strictly `127.0.0.1` (không `0.0.0.0` kể cả loopback) để tránh Windows Firewall prompt
+- Bind strictly `127.0.0.1`, không `0.0.0.0` kể cả loopback (tránh Windows Firewall prompt)
 - Bearer token file 0600 (Unix) / NTFS ACL current user only (Windows)
-- `Origin` header validation: accept `http://127.0.0.1:*` và `http://localhost:*`, reject others với 403
-- DNS rebinding defense: reject `Host` header không phải `127.0.0.1`, `localhost`, `::1`
-- JWT signing key sinh ra lần đầu server start, persisted trong config.enc, rotation qua `reset_credentials` action
+- `Origin` header validation: accept `http://127.0.0.1:*` + `http://localhost:*`, reject khác 403
+- DNS rebinding defense: reject `Host` header không phải `127.0.0.1|localhost|::1`
+- JWT signing key sinh lần đầu, persist trong config.enc, rotation qua `reset_credentials` action
 
-### 3.2 Remote mode
+### 3.2 Remote mode (Tier B mandatory, Tier A opt-in)
 
-- Bind `0.0.0.0` nhưng phía trước phải có Caddy reverse proxy + TLS + CF Tunnel hoặc Tailscale (tuân rule "No open ports on VM")
+- Bind `0.0.0.0` phía sau Caddy + TLS + CF Tunnel HOẶC Tailscale (rule "No open ports on VM")
 - OAuth 2.1 với PKCE mandatory
 - Per-user credential encryption: PBKDF2 600k iterations + user_id + master secret
-- Master secret trong Doppler (VM config) + Infisical (app secrets), rotation procedure documented per server repo AGENTS.md
+- Master secret trong Doppler (VM config) + Infisical (app secrets)
 - Rate limiting per user (token bucket) qua middleware
-- Audit log: mọi authorize/token/revoke event
-- Multi-user isolation test: user A không decrypt được user B credentials
+- Audit log: authorize/token/revoke events
+- Multi-user isolation fuzz test Phase L
 
-**Infisical structure** (concrete, không placeholder):
+**Infisical structure** (`mcp-core-prod` project, production environment):
 
 ```
-project:   mcp-core-prod
-environment: production
-folders:
-  /mcp-core/
-    MASTER_SECRET          # base64 32 bytes, feeds PBKDF2
-    JWT_PRIVATE_KEY_PEM    # RS256 signing key (rotatable)
-    JWT_PUBLIC_KEY_PEM     # paired public key
-  /wet-mcp/
-    GDRIVE_OAUTH_CLIENT_ID
-    GDRIVE_OAUTH_CLIENT_SECRET
-    SEARXNG_CONFIG         # optional custom SearXNG endpoint
-  /mnemo-mcp/
-    GDRIVE_OAUTH_CLIENT_ID
-    GDRIVE_OAUTH_CLIENT_SECRET
-  /better-code-review-graph/
-    GITHUB_APP_PRIVATE_KEY
-    GITHUB_APP_CLIENT_ID
-  /better-telegram-mcp/
-    TELEGRAM_API_ID
-    TELEGRAM_API_HASH
-  /better-email-mcp/
-    (no app-level secret — per-user IMAP creds only)
-  /better-notion-mcp/
-    NOTION_OAUTH_CLIENT_ID
-    NOTION_OAUTH_CLIENT_SECRET
-    NOTION_OAUTH_REDIRECT_URI
+/mcp-core/
+  MASTER_SECRET          # base64 32 bytes, PBKDF2 input
+  JWT_PRIVATE_KEY_PEM    # RS256 signing key
+  JWT_PUBLIC_KEY_PEM
+/wet-mcp/                # (opt-in remote only — skip nếu không self-host)
+  GDRIVE_OAUTH_CLIENT_ID
+  GDRIVE_OAUTH_CLIENT_SECRET
+  SEARXNG_CONFIG
+/mnemo-mcp/              # (opt-in remote only)
+  GDRIVE_OAUTH_CLIENT_ID
+  GDRIVE_OAUTH_CLIENT_SECRET
+/better-code-review-graph/  # (opt-in remote only)
+  GITHUB_APP_PRIVATE_KEY
+  GITHUB_APP_CLIENT_ID
+/better-telegram-mcp/    # (mandatory — existing Infisical project 29457d18-fd82-4942-9330-7da7982e6b1d)
+  TELEGRAM_API_ID
+  TELEGRAM_API_HASH
+/better-email-mcp/
+  (no app-level secret)
+/better-notion-mcp/
+  NOTION_OAUTH_CLIENT_ID
+  NOTION_OAUTH_CLIENT_SECRET
+  NOTION_OAUTH_REDIRECT_URI
 ```
 
-Universal-auth machine identity (Client ID `92ae6217-...` per memory) fetches at server start via `infisical export --format=dotenv --token=$INFISICAL_TOKEN`. Secrets never touched by user during runtime.
+Universal-auth machine identity (Client ID `92ae6217-...`) fetches secrets via `infisical export --format=dotenv --token=$INFISICAL_TOKEN`.
 
-### 3.3 Credential flow (không đổi)
+### 3.3 Credential flow
 
-- Credentials KHÔNG bao giờ pass qua LLM chat context
-- Relay form POST body nhận credentials, server process immediately, store encrypted
+- Credentials KHÔNG qua LLM chat context
+- OAuth 2.1 authorization page (relay form HTML) nhận credentials, server process immediately, store encrypted
 - No `set_env` MCP action anywhere
 - Token exchange theo OAuth 2.1 standard
 
-### 3.4 Pre-existing secret exposure (new section, incident documented)
+### 3.4 Pre-existing secret exposure (out of scope, flagged)
 
-**Finding**: `~/.claude/settings.local.json` và backups `~/.claude/backups/.claude.json.*` chứa hardcoded credentials đã commit vào disk trong prior sessions:
-- `GITHUB_TOKEN` (personal access token)
-- `GEMINI_API_KEY`
-- `COHERE_API_KEY`
-- `TELEGRAM_API_ID` + `TELEGRAM_API_HASH` + `TELEGRAM_PHONE`
-- `EMAIL_CREDENTIALS` cho 4 accounts (IMAP app passwords)
-- Google Stitch API key (`X-Goog-Api-Key` header trong `.claude.json.backup` stitch entry)
+`~/.claude/settings.local.json` + `~/.claude/backups/.claude.json.*` chứa 7 real credentials hardcoded. **Fix ownership không thuộc 12 repo này** nhưng user cần:
 
-**Impact**: Các credential này có thể có trong:
-- Claude Code session history files (jsonl transcripts)
-- Backup files theo timestamp
-- Memory file-history versioning directory
+1. Rotate GitHub PAT, Gemini, Cohere, Google Stitch, email app passwords × 4, Telegram API creds
+2. Migrate `settings.local.json` sang Infisical fetch-at-runtime
+3. Sanitize backup files trước khi sync bất cứ đâu
 
-**Fix ownership**: Không phải phạm vi spec này (không thuộc 12 repo). Nhưng cần:
-1. User rotate tất cả secret trên
-2. `~/.claude/settings.local.json` phải migrate sang Doppler/Infisical fetch-at-runtime pattern
-3. Backup files sanitize (grep replace placeholders) trước khi sync bất cứ đâu
-4. Spec này không làm thay — flag để user handle separately
-
-**Enforce going forward**: MCP core credential load luôn qua Infisical, không qua env vars trực tiếp user set.
+**Enforce going forward**: MCP core credential load luôn qua Infisical, không qua env vars user set.
 
 ---
 
@@ -371,119 +477,118 @@ Universal-auth machine identity (Client ID `92ae6217-...` per memory) fetches at
 
 ### 4.1 Breaking changes
 
-- **mcp-relay-core → mcp-core**: import path change, major version bump (v2.0.0). **Editable path** trong pyproject.toml của 3 downstream Python repo phải update (wet-mcp line 120, mnemo-mcp, crg).
-- **stdio mode drop** cho 6 credential servers: major version bump per server
-- **Old HTTP relay endpoints** (`/sse`, `/events/*`): bỏ hoàn toàn, không grace period (chưa có external user ngoài 1 PR contributor)
-- **GDrive scope** `drive.file` → `drive.appdata`: user phải re-consent OAuth 1 lần
+- **mcp-relay-core archived → mcp-core fresh repo**: import path change, package name change, NPM/PyPI package name change (`mcp-relay-core` → `mcp-core`)
+- **stdio mode removed** cho 6 credential server: major version bump per server
+- **credential_state.py removed** cho 6 repos: tool behavior change (no more AWAITING_SETUP inline error, now HTTP 401)
+- **GDrive scope** `drive.file` → `drive.appdata`: user re-consent 1 lần
+- **CRG hooks.json PostToolUse** stdio subprocess → HTTP POST
 
-### 4.2 Migration path cho user
+### 4.2 Migration path
 
-- Release current N.x.y: unchanged, no action needed
-- Release N+1.0.0: stdio mode removed hoàn toàn, chỉ HTTP mode, rename mcp-relay-core → mcp-core
-- Runtime một lần: data migration routine chạy first start sau upgrade (GDrive appdata, optional backup old config.enc)
-
-Vì ecosystem này chưa có external user, skip grace period — release N+1.0.0 thẳng với mọi breaking change aggregated.
+- Release current N.x.y: unchanged
+- Release N+1.0.0: tất cả breaking changes aggregated (không grace period vì chưa external user đáng kể)
+- Data migration routine first run post-upgrade (GDrive appdata, optional backup old config.enc)
 
 ### 4.3 User migration tool
 
-- `wet(action="install_agent", targets=["all"])` detect existing stdio entries trong agent config files, replace với HTTP entries
+- `<server>(action="install_agent", targets=["all"])` detect existing stdio entries, replace HTTP
 - Existing `config.enc` format compatible — AES-GCM machine key scheme không đổi
-- GDrive migration: `wet(action="reset_credentials")` triggers re-consent với new scope, routine chạy appdata migration once.
+- GDrive: `reset_credentials` triggers re-consent với new scope
 
 ---
 
 ## 5. Verification strategy
 
-### 5.1 Evidence requirement (mới, ra đời từ lesson của audit)
+### 5.1 Evidence requirement
 
 Mọi task complete claim PHẢI kèm:
-- `gh api` / `gh pr view` / `gh run view` output (cho PR/issue/CI state)
-- `git log --oneline` output với hash
+- `gh api` / `gh pr view` / `gh run view` output
+- `git log --oneline` với hash
 - File path + line number
-- Test output (command invoked + stdout)
-
-Lý do: tránh lặp lại incident Antigravity walkthrough hoặc Claude Code session cf5ac4a3 hallucinate task status. Không trust "tôi đã làm rồi" — trust evidence.
+- Test output (command + stdout)
 
 ### 5.2 Phase gate acceptance
 
-Mỗi phase có acceptance criteria cụ thể (xem plan file). Phase kế chỉ start sau khi phase trước pass acceptance với evidence attached.
+Mỗi phase acceptance criteria cụ thể (xem plan files). Phase kế chỉ start sau evidence pass.
 
 ### 5.3 E2E gate trước release
 
-Release stable version CHỈ sau Phase M E2E suite pass 100% với local unreleased build (không dùng released package).
+Release stable CHỈ sau Phase M E2E suite pass 100% với **local unreleased build** (không dùng released package).
 
 ---
 
 ## 6. Risk analysis & rollback
 
-### 6.1 Per-server rollback
-
 | Risk | Likelihood | Impact | Mitigation | Rollback |
 |------|:---:|:---:|------------|----------|
-| Rename `mcp-relay-core` → `mcp-core` breaks editable path in downstream | High | Medium | Update all 3 downstream `pyproject.toml` in **same commit** as rename; verify `uv sync` + test run before push | `git revert` rename commit → downstream imports still work via legacy package name |
-| FastMCP base framework incompatible với existing mcp-relay-core APIs | Medium | High | Spike FastMCP integration in Phase H1 (1 server only: wet-mcp) before rolling to mnemo + crg | Keep legacy Starlette custom transport code path in `mcp_core.transport.legacy.py`, flip flag per server |
-| GDrive appdata migration corrupts existing databases | Low | High | Upload to appdata **first**, verify checksum, only then delete old folders; keep rclone backup local before destructive delete | rclone restore từ local backup trong 24h |
-| OAuth 2.1 auto-browser UX broken in some agent (e.g. Antigravity can't open browser) | High | Medium | Phase G5 empirical test before rolling AS; fallback: print URL to stderr for manual copy | Per-agent compat matrix; revert to legacy relay trigger for agents that fail |
-| Pre-commit prefix hook blocks urgent fix PR | Medium | Low | Hook only on push, not on amend; bypass documented but discouraged | Remove hook commit, push fix, re-add hook |
-| Multi-user remote isolation bug leaks User A's creds to User B | Low | Critical | Phase L3 fuzz test với 10 concurrent users, cross-decrypt attempt fails | Kill remote mode immediately, force all users back to local, rotate master secret |
-| Notion OAuth app registration delays remote launch | High | Low | Register Notion OAuth app before Phase K; local mode unaffected | Remote notion stays opt-out until registered; other 5 remote servers unaffected |
+| Archive mcp-relay-core + create new breaks 3 downstream editable paths | High | Medium | Same-commit update of all 3 `pyproject.toml` editable paths; verify `uv sync` before push | git bundle restore + `gh api unarchive`; re-activate editable paths |
+| FastMCP base framework incompatible với existing mcp-relay-core APIs | Medium | High | Spike FastMCP trong Phase I4 với 1 server (wet-mcp) trước khi roll mnemo + crg | Keep legacy Starlette custom transport code path in `mcp_core.transport.legacy.py`, flip flag per server |
+| GDrive appdata migration corrupts SQLite DBs | Low | High | Upload appdata **first**, verify checksum, only then delete old folders; keep rclone + local backup before destructive op | rclone restore từ local backup trong 24h |
+| Duplicate GDrive folders contain divergent data (SQLite merge conflict) | High | Medium | Phase H interactive merge with user; sqlite3 diff analysis before decision | Keep both folders with suffix, defer final merge |
+| OAuth 2.1 auto-browser UX broken in some agent | High | Medium | Baseline assumption documented in profile + skill ref; fallback: print URL stderr; Phase G5 empirical (reduced scope) | Per-agent compat matrix; revert specific agent to legacy trigger if needed |
+| Pre-commit prefix hook blocks urgent fix PR | Medium | Low | Hook only on push; bypass discouraged | Remove hook commit, push fix, re-add |
+| Multi-user remote leaks User A creds to User B | Low | Critical | Phase L fuzz test 10 concurrent users | Kill remote, force local, rotate master |
+| Notion OAuth app registration delays remote launch | High | Low | Register Notion OAuth app before Phase K; local unaffected | Remote notion stays down; other 5 remote servers unaffected |
+| credential_state.py removal breaks test suite across 6 repos | High | Medium | Phase J update test suite simultaneously với removal; baseline test run before-after | Restore file + re-add inline gate temporarily |
+| Shared embedding daemon single point of failure | Medium | Medium | Auto-restart via lifecycle lock; fallback: each server loads own model if daemon down | Revert to per-server loading (spec §2.11 fallback path) |
+| CRG `hooks.json` HTTP POST fails silently (daemon not running) | Medium | Low | `|| true` at end of curl command; stderr log | No rollback needed, hook is best-effort |
 
 ### 6.2 PR review SLA
 
-**Pending 246 PRs** — aggressive processing strategy:
-- Bot PRs (Renovate, Dependabot): batch review + merge trong Phase G1-G4 nếu CI xanh và không touch auth/transport code
-- Human PRs (1 only: OdinYkt telegram #277): review individually với context về Phase 3 rewrite; có thể close với explanation nếu conflict với new architecture, OR cherry-pick useful changes
-- SLA: Phase G kết thúc ≤ 50 open PRs (review ≥ 200)
+**246 open PRs** aggressive strategy:
+- Bot PRs (Renovate, Dependabot): batch review + merge trong Phase G nếu CI xanh + không touch auth/transport
+- Human PRs (1 only: OdinYkt telegram #277): individual review với Phase 3 context; possibly close with explanation nếu conflict
+- SLA: Phase G kết thúc ≤ 50 open PRs
 
 ### 6.3 Test credential strategy
 
-E2E tests cần real credentials cho mọi server. Strategy:
-- **Dedicated test accounts**: test Telegram account, test Notion workspace, test email (Gmail app password), test GitHub App
-- Stored trong Infisical `mcp-core-test` project (separate environment)
+E2E test cần real credentials cho mọi server. Strategy:
+- Dedicated test accounts (test Telegram, test Notion workspace, test Gmail app password, test GitHub App)
+- Stored trong Infisical `mcp-core-test` project (separate env)
 - Rotated monthly
-- CI fetches qua machine identity, không commit trong GitHub secrets
-- Local dev dùng same Infisical project
+- CI fetches via machine identity
 
-### 6.4 Circular dependency risk
+### 6.4 Circular dependency check
 
-`mcp-core` depends on `web-core` cho HTTP client utilities. `web-core` potentially imports `mcp-core` nếu cần MCP client. **Resolution**: `web-core` KHÔNG import `mcp-core`. `mcp-core` có internal `http_client.py` duplicate nếu cần thiết. Verify qua dependency graph check trong Phase H.
+`mcp-core` depends on `web-core` cho HTTP client utilities. `web-core` KHÔNG import `mcp-core`. Verify trong Phase I3 dependency graph check.
 
 ---
 
 ## 7. Open design questions
 
-Resolve trong execution, không blocker cho spec approval:
+1. **Shared ONNX daemon startup race**: 2 agent spawn song song → cả 2 cố spawn embedding daemon → conflict. Resolve: atomic file lock + retry (Phase I7).
+2. **Idle shutdown policy**: default local HTTP server idle bao lâu exit? Recommend: never shutdown, configurable `MCP_CORE_IDLE_TIMEOUT=<minutes>`.
+3. **Notion SDK current Streamable HTTP version**: verify Phase G6 vì `better-notion-mcp` đã production HTTP nhưng SDK version có thể chưa 2025-11-25.
 
-1. **Agent auto-open browser reliability**: Spec 2025-11-25 nói MCP client MUST auto-open browser khi nhận 401 với `WWW-Authenticate: Bearer resource_metadata=...`. Claude Code, Codex CLI, Copilot, Antigravity hiện tại implement đầy đủ chưa? Test empirical trong Phase G5.
-2. **Shared ONNX across wet+mnemo+crg daemons**: Ba daemon riêng đều load model qwen3-embed độc lập (3 copies RAM). Tạo 1 embedding daemon riêng share 3 server khác? Defer — phase sau nếu cần, không blocker.
-3. **Stdio proxy auto-ensure race**: 2 agent start song song → cả 2 spawn daemon → conflict. Resolve qua atomic file lock + retry pattern (fcntl Unix / msvcrt Windows).
-4. **PSR commit prefix config**: verify PSR trong 12 repo support custom commit template qua `python-semantic-release` hoặc `semantic-release-monorepo`. Override ở Phase K4.
-5. **Notion current Streamable HTTP compliance**: verify `better-notion-mcp` HTTP transport hiện dùng spec nào (2024-11-05 old, 2025-03-26, hoặc 2025-11-25). Đọc source trong Phase G6.
-6. **Idle shutdown policy**: default local HTTP server idle bao lâu thì tự exit? Recommend: never shutdown by default, configurable qua env var `MCP_CORE_IDLE_TIMEOUT=<minutes>`.
+**Resolved / removed** (v3):
+- ~~Agent auto-browser reliability~~ → baseline assumption, không test empirical
+- ~~PSR commit prefix config~~ → user confirmed đã xong
 
 ---
 
 ## 8. Objectives mapping (O12-O19)
 
-Nối tiếp O1-O11 của April 5 spec.
-
-- **O12** — Unblock CI: tất cả 12 repo CI xanh 3 run liên tiếp trên ubuntu + windows + macos
-- **O13** — GDrive single-folder invariant: wet + mnemo sync vào 1 appdata folder, token rotation không tạo duplicate
+- **O12** — Unblock CI: 12 repo CI xanh 3 run liên tiếp ubuntu + windows + macos
+- **O13** — GDrive single-folder: wet + mnemo sync vào 1 appdata folder, token rotation không duplicate
 - **O14** — Streamable HTTP 2025-11-25 compliance: mcp-core + 6 credential server dùng unified `/mcp` endpoint
-- **O15** — Unified OAuth 2.1 AS: self-hosted AS cho 5 server, delegated cho notion remote, UX relay form giữ nguyên
-- **O16** — Resource consolidation: wet + mnemo + crg chạy long-running HTTP, share heavy state across Claude Code sessions
-- **O17** — Multi-OS + multi-agent support: 12 repo CI matrix pass, `install_agent` ghi config đúng cho 7 agent
-- **O18** — Docs/rules compliance: README accurate, profile accurate, pre-commit hook enforce `fix:`/`feat:` only từ 2026-04-10
-- **O19** — Full/real/live E2E test pre-release: clean state, real credentials, build local, mọi action/mode của mọi server, concurrent session test
+- **O15** — Unified OAuth 2.1: self-hosted AS cho 5 server, delegated cho notion remote
+- **O16** — Resource consolidation: wet + mnemo + crg chạy long-running HTTP + shared embedding daemon
+- **O17** — Multi-OS + multi-agent: 12 repo CI matrix pass, `install_agent` ghi config đúng cho 7 agent
+- **O18** — Docs/rules compliance: README accurate, profile accurate, pre-commit enforce `fix:`/`feat:` từ 2026-04-10
+- **O19** — Full/real/live E2E test pre-release: clean state, real credentials, build local, mọi action/mode × server × concurrent session
 
 ---
 
 ## 9. References
 
-- MCP Streamable HTTP 2025-11-25 spec: https://modelcontextprotocol.io/specification/2025-11-25/basic/transports
-- MCP Authorization spec: https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization
-- OAuth 2.1 draft: RFC 9470
-- Google Drive API appdata scope: https://developers.google.com/drive/api/guides/appdata
-- FastMCP Streamable HTTP deployment: https://gofastmcp.com/deployment/http
+- MCP Streamable HTTP 2025-11-25: https://modelcontextprotocol.io/specification/2025-11-25/basic/transports
+- MCP Authorization: https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization
+- OAuth 2.1: RFC 9470
+- Google Drive API appdata: https://developers.google.com/drive/api/guides/appdata
+- FastMCP Streamable HTTP: https://gofastmcp.com/deployment/http
+- **Profile principles**: `n24q02m/README.md` §"Design Philosophy" principle #6
+- **Skill reference**: `n24q02m/skills/fullstack-dev/references/mcp-server.md`
+- **Global rules**: `~/.claude/CLAUDE.md` §3 E2E TESTING
+- **Doc update matrix**: `specs/2026-04-11-doc-update-matrix.md` (companion)
 - Prior spec: `specs/2026-04-05-relay-redesign-and-production-hardening-design.md`
 - Prior plan: `plans/2026-04-08-production-hardening-phase2.md`

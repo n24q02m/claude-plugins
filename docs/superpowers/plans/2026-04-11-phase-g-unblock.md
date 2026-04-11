@@ -6,9 +6,14 @@
 **Roadmap**: `plans/2026-04-10-phase3-roadmap.md` (phase G slice)
 **Date**: 2026-04-11 (to be executed 2026-04-11 onward)
 
-**Goal:** Unblock the Phase H/I/J/K/L/M critical path by resolving the 6 P0 issues (telegram conflict, wet-mcp CI, CodeQL noise, Dependabot vulns, Claude Code HTTP verification, notion spec verification) so later phases can begin from a clean baseline.
+**Goal:** Unblock the Phase H/I/J critical path by resolving the 5 P0 issues (telegram conflict, wet-mcp CI, CodeQL noise, Dependabot vulns, notion HTTP template inventory) and capture a credential_state file inventory for Phase J, so later phases can begin from a clean baseline.
 
 **Architecture:** Each task is self-contained — investigate the concrete state, apply a minimal fix, verify via evidence, commit. No cross-task dependencies except G4 (Dependabot) which may be easier to verify after G2 (CI unblocked).
+
+**Changes from v1**:
+- G5 removed (Claude Code HTTP schema already verified via backup files + better-notion-mcp production use, no more investigation needed)
+- G6 expanded to inventory plugin.json format across all 6 credential repos (notion already HTTP — template for others)
+- G7 added: credential_state.py inventory for Phase J deletion list
 
 **Tech Stack:** Python 3.13 + uv + ruff + ty + pytest; Node 20 + pnpm; `gh` CLI for GitHub evidence; `git` for repo ops.
 
@@ -480,110 +485,18 @@ Expected: length drops to `0` (or stays low if Dependabot hasn't re-scanned yet 
 
 ---
 
-### Task G5: Finalize Claude Code localhost HTTP transport verification
+### Task G5: REMOVED
 
-**Files:**
-- Evidence only — no code change
-- Write: `docs/superpowers/evidence/2026-04-11-g5-claude-code-http-verification.md`
-- Commit: in claude-plugins worktree
+Task G5 (Claude Code HTTP transport schema verification) is removed in plan v2. The schema is already verified via two independent sources:
 
-**Context (from audit):** File evidence found:
-- `~/.claude/backups/.claude.json.backup.*` line 667: `"type": "http"` for `stitch` server
-- `projects/docs/agent-skills-research/microsoft_skills/.mcp.json:8` and `.vscode/mcp.json` multiple entries with `"type": "http"`
+1. **`~/.claude/backups/.claude.json.backup.*` line 667** — stitch entry uses `"type": "http"`
+2. **`better-notion-mcp/.claude-plugin/plugin.json`** — production already uses `"type": "http"` with `https://better-notion-mcp.n24q02m.com/mcp`
 
-This establishes the Claude Code `.mcp.json` schema accepts `"type": "http"` with a `url` field. But we have NOT yet verified end-to-end with a localhost URL and active session. The empirical test is deferred to Phase M integration but we record current evidence here.
-
-- [ ] **Step 1: Re-grep for `"type": "http"` entries in Claude Code config files**
-
-```bash
-cd C:/Users/n24q02m-wlap/projects/claude-plugins/.worktrees/phase3-mcp-core
-grep -rn '"type":[[:space:]]*"http"' ~/.claude/backups/*.json 2>&1 | head -20
-grep -rn '"type":[[:space:]]*"http"' "C:/Users/n24q02m-wlap/projects/docs/agent-skills-research/microsoft_skills" 2>&1 | head -20
-```
-
-Expected: multiple hits confirming the schema is accepted.
-
-- [ ] **Step 2: Check Claude Code docs in the packaged plugin**
-
-```bash
-ls ~/.claude/plugins/cache/claude-plugins-official/superpowers/ 2>&1 | head -5
-find ~/.claude/plugins -name "*.md" -exec grep -l 'type.*http' {} \; 2>&1 | head -5
-```
-
-Expected: may find or not; either way records the current state.
-
-- [ ] **Step 3: Write evidence file**
-
-```bash
-cd C:/Users/n24q02m-wlap/projects/claude-plugins/.worktrees/phase3-mcp-core
-cat > docs/superpowers/evidence/2026-04-11-g5-claude-code-http-verification.md <<'EOF'
-# Phase G5 — Claude Code HTTP transport schema verification
-
-Date: 2026-04-11
-Executed by: Claude Code session
-Spec: `specs/2026-04-10-mcp-core-unified-transport-design.md`
-Status: **Schema verified via file evidence. Full empirical handshake deferred to Phase M.**
-
-## Evidence collected
-
-### 1. Claude Code JSON config schema accepts `"type": "http"`
-
-From `~/.claude/backups/.claude.json.backup.*` line 667:
-
-```json
-"stitch": {
-    "type": "http",
-    "url": "https://stitch.googleapis.com/mcp",
-    "headers": { "X-Goog-Api-Key": "<redacted>" }
-}
-```
-
-From `projects/docs/agent-skills-research/microsoft_skills/.vscode/mcp.json` lines 27, 36, 43, 65:
-
-```json
-{ "type": "http", ... }
-```
-
-### 2. What this confirms
-
-- `.mcp.json` and `settings.json` accept `"type": "http"` with `"url": "..."` and optional `"headers": {}`.
-- Remote HTTP URLs are supported (Google Stitch example).
-
-### 3. What remains unverified
-
-- **Localhost** URL (`http://127.0.0.1:<port>/mcp`) — not yet tested with an actual Streamable HTTP 2025-11-25 server
-- **Auto-browser OAuth 401 flow** — behavior when server returns 401 with `WWW-Authenticate: Bearer resource_metadata=...`
-- **`Mcp-Session-Id` header propagation** across a session
-
-## Deferred empirical test (Phase M1)
-
-Full end-to-end test plan:
-1. Start a minimal FastMCP localhost HTTP server on 127.0.0.1:9876
-2. Write `~/.claude/mcp-test.json` with entry pointing to it
-3. Use `claude-code --mcp-config mcp-test.json` to load
-4. Verify tool is listed, callable, and session id is exchanged
-
-This is part of Phase M integration validation, not Phase G.
-
-## Conclusion
-
-Schema-level verification passes. No blocker for Phase H/I/J. Empirical test
-queued for Phase M1.
-EOF
-git add docs/superpowers/evidence/2026-04-11-g5-claude-code-http-verification.md
-git commit -m "feat: record Phase G5 Claude Code HTTP schema verification evidence
-
-Schema-level verification confirms .mcp.json accepts \"type\": \"http\" with
-url + headers fields. Empirical localhost test deferred to Phase M1.
-
-Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>"
-```
-
-Expected: commit made.
+No further Phase G investigation needed. Empirical localhost handshake is deferred to Phase M (E2E validation).
 
 ---
 
-### Task G6: Verify notion-mcp Streamable HTTP spec version
+### Task G6: Inventory plugin.json format across 6 credential repos + verify notion Streamable HTTP spec
 
 **Files:**
 - Read: `better-notion-mcp/src/transports/http.ts`
@@ -718,15 +631,157 @@ cat docs/superpowers/evidence/2026-04-11-g6-notion-streamable-http-version.md | 
 
 Expected: file written with actual shell variable values substituted (no `$SDK_PIN` literal text).
 
-- [ ] **Step 8: Commit evidence**
+- [ ] **Step 8: Inventory all 6 credential repos' plugin.json format**
+
+```bash
+cd C:/Users/n24q02m-wlap/projects
+for repo in wet-mcp mnemo-mcp better-code-review-graph better-telegram-mcp better-email-mcp better-notion-mcp; do
+  echo "=== $repo ==="
+  cat $repo/.claude-plugin/plugin.json | python -c "import sys, json; d=json.load(sys.stdin); srv=next(iter(d.get('mcpServers', {}).values())); print('type:', srv.get('type', 'stdio (command-based)')); print('url:', srv.get('url', 'n/a')); print('command:', srv.get('command', 'n/a'))"
+done
+```
+
+Expected:
+- notion: `type: http, url: https://better-notion-mcp.n24q02m.com/mcp`
+- 5 others: `type: stdio, command: uvx|npx`
+
+- [ ] **Step 9: Append inventory to evidence file**
+
+```bash
+cd C:/Users/n24q02m-wlap/projects/claude-plugins/.worktrees/phase3-mcp-core
+cat >> docs/superpowers/evidence/2026-04-11-g6-notion-streamable-http-version.md <<'EOF'
+
+## plugin.json format inventory (all 6 credential repos)
+
+| Repo | Transport type | URL or command | Phase J action |
+|------|---------------|----------------|----------------|
+| better-notion-mcp | **http** (production) | https://better-notion-mcp.n24q02m.com/mcp | Reference template |
+| wet-mcp | stdio | `uvx --python 3.13 wet-mcp` | Flip to `type: http`, local port 41601 |
+| mnemo-mcp | stdio | `uvx --python 3.13 mnemo-mcp` | Flip to `type: http`, local port 41602 |
+| better-code-review-graph | stdio | `uvx better-code-review-graph` | Flip to `type: http`, local port 41603 |
+| better-telegram-mcp | stdio | `uvx --python 3.13 better-telegram-mcp` | Flip to `type: http`, remote URL (Tier B) |
+| better-email-mcp | stdio | `npx -y @n24q02m/better-email-mcp` | Flip to `type: http`, remote URL (Tier B) |
+
+notion is the template. Phase J per-repo migration duplicates this format with appropriate URL/port.
+EOF
+```
+
+- [ ] **Step 10: Commit evidence**
 
 ```bash
 cd C:/Users/n24q02m-wlap/projects/claude-plugins/.worktrees/phase3-mcp-core
 git add docs/superpowers/evidence/2026-04-11-g6-notion-streamable-http-version.md
-git commit -m "feat: record Phase G6 notion Streamable HTTP version evidence
+git commit -m "feat: record Phase G6 notion spec + 6-repo plugin.json inventory
 
-SDK pin/installed version, protocol constants, and SSE transport
-presence captured. Verdict drives Phase J notion scope.
+SDK version, protocol constants, SSE presence captured. Plugin.json
+inventory shows notion is the only repo on HTTP transport — others
+use stdio and will be migrated in Phase J using notion as template.
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>"
+```
+
+Expected: commit made.
+
+---
+
+### Task G7: credential_state inventory for Phase J deletion list
+
+**Files:**
+- Read only — no code change
+- Write: `docs/superpowers/evidence/2026-04-11-g7-credential-state-inventory.md`
+- Commit: in claude-plugins worktree
+
+**Context**: Spec v3 §2.7(b) mandates deletion of `credential_state.py`/`.ts` + inline `AWAITING_SETUP` gates in 6 repos. Phase J will execute deletion. This task captures exact file paths + line ranges so Phase J plan has concrete target list.
+
+- [ ] **Step 1: Enumerate credential_state files**
+
+```bash
+cd C:/Users/n24q02m-wlap/projects
+for repo in wet-mcp mnemo-mcp better-code-review-graph better-telegram-mcp better-email-mcp better-notion-mcp; do
+  echo "=== $repo ==="
+  find $repo -type f \( -name "credential_state.py" -o -name "credential-state.ts" -o -name "test_credential_state.py" -o -name "credential-state.test.ts" \) -not -path "*/.venv*" -not -path "*/node_modules/*" -not -path "*/build/*" 2>/dev/null
+done
+```
+
+Expected: ~12 files listed (1 impl + 1 test per repo).
+
+- [ ] **Step 2: Locate AWAITING_SETUP usage sites in server.py**
+
+```bash
+cd C:/Users/n24q02m-wlap/projects
+for repo in wet-mcp mnemo-mcp better-code-review-graph better-telegram-mcp; do
+  echo "=== $repo server.py AWAITING_SETUP sites ==="
+  grep -n "AWAITING_SETUP\|credential_state\|awaiting_setup" $repo/src/*/server.py 2>/dev/null | head -20
+done
+for repo in better-email-mcp better-notion-mcp; do
+  echo "=== $repo init/tools AWAITING_SETUP sites ==="
+  grep -rn "AWAITING_SETUP\|credential[- ]state" $repo/src/*.ts $repo/src/tools/ 2>/dev/null | head -20
+done
+```
+
+Expected: concrete line numbers for each usage site. wet-mcp will show many (seen: lines 58-70, 146, 251-333, 1278-1395).
+
+- [ ] **Step 3: Write inventory evidence file**
+
+```bash
+cd C:/Users/n24q02m-wlap/projects/claude-plugins/.worktrees/phase3-mcp-core
+cat > docs/superpowers/evidence/2026-04-11-g7-credential-state-inventory.md <<'EOF'
+# Phase G7 — credential_state inventory for Phase J deletion list
+
+Date: 2026-04-11
+Executed by: Claude Code session
+Spec: `specs/2026-04-10-mcp-core-unified-transport-design.md` §2.7(b)
+
+## Files to delete in Phase J
+
+Paste output of Step 1 command here — full file path per repo.
+
+## AWAITING_SETUP inline gate sites in server.py / init
+
+Paste output of Step 2 command here — `file.py:line_number` per usage site.
+
+## Replacement plan
+
+Per spec v3 §2.2 and §2.7(b):
+- Delete credential_state.py + test_credential_state.py in all 6 repos
+- Remove AWAITING_SETUP blocks in server.py / init-server.ts
+- Install `mcp_core.auth.middleware` transport-level middleware
+- Add `Depends(get_session_creds)` to tool handlers in FastMCP
+- Tool code assumes credentials present at runtime
+
+## Verification after Phase J
+
+```bash
+# Should return 0 results
+grep -rln "AWAITING_SETUP\|credential_state" wet-mcp/src mnemo-mcp/src better-code-review-graph/src better-telegram-mcp/src
+grep -rln "AWAITING_SETUP\|credential-state" better-email-mcp/src better-notion-mcp/src
+```
+EOF
+# Manually append Step 1 + Step 2 actual output to the placeholder sections above
+```
+
+- [ ] **Step 4: Fill placeholder sections with actual command output**
+
+Re-run Step 1 and Step 2 commands, capture output, and append to the evidence file (replace the "Paste output of Step N command here" lines). Example:
+
+```bash
+cd C:/Users/n24q02m-wlap/projects
+# Run Step 1 and Step 2, pipe output into the file
+for repo in wet-mcp mnemo-mcp better-code-review-graph better-telegram-mcp better-email-mcp better-notion-mcp; do
+  echo "=== $repo ==="
+  find $repo -type f \( -name "credential_state.py" -o -name "credential-state.ts" -o -name "test_credential_state.py" -o -name "credential-state.test.ts" \) -not -path "*/.venv*" -not -path "*/node_modules/*" -not -path "*/build/*" 2>/dev/null
+done >> C:/Users/n24q02m-wlap/projects/claude-plugins/.worktrees/phase3-mcp-core/docs/superpowers/evidence/2026-04-11-g7-credential-state-inventory.md
+```
+
+- [ ] **Step 5: Commit evidence**
+
+```bash
+cd C:/Users/n24q02m-wlap/projects/claude-plugins/.worktrees/phase3-mcp-core
+git add docs/superpowers/evidence/2026-04-11-g7-credential-state-inventory.md
+git commit -m "feat: record Phase G7 credential_state inventory for Phase J
+
+Captures exact file paths + AWAITING_SETUP usage sites across 6
+credential repos. Target list for Phase J deletion per spec v3 §2.7(b).
 
 Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>"
 ```
@@ -772,14 +827,14 @@ gh api "repos/n24q02m/wet-mcp/dependabot/alerts?state=open" --jq 'length'
 ```
 Expected: `0`.
 
-- [ ] **Gate 5 + 6: Evidence files committed in worktree**
+- [ ] **Gate 5 + 6 + 7: Evidence files committed in worktree**
 
 ```bash
 cd C:/Users/n24q02m-wlap/projects/claude-plugins/.worktrees/phase3-mcp-core
 ls docs/superpowers/evidence/2026-04-11-g*.md
 git log --oneline -10
 ```
-Expected: 3 evidence files present (G3, G5, G6), commits in git log.
+Expected: 3 evidence files present (G3, G6, G7 — G5 removed), commits in git log.
 
 - [ ] **Gate 7: Worktree tests still pass (regression check)**
 
