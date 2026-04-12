@@ -68,7 +68,7 @@ Từ các turn trao đổi của user:
 - Multi-session trên 1 process (key lợi ích cho heavy servers)
 - Session isolation qua `Mcp-Session-Id` header native từ spec
 
-**Exception**: `better-godot-mcp` giữ stdio — không có credentials, process nhẹ, spawn per-session OK.
+**Godot**: `better-godot-mcp` cũng HTTP — không có credentials/OAuth nhưng vẫn dùng Streamable HTTP transport cho consistency. Không cần relay form hay auth layer.
 
 **Backward compat cho stdio-only agents**: thin `stdio_proxy` binary trong mcp-core forward JSON-RPC frames từ stdin → HTTP POST → response → stdout. Không phải server, chỉ adapter.
 
@@ -107,7 +107,7 @@ Từ các turn trao đổi của user:
 | **better-telegram-mcp** | HTTP only | Self-hosted AS | Self-hosted AS multi-user | Per-session Telethon (not shared) |
 | **better-email-mcp** | HTTP only | Self-hosted AS | Self-hosted AS multi-user | Per-session IMAP pool (not shared) |
 | **better-notion-mcp** | HTTP only | **Self-hosted AS** (paste Notion integration token) | **Delegated → Notion OAuth** | Per-session Notion client (not shared) |
-| **better-godot-mcp** | stdio only | — | — | Stateless CLI wrapper |
+| **better-godot-mcp** | HTTP only | — (no credentials) | — (no credentials) | Stateless CLI wrapper |
 
 **Notion exception explanation**: Notion có real OAuth provider cho multi-user (`api.notion.com/v1/oauth`). Remote mode bắt buộc delegate để mỗi user authorize với chính Notion account của họ. Local mode vẫn dùng self-hosted AS với relay form paste integration token (đơn giản, không cần OAuth dance cho 1 user).
 
