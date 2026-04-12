@@ -81,6 +81,11 @@ jobs:
         run: |
           set -euo pipefail
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+
+          # Explicitly mask the extracted substrings to prevent plaintext leakage
+          echo "::add-mask::${SMTP_CREDENTIAL%%:*}"
+          echo "::add-mask::${SMTP_CREDENTIAL#*:}"
+
           echo "SMTP_USER<<$EOF" >> "$GITHUB_ENV"
           echo "${SMTP_CREDENTIAL%%:*}" >> "$GITHUB_ENV"
           echo "$EOF" >> "$GITHUB_ENV"
