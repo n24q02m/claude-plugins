@@ -7,11 +7,13 @@ import subprocess
 import os
 import re
 
+PLUGIN_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
+
 
 def check_plugin(plugin):
     """Check a single plugin's version against its latest GitHub release."""
     name = plugin["name"]
-    if not re.match(r"^[a-zA-Z0-9_-]+$", name):
+    if not PLUGIN_NAME_PATTERN.match(name):
         return {
             "status": "error",
             "name": name,
