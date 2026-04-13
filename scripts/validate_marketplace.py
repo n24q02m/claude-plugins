@@ -30,8 +30,8 @@ def validate_marketplace():
 
         for plugin in plugins:
             name = plugin.get("name", "Unknown")
-            if not re.match(r"^[a-zA-Z0-9_-]+$", name):
-                errors.append(f"Plugin {name}: invalid name format (must match ^[a-zA-Z0-9_-]+$)")
+            if not re.fullmatch(r"^[a-zA-Z0-9-]+$", name):
+                errors.append(f"Plugin {name}: invalid name format (must match ^[a-zA-Z0-9-]+$)")
                 continue
 
             source = plugin.get("source")
