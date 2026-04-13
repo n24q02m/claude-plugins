@@ -10,7 +10,8 @@
 **Vulnerability:** Plugin names derived from `.claude-plugin/marketplace.json` were passed directly into the `--repo` argument for `gh release view` without validation, leading to potential command argument injection if a malicious name (e.g. `n24q02m/-foo`) or shell expansion string was used. This also applies when evaluating paths.
 **Learning:** External tools (like `gh` or shell scripts) can misinterpret arguments derived from JSON configuration files when the input is malformed, leading to potential exploits. Always sanitize and validate variables before using them as arguments to shell commands or subprocesses.
 **Prevention:** Strictly validate input formats using regex (e.g., `^[a-zA-Z0-9_-]+$`) in Python scripts like `scripts/validate_marketplace.py` and `scripts/check_version_freshness.py` to ensure external tool arguments and paths cannot be used to inject arguments.
-## 2024-04-10 - [SECURITY] Potential Argument Injection in subprocess.run
-**Vulnerability:** Potential argument injection via the `name` field used in a `subprocess.run` call to `gh release view`.
-**Learning:** Using `re.match` with a regex that doesn't explicitly anchor the end (or using it on a string with a newline) can allow malicious input to pass if it starts with valid characters. `re.fullmatch` is safer for strict validation.
-**Prevention:** Always use `re.fullmatch` for input validation before passing variables to subprocesses, and use strict whitelists for allowed characters (e.g., `^[a-zA-Z0-9_-]+$`).
+
+## 2026-04-10 - [HIGH] Untrusted Data in echo Arguments
+**Vulnerability:** In bash scripts and GitHub Actions, `echo "$VAR"` was used incorrectly when formatting variables containing potentially untrusted input (e.g., `echo "OK $repo"`, `echo "Syncing $REPO"`). If an attacker injects a string beginning with `-`, `echo` interprets it as an option (like `-e` or `-n`).
+**Learning:** `echo` arguments that begin with a hyphen are interpreted as options by the `echo` command itself. While `printf "%s\n" "$VAR"` is generally safe, using `echo "$VAR"` is unsafe. In some older shell implementations, `printf "$VAR"` without a format string can interpret format specifiers from the variable itself.
+**Prevention:** Always use `printf "%s\n" "$VAR"` instead of `echo "$VAR"` to prevent flag injection (if `$VAR` starts with `-`) and unexpected formatting issues.
