@@ -80,13 +80,19 @@ jobs:
       - name: Parse SMTP credential
         run: |
           set -euo pipefail
+          USER_PART="${SMTP_CREDENTIAL%%:*}"
+          PASS_PART="${SMTP_CREDENTIAL#*:}"
+
+          printf "::add-mask::%s\n" "$USER_PART"
+          printf "::add-mask::%s\n" "$PASS_PART"
+
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           printf "SMTP_USER<<%s\n" "$EOF" >> "$GITHUB_ENV"
-          printf "%s\n" "${SMTP_CREDENTIAL%%:*}" >> "$GITHUB_ENV"
+          printf "%s\n" "$USER_PART" >> "$GITHUB_ENV"
           printf "%s\n" "$EOF" >> "$GITHUB_ENV"
 
           printf "SMTP_PASS<<%s\n" "$EOF" >> "$GITHUB_ENV"
-          printf "%s\n" "${SMTP_CREDENTIAL#*:}" >> "$GITHUB_ENV"
+          printf "%s\n" "$PASS_PART" >> "$GITHUB_ENV"
           printf "%s\n" "$EOF" >> "$GITHUB_ENV"
         env:
           SMTP_CREDENTIAL: ${{ secrets.SMTP_CREDENTIAL }}
