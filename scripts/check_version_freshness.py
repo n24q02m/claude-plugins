@@ -7,11 +7,14 @@ import subprocess
 import os
 import re
 
+# Pre-compile regex at module level to avoid cache lookup overhead in concurrent loops
+PLUGIN_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9-]+$")
+
 
 def check_plugin(plugin):
     """Check a single plugin's version against its latest GitHub release."""
     name = plugin["name"]
-    if not re.fullmatch(r"^[a-zA-Z0-9-]+$", name):
+    if not PLUGIN_NAME_PATTERN.fullmatch(name):
         return {
             "status": "error",
             "name": name,
