@@ -132,13 +132,6 @@ jobs:
             printf "Synced hooks/\n"
           fi
 
-      - name: Update README with new version
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        working-directory: marketplace
-        run: |
-          python3 scripts/sync_readme_versions.py
-
       - name: Commit and push
         env:
           REPO: ${{ steps.inputs.outputs.repo }}
