@@ -13,15 +13,15 @@ Or browse all plugins: run `/plugin` and go to the **Discover** tab.
 
 ## Plugins
 
-| Plugin | Category | Description | Env Vars |
-|--------|----------|-------------|----------|
-| **wet-mcp** | Research | Web search, content extraction, media download | `API_KEYS` (optional) |
-| **mnemo-mcp** | Productivity | Persistent AI memory across sessions | `API_KEYS` (optional) |
-| **better-notion-mcp** | Productivity | Notion API — 10 tools, ~95% coverage | `NOTION_TOKEN` |
-| **better-email-mcp** | Communication | Email IMAP/SMTP — multi-account | `EMAIL_CREDENTIALS` |
-| **better-telegram-mcp** | Communication | Telegram dual-mode (Bot + MTProto) — messages, chats, media | `TELEGRAM_BOT_TOKEN` |
-| **better-godot-mcp** | Development | Godot Engine — 17 composite tools for game dev | `GODOT_PATH` (optional) |
-| **better-code-review-graph** | Development | Knowledge graph for code reviews | `API_KEYS` (optional) |
+| Plugin | Version | Category | Description | Env Vars |
+|--------|---------|----------|-------------|----------|
+| **wet-mcp** | `2.25.0` | Research | Web search, content extraction, media download | `API_KEYS` (optional) |
+| **mnemo-mcp** | `1.20.0` | Productivity | Persistent AI memory across sessions | `API_KEYS` (optional) |
+| **better-notion-mcp** | `2.27.4` | Productivity | Notion API — 10 tools, ~95% coverage | `NOTION_TOKEN` |
+| **better-email-mcp** | `1.22.4` | Communication | Email IMAP/SMTP — multi-account | `EMAIL_CREDENTIALS` |
+| **better-telegram-mcp** | `4.4.0` | Communication | Telegram dual-mode (Bot + MTProto) — messages, chats, media | `TELEGRAM_BOT_TOKEN` |
+| **better-godot-mcp** | `1.12.0` | Development | Godot Engine — 17 composite tools for game dev | `GODOT_PATH` (optional) |
+| **better-code-review-graph** | `3.9.0` | Development | Knowledge graph for code reviews | `API_KEYS` (optional) |
 
 ## Configuration
 
