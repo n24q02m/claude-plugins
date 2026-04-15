@@ -15,3 +15,7 @@
 **Vulnerability:** In bash scripts and GitHub Actions, `echo "$VAR"` was used incorrectly when formatting variables containing potentially untrusted input (e.g., `echo "OK $repo"`, `echo "Syncing $REPO"`). If an attacker injects a string beginning with `-`, `echo` interprets it as an option (like `-e` or `-n`).
 **Learning:** `echo` arguments that begin with a hyphen are interpreted as options by the `echo` command itself. While `printf "%s\n" "$VAR"` is generally safe, using `echo "$VAR"` is unsafe. In some older shell implementations, `printf "$VAR"` without a format string can interpret format specifiers from the variable itself.
 **Prevention:** Always use `printf "%s\n" "$VAR"` instead of `echo "$VAR"` to prevent flag injection (if `$VAR` starts with `-`) and unexpected formatting issues.
+## 2024-05-24 - Unmasked Extracted Secrets
+**Vulnerability:** Substrings extracted from composite secrets (like `user:password`) bypass automatic GitHub Actions secret redaction, potentially leaking plaintext credentials in logs.
+**Learning:** GitHub Actions only masks the exact value of the secret. If a script extracts a substring from a secret, the substring is not automatically masked.
+**Prevention:** Always explicitly mask extracted variables using `printf "::add-mask::%s\n" "$VAR"` before exporting them to `$GITHUB_ENV` or using them in a way that might be logged.
