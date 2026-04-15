@@ -7,11 +7,13 @@ import subprocess
 import os
 import re
 
+# Pre-compile regex at module level to avoid internal re cache lookup overhead in tight loops
+NAME_PATTERN = re.compile(r"^[a-zA-Z0-9-]+$")
 
 def check_plugin(plugin):
     """Check a single plugin's version against its latest GitHub release."""
     name = plugin["name"]
-    if not re.fullmatch(r"^[a-zA-Z0-9-]+$", name):
+    if not NAME_PATTERN.fullmatch(name):
         return {
             "status": "error",
             "name": name,
@@ -21,24 +23,24 @@ def check_plugin(plugin):
     source = plugin["source"].lstrip("./")
 
     # Priority: .claude-plugin/plugin.json, fallback: gemini-extension.json
+    # Optimize: Use EAFP to avoid duplicate system stat calls from os.path.exists followed by open
     pjson_path = os.path.join(source, ".claude-plugin", "plugin.json")
     gext_path = os.path.join(source, "gemini-extension.json")
 
     marketplace_ver = "unknown"
-    if os.path.exists(pjson_path):
-        try:
-            with open(pjson_path) as f:
-                pdata = json.load(f)
-            marketplace_ver = pdata.get("version", "unknown")
-        except Exception:
-            pass
-    elif os.path.exists(gext_path):
+    try:
+        with open(pjson_path) as f:
+            pdata = json.load(f)
+        marketplace_ver = pdata.get("version", "unknown")
+    except FileNotFoundError:
         try:
             with open(gext_path) as f:
                 gdata = json.load(f)
             marketplace_ver = gdata.get("version", "unknown")
         except Exception:
             pass
+    except Exception:
+        pass
 
     # Get latest stable release from source repo
     try:
