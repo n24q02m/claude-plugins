@@ -70,5 +70,18 @@ class TestCheckVersionFreshness(unittest.TestCase):
         self.assertEqual(result["error"], "invalid name format")
         mock_run.assert_not_called()
 
+    @patch('check_version_freshness.subprocess.run')
+    @patch('check_version_freshness.os.path.exists')
+    def test_check_plugin_timeout(self, mock_exists, mock_run):
+        plugin = {"name": "timeout-plugin", "source": "./plugins/timeout-plugin"}
+        mock_exists.return_value = False
+        mock_run.side_effect = subprocess.TimeoutExpired(cmd=["gh"], timeout=30)
+
+        result = check_version_freshness.check_plugin(plugin)
+
+        self.assertEqual(result["status"], "timeout")
+        self.assertEqual(result["name"], "timeout-plugin")
+        self.assertEqual(result["marketplace_ver"], "unknown")
+
 if __name__ == '__main__':
     unittest.main()
