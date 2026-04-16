@@ -70,5 +70,36 @@ class TestCheckVersionFreshness(unittest.TestCase):
         self.assertEqual(result["error"], "invalid name format")
         mock_run.assert_not_called()
 
+    @patch('check_version_freshness.subprocess.run')
+    @patch('check_version_freshness.os.path.exists')
+    @patch('check_version_freshness.open', create=True)
+    def test_check_plugin_no_release(self, mock_open, mock_exists, mock_run):
+        plugin = {"name": "no-release-plugin", "source": "./plugins/no-release-plugin"}
+        mock_exists.return_value = True
+        # Mocking json.load because we are mocking open
+        with patch('json.load', return_value={"version": "1.0.0"}):
+            mock_run.return_value = MagicMock(returncode=1)
+
+            result = check_version_freshness.check_plugin(plugin)
+
+            self.assertEqual(result["status"], "no-release")
+            self.assertEqual(result["marketplace_ver"], "1.0.0")
+
+    @patch('check_version_freshness.subprocess.run')
+    @patch('check_version_freshness.os.path.exists')
+    @patch('check_version_freshness.open', create=True)
+    def test_check_plugin_stale(self, mock_open, mock_exists, mock_run):
+        plugin = {"name": "stale-plugin", "source": "./plugins/stale-plugin"}
+        mock_exists.return_value = True
+        # Mocking json.load because we are mocking open
+        with patch('json.load', return_value={"version": "1.0.0"}):
+            mock_run.return_value = MagicMock(returncode=0, stdout="v1.1.0\n")
+
+            result = check_version_freshness.check_plugin(plugin)
+
+            self.assertEqual(result["status"], "stale")
+            self.assertEqual(result["marketplace_ver"], "1.0.0")
+            self.assertEqual(result["latest_tag"], "1.1.0")
+
 if __name__ == '__main__':
     unittest.main()
