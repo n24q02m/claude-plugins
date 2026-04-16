@@ -1,6 +1,6 @@
 # Phase M — Pre-Release Hardening & Stable Release Cut
 
-**Status:** ready for plan
+**Status:** Phase A–E COMPLETE (2026-04-14). Phase M.2 + post-release items pending.
 **Date:** 2026-04-13
 **Scope:** All 12 repos in the n24q02m MCP ecosystem (7 MCP servers + mcp-core + claude-plugins + qwen3-embed + web-core + n24q02m profile)
 **Predecessor:** Phase L (multi-step auth + core-ts parity, commits across mcp-core/email/notion/godot/telegram/mnemo/wet on 2026-04-12..13)
@@ -178,18 +178,84 @@ Precondition: Phase B exit gate met.
 - Migrating to a new OAuth surface. Phase L's multi-step auth is the final shape.
 - Closing tracking issues that are still doing useful work (Dependency Dashboard, active `[Phase 3]` coordinators).
 
-## Open questions
+## Open questions (all resolved during execution)
 
-- **Bot PR merge authority:** for Sentinel/Bolt/Palette/Jules PRs with genuine fixes, should we auto-accept after single-pass review, or require a fresh code-review subagent on every one? Default to subagent review until a rule gets added to the `feedback` memory.
-- **qwen3-embed Python floor:** bump `requires-python` to `>=3.11` aligning with numpy 2.4.4, vs. pinning numpy `<2.4` to stay on 3.10? Prefer the floor bump — 3.11 is two years old.
-- **Remote mode scope:** task #25 (Phase L2 Remote Mode) is listed but has no landed implementation yet. Phase B3 presumes it exists. If remote mode is not implemented by the time Phase B starts, split B into B-local+B-stdio (7 + 7) first and track B-remote as a Phase M.2 follow-up.
+- **qwen3-embed Python floor:** RESOLVED -- bumped to `>=3.11`.
+- **Remote mode scope:** RESOLVED -- B3 deferred to Phase M.2 per spec fallback.
+- **Bot PR merge authority:** Defaulting to subagent review per feedback memory.
 
-## Deliverables
+## Phase M execution outcome (2026-04-13/14)
 
-- Clean working tree on all 12 repos.
-- Green CI on `main` for all 12 repos.
-- Zero open security alerts across the ecosystem.
-- Actively-reviewed PR queue (no stale bot duplicates).
-- mcp-core stable release published + consumed.
-- 7 MCP server stable releases published + available in the marketplace.
-- Updated `MEMORY.md` entry with the Phase M outcome and any feedback the user provided during execution.
+### Completed
+
+- **Phase A:** 12 repos cleaned. 130/188 PRs resolved (81 merged, 49 closed). Lint/type/test green. CI green on 11/12 repos (n24q02m still failing).
+- **Phase B:** B1 (7 local HTTP) PASS. B2 (7 stdio-proxy) PASS. B3 (3 remote HTTP) **deferred** to M.2.
+- **Phase C:** mcp-core v1.0.0 stable released on npm + PyPI + Docker.
+- **Phase D:** All 7 MCP repos bumped to mcp-core 1.0.0, CI green.
+- **Phase E:** 7 MCP stable releases shipped (godot v1.12.0, telegram v4.4.0, crg v3.9.0, wet v2.25.0, mnemo v1.20.0, email v1.22.4, notion v2.27.4).
+
+### Key root causes fixed
+
+- mcp-core `scheduleReloadExit` decoupled from `writeConfig`
+- `try_open_browser` 5-min dedup + removed from mnemo/wet sync loops
+- mcp-stdio-proxy: thread-based stdin (Windows fix) + Accept header (406 fix)
+- Bun + better-sqlite3: must stay transitive + `trustedDependencies: ["esbuild"]`
+- email form UX, qwen3-embed 3.11 floor, cd.yml YAML quoting, .gitattributes eol=lf
+
+## Post-Phase M audit (2026-04-14)
+
+### Remaining security alerts (7 across 5 repos)
+
+| Severity | Package | Repos | Issue |
+|---|---|---|---|
+| HIGH | pillow | web-core | FITS GZIP decompression bomb |
+| MEDIUM | gdown | wet-mcp, web-core | Path Traversal in extractall |
+| MEDIUM | pytest | crg, wet-mcp, web-core | Vulnerable tmpdir handling |
+| MEDIUM | diskcache | mcp-core | Unsafe deserialization |
+
+### CI failures
+
+- **n24q02m**: FAIL (needs investigation; dirty settings.json)
+
+### Deferred PR decisions (3)
+
+- mnemo-mcp #408: bulk archive + coverage.xml artifact
+- crg #267: batch queries + removes editable path
+- email #397: pre-compile regex + Windows lint red
+
+### Open PRs remaining (~79 across 12 repos)
+
+7 Renovate workflow-scope, 8 genuine bugs, 1 fastmcp CVE, 1 cohere v6 major, ~34 NEEDS-DISCUSSION, ~7 external, ~21 bot/misc.
+
+### Other outstanding items
+
+- web-core has no stable release (beta only)
+- claude-plugins has no release
+- Browser helper refactor: 4 repos re-implement try_open_browser; consolidate to mcp-core
+- Cross-repo anti-patterns: Jules diacritic damage, phantom commits, coverage artifacts
+
+## Phase M.2 -- Remote HTTP mode (B3)
+
+Precondition: Phase L2 Remote Mode implemented. Run 3-config E2E (telegram, email, notion) against public URL with Claude Code. Exit gate: 3/3 pass.
+
+## Phase N -- Post-release hygiene
+
+1. Fix 7 Dependabot alerts (pillow HIGH, gdown x2, pytest x3, diskcache)
+2. Fix n24q02m CI failure
+3. Resolve 3 deferred PR decisions
+4. Triage remaining ~79 open PRs
+5. Fleet-wide .gitignore for coverage artifacts
+6. Pre-commit hook rejecting non-ASCII to ASCII replacements
+7. Consolidate try_open_browser into mcp-core
+8. Cut web-core stable release
+9. Audit Jules pipeline for silent diff loss
+
+## Deliverables status
+
+- Clean working tree: 11/12 (n24q02m dirty)
+- Green CI: 11/12 (n24q02m failing)
+- Zero security alerts: 7 remain (Phase N)
+- PR queue reduced: 188 to ~79
+- mcp-core stable: v1.0.0
+- 7 MCP stable releases: shipped
+- MEMORY.md updated: yes
