@@ -4,9 +4,14 @@
 Blocking -- Telegram tools cannot function without credentials.
 Allows config and help tools through so the user can initiate setup.
 """
+
 import json
 import os
 import sys
+
+# Add plugins/ to sys.path for shared utility imports
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+from mcp_utils import is_configured
 
 SERVER_NAME = "better-telegram-mcp"
 # Either TELEGRAM_PHONE (user mode) or TELEGRAM_BOT_TOKEN (bot mode) is required.
@@ -17,22 +22,7 @@ EXEMPT_SUFFIXES = ("__setup", "__help", "__config")
 
 
 def _is_configured() -> bool:
-    for k in CREDENTIAL_KEYS:
-        if os.environ.get(k):
-            return True
-    local_app_data = os.environ.get("LOCALAPPDATA", "")
-    app_data = os.environ.get("APPDATA", "")
-    home = os.path.expanduser("~")
-    # mcp-relay-core stores config.enc in a shared 'mcp' directory
-    paths = [p for p in [
-        os.path.join(local_app_data, "mcp", "config.enc") if local_app_data else "",
-        os.path.join(app_data, "mcp", "Config", "config.enc") if app_data else "",
-        os.path.join(home, ".config", "mcp", "config.enc"),
-    ] if p]
-    for p in paths:
-        if os.path.exists(p):
-            return True
-    return False
+    return is_configured(CREDENTIAL_KEYS)
 
 
 def main() -> None:
