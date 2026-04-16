@@ -7,6 +7,37 @@ import re
 import sys
 
 
+def _validate_plugin_skills(plugin_dir, plugin_name):
+    """Validate that all skills in a plugin have proper SKILL.md files."""
+    errors = []
+    skills_dir = os.path.join(plugin_dir, "skills")
+    if not os.path.isdir(skills_dir):
+        return errors
+
+    with os.scandir(skills_dir) as entries:
+        for entry in entries:
+            if entry.is_dir():
+                skill_name = entry.name
+                skill_file = os.path.join(entry.path, "SKILL.md")
+                if os.path.exists(skill_file):
+                    try:
+                        with open(skill_file) as f:
+                            content = f.read()
+                        if not content.startswith("---"):
+                            errors.append(
+                                f"{plugin_name}/skills/{skill_name}: SKILL.md missing frontmatter"
+                            )
+                        if len(content.strip()) < 50:
+                            errors.append(
+                                f"{plugin_name}/skills/{skill_name}: SKILL.md too short"
+                            )
+                    except Exception as e:
+                        errors.append(
+                            f"{plugin_name}/skills/{skill_name}: Failed to read SKILL.md: {e}"
+                        )
+    return errors
+
+
 def validate_marketplace():
     """Validate marketplace.json and all referenced plugins."""
     errors = []
@@ -68,27 +99,7 @@ def validate_marketplace():
                     errors.append(f"{name}: Failed to parse {gext}: {e}")
 
             # Check skills have frontmatter
-            skills_dir = os.path.join(plugin_dir, "skills")
-            if os.path.isdir(skills_dir):
-                with os.scandir(skills_dir) as entries:
-                    for entry in entries:
-                        if entry.is_dir():
-                            skill_name = entry.name
-                            skill_file = os.path.join(entry.path, "SKILL.md")
-                            if os.path.exists(skill_file):
-                                try:
-                                    with open(skill_file) as f:
-                                        content = f.read()
-                                    if not content.startswith("---"):
-                                        errors.append(
-                                            f"{name}/skills/{skill_name}: SKILL.md missing frontmatter"
-                                        )
-                                    if len(content.strip()) < 50:
-                                        errors.append(
-                                            f"{name}/skills/{skill_name}: SKILL.md too short"
-                                        )
-                                except Exception as e:
-                                    errors.append(f"{name}/skills/{skill_name}: Failed to read SKILL.md: {e}")
+            errors.extend(_validate_plugin_skills(plugin_dir, name))
 
     if errors:
         print("Validation errors:")
