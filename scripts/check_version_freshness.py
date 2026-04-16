@@ -30,15 +30,15 @@ def check_plugin(plugin):
             with open(pjson_path) as f:
                 pdata = json.load(f)
             marketplace_ver = pdata.get("version", "unknown")
-        except Exception:
-            pass
+        except (OSError, json.JSONDecodeError) as e:
+            print(f"::warning ::Failed to parse {pjson_path}: {e}")
     elif os.path.exists(gext_path):
         try:
             with open(gext_path) as f:
                 gdata = json.load(f)
             marketplace_ver = gdata.get("version", "unknown")
-        except Exception:
-            pass
+        except (OSError, json.JSONDecodeError) as e:
+            print(f"::warning ::Failed to parse {gext_path}: {e}")
 
     # Get latest stable release from source repo
     try:
@@ -99,7 +99,7 @@ def check_version_freshness():
     try:
         with open(".claude-plugin/marketplace.json") as f:
             marketplace = json.load(f)
-    except Exception as e:
+    except (OSError, json.JSONDecodeError) as e:
         print(f"::error ::Failed to load marketplace.json: {e}")
         return
 
