@@ -8,39 +8,31 @@ import os
 import re
 
 
-def check_plugin(plugin):
-    """Check a single plugin's version against its latest GitHub release."""
-    name = plugin["name"]
-    if not re.fullmatch(r"^[a-zA-Z0-9-]+$", name):
-        return {
-            "status": "error",
-            "name": name,
-            "marketplace_ver": "unknown",
-            "error": "invalid name format"
-        }
-    source = plugin["source"].lstrip("./")
-
-    # Priority: .claude-plugin/plugin.json, fallback: gemini-extension.json
+def parse_local_version(source):
+    """Priority: .claude-plugin/plugin.json, fallback: gemini-extension.json"""
+    source = source.lstrip("./")
     pjson_path = os.path.join(source, ".claude-plugin", "plugin.json")
     gext_path = os.path.join(source, "gemini-extension.json")
 
-    marketplace_ver = "unknown"
     if os.path.exists(pjson_path):
         try:
             with open(pjson_path) as f:
                 pdata = json.load(f)
-            marketplace_ver = pdata.get("version", "unknown")
+            return pdata.get("version", "unknown")
         except Exception:
             pass
     elif os.path.exists(gext_path):
         try:
             with open(gext_path) as f:
                 gdata = json.load(f)
-            marketplace_ver = gdata.get("version", "unknown")
+            return gdata.get("version", "unknown")
         except Exception:
             pass
+    return "unknown"
 
-    # Get latest stable release from source repo
+
+def fetch_github_version(name):
+    """Get latest stable release from source repo."""
     try:
         result = subprocess.run(
             [
@@ -59,38 +51,62 @@ def check_plugin(plugin):
             timeout=30,
         )
         if result.returncode == 0:
-            latest_tag = result.stdout.strip().lstrip("v")
-            if marketplace_ver != latest_tag:
-                return {
-                    "status": "stale",
-                    "name": name,
-                    "marketplace_ver": marketplace_ver,
-                    "latest_tag": latest_tag,
-                }
-            else:
-                return {
-                    "status": "up-to-date",
-                    "name": name,
-                    "marketplace_ver": marketplace_ver,
-                }
+            return {"status": "success", "tag": result.stdout.strip().lstrip("v")}
+        else:
+            return {"status": "no-release"}
+    except subprocess.TimeoutExpired:
+        return {"status": "timeout"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+def check_plugin(plugin):
+    """Check a single plugin's version against its latest GitHub release."""
+    name = plugin["name"]
+    if not re.fullmatch(r"^[a-zA-Z0-9-]+$", name):
+        return {
+            "status": "error",
+            "name": name,
+            "marketplace_ver": "unknown",
+            "error": "invalid name format"
+        }
+
+    marketplace_ver = parse_local_version(plugin["source"])
+    github_res = fetch_github_version(name)
+
+    if github_res["status"] == "success":
+        latest_tag = github_res["tag"]
+        if marketplace_ver != latest_tag:
+            return {
+                "status": "stale",
+                "name": name,
+                "marketplace_ver": marketplace_ver,
+                "latest_tag": latest_tag,
+            }
         else:
             return {
-                "status": "no-release",
+                "status": "up-to-date",
                 "name": name,
                 "marketplace_ver": marketplace_ver,
             }
-    except subprocess.TimeoutExpired:
+    elif github_res["status"] == "no-release":
+        return {
+            "status": "no-release",
+            "name": name,
+            "marketplace_ver": marketplace_ver,
+        }
+    elif github_res["status"] == "timeout":
         return {
             "status": "timeout",
             "name": name,
             "marketplace_ver": marketplace_ver,
         }
-    except Exception as e:
+    else:  # error
         return {
             "status": "error",
             "name": name,
             "marketplace_ver": marketplace_ver,
-            "error": str(e)
+            "error": github_res.get("error", "unknown error")
         }
 
 

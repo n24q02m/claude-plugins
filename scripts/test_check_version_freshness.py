@@ -70,5 +70,46 @@ class TestCheckVersionFreshness(unittest.TestCase):
         self.assertEqual(result["error"], "invalid name format")
         mock_run.assert_not_called()
 
+    @patch('check_version_freshness.os.path.exists')
+    @patch('check_version_freshness.open', create=True)
+    def test_parse_local_version_plugin_json(self, mock_open, mock_exists):
+        mock_exists.side_effect = lambda p: p.endswith('plugin.json')
+        mock_open.return_value.__enter__.return_value.read.return_value = '{"version": "1.2.3"}'
+        with patch('json.load', return_value={"version": "1.2.3"}):
+            version = check_version_freshness.parse_local_version("plugins/my-plugin")
+            self.assertEqual(version, "1.2.3")
+
+    @patch('check_version_freshness.os.path.exists')
+    @patch('check_version_freshness.open', create=True)
+    def test_parse_local_version_gemini_extension(self, mock_open, mock_exists):
+        def exists_side_effect(p):
+            if p.endswith('plugin.json'): return False
+            if p.endswith('gemini-extension.json'): return True
+            return False
+        mock_exists.side_effect = exists_side_effect
+        mock_open.return_value.__enter__.return_value.read.return_value = '{"version": "2.0.0"}'
+        with patch('json.load', return_value={"version": "2.0.0"}):
+            version = check_version_freshness.parse_local_version("plugins/my-plugin")
+            self.assertEqual(version, "2.0.0")
+
+    @patch('check_version_freshness.subprocess.run')
+    def test_fetch_github_version_success(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=0, stdout="v1.5.0\n")
+        res = check_version_freshness.fetch_github_version("my-plugin")
+        self.assertEqual(res["status"], "success")
+        self.assertEqual(res["tag"], "1.5.0")
+
+    @patch('check_version_freshness.subprocess.run')
+    def test_fetch_github_version_timeout(self, mock_run):
+        mock_run.side_effect = subprocess.TimeoutExpired(cmd=["gh"], timeout=30)
+        res = check_version_freshness.fetch_github_version("my-plugin")
+        self.assertEqual(res["status"], "timeout")
+
+    @patch('check_version_freshness.subprocess.run')
+    def test_fetch_github_version_error(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=1, stderr="error")
+        res = check_version_freshness.fetch_github_version("my-plugin")
+        self.assertEqual(res["status"], "no-release")
+
 if __name__ == '__main__':
     unittest.main()
