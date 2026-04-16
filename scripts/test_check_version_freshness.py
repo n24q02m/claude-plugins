@@ -70,5 +70,26 @@ class TestCheckVersionFreshness(unittest.TestCase):
         self.assertEqual(result["error"], "invalid name format")
         mock_run.assert_not_called()
 
+    @patch('check_version_freshness.subprocess.run')
+    def test_check_plugin_generic_exception(self, mock_run):
+        plugin = {"name": "valid-plugin", "source": "./plugins/valid-plugin"}
+        mock_run.side_effect = Exception("test error")
+
+        result = check_version_freshness.check_plugin(plugin)
+
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["error"], "test error")
+        self.assertEqual(result["name"], "valid-plugin")
+
+    @patch('check_version_freshness.subprocess.run')
+    def test_check_plugin_timeout_exception(self, mock_run):
+        plugin = {"name": "valid-plugin", "source": "./plugins/valid-plugin"}
+        mock_run.side_effect = subprocess.TimeoutExpired(cmd=["gh"], timeout=30)
+
+        result = check_version_freshness.check_plugin(plugin)
+
+        self.assertEqual(result["status"], "timeout")
+        self.assertEqual(result["name"], "valid-plugin")
+
 if __name__ == '__main__':
     unittest.main()
