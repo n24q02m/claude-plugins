@@ -104,5 +104,26 @@ class TestValidateMarketplace(unittest.TestCase):
             validate_marketplace.validate_marketplace()
             mock_exit.assert_called_with(1)
 
+
+    def test_gemini_extension_missing_version(self):
+        """Should fail if gemini-extension.json is missing version."""
+        gext_path = "plugins/test-plugin/gemini-extension.json"
+        with open(gext_path, 'w') as f:
+            json.dump({"foo": "bar"}, f)
+
+        with patch('sys.exit') as mock_exit:
+            validate_marketplace.validate_marketplace()
+            mock_exit.assert_called_with(1)
+
+    def test_gemini_extension_invalid_json(self):
+        """Should fail if gemini-extension.json is invalid JSON."""
+        gext_path = "plugins/test-plugin/gemini-extension.json"
+        with open(gext_path, 'w') as f:
+            f.write("invalid json")
+
+        with patch('sys.exit') as mock_exit:
+            validate_marketplace.validate_marketplace()
+            mock_exit.assert_called_with(1)
+
 if __name__ == '__main__':
     unittest.main()
