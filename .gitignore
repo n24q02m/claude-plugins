@@ -1,3 +1,12 @@
 __pycache__/
 *.pyc
 .worktrees/
+
+# AI Assistant / Rules
+.jules/
+.jules
+.superpower/
+superpower/
+superpowers/
+docs/superpowers/
+
