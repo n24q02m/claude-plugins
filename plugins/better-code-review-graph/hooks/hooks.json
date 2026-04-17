@@ -1,16 +1,5 @@
 {
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "mcp__plugin_better-code-review-graph_better-code-review-graph__",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/check-credentials.py\""
-          }
-        ]
-      }
-    ],
     "SessionStart": [
       {
         "hooks": [
