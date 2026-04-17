@@ -33,7 +33,7 @@ jobs:
       - name: Validate marketplace.json
         run: |
           set -euo pipefail
-          printf "%s\n" "Validating marketplace.json..."
+          echo "Validating marketplace.json..."
           python3 scripts/validate_marketplace.py
 
       - name: Check version freshness
@@ -42,7 +42,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          printf "%s\n" "Checking marketplace versions against latest releases..."
+          echo "Checking marketplace versions against latest releases..."
           python3 scripts/check_version_freshness.py
 
   dependency-review:
@@ -87,13 +87,13 @@ jobs:
           echo "::add-mask::$PASS"
 
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          printf "SMTP_USER<<%s\n" "$EOF" >> "$GITHUB_ENV"
-          printf "%s\n" "$USER" >> "$GITHUB_ENV"
-          printf "%s\n" "$EOF" >> "$GITHUB_ENV"
+          echo "SMTP_USER<<$EOF" >> "$GITHUB_ENV"
+          echo "$USER" >> "$GITHUB_ENV"
+          echo "$EOF" >> "$GITHUB_ENV"
 
-          printf "SMTP_PASS<<%s\n" "$EOF" >> "$GITHUB_ENV"
-          printf "%s\n" "$PASS" >> "$GITHUB_ENV"
-          printf "%s\n" "$EOF" >> "$GITHUB_ENV"
+          echo "SMTP_PASS<<$EOF" >> "$GITHUB_ENV"
+          echo "$PASS" >> "$GITHUB_ENV"
+          echo "$EOF" >> "$GITHUB_ENV"
         env:
           SMTP_CREDENTIAL: ${{ secrets.SMTP_CREDENTIAL }}
 

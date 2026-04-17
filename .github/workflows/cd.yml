@@ -49,17 +49,17 @@ jobs:
       - name: Resolve inputs
         id: inputs
         env:
-          REPO: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.repo || inputs.repo }}
-          TAG: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.tag || inputs.tag }}
+          REPO: ${{ github.event_name == "repository_dispatch" && github.event.client_payload.repo || inputs.repo }}
+          TAG: ${{ github.event_name == "repository_dispatch" && github.event.client_payload.tag || inputs.tag }}
         run: |
           set -euo pipefail
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          printf "repo<<%s\n" "$EOF" >> "$GITHUB_OUTPUT"
+          echo "repo<<$EOF" >> "$GITHUB_OUTPUT"
           printf "%s\n" "$REPO" >> "$GITHUB_OUTPUT"
-          printf "%s\n" "$EOF" >> "$GITHUB_OUTPUT"
-          printf "tag<<%s\n" "$EOF" >> "$GITHUB_OUTPUT"
+          echo "$EOF" >> "$GITHUB_OUTPUT"
+          echo "tag<<$EOF" >> "$GITHUB_OUTPUT"
           printf "%s\n" "$TAG" >> "$GITHUB_OUTPUT"
-          printf "%s\n" "$EOF" >> "$GITHUB_OUTPUT"
+          echo "$EOF" >> "$GITHUB_OUTPUT"
 
       - name: Validate inputs
         env:

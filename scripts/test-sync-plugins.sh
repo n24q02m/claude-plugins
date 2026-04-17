@@ -11,10 +11,10 @@ assert() {
   local desc="$1"
   shift
   if "$@"; then
-    printf "%s\n" "PASS: $desc"
+    echo "PASS: $desc"
     PASS=$((PASS + 1))
   else
-    printf "%s\n" "FAIL: $desc"
+    echo "FAIL: $desc"
     FAIL=$((FAIL + 1))
   fi
 }
@@ -23,10 +23,10 @@ assert_not() {
   local desc="$1"
   shift
   if ! "$@"; then
-    printf "%s\n" "PASS: $desc"
+    echo "PASS: $desc"
     PASS=$((PASS + 1))
   else
-    printf "%s\n" "FAIL: $desc"
+    echo "FAIL: $desc"
     FAIL=$((FAIL + 1))
   fi
 }
@@ -64,13 +64,13 @@ test_sync_plugins() {
   # Setup mock source repos
   local repos="$tmp/repos"
   mkdir -p "$repos/test-plugin/.claude-plugin"
-  printf "%s\n" '{"name":"test-plugin","description":"test","mcpServers":{}}' > "$repos/test-plugin/.claude-plugin/plugin.json"
+  echo '{"name":"test-plugin","description":"test","mcpServers":{}}' > "$repos/test-plugin/.claude-plugin/plugin.json"
   mkdir -p "$repos/test-plugin/skills/demo"
-  printf "%b\n" "---\ntitle: demo\n---\nDemo skill content that is long enough to pass validation checks." > "$repos/test-plugin/skills/demo/SKILL.md"
-  printf "%s\n" '{"version":"1.0.0"}' > "$repos/test-plugin/gemini-extension.json"
+  echo -e "---\ntitle: demo\n---\nDemo skill content that is long enough to pass validation checks." > "$repos/test-plugin/skills/demo/SKILL.md"
+  echo '{"version":"1.0.0"}' > "$repos/test-plugin/gemini-extension.json"
   # Setup mock only-skills repo
   mkdir -p "$repos/only-skills/skills/demo"
-  printf "%s\n" "demo skill" > "$repos/only-skills/skills/demo/SKILL.md"
+  echo "demo skill" > "$repos/only-skills/skills/demo/SKILL.md"
 
   # Setup mock missing repo
   # (test-missing does not exist)
@@ -93,11 +93,11 @@ test_sync_plugins() {
   assert "gemini-extension.json synced" test -f "$ROOT/plugins/test-plugin/gemini-extension.json"
   assert "skills synced" test -d "$ROOT/plugins/test-plugin/skills"
   assert "only-skills synced" test -d "$ROOT/plugins/only-skills/skills"
-  if printf "%s\n" "$output" | grep -q "SKIP test-missing"; then
-    printf "%s\n" "PASS: missing repo skipped"
+  if echo "$output" | grep -q "SKIP test-missing"; then
+    echo "PASS: missing repo skipped"
     PASS=$((PASS + 1))
   else
-    printf "%s\n" "FAIL: missing repo skipped"
+    echo "FAIL: missing repo skipped"
     FAIL=$((FAIL + 1))
   fi
 
@@ -107,13 +107,13 @@ test_sync_plugins() {
   ROOT="$old_root"
 }
 
-printf "%s\n" "=== has_files tests ==="
+echo "=== has_files tests ==="
 test_has_files
 
-printf "%s\n" ""
-printf "%s\n" "=== sync_plugins integration test ==="
+echo ""
+echo "=== sync_plugins integration test ==="
 test_sync_plugins
 
-printf "%s\n" ""
-printf "%s\n" "Results: $PASS passed, $FAIL failed"
+echo ""
+echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1

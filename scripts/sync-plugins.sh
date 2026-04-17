@@ -46,7 +46,7 @@ sync_plugins() {
     dst="$ROOT/plugins/$repo"
 
     if [ ! -d "$src" ]; then
-      printf "%s\n" "SKIP $repo (not found at $src)"
+      echo "SKIP $repo (not found at $src)"
       continue
     fi
 
@@ -58,10 +58,10 @@ sync_plugins() {
     sync_dir "skills"
     sync_dir "hooks"
 
-    printf "%s\n" "OK $repo"
+    echo "OK $repo"
   done
 
-  printf "%s\n" "Sync complete."
+  echo "Sync complete."
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

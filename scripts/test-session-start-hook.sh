@@ -8,13 +8,13 @@ FAIL=0
 
 assert_contains() {
   local desc="$1" expected="$2" actual="$3"
-  if printf "%s\n" "$actual" | grep -qF "$expected"; then
-    printf "%s\n" "PASS: $desc"
+  if echo "$actual" | grep -qF "$expected"; then
+    echo "PASS: $desc"
     PASS=$((PASS + 1))
   else
-    printf "%s\n" "FAIL: $desc"
-    printf "%s\n" "  Expected to contain: $expected"
-    printf "%s\n" "  Actual: $actual"
+    echo "FAIL: $desc"
+    echo "  Expected to contain: $expected"
+    echo "  Actual: $actual"
     FAIL=$((FAIL + 1))
   fi
 }
@@ -35,6 +35,6 @@ output=$(bash "$HOOK_SCRIPT")
 assert_contains "existing DB shows available message" "Knowledge graph is available" "$output"
 assert_contains "existing DB mentions semantic_search" "semantic_search_nodes_tool" "$output"
 
-printf "%s\n" ""
-printf "%s\n" "Results: $PASS passed, $FAIL failed"
+echo ""
+echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1
