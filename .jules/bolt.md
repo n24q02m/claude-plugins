@@ -4,3 +4,6 @@
 ## 2025-02-12 - Replacing Python generator expressions with native evaluation
 **Learning:** Using `str.endswith(tuple)` or `str.startswith(tuple)` is significantly more efficient and idiomatic in Python than using `any()` with a generator expression for multiple suffix or prefix matching. Replacing generator expressions within `any()` calls with explicit `for` loops improves performance for repeated `os.environ.get()` and `os.path.exists()` checks by avoiding generator overhead in Python hot paths.
 **Action:** Always prefer explicit loop iterations or tuple support for string evaluations over `any(...)` or `all(...)` with generator expressions for core performance paths, since generator evaluation adds extra latency.
+## 2024-04-18 - Parallelizing Synchronous File Operations
+**Learning:** Validation scripts performing synchronous blocking I/O (reading JSON/Markdown files) across multiple plugin directories sequentially cause performance bottlenecks.
+**Action:** Refactor sequential I/O bound loops into distinct helper functions (converting loop controls like `continue` to early returns) and execute them concurrently using `concurrent.futures.ThreadPoolExecutor` to overlap blocking calls and dramatically improve execution time.
