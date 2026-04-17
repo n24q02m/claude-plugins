@@ -81,12 +81,19 @@ jobs:
         run: |
           set -euo pipefail
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+
+          # Mask extracted credentials to prevent plaintext logging
+          SMTP_USER_VAL="${SMTP_CREDENTIAL%%:*}"
+          SMTP_PASS_VAL="${SMTP_CREDENTIAL#*:}"
+          printf "::add-mask::%s\n" "$SMTP_USER_VAL"
+          printf "::add-mask::%s\n" "$SMTP_PASS_VAL"
+
           printf "SMTP_USER<<%s\n" "$EOF" >> "$GITHUB_ENV"
-          printf "%s\n" "${SMTP_CREDENTIAL%%:*}" >> "$GITHUB_ENV"
+          printf "%s\n" "$SMTP_USER_VAL" >> "$GITHUB_ENV"
           printf "%s\n" "$EOF" >> "$GITHUB_ENV"
 
           printf "SMTP_PASS<<%s\n" "$EOF" >> "$GITHUB_ENV"
-          printf "%s\n" "${SMTP_CREDENTIAL#*:}" >> "$GITHUB_ENV"
+          printf "%s\n" "$SMTP_PASS_VAL" >> "$GITHUB_ENV"
           printf "%s\n" "$EOF" >> "$GITHUB_ENV"
         env:
           SMTP_CREDENTIAL: ${{ secrets.SMTP_CREDENTIAL }}
