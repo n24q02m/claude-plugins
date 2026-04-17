@@ -10,3 +10,8 @@ superpower/
 superpowers/
 docs/superpowers/
 
+
+# Test coverage artifacts
+coverage.xml
+htmlcov/
+.coverage
