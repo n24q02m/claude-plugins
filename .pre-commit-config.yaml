@@ -1,0 +1,33 @@
+# Pre-commit Hooks Configuration
+# Installation: https://pre-commit.com/
+#
+# Quick start:
+#   1. Install pre-commit: pipx install pre-commit
+#   2. Install hooks: pre-commit install
+#   3. Run manually: pre-commit run --all-files
+#
+# Bypass checks: git commit --no-verify (use only in emergency)
+
+repos:
+  # ============================================================================
+  # Security: Secret Detection (MUST be first)
+  # ============================================================================
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: 83d9cd684c87d95d656c1458ef04895a7f1cbd8e # v8.30.1
+    hooks:
+      - id: gitleaks
+        name: gitleaks (detect secrets)
+
+  # ============================================================================
+  # Content integrity: block ASCII rewriting of Vietnamese diacritics
+  # + Unicode punctuation (em-dash, ellipsis, arrows, smart quotes, emoji).
+  # See scripts/preserve-diacritics.py and feedback_vietnamese_diacritics rule.
+  # ============================================================================
+  - repo: local
+    hooks:
+      - id: preserve-diacritics
+        name: Preserve Vietnamese diacritics + Unicode punctuation
+        entry: python scripts/preserve-diacritics.py
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
