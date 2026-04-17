@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate marketplace.json structure and plugin integrity."""
 
+import concurrent.futures
 import json
 import os
 import re
@@ -8,6 +9,80 @@ import sys
 
 # Pre-compile regex at module level to avoid cache lookup overhead in loops
 PLUGIN_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9-]+$")
+
+
+def _validate_plugin_skills(plugin_dir, plugin_name):
+    """Validate skills for a single plugin."""
+    errors = []
+    skills_dir = os.path.join(plugin_dir, "skills")
+    if os.path.isdir(skills_dir):
+        with os.scandir(skills_dir) as entries:
+            for entry in entries:
+                if entry.is_dir():
+                    skill_name = entry.name
+                    skill_file = os.path.join(entry.path, "SKILL.md")
+                    if os.path.exists(skill_file):
+                        try:
+                            with open(skill_file) as f:
+                                content = f.read()
+                            if not content.startswith("---"):
+                                errors.append(
+                                    f"{plugin_name}/skills/{skill_name}: SKILL.md missing frontmatter"
+                                )
+                            if len(content.strip()) < 50:
+                                errors.append(
+                                    f"{plugin_name}/skills/{skill_name}: SKILL.md too short"
+                                )
+                        except Exception as e:
+                            errors.append(f"{plugin_name}/skills/{skill_name}: Failed to read SKILL.md: {e}")
+    return errors
+
+
+def _validate_plugin(plugin):
+    """Validate a single plugin entry and its contents."""
+    errors = []
+    name = plugin.get("name", "Unknown")
+    if not PLUGIN_NAME_PATTERN.fullmatch(name):
+        errors.append(f"Plugin {name}: invalid name format (must match ^[a-zA-Z0-9-]+$)")
+        return errors
+
+    source = plugin.get("source")
+    if not source:
+        errors.append(f"Plugin {name}: missing source")
+        return errors
+
+    plugin_dir = source.lstrip("./")
+
+    # Check plugin.json exists and is valid
+    pjson = os.path.join(plugin_dir, ".claude-plugin", "plugin.json")
+    if not os.path.exists(pjson):
+        errors.append(f"{name}: missing {pjson}")
+        return errors
+
+    try:
+        with open(pjson) as f:
+            pdata = json.load(f)
+        for req in ["name", "description", "mcpServers"]:
+            if req not in pdata:
+                errors.append(f"{name}: plugin.json missing {req}")
+    except Exception as e:
+        errors.append(f"{name}: Failed to parse {pjson}: {e}")
+
+    # Check gemini-extension.json has version (optional file)
+    gext = os.path.join(plugin_dir, "gemini-extension.json")
+    if os.path.exists(gext):
+        try:
+            with open(gext) as f:
+                gdata = json.load(f)
+            if "version" not in gdata:
+                errors.append(f"{name}: gemini-extension.json missing version")
+        except Exception as e:
+            errors.append(f"{name}: Failed to parse {gext}: {e}")
+
+    # Check skills have frontmatter
+    errors.extend(_validate_plugin_skills(plugin_dir, name))
+
+    return errors
 
 
 def validate_marketplace():
@@ -31,67 +106,16 @@ def validate_marketplace():
         if not plugins:
             errors.append("marketplace.json: No plugins defined")
 
-        for plugin in plugins:
-            name = plugin.get("name", "Unknown")
-            if not PLUGIN_NAME_PATTERN.fullmatch(name):
-                errors.append(f"Plugin {name}: invalid name format (must match ^[a-zA-Z0-9-]+$)")
-                continue
-
-            source = plugin.get("source")
-            if not source:
-                errors.append(f"Plugin {name}: missing source")
-                continue
-
-            plugin_dir = source.lstrip("./")
-
-            # Check plugin.json exists and is valid
-            pjson = os.path.join(plugin_dir, ".claude-plugin", "plugin.json")
-            if not os.path.exists(pjson):
-                errors.append(f"{name}: missing {pjson}")
-                continue
-
-            try:
-                with open(pjson) as f:
-                    pdata = json.load(f)
-                for req in ["name", "description", "mcpServers"]:
-                    if req not in pdata:
-                        errors.append(f"{name}: plugin.json missing {req}")
-            except Exception as e:
-                errors.append(f"{name}: Failed to parse {pjson}: {e}")
-
-            # Check gemini-extension.json has version (optional file)
-            gext = os.path.join(plugin_dir, "gemini-extension.json")
-            if os.path.exists(gext):
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future_to_plugin = {executor.submit(_validate_plugin, p): p for p in plugins}
+            for future in concurrent.futures.as_completed(future_to_plugin):
                 try:
-                    with open(gext) as f:
-                        gdata = json.load(f)
-                    if "version" not in gdata:
-                        errors.append(f"{name}: gemini-extension.json missing version")
-                except Exception as e:
-                    errors.append(f"{name}: Failed to parse {gext}: {e}")
-
-            # Check skills have frontmatter
-            skills_dir = os.path.join(plugin_dir, "skills")
-            if os.path.isdir(skills_dir):
-                with os.scandir(skills_dir) as entries:
-                    for entry in entries:
-                        if entry.is_dir():
-                            skill_name = entry.name
-                            skill_file = os.path.join(entry.path, "SKILL.md")
-                            if os.path.exists(skill_file):
-                                try:
-                                    with open(skill_file) as f:
-                                        content = f.read()
-                                    if not content.startswith("---"):
-                                        errors.append(
-                                            f"{name}/skills/{skill_name}: SKILL.md missing frontmatter"
-                                        )
-                                    if len(content.strip()) < 50:
-                                        errors.append(
-                                            f"{name}/skills/{skill_name}: SKILL.md too short"
-                                        )
-                                except Exception as e:
-                                    errors.append(f"{name}/skills/{skill_name}: Failed to read SKILL.md: {e}")
+                    plugin_errors = future.result()
+                    errors.extend(plugin_errors)
+                except Exception as exc:
+                    plugin = future_to_plugin[future]
+                    name = plugin.get("name", "Unknown")
+                    errors.append(f"Plugin {name} generated an exception: {exc}")
 
     if errors:
         print("Validation errors:")
