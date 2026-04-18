@@ -15,3 +15,4 @@ docs/superpowers/
 coverage.xml
 htmlcov/
 .coverage
+.Jules/
