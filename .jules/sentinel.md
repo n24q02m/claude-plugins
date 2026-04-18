@@ -15,8 +15,3 @@
 **Vulnerability:** In bash scripts and GitHub Actions, `echo "$VAR"` was used incorrectly when formatting variables containing potentially untrusted input (e.g., `echo "OK $repo"`, `echo "Syncing $REPO"`). If an attacker injects a string beginning with `-`, `echo` interprets it as an option (like `-e` or `-n`).
 **Learning:** `echo` arguments that begin with a hyphen are interpreted as options by the `echo` command itself. While `printf "%s\n" "$VAR"` is generally safe, using `echo "$VAR"` is unsafe. In some older shell implementations, `printf "$VAR"` without a format string can interpret format specifiers from the variable itself.
 **Prevention:** Always use `printf "%s\n" "$VAR"` instead of `echo "$VAR"` to prevent flag injection (if `$VAR` starts with `-`) and unexpected formatting issues.
-
-## 2026-04-12 - [LOW] Potential Argument Injection in Subprocess Calls
-**Vulnerability:** Even with strict regex validation of input, command-line tools can be vulnerable to argument injection if input is interpreted as a flag. While our current regex `^[a-zA-Z0-9-]+$` prevents names from starting with a hyphen in most cases (if we were using a different regex or if the tool has unusual parsing), it is safer to be explicit.
-**Learning:** Using a `--` separator is a standard defense-in-depth practice to explicitly terminate the option list, ensuring that any subsequent arguments are treated as positional parameters or values rather than flags.
-**Prevention:** Always use the `--` argument separator in `subprocess.run` calls before passing variable arguments that are intended to be values for specific flags or positional arguments, especially when interacting with external CLIs like `gh`.

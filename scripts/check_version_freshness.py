@@ -53,7 +53,6 @@ def check_plugin(plugin):
                 "tagName",
                 "-q",
                 ".tagName",
-                "--",
             ],
             capture_output=True,
             text=True,
