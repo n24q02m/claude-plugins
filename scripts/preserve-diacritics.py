@@ -191,6 +191,11 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
     """Return list of (rule, old_excerpt, new_excerpt) violations for one pair."""
     violations: list[tuple[str, str, str]] = []
 
+    # Fast path: if the old string is pure ASCII, it cannot possibly contain
+    # Unicode punctuation, Vietnamese diacritics, or emojis to strip.
+    if old.isascii():
+        return violations
+
     # Rule 1: Unicode punctuation replaced with ASCII.
     # Strategy: strip ALL tracked unicode punct from `old` and ALL their ASCII
     # forms from `new`; if the resulting skeletons match (similarity), this is
