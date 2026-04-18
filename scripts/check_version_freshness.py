@@ -3,9 +3,57 @@
 
 import concurrent.futures
 import json
-import subprocess
 import os
 import re
+import urllib.request
+import urllib.error
+import threading
+
+# In-memory cache for API responses to avoid redundant calls
+_cache = {}
+_cache_lock = threading.Lock()
+
+
+def get_latest_tag_api(repo):
+    """Fetch the latest stable release tag from GitHub API."""
+    with _cache_lock:
+        if repo in _cache:
+            return _cache[repo]
+
+    url = f"https://api.github.com/repos/{repo}/releases/latest"
+    headers = {
+        "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "Marketplace-Version-Checker"
+    }
+
+    # Support both GITHUB_TOKEN and GH_TOKEN for authenticated requests
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    if token:
+        headers["Authorization"] = f"token {token}"
+
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            data = json.loads(response.read().decode())
+            # GitHub REST API returns snake_case tag_name (gh CLI returns camelCase).
+            tag = data.get("tag_name", "").lstrip("v")
+            result = ("ok", tag)
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            result = ("no-release", None)
+        else:
+            result = ("error", str(e))
+    except urllib.error.URLError as e:
+        if isinstance(e.reason, TimeoutError):
+            result = ("timeout", None)
+        else:
+            result = ("error", str(e))
+    except Exception as e:
+        result = ("error", str(e))
+
+    with _cache_lock:
+        _cache[repo] = result
+    return result
 
 # Pre-compile regex at module level to avoid cache lookup overhead in concurrent loops
 PLUGIN_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9-]+$")
@@ -43,57 +91,41 @@ def check_plugin(plugin):
         except (OSError, json.JSONDecodeError) as e:
             print(f"::warning ::Failed to parse {gext_path}: {e}")
 
-    # Get latest stable release from source repo
-    try:
-        result = subprocess.run(
-            [
-                "gh",
-                "release",
-                "view",
-                "--repo",
-                f"n24q02m/{name}",
-                "--json",
-                "tagName",
-                "-q",
-                ".tagName",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        if result.returncode == 0:
-            latest_tag = result.stdout.strip().lstrip("v")
-            if marketplace_ver != latest_tag:
-                return {
-                    "status": "stale",
-                    "name": name,
-                    "marketplace_ver": marketplace_ver,
-                    "latest_tag": latest_tag,
-                }
-            else:
-                return {
-                    "status": "up-to-date",
-                    "name": name,
-                    "marketplace_ver": marketplace_ver,
-                }
+    # Get latest stable release from source repo via API
+    status, latest_tag = get_latest_tag_api(f"n24q02m/{name}")
+
+    if status == "ok":
+        if marketplace_ver != latest_tag:
+            return {
+                "status": "stale",
+                "name": name,
+                "marketplace_ver": marketplace_ver,
+                "latest_tag": latest_tag,
+            }
         else:
             return {
-                "status": "no-release",
+                "status": "up-to-date",
                 "name": name,
                 "marketplace_ver": marketplace_ver,
             }
-    except subprocess.TimeoutExpired:
+    elif status == "no-release":
+        return {
+            "status": "no-release",
+            "name": name,
+            "marketplace_ver": marketplace_ver,
+        }
+    elif status == "timeout":
         return {
             "status": "timeout",
             "name": name,
             "marketplace_ver": marketplace_ver,
         }
-    except Exception as e:
+    else:
         return {
             "status": "error",
             "name": name,
             "marketplace_ver": marketplace_ver,
-            "error": str(e)
+            "error": latest_tag # status is "error", latest_tag contains the error message
         }
 
 
