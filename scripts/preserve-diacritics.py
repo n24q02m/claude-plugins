@@ -214,30 +214,34 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
             violations.append((f"unicode-punct {uni!r}->ascii", old, new))
 
     # Rule 2: Vietnamese diacritics stripped.
+    # Performance: Skip iterating over new string if no diacritics existed in the old string to be removed
     old_diacritics = [c for c in old if c in VIETNAMESE_DIACRITIC_CHARS]
-    new_diacritics = [c for c in new if c in VIETNAMESE_DIACRITIC_CHARS]
-    if len(old_diacritics) > len(new_diacritics):
-        # Confirm via NFD-strip round-trip: does stripping old give us new?
-        old_stripped = _strip_diacritics(old)
-        new_lower = new.replace("đ", "d").replace("Đ", "D")
-        if old_stripped.strip().lower() == new_lower.strip().lower():
-            violations.append(("vietnamese-diacritic-strip", old, new))
-        elif (
-            _similar(old_stripped, new_lower)
-            and len(old_diacritics) - len(new_diacritics) >= 2
-        ):
-            # Many diacritics vanished but content otherwise similar.
-            violations.append(("vietnamese-diacritic-strip", old, new))
+    if old_diacritics:
+        new_diacritics = [c for c in new if c in VIETNAMESE_DIACRITIC_CHARS]
+        if len(old_diacritics) > len(new_diacritics):
+            # Confirm via NFD-strip round-trip: does stripping old give us new?
+            old_stripped = _strip_diacritics(old)
+            new_lower = new.replace("đ", "d").replace("Đ", "D")
+            if old_stripped.strip().lower() == new_lower.strip().lower():
+                violations.append(("vietnamese-diacritic-strip", old, new))
+            elif (
+                _similar(old_stripped, new_lower)
+                and len(old_diacritics) - len(new_diacritics) >= 2
+            ):
+                # Many diacritics vanished but content otherwise similar.
+                violations.append(("vietnamese-diacritic-strip", old, new))
 
     # Rule 3: Emoji removed / replaced.
+    # Performance: Skip regex search on new string if no emojis existed in the old string to be removed
     old_emoji = _EMOJI_RE.findall(old)
-    new_emoji = _EMOJI_RE.findall(new)
-    if len(old_emoji) > len(new_emoji):
-        # Confirm similarity so that full-paragraph rewrites don't trip it.
-        old_no_emoji = _EMOJI_RE.sub("", old).strip()
-        new_no_emoji = _EMOJI_RE.sub("", new).strip()
-        if _similar(old_no_emoji, new_no_emoji):
-            violations.append(("emoji-removed", old, new))
+    if old_emoji:
+        new_emoji = _EMOJI_RE.findall(new)
+        if len(old_emoji) > len(new_emoji):
+            # Confirm similarity so that full-paragraph rewrites don't trip it.
+            old_no_emoji = _EMOJI_RE.sub("", old).strip()
+            new_no_emoji = _EMOJI_RE.sub("", new).strip()
+            if _similar(old_no_emoji, new_no_emoji):
+                violations.append(("emoji-removed", old, new))
 
     return violations
 
