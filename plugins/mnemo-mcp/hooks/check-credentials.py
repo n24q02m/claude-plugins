@@ -46,7 +46,7 @@ def main() -> None:
     except Exception:
         sys.exit(0)
 
-    tool_name = data.get("tool_name", "")
+    tool_name = data.get("tool_name") or ""
     if tool_name.endswith(EXEMPT_SUFFIXES):
         sys.exit(0)
 
