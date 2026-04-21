@@ -38,6 +38,8 @@ def _is_configured() -> bool:
 def main() -> None:
     try:
         data = json.load(sys.stdin)
+        if not isinstance(data, dict):
+            sys.exit(0)
     except Exception:
         sys.exit(0)
 
