@@ -69,7 +69,18 @@ def check_plugin(plugin):
             "marketplace_ver": "unknown",
             "error": "invalid name format"
         }
-    source = plugin["source"].lstrip("./")
+
+    source = plugin["source"]
+    norm_source = os.path.normpath(source)
+    if os.path.isabs(norm_source) or norm_source.startswith(".."):
+        return {
+            "status": "error",
+            "name": name,
+            "marketplace_ver": "unknown",
+            "error": "invalid source path"
+        }
+
+    source = source[2:] if source.startswith("./") else source
 
     # Priority: .claude-plugin/plugin.json, fallback: gemini-extension.json
     pjson_path = os.path.join(source, ".claude-plugin", "plugin.json")

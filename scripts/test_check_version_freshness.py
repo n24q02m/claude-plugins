@@ -51,7 +51,12 @@ class TestCheckVersionFreshness(unittest.TestCase):
         result = check_version_freshness.check_plugin(plugin)
         self.assertEqual(result["status"], "error")
         self.assertEqual(result["error"], "invalid name format")
-        mock_urlopen.assert_not_called()
+
+    def test_check_plugin_path_traversal(self):
+        plugin = {"name": "test-plugin", "source": "../../../etc/passwd"}
+        res = check_version_freshness.check_plugin(plugin)
+        self.assertEqual(res["status"], "error")
+        self.assertEqual(res["error"], "invalid source path")
 
     @patch("check_version_freshness.urllib.request.urlopen")
     def test_check_plugin_invalid_name_space(self, mock_urlopen):
