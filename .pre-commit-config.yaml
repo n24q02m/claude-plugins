@@ -31,3 +31,11 @@ repos:
         language: system
         pass_filenames: false
         stages: [pre-commit]
+
+      - id: validate-marketplace
+        name: Validate marketplace.json + plugin integrity
+        entry: python3 scripts/validate_marketplace.py
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        files: ^(\.claude-plugin/marketplace\.json|plugins/.*/plugin\.json)$
