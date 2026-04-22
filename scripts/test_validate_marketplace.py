@@ -74,6 +74,16 @@ class TestValidateMarketplace(unittest.TestCase):
             validate_marketplace.validate_marketplace()
             mock_exit.assert_called_with(1)
 
+    def test_path_traversal_source(self):
+        """Should fail if a plugin has a path traversal in source."""
+        self.valid_marketplace["plugins"][0]["source"] = "../../../etc/passwd"
+        with open(self.marketplace_path, 'w') as f:
+            json.dump(self.valid_marketplace, f)
+
+        with patch('sys.exit') as mock_exit:
+            validate_marketplace.validate_marketplace()
+            mock_exit.assert_called_with(1)
+
     def test_invalid_name(self):
         """Should fail if a plugin has an invalid name format."""
         self.valid_marketplace["plugins"][0]["name"] = "invalid_name!"
