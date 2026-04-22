@@ -68,11 +68,30 @@ class TestCheckCredentials(unittest.TestCase):
         mock_exit.assert_called_with(0)
 
     @patch('sys.stdin', io.StringIO("invalid json"))
-    @patch('sys.exit', side_effect=SystemExit)
-    def test_main_invalid_json(self, mock_exit):
-        with self.assertRaises(SystemExit):
+    @patch('sys.exit', side_effect=SystemExit(2))
+    @patch('sys.stdout', new_callable=io.StringIO)
+    def test_main_invalid_json(self, mock_stdout, mock_exit):
+        with self.assertRaises(SystemExit) as cm:
             check_credentials.main()
-        mock_exit.assert_called_with(0)
+
+        self.assertEqual(cm.exception.code, 2)
+        mock_exit.assert_called_with(2)
+        output = json.loads(mock_stdout.getvalue())
+        self.assertEqual(output["decision"], "block")
+        self.assertIn("Invalid input: payload must be a JSON dictionary", output["reason"])
+
+    @patch('sys.stdin', io.StringIO('["not a dict"]'))
+    @patch('sys.exit', side_effect=SystemExit(2))
+    @patch('sys.stdout', new_callable=io.StringIO)
+    def test_main_not_dict_json(self, mock_stdout, mock_exit):
+        with self.assertRaises(SystemExit) as cm:
+            check_credentials.main()
+
+        self.assertEqual(cm.exception.code, 2)
+        mock_exit.assert_called_with(2)
+        output = json.loads(mock_stdout.getvalue())
+        self.assertEqual(output["decision"], "block")
+        self.assertIn("Invalid input: payload must be a JSON dictionary", output["reason"])
 
 if __name__ == '__main__':
     unittest.main()
