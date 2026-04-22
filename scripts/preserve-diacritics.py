@@ -101,7 +101,7 @@ _SKIP_DIRS = {".git", "node_modules", "dist", "build", ".venv", "venv", "__pycac
 
 def _is_skippable(path: str) -> bool:
     p = Path(path)
-    if any(part in _SKIP_DIRS for part in p.parts):
+    if not _SKIP_DIRS.isdisjoint(p.parts):
         return True
     if p.suffix.lower() in _SKIP_SUFFIXES:
         return True
@@ -214,10 +214,18 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
             violations.append((f"unicode-punct {uni!r}->ascii", old, new))
 
     # Rule 2: Vietnamese diacritics stripped.
-    # Performance: Skip iterating over new string if no diacritics existed in the old string to be removed
-    old_diacritics = [c for c in old if c in VIETNAMESE_DIACRITIC_CHARS]
+    # Performance: Skip iterating over strings if no diacritics exist
+    if not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(old):
+        old_diacritics = [c for c in old if c in VIETNAMESE_DIACRITIC_CHARS]
+    else:
+        old_diacritics = []
+
     if old_diacritics:
-        new_diacritics = [c for c in new if c in VIETNAMESE_DIACRITIC_CHARS]
+        if not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(new):
+            new_diacritics = [c for c in new if c in VIETNAMESE_DIACRITIC_CHARS]
+        else:
+            new_diacritics = []
+
         if len(old_diacritics) > len(new_diacritics):
             # Confirm via NFD-strip round-trip: does stripping old give us new?
             old_stripped = _strip_diacritics(old)
@@ -252,18 +260,25 @@ def _similar(a: str, b: str) -> bool:
         return True
     if not a or not b:
         return False
+
     shorter, longer = (a, b) if len(a) <= len(b) else (b, a)
-    if len(shorter) == 0:
+    len_s = len(shorter)
+
+    if len_s == 0:
         return False
+
     # Abs length gap guard: if one side is >2x the other, treat as different.
-    if len(longer) > 2 * max(len(shorter), 1):
+    if len(longer) > 2 * len_s:
         return False
+
     # Character-in-order match ratio.
     i = 0
     for ch in longer:
-        if i < len(shorter) and ch == shorter[i]:
+        if ch == shorter[i]:
             i += 1
-    return (i / len(shorter)) >= 0.7
+            if i == len_s:
+                break
+    return (i / len_s) >= 0.7
 
 
 def main() -> int:
