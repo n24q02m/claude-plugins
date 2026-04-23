@@ -44,9 +44,17 @@ def main() -> None:
     try:
         data = json.load(sys.stdin)
         if not isinstance(data, dict):
-            sys.exit(0)
+            print(json.dumps({
+                "decision": "block",
+                "reason": "Invalid input: payload must be a JSON dictionary",
+            }))
+            sys.exit(2)
     except Exception:
-        sys.exit(0)
+        print(json.dumps({
+            "decision": "block",
+            "reason": "Invalid input: payload must be a JSON dictionary",
+        }))
+        sys.exit(2)
 
     tool_name = data.get("tool_name") or ""
     if tool_name.endswith(EXEMPT_SUFFIXES):
