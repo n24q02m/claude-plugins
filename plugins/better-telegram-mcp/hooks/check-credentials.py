@@ -51,7 +51,9 @@ def main() -> None:
         }))
         sys.exit(2)
 
-    tool_name = data.get("tool_name") or ""
+    tool_name = data.get("tool_name")
+    if not isinstance(tool_name, str):
+        tool_name = ""
     if tool_name.endswith(EXEMPT_SUFFIXES):
         sys.exit(0)
 
