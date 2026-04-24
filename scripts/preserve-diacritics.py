@@ -72,7 +72,7 @@ _EMOJI_RE = re.compile(
 )
 
 # Files we deliberately skip (binary-ish or generated).
-_SKIP_SUFFIXES = {
+_SKIP_SUFFIXES = (
     ".lock",
     ".svg",
     ".png",
@@ -95,18 +95,16 @@ _SKIP_SUFFIXES = {
     ".wasm",
     ".min.js",
     ".min.css",
-}
+)
 _SKIP_DIRS = {".git", "node_modules", "dist", "build", ".venv", "venv", "__pycache__"}
 
 
 def _is_skippable(path: str) -> bool:
-    p = Path(path)
-    if not _SKIP_DIRS.isdisjoint(p.parts):
+    parts = path.split("/")
+    if not _SKIP_DIRS.isdisjoint(parts):
         return True
-    if p.suffix.lower() in _SKIP_SUFFIXES:
-        return True
-    # Lockfiles
-    return p.name in {
+    name = parts[-1]
+    if name in {
         "bun.lockb",
         "bun.lock",
         "package-lock.json",
@@ -115,7 +113,11 @@ def _is_skippable(path: str) -> bool:
         "poetry.lock",
         "Cargo.lock",
         "go.sum",
-    }
+    }:
+        return True
+    if name.lower().endswith(_SKIP_SUFFIXES):
+        return True
+    return False
 
 
 def _run_git(args: list[str]) -> str:
