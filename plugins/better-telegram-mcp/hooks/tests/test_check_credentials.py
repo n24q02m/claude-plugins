@@ -80,6 +80,21 @@ class TestCheckCredentials(unittest.TestCase):
         self.assertEqual(output["decision"], "block")
         self.assertIn("Invalid input: payload must be a JSON dictionary", output["reason"])
 
+    @patch.dict(os.environ, {}, clear=True)
+    @patch('os.path.exists')
+    @patch('sys.stdin', io.StringIO(json.dumps({"tool_name": 123})))
+    @patch('sys.exit', side_effect=SystemExit)
+    @patch('sys.stdout', new_callable=io.StringIO)
+    def test_main_invalid_tool_name_type(self, mock_stdout, mock_exit, mock_exists):
+        mock_exists.return_value = False
+        with self.assertRaises(SystemExit):
+            check_credentials.main()
+
+        mock_exit.assert_called_with(2)
+        output = json.loads(mock_stdout.getvalue())
+        self.assertEqual(output["decision"], "block")
+        self.assertIn("better-telegram-mcp credentials not configured", output["reason"])
+
     @patch('sys.stdin', io.StringIO('["not a dict"]'))
     @patch('sys.exit', side_effect=SystemExit(2))
     @patch('sys.stdout', new_callable=io.StringIO)
