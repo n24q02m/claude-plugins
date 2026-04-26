@@ -80,7 +80,7 @@ def check_plugin(plugin):
             "error": "invalid source path"
         }
 
-    source = source[2:] if source.startswith("./") else source
+    source = norm_source
 
     # Priority: .claude-plugin/plugin.json, fallback: gemini-extension.json
     pjson_path = os.path.join(source, ".claude-plugin", "plugin.json")
