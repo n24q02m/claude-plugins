@@ -48,7 +48,7 @@ def validate_marketplace():
                 errors.append(f"Plugin {name}: invalid source path (path traversal blocked)")
                 continue
 
-            plugin_dir = source[2:] if source.startswith("./") else source
+            plugin_dir = norm_source
 
             # Check plugin.json exists and is valid
             pjson = os.path.join(plugin_dir, ".claude-plugin", "plugin.json")
