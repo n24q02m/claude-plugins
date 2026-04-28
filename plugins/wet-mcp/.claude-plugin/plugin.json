@@ -1,7 +1,7 @@
 {
   "name": "wet-mcp",
   "description": "Web search, content extraction, and media download",
-  "version": "2.28.3",
+  "version": "2.28.4",
   "author": {
     "name": "n24q02m",
     "url": "https://github.com/n24q02m"
@@ -23,7 +23,10 @@
         "--python",
         "3.13",
         "wet-mcp"
-      ]
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio"
+      }
     }
   }
 }
