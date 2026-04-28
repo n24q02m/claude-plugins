@@ -1,6 +1,6 @@
 # n24q02m Claude Plugins
 
-7 MCP servers for Claude Code, Codex, and other AI coding agents.
+8 MCP servers for Claude Code, Codex, and other AI coding agents.
 
 ## Install
 
@@ -22,6 +22,7 @@ Or browse all plugins: run `/plugin` and go to the **Discover** tab.
 | **better-telegram-mcp** | Communication | Telegram dual-mode (Bot + MTProto) — messages, chats, media | `TELEGRAM_BOT_TOKEN` |
 | **better-godot-mcp** | Development | Godot Engine — 17 composite tools for game dev | `GODOT_PATH` (optional) |
 | **better-code-review-graph** | Development | Knowledge graph for code reviews | `API_KEYS` (optional) |
+| **imagine-mcp** | Multimodal | Image/video understanding + generation across Gemini, OpenAI, Grok | `GEMINI_API_KEY`, `OPENAI_API_KEY`, `XAI_API_KEY` (any optional) |
 
 ## Configuration
 
@@ -80,6 +81,7 @@ uvx --python 3.13 wet-mcp
 uvx --python 3.13 mnemo-mcp
 uvx --python 3.13 better-telegram-mcp
 uvx --python 3.13 better-code-review-graph
+uvx imagine-mcp
 ```
 
 **TypeScript plugins** (npx / bunx / docker):
