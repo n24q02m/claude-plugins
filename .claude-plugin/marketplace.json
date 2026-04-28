@@ -2,7 +2,7 @@
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "n24q02m-plugins",
   "metadata": {
-    "description": "7 MCP servers: web search, memory, Notion, email, Telegram, Godot, code review",
+    "description": "8 MCP servers: web search, memory, Notion, email, Telegram, Godot, code review, imagine",
     "version": "1.0.0",
     "pluginRoot": "./plugins"
   },
@@ -52,6 +52,12 @@
       "source": "./plugins/better-code-review-graph",
       "description": "Knowledge graph for token-efficient code reviews",
       "category": "development"
+    },
+    {
+      "name": "imagine-mcp",
+      "source": "./plugins/imagine-mcp",
+      "description": "Image/video understanding + generation across Gemini, OpenAI, Grok",
+      "category": "multimodal"
     }
   ]
 }
