@@ -1,7 +1,7 @@
 {
   "name": "better-notion-mcp",
   "description": "Comprehensive Notion API integration — 9 composite tools, ~95% coverage",
-  "version": "2.30.3",
+  "version": "2.30.2",
   "author": {
     "name": "n24q02m",
     "url": "https://github.com/n24q02m"
@@ -10,7 +10,7 @@
   "mcpServers": {
     "better-notion-mcp": {
       "command": "npx",
-      "args": ["-y", "@n24q02m/better-notion-mcp"],
+      "args": ["--yes", "@n24q02m/better-notion-mcp@latest"],
       "env": { "MCP_TRANSPORT": "stdio" }
     }
   }
