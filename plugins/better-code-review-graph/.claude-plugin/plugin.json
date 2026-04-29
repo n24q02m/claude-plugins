@@ -1,7 +1,7 @@
 {
   "name": "better-code-review-graph",
   "description": "Persistent incremental knowledge graph for token-efficient code reviews",
-  "version": "3.12.1",
+  "version": "3.12.2",
   "author": {
     "name": "n24q02m",
     "url": "https://github.com/n24q02m"
@@ -14,7 +14,10 @@
         "--python",
         "3.13",
         "better-code-review-graph"
-      ]
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio"
+      }
     }
   }
 }

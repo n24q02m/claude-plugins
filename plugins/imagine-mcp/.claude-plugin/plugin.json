@@ -1,7 +1,7 @@
 {
   "name": "imagine-mcp",
   "description": "Image/video understanding & generation across Gemini, OpenAI, Grok",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "author": {
     "name": "n24q02m",
     "url": "https://github.com/n24q02m"
@@ -20,7 +20,8 @@
   "mcpServers": {
     "imagine": {
       "command": "uvx",
-      "args": ["--python", "3.13", "imagine-mcp"]
+      "args": ["--python", "3.13", "imagine-mcp"],
+      "env": {"MCP_TRANSPORT": "stdio"}
     }
   }
 }
