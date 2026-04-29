@@ -10,6 +10,10 @@ import sys
 PLUGIN_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9-]+$")
 
 
+def sanitize_log(msg: str) -> str:
+    """Sanitize strings to prevent GitHub Actions log injection."""
+    return str(msg).replace("\r", "%0D").replace("\n", "%0A")
+
 def validate_marketplace():
     """Validate marketplace.json and all referenced plugins."""
     errors = []
@@ -18,7 +22,7 @@ def validate_marketplace():
         with open(".claude-plugin/marketplace.json") as f:
             marketplace = json.load(f)
     except Exception as e:
-        print(f"::error ::Failed to load marketplace.json: {e}")
+        print(f"::error ::Failed to load marketplace.json: {sanitize_log(e)}")
         sys.exit(1)
 
     required = ["name", "metadata", "owner", "plugins"]
@@ -33,7 +37,9 @@ def validate_marketplace():
 
         for plugin in plugins:
             name = plugin.get("name", "Unknown")
-            if not PLUGIN_NAME_PATTERN.fullmatch(name):
+            if name is not None and not isinstance(name, str):
+                name = str(name)
+            if not isinstance(name, str) or not PLUGIN_NAME_PATTERN.fullmatch(name):
                 errors.append(f"Plugin {name}: invalid name format (must match ^[a-zA-Z0-9-]+$)")
                 continue
 
@@ -41,6 +47,8 @@ def validate_marketplace():
             if not source:
                 errors.append(f"Plugin {name}: missing source")
                 continue
+            if not isinstance(source, str):
+                source = str(source)
 
             # Security check: prevent path traversal
             norm_source = os.path.normpath(source)
@@ -102,7 +110,7 @@ def validate_marketplace():
     if errors:
         print("Validation errors:")
         for e in errors:
-            print(f"::error ::{e}")
+            print(f"::error ::{sanitize_log(e)}")
         sys.exit(1)
     else:
         num_plugins = len(marketplace.get("plugins", []))

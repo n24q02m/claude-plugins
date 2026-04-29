@@ -9,6 +9,10 @@ import urllib.request
 import urllib.error
 import threading
 
+def sanitize_log(msg: str) -> str:
+    """Sanitize strings to prevent GitHub Actions log injection."""
+    return str(msg).replace("\r", "%0D").replace("\n", "%0A")
+
 # In-memory cache for API responses to avoid redundant calls
 _cache = {}
 _cache_lock = threading.Lock()
@@ -61,8 +65,10 @@ PLUGIN_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9-]+$")
 
 def check_plugin(plugin):
     """Check a single plugin's version against its latest GitHub release."""
-    name = plugin["name"]
-    if not PLUGIN_NAME_PATTERN.fullmatch(name):
+    name = plugin.get("name", "")
+    if name is not None and not isinstance(name, str):
+        name = str(name)
+    if not isinstance(name, str) or not PLUGIN_NAME_PATTERN.fullmatch(name):
         return {
             "status": "error",
             "name": name,
@@ -70,7 +76,16 @@ def check_plugin(plugin):
             "error": "invalid name format"
         }
 
-    source = plugin["source"]
+    source = plugin.get("source")
+    if not source:
+        return {
+            "status": "error",
+            "name": name,
+            "marketplace_ver": "unknown",
+            "error": "missing source"
+        }
+    if not isinstance(source, str):
+        source = str(source)
     norm_source = os.path.normpath(source)
     if os.path.isabs(norm_source) or norm_source.startswith(".."):
         return {
@@ -93,14 +108,14 @@ def check_plugin(plugin):
                 pdata = json.load(f)
             marketplace_ver = pdata.get("version", "unknown")
         except (OSError, json.JSONDecodeError) as e:
-            print(f"::warning ::Failed to parse {pjson_path}: {e}")
+            print(f"::warning ::Failed to parse {pjson_path}: {sanitize_log(e)}")
     elif os.path.exists(gext_path):
         try:
             with open(gext_path) as f:
                 gdata = json.load(f)
             marketplace_ver = gdata.get("version", "unknown")
         except (OSError, json.JSONDecodeError) as e:
-            print(f"::warning ::Failed to parse {gext_path}: {e}")
+            print(f"::warning ::Failed to parse {gext_path}: {sanitize_log(e)}")
 
     # Get latest stable release from source repo via API
     status, latest_tag = get_latest_tag_api(f"n24q02m/{name}")
@@ -146,7 +161,7 @@ def check_version_freshness():
         with open(".claude-plugin/marketplace.json") as f:
             marketplace = json.load(f)
     except (OSError, json.JSONDecodeError) as e:
-        print(f"::error ::Failed to load marketplace.json: {e}")
+        print(f"::error ::Failed to load marketplace.json: {sanitize_log(e)}")
         return
 
     stale = []
@@ -166,21 +181,15 @@ def check_version_freshness():
                 stale.append(
                     f"{name}: marketplace={marketplace_ver}, latest={latest_tag}"
                 )
-                print(
-                    f"::warning ::{name} is stale: marketplace={marketplace_ver}, latest={latest_tag}"
-                )
+                print(f"::warning ::{sanitize_log(f'{name} is stale: marketplace={marketplace_ver}, latest={latest_tag}')}")
             elif status == "up-to-date":
                 print(f"{name}: up-to-date ({marketplace_ver})")
             elif status == "no-release":
                 print(f"{name}: no release found (marketplace={marketplace_ver})")
             elif status == "timeout":
-                print(
-                    f"::error ::{name} timed out checking release (marketplace={marketplace_ver})"
-                )
+                print(f"::error ::{sanitize_log(f'{name} timed out checking release (marketplace={marketplace_ver})')}")
             elif status == "error":
-                print(
-                    f"::error ::{name} error: {res['error']}"
-                )
+                print(f"::error ::{sanitize_log(f'{name} error: {res.get("error", "Unknown error")}')}")
 
     if stale:
         print(f"\n{len(stale)} plugin(s) need sync")
