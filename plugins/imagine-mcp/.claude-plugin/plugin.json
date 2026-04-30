@@ -20,8 +20,14 @@
   "mcpServers": {
     "imagine": {
       "command": "uvx",
-      "args": ["--python", "3.13", "imagine-mcp"],
-      "env": {"MCP_TRANSPORT": "stdio"}
+      "args": [
+        "--python",
+        "3.13",
+        "imagine-mcp@latest"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio"
+      }
     }
   }
 }
