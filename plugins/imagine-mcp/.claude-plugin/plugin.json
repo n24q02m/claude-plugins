@@ -23,7 +23,9 @@
       "args": [
         "--python",
         "3.13",
-        "imagine-mcp@latest"
+        "--from",
+        "imagine-mcp==1.2.0b1",
+        "imagine-mcp"
       ],
       "env": {
         "MCP_TRANSPORT": "stdio"

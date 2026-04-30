@@ -13,7 +13,9 @@
       "args": [
         "--python",
         "3.13",
-        "better-code-review-graph@latest"
+        "--from",
+        "better-code-review-graph==3.13.0b3",
+        "better-code-review-graph"
       ],
       "env": {
         "MCP_TRANSPORT": "stdio"

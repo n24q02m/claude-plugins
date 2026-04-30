@@ -22,7 +22,9 @@
       "args": [
         "--python",
         "3.13",
-        "wet-mcp@latest"
+        "--from",
+        "wet-mcp==2.29.0b1",
+        "wet-mcp"
       ],
       "env": {
         "MCP_TRANSPORT": "stdio"

@@ -12,7 +12,7 @@
       "command": "npx",
       "args": [
         "-y",
-        "@n24q02m/better-godot-mcp@latest"
+        "@n24q02m/better-godot-mcp@1.16.0-beta.1"
       ],
       "env": {
         "MCP_TRANSPORT": "stdio"

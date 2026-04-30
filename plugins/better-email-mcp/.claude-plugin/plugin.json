@@ -10,7 +10,7 @@
   "mcpServers": {
     "better-email-mcp": {
       "command": "npx",
-      "args": ["--yes", "@n24q02m/better-email-mcp@latest"],
+      "args": ["--yes", "@n24q02m/better-email-mcp@1.27.0-beta.1"],
       "env": { "MCP_TRANSPORT": "stdio" }
     }
   }

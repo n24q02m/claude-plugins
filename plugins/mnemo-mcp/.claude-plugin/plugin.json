@@ -13,7 +13,9 @@
       "args": [
         "--python",
         "3.13",
-        "mnemo-mcp@latest"
+        "--from",
+        "mnemo-mcp==1.25.0b1",
+        "mnemo-mcp"
       ],
       "env": {
         "MCP_TRANSPORT": "stdio"
