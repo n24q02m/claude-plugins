@@ -99,10 +99,13 @@ def validate_marketplace():
                                 except Exception as e:
                                     errors.append(f"{name}/skills/{skill_name}: Failed to read SKILL.md: {e}")
 
+    def sanitize(text: str) -> str:
+        return str(text).replace("\r", "%0D").replace("\n", "%0A")
+
     if errors:
         print("Validation errors:")
         for e in errors:
-            print(f"::error ::{e}")
+            print(f"::error ::{sanitize(e)}")
         sys.exit(1)
     else:
         num_plugins = len(marketplace.get("plugins", []))

@@ -161,13 +161,16 @@ def check_version_freshness():
             status = res["status"]
             marketplace_ver = res["marketplace_ver"]
 
+            def sanitize(text: str) -> str:
+                return str(text).replace("\r", "%0D").replace("\n", "%0A")
+
             if status == "stale":
                 latest_tag = res["latest_tag"]
                 stale.append(
                     f"{name}: marketplace={marketplace_ver}, latest={latest_tag}"
                 )
                 print(
-                    f"::warning ::{name} is stale: marketplace={marketplace_ver}, latest={latest_tag}"
+                    f"::warning ::{sanitize(f'{name} is stale: marketplace={marketplace_ver}, latest={latest_tag}')}"
                 )
             elif status == "up-to-date":
                 print(f"{name}: up-to-date ({marketplace_ver})")
@@ -175,11 +178,12 @@ def check_version_freshness():
                 print(f"{name}: no release found (marketplace={marketplace_ver})")
             elif status == "timeout":
                 print(
-                    f"::error ::{name} timed out checking release (marketplace={marketplace_ver})"
+                    f"::error ::{sanitize(f'{name} timed out checking release (marketplace={marketplace_ver})')}"
                 )
             elif status == "error":
+                err_msg = res.get("error", "Unknown")
                 print(
-                    f"::error ::{name} error: {res['error']}"
+                    f"::error ::{sanitize(f'{name} error: {err_msg}')}"
                 )
 
     if stale:
