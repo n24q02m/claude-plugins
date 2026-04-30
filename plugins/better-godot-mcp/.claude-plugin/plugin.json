@@ -1,6 +1,6 @@
 {
   "name": "better-godot-mcp",
-  "description": "Comprehensive Godot Engine integration — 17 tools for game development",
+  "description": "Comprehensive Godot Engine integration \u2014 17 tools for game development",
   "version": "1.15.1",
   "author": {
     "name": "n24q02m",
@@ -10,8 +10,13 @@
   "mcpServers": {
     "better-godot-mcp": {
       "command": "npx",
-      "args": ["-y", "@n24q02m/better-godot-mcp"],
-      "env": { "MCP_TRANSPORT": "stdio" }
+      "args": [
+        "-y",
+        "@n24q02m/better-godot-mcp@latest"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio"
+      }
     }
   }
 }
