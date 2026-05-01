@@ -10,6 +10,11 @@ import sys
 PLUGIN_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9-]+$")
 
 
+def sanitize_log(msg: str) -> str:
+    """Sanitize strings for GitHub Actions log commands."""
+    return str(msg).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+
 def validate_marketplace():
     """Validate marketplace.json and all referenced plugins."""
     errors = []
@@ -18,7 +23,7 @@ def validate_marketplace():
         with open(".claude-plugin/marketplace.json") as f:
             marketplace = json.load(f)
     except Exception as e:
-        print(f"::error ::Failed to load marketplace.json: {e}")
+        print(f"::error ::{sanitize_log(f'Failed to load marketplace.json: {e}')}")
         sys.exit(1)
 
     required = ["name", "metadata", "owner", "plugins"]
@@ -102,7 +107,7 @@ def validate_marketplace():
     if errors:
         print("Validation errors:")
         for e in errors:
-            print(f"::error ::{e}")
+            print(f"::error ::{sanitize_log(e)}")
         sys.exit(1)
     else:
         num_plugins = len(marketplace.get("plugins", []))

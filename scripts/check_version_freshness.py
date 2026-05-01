@@ -55,6 +55,10 @@ def get_latest_tag_api(repo):
         _cache[repo] = result
     return result
 
+def sanitize_log(msg: str) -> str:
+    """Sanitize strings for GitHub Actions log commands."""
+    return str(msg).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
 # Pre-compile regex at module level to avoid cache lookup overhead in concurrent loops
 PLUGIN_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9-]+$")
 
@@ -93,14 +97,14 @@ def check_plugin(plugin):
                 pdata = json.load(f)
             marketplace_ver = pdata.get("version", "unknown")
         except (OSError, json.JSONDecodeError) as e:
-            print(f"::warning ::Failed to parse {pjson_path}: {e}")
+            print(f"::warning ::{sanitize_log(f'Failed to parse {pjson_path}: {e}')}")
     elif os.path.exists(gext_path):
         try:
             with open(gext_path) as f:
                 gdata = json.load(f)
             marketplace_ver = gdata.get("version", "unknown")
         except (OSError, json.JSONDecodeError) as e:
-            print(f"::warning ::Failed to parse {gext_path}: {e}")
+            print(f"::warning ::{sanitize_log(f'Failed to parse {gext_path}: {e}')}")
 
     # Get latest stable release from source repo via API
     status, latest_tag = get_latest_tag_api(f"n24q02m/{name}")
@@ -146,7 +150,7 @@ def check_version_freshness():
         with open(".claude-plugin/marketplace.json") as f:
             marketplace = json.load(f)
     except (OSError, json.JSONDecodeError) as e:
-        print(f"::error ::Failed to load marketplace.json: {e}")
+        print(f"::error ::{sanitize_log(f'Failed to load marketplace.json: {e}')}")
         return
 
     stale = []
@@ -167,7 +171,7 @@ def check_version_freshness():
                     f"{name}: marketplace={marketplace_ver}, latest={latest_tag}"
                 )
                 print(
-                    f"::warning ::{name} is stale: marketplace={marketplace_ver}, latest={latest_tag}"
+                    f"::warning ::{sanitize_log(f'{name} is stale: marketplace={marketplace_ver}, latest={latest_tag}')}"
                 )
             elif status == "up-to-date":
                 print(f"{name}: up-to-date ({marketplace_ver})")
@@ -175,11 +179,11 @@ def check_version_freshness():
                 print(f"{name}: no release found (marketplace={marketplace_ver})")
             elif status == "timeout":
                 print(
-                    f"::error ::{name} timed out checking release (marketplace={marketplace_ver})"
+                    f"::error ::{sanitize_log(f'{name} timed out checking release (marketplace={marketplace_ver})')}"
                 )
             elif status == "error":
                 print(
-                    f"::error ::{name} error: {res['error']}"
+                    "::error ::" + sanitize_log(f"{name} error: {res['error']}")
                 )
 
     if stale:
