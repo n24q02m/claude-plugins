@@ -1,6 +1,6 @@
 {
   "name": "better-email-mcp",
-  "description": "Email management via IMAP/SMTP — multi-account",
+  "description": "Email management via IMAP/SMTP \u00e2\u20ac\u201d multi-account",
   "version": "1.26.3",
   "author": {
     "name": "n24q02m",
@@ -10,8 +10,13 @@
   "mcpServers": {
     "better-email-mcp": {
       "command": "npx",
-      "args": ["--yes", "@n24q02m/better-email-mcp@latest"],
-      "env": { "MCP_TRANSPORT": "stdio" }
+      "args": [
+        "--yes",
+        "@n24q02m/better-email-mcp@1.27.0-beta.2"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio"
+      }
     }
   }
 }

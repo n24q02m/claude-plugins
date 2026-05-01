@@ -23,7 +23,10 @@
       "args": [
         "--python",
         "3.13",
-        "imagine-mcp@latest"
+        "--prerelease=allow",
+        "--from",
+        "imagine-mcp==1.2.0b2",
+        "imagine-mcp"
       ],
       "env": {
         "MCP_TRANSPORT": "stdio"
