@@ -13,7 +13,10 @@
       "args": [
         "--python",
         "3.13",
-        "mnemo-mcp@latest"
+        "--prerelease=allow",
+        "--from",
+        "mnemo-mcp==1.25.0b3",
+        "mnemo-mcp"
       ],
       "env": {
         "MCP_TRANSPORT": "stdio"

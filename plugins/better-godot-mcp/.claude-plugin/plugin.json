@@ -11,8 +11,8 @@
     "better-godot-mcp": {
       "command": "npx",
       "args": [
-        "-y",
-        "@n24q02m/better-godot-mcp@latest"
+        "--yes",
+        "@n24q02m/better-godot-mcp@1.16.0-beta.2"
       ],
       "env": {
         "MCP_TRANSPORT": "stdio"
