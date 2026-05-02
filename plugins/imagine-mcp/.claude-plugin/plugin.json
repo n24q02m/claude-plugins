@@ -25,7 +25,7 @@
         "3.13",
         "--prerelease=allow",
         "--from",
-        "imagine-mcp==1.2.0b2",
+        "imagine-mcp==1.2.0b3",
         "imagine-mcp"
       ]
     }
