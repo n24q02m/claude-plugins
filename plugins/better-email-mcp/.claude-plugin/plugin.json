@@ -12,7 +12,7 @@
       "command": "npx",
       "args": [
         "--yes",
-        "@n24q02m/better-email-mcp@1.27.0-beta.2"
+        "@n24q02m/better-email-mcp@1.27.0-beta.3"
       ]
     }
   }

@@ -15,7 +15,7 @@
         "3.13",
         "--prerelease=allow",
         "--from",
-        "mnemo-mcp==1.25.0b3",
+        "mnemo-mcp==1.25.0b4",
         "mnemo-mcp"
       ]
     }

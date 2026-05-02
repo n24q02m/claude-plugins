@@ -15,7 +15,7 @@
         "3.13",
         "--prerelease=allow",
         "--from",
-        "better-telegram-mcp==4.9.0b4",
+        "better-telegram-mcp==4.9.0b6",
         "better-telegram-mcp"
       ]
     }
