@@ -17,10 +17,7 @@
         "--from",
         "better-code-review-graph==3.13.0b4",
         "better-code-review-graph"
-      ],
-      "env": {
-        "MCP_TRANSPORT": "stdio"
-      }
+      ]
     }
   }
 }

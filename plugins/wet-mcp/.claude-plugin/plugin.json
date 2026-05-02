@@ -26,10 +26,7 @@
         "--from",
         "wet-mcp==2.29.0b3",
         "wet-mcp"
-      ],
-      "env": {
-        "MCP_TRANSPORT": "stdio"
-      }
+      ]
     }
   }
 }

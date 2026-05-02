@@ -1,6 +1,6 @@
 {
   "name": "mnemo-mcp",
-  "description": "Persistent AI memory \u2014 store, search, and recall knowledge across sessions",
+  "description": "Persistent AI memory — store, search, and recall knowledge across sessions",
   "version": "1.24.4",
   "author": {
     "name": "n24q02m",
@@ -17,10 +17,7 @@
         "--from",
         "mnemo-mcp==1.25.0b3",
         "mnemo-mcp"
-      ],
-      "env": {
-        "MCP_TRANSPORT": "stdio"
-      }
+      ]
     }
   }
 }
