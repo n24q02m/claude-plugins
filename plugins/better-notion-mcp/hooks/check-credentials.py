@@ -33,6 +33,27 @@ def _is_configured() -> bool:
 
 
 def main() -> None:
+    try:
+        data = json.load(sys.stdin)
+        if not isinstance(data, dict):
+            print(json.dumps({
+                "decision": "block",
+                "reason": "Invalid input: payload must be a JSON dictionary",
+            }))
+            sys.exit(2)
+    except Exception:
+        print(json.dumps({
+            "decision": "block",
+            "reason": "Invalid input: payload must be a JSON dictionary",
+        }))
+        sys.exit(2)
+
+    tool_name = data.get("tool_name")
+    if not isinstance(tool_name, str):
+        tool_name = ""
+    if tool_name.endswith(("__setup", "__help", "__config")):
+        sys.exit(0)
+
     if _is_configured():
         sys.exit(0)
 
