@@ -15,7 +15,7 @@
         "3.13",
         "--prerelease=allow",
         "--from",
-        "better-code-review-graph==3.13.0b6",
+        "better-code-review-graph==3.13.0b8",
         "better-code-review-graph"
       ]
     }
