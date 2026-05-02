@@ -20,7 +20,7 @@ def validate_marketplace():
     errors = []
 
     try:
-        with open(".claude-plugin/marketplace.json") as f:
+        with open(".claude-plugin/marketplace.json", encoding="utf-8") as f:
             marketplace = json.load(f)
     except Exception as e:
         print(f"::error ::{sanitize_log(f'Failed to load marketplace.json: {e}')}")
@@ -59,7 +59,7 @@ def validate_marketplace():
             pjson = os.path.join(plugin_dir, ".claude-plugin", "plugin.json")
             # Optimization: Use EAFP to avoid redundant os.path.exists stat syscalls before open
             try:
-                with open(pjson) as f:
+                with open(pjson, encoding="utf-8") as f:
                     pdata = json.load(f)
                 # Optimization: Use tuple literal over list literal for slight interpreter-level improvement
                 for req in ("name", "description", "mcpServers"):
@@ -75,7 +75,7 @@ def validate_marketplace():
             gext = os.path.join(plugin_dir, "gemini-extension.json")
             # Optimization: Use EAFP to avoid redundant os.path.exists stat syscalls before open
             try:
-                with open(gext) as f:
+                with open(gext, encoding="utf-8") as f:
                     gdata = json.load(f)
                 if "version" not in gdata:
                     errors.append(f"{name}: gemini-extension.json missing version")
@@ -95,7 +95,7 @@ def validate_marketplace():
                             skill_file = os.path.join(entry.path, "SKILL.md")
                             # Optimization: Use EAFP to avoid redundant os.path.exists stat syscalls before open
                             try:
-                                with open(skill_file) as f:
+                                with open(skill_file, encoding="utf-8") as f:
                                     content = f.read()
                                 if not content.startswith("---"):
                                     errors.append(
