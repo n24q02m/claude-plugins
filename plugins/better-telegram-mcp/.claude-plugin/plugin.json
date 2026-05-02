@@ -1,6 +1,6 @@
 {
   "name": "better-telegram-mcp",
-  "description": "Telegram dual-mode (Bot API + MTProto) \u00e2\u20ac\u201d messages, chats, media, contacts",
+  "description": "Telegram dual-mode (Bot API + MTProto) â€” messages, chats, media, contacts",
   "version": "4.8.5",
   "author": {
     "name": "n24q02m",
@@ -17,10 +17,7 @@
         "--from",
         "better-telegram-mcp==4.9.0b4",
         "better-telegram-mcp"
-      ],
-      "env": {
-        "MCP_TRANSPORT": "stdio"
-      }
+      ]
     }
   }
 }

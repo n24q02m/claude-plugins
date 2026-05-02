@@ -27,10 +27,7 @@
         "--from",
         "imagine-mcp==1.2.0b2",
         "imagine-mcp"
-      ],
-      "env": {
-        "MCP_TRANSPORT": "stdio"
-      }
+      ]
     }
   }
 }
