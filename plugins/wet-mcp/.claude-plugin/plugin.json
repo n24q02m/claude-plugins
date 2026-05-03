@@ -24,7 +24,7 @@
         "3.13",
         "--prerelease=allow",
         "--from",
-        "wet-mcp==2.29.0b9",
+        "wet-mcp==2.29.0b10",
         "wet-mcp"
       ]
     }
