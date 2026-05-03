@@ -91,20 +91,22 @@ def check_plugin(plugin):
     gext_path = os.path.join(source, "gemini-extension.json")
 
     marketplace_ver = "unknown"
-    if os.path.exists(pjson_path):
-        try:
-            with open(pjson_path) as f:
-                pdata = json.load(f)
-            marketplace_ver = pdata.get("version", "unknown")
-        except (OSError, json.JSONDecodeError) as e:
-            print(f"::warning ::{sanitize_log(f'Failed to parse {pjson_path}: {e}')}")
-    elif os.path.exists(gext_path):
+    # Optimization: Use EAFP to avoid redundant os.path.exists stat syscalls before open
+    try:
+        with open(pjson_path) as f:
+            pdata = json.load(f)
+        marketplace_ver = pdata.get("version", "unknown")
+    except FileNotFoundError:
         try:
             with open(gext_path) as f:
                 gdata = json.load(f)
             marketplace_ver = gdata.get("version", "unknown")
+        except FileNotFoundError:
+            pass
         except (OSError, json.JSONDecodeError) as e:
             print(f"::warning ::{sanitize_log(f'Failed to parse {gext_path}: {e}')}")
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"::warning ::{sanitize_log(f'Failed to parse {pjson_path}: {e}')}")
 
     # Get latest stable release from source repo via API
     status, latest_tag = get_latest_tag_api(f"n24q02m/{name}")
