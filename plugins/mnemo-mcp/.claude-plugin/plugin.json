@@ -1,7 +1,7 @@
 {
   "name": "mnemo-mcp",
   "description": "Persistent AI memory — store, search, and recall knowledge across sessions",
-  "version": "1.24.4",
+  "version": "1.25.0",
   "author": {
     "name": "n24q02m",
     "url": "https://github.com/n24q02m"
@@ -13,11 +13,11 @@
       "args": [
         "--python",
         "3.13",
-        "--prerelease=allow",
-        "--from",
-        "mnemo-mcp==1.25.0b7",
         "mnemo-mcp"
-      ]
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio"
+      }
     }
   }
 }
