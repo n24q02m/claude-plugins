@@ -13,9 +13,8 @@
       "args": [
         "--python",
         "3.13",
-        "--prerelease=allow",
         "--from",
-        "better-telegram-mcp==4.9.0b6",
+        "better-telegram-mcp==4.9.0",
         "better-telegram-mcp"
       ]
     }

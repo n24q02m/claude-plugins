@@ -22,9 +22,8 @@
       "args": [
         "--python",
         "3.13",
-        "--prerelease=allow",
         "--from",
-        "wet-mcp==2.29.0b11",
+        "wet-mcp==2.29.0",
         "wet-mcp"
       ]
     }

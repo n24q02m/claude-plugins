@@ -23,9 +23,8 @@
       "args": [
         "--python",
         "3.13",
-        "--prerelease=allow",
         "--from",
-        "imagine-mcp==1.2.0b6",
+        "imagine-mcp==1.2.0",
         "imagine-mcp"
       ]
     }

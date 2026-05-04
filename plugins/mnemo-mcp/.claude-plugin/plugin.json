@@ -13,9 +13,8 @@
       "args": [
         "--python",
         "3.13",
-        "--prerelease=allow",
         "--from",
-        "mnemo-mcp==1.25.0b7",
+        "mnemo-mcp==1.25.0",
         "mnemo-mcp"
       ]
     }
