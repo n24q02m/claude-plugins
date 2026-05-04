@@ -13,9 +13,8 @@
       "args": [
         "--python",
         "3.13",
-        "--prerelease=allow",
         "--from",
-        "better-code-review-graph==3.13.0b9",
+        "better-code-review-graph==3.13.0",
         "better-code-review-graph"
       ]
     }
