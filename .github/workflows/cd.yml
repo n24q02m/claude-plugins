@@ -67,19 +67,28 @@ jobs:
           TAG: ${{ steps.inputs.outputs.tag }}
         run: |
           set -euo pipefail
+
+          sanitize() {
+            local val="$1"
+            val="${val//%/%25}"
+            val="${val//$'\r'/%0D}"
+            val="${val//$'\n'/%0A}"
+            printf "%s" "$val"
+          }
+
           case "$REPO" in
             wet-mcp|mnemo-mcp|better-telegram-mcp|better-code-review-graph|better-notion-mcp|better-email-mcp|better-godot-mcp)
               ;;
             *)
-              printf "::error::Invalid repo: %s\n" "$REPO"
+              printf "::error::Invalid repo: %s\n" "$(sanitize "$REPO")"
               exit 1
               ;;
           esac
           if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            printf "::error::Invalid tag format: %s (expected vX.Y.Z)\n" "$TAG"
+            printf "::error::Invalid tag format: %s (expected vX.Y.Z)\n" "$(sanitize "$TAG")"
             exit 1
           fi
-          printf "Syncing %s @ %s\n" "$REPO" "$TAG"
+          printf "Syncing %s @ %s\n" "$(sanitize "$REPO")" "$(sanitize "$TAG")"
 
       - name: Checkout marketplace
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
