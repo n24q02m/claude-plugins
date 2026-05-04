@@ -16,10 +16,8 @@ class TestCheckVersionFreshness(unittest.TestCase):
     # ------------------------------------------------------------------
 
     @patch("check_version_freshness.urllib.request.urlopen")
-    @patch("check_version_freshness.os.path.exists")
-    def test_check_plugin_valid_name(self, mock_exists, mock_urlopen):
+    def test_check_plugin_valid_name(self, mock_urlopen):
         plugin = {"name": "valid-plugin-123", "source": "./plugins/valid-plugin-123"}
-        mock_exists.return_value = True
 
         mock_response = MagicMock()
         mock_response.read.return_value = b'{"tag_name": "v1.0.0"}'
@@ -84,8 +82,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
     # ------------------------------------------------------------------
 
     @patch("check_version_freshness.urllib.request.urlopen")
-    @patch("check_version_freshness.os.path.exists", return_value=True)
-    def test_check_plugin_stale(self, _mock_exists, mock_urlopen):
+    def test_check_plugin_stale(self, mock_urlopen):
         plugin = {"name": "stale-plugin", "source": "./plugins/stale-plugin"}
 
         mock_response = MagicMock()
@@ -104,8 +101,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
         self.assertEqual(result["latest_tag"], "1.1.0")
 
     @patch("check_version_freshness.urllib.request.urlopen")
-    @patch("check_version_freshness.os.path.exists", return_value=True)
-    def test_check_plugin_no_release_404(self, _mock_exists, mock_urlopen):
+    def test_check_plugin_no_release_404(self, mock_urlopen):
         plugin = {
             "name": "no-release-plugin",
             "source": "./plugins/no-release-plugin",
@@ -123,8 +119,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
         self.assertEqual(result["status"], "no-release")
 
     @patch("check_version_freshness.urllib.request.urlopen")
-    @patch("check_version_freshness.os.path.exists", return_value=True)
-    def test_check_plugin_timeout(self, _mock_exists, mock_urlopen):
+    def test_check_plugin_timeout(self, mock_urlopen):
         plugin = {"name": "timeout-plugin", "source": "./plugins/timeout-plugin"}
         mock_urlopen.side_effect = urllib.error.URLError(reason=TimeoutError())
 
@@ -137,8 +132,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
         self.assertEqual(result["status"], "timeout")
 
     @patch("check_version_freshness.urllib.request.urlopen")
-    @patch("check_version_freshness.os.path.exists", return_value=True)
-    def test_check_plugin_error_generic(self, _mock_exists, mock_urlopen):
+    def test_check_plugin_error_generic(self, mock_urlopen):
         plugin = {"name": "error-plugin", "source": "./plugins/error-plugin"}
         mock_urlopen.side_effect = urllib.error.URLError(reason="boom")
 
@@ -155,18 +149,21 @@ class TestCheckVersionFreshness(unittest.TestCase):
     # ------------------------------------------------------------------
 
     @patch("check_version_freshness.urllib.request.urlopen")
-    @patch("check_version_freshness.os.path.exists")
-    def test_check_plugin_gemini_fallback(self, mock_exists, mock_urlopen):
+    def test_check_plugin_gemini_fallback(self, mock_urlopen):
         plugin = {"name": "gemini-plugin", "source": "./plugins/gemini-plugin"}
-        mock_exists.side_effect = lambda path: "gemini-extension.json" in path
 
         mock_response = MagicMock()
         mock_response.read.return_value = b'{"tag_name": "v2.0.0"}'
         mock_response.__enter__.return_value = mock_response
         mock_urlopen.return_value = mock_response
 
+        def mock_open_fallback(path, *args, **kwargs):
+            if "plugin.json" in path:
+                raise FileNotFoundError()
+            return MagicMock()
+
         with (
-            patch("check_version_freshness.open", create=True),
+            patch("check_version_freshness.open", create=True, side_effect=mock_open_fallback),
             patch("json.load", return_value={"version": "2.0.0"}),
         ):
             result = check_version_freshness.check_plugin(plugin)
@@ -187,7 +184,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
         mock_response.__enter__.return_value = mock_response
         mock_urlopen.return_value = mock_response
 
-        with patch("check_version_freshness.os.path.exists", return_value=False):
+        with patch("check_version_freshness.open", create=True, side_effect=FileNotFoundError):
             check_version_freshness.check_plugin(plugin)
             check_version_freshness.check_plugin(plugin)
 
@@ -199,9 +196,8 @@ class TestCheckVersionFreshness(unittest.TestCase):
 
     @patch.dict("os.environ", {"GITHUB_TOKEN": "secret-token"}, clear=False)
     @patch("check_version_freshness.urllib.request.urlopen")
-    @patch("check_version_freshness.os.path.exists", return_value=True)
     def test_check_plugin_uses_auth_header(
-        self, _mock_exists, mock_urlopen
+        self, mock_urlopen
     ):
         plugin = {"name": "auth-plugin", "source": "./plugins/auth-plugin"}
 
@@ -226,9 +222,8 @@ class TestCheckVersionFreshness(unittest.TestCase):
     # ------------------------------------------------------------------
 
     @patch("check_version_freshness.urllib.request.urlopen")
-    @patch("check_version_freshness.os.path.exists", return_value=True)
     def test_check_plugin_uses_snake_case_tag_name(
-        self, _mock_exists, mock_urlopen
+        self, mock_urlopen
     ):
         """API payload uses tag_name; tagName (camelCase) would regress to empty tag."""
         plugin = {"name": "regression-plugin", "source": "./plugins/regression-plugin"}
