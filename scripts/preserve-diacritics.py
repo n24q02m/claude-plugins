@@ -206,11 +206,16 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
     new_skel = new
     hit_uni: list[str] = []
     for uni, ascii_forms in UNICODE_REPLACEMENTS.items():
-        if uni in old and uni not in new and any(form in new for form in ascii_forms):
-            hit_uni.append(uni)
-            old_skel = old_skel.replace(uni, "")
+        if uni in old and uni not in new:
+            # Optimization: Replace generator-based any() with explicit loop
+            # and early truthiness check to bypass unnecessary instantiation overhead.
             for form in ascii_forms:
-                new_skel = new_skel.replace(form, "")
+                if form in new:
+                    hit_uni.append(uni)
+                    old_skel = old_skel.replace(uni, "")
+                    for f in ascii_forms:
+                        new_skel = new_skel.replace(f, "")
+                    break
     if hit_uni and _similar(old_skel.strip(), new_skel.strip()):
         for uni in hit_uni:
             violations.append((f"unicode-punct {uni!r}->ascii", old, new))
