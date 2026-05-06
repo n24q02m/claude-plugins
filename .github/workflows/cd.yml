@@ -17,6 +17,7 @@ on:
           - better-notion-mcp
           - better-email-mcp
           - better-godot-mcp
+          - imagine-mcp
       tag:
         description: "Release tag (e.g., v2.18.1)"
         required: true
