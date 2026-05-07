@@ -20,6 +20,7 @@ import subprocess
 import sys
 import os
 import unicodedata
+from typing import Iterator
 
 # Force UTF-8 on stderr so Vietnamese / Unicode chars display correctly on
 # Windows (default cp1252 otherwise replaces non-ASCII chars with '?').
@@ -133,53 +134,95 @@ def _staged_files() -> list[str]:
     return [line for line in out.splitlines() if line]
 
 
-def _diff_pairs(file_path: str) -> list[tuple[int, str, str]]:
-    """Return list of (line_number, removed_line, added_line) pairs.
+def _yield_diff_pairs(files: list[str]) -> Iterator[tuple[str, int, str, str]]:
+    """Yield (file_path, line_number, removed_line, added_line) for all files.
 
-    Pairs are aligned within the same hunk using position matching: the k-th
-    '-' removal is paired with the k-th '+' addition of that hunk. Unpaired
-    lines (pure add / pure delete) are skipped — they are definitionally
-    not rewrites of existing content.
+    Batches git diff calls to avoid N+1 subprocess overhead.
     """
-    try:
-        diff = _run_git(["diff", "--cached", "-U0", "--no-color", "--", file_path])
-    except subprocess.CalledProcessError:
-        return []
+    if not files:
+        return
 
-    pairs: list[tuple[int, str, str]] = []
-    removed: list[str] = []
-    added: list[str] = []
-    plus_line_no = 0
-    hunk_plus_start = 0
-
-    def _flush(start_line: int) -> None:
-        # Pair k-th removed with k-th added; any overflow is pure add/delete.
-        for idx in range(min(len(removed), len(added))):
-            pairs.append((start_line + idx, removed[idx], added[idx]))
-        removed.clear()
-        added.clear()
-
-    for line in diff.splitlines():
-        if line.startswith("@@"):
-            _flush(hunk_plus_start)
-            m = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@", line)
-            if m:
-                hunk_plus_start = int(m.group(1))
-                plus_line_no = hunk_plus_start
+    # Batching to avoid command line length limits. 50 is safe and efficient.
+    batch_size = 50
+    for i in range(0, len(files), batch_size):
+        batch = files[i : i + batch_size]
+        try:
+            # Use core.quotepath=false to get raw UTF-8 paths instead of octal-escaped.
+            # Use --no-prefix to simplify filename parsing from 'diff --git' headers.
+            diff = _run_git(
+                [
+                    "-c",
+                    "core.quotepath=false",
+                    "diff",
+                    "--cached",
+                    "-U0",
+                    "--no-color",
+                    "--no-prefix",
+                    "--",
+                    *batch,
+                ]
+            )
+        except subprocess.CalledProcessError:
             continue
-        if line.startswith("---") or line.startswith("+++"):
-            continue
-        if line.startswith("-"):
-            removed.append(line[1:])
-        elif line.startswith("+"):
-            added.append(line[1:])
-        else:
-            # context line (unlikely with -U0) — flush
-            _flush(hunk_plus_start)
-            plus_line_no += 1
-            hunk_plus_start = plus_line_no
-    _flush(hunk_plus_start)
-    return pairs
+
+        current_file = ""
+        removed: list[str] = []
+        added: list[str] = []
+        plus_line_no = 0
+        hunk_plus_start = 0
+
+        def _flush(file_path: str, start_line: int) -> Iterator[tuple[str, int, str, str]]:
+            for idx in range(min(len(removed), len(added))):
+                yield (file_path, start_line + idx, removed[idx], added[idx])
+            removed.clear()
+            added.clear()
+
+        for line in diff.splitlines():
+            if line.startswith("diff --git "):
+                if current_file:
+                    yield from _flush(current_file, hunk_plus_start)
+                current_file = ""
+                removed.clear()
+                added.clear()
+                plus_line_no = 0
+                hunk_plus_start = 0
+                continue
+
+            if line.startswith("--- ") and not current_file:
+                path = line[4:].split("\t")[0]
+                if path != "/dev/null":
+                    current_file = path
+                continue
+            if line.startswith("+++ ") and not current_file:
+                path = line[4:].split("\t")[0]
+                if path != "/dev/null":
+                    current_file = path
+                continue
+
+            if line.startswith("@@"):
+                if current_file:
+                    yield from _flush(current_file, hunk_plus_start)
+                m = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@", line)
+                if m:
+                    hunk_plus_start = int(m.group(1))
+                    plus_line_no = hunk_plus_start
+                continue
+
+            if line.startswith("---") or line.startswith("+++"):
+                continue
+
+            if line.startswith("-"):
+                removed.append(line[1:])
+            elif line.startswith("+"):
+                added.append(line[1:])
+            elif current_file:
+                # context line (unlikely with -U0) — flush
+                yield from _flush(current_file, hunk_plus_start)
+                plus_line_no += 1
+                hunk_plus_start = plus_line_no
+
+        if current_file:
+            yield from _flush(current_file, hunk_plus_start)
 
 
 def _strip_diacritics(s: str) -> str:
@@ -294,10 +337,9 @@ def main() -> int:
     files = [f for f in files if not _is_skippable(f) and os.path.isfile(f)]
 
     violations: list[tuple[str, int, str, str, str]] = []
-    for f in files:
-        for line_no, old, new in _diff_pairs(f):
-            for rule, old_ex, new_ex in _check_pair(old, new):
-                violations.append((f, line_no, rule, old_ex, new_ex))
+    for f, line_no, old, new in _yield_diff_pairs(files):
+        for rule, old_ex, new_ex in _check_pair(old, new):
+            violations.append((f, line_no, rule, old_ex, new_ex))
 
     if not violations:
         return 0
