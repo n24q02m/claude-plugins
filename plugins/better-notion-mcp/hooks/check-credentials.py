@@ -9,6 +9,10 @@ import json
 import os
 import sys
 
+# Add plugins root to sys.path for shared utilities
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from mcp_common import is_relay_configured
+
 SERVER_NAME = "better-notion-mcp"
 CREDENTIAL_KEYS = ["NOTION_TOKEN"]
 EXEMPT_SUFFIXES = ("__setup", "__help", "__config")
@@ -18,19 +22,7 @@ def _is_configured() -> bool:
     for k in CREDENTIAL_KEYS:
         if os.environ.get(k):
             return True
-    # mcp-relay-core stores config.enc in a shared 'mcp' directory
-    # Optimization: Use sequential checks to short-circuit early and
-    # avoid constructing unused paths or unnecessary memory allocations.
-    local_app_data = os.environ.get("LOCALAPPDATA", "")
-    if local_app_data and os.path.exists(os.path.join(local_app_data, "mcp", "config.enc")):
-        return True
-    app_data = os.environ.get("APPDATA", "")
-    if app_data and os.path.exists(os.path.join(app_data, "mcp", "Config", "config.enc")):
-        return True
-    home = os.path.expanduser("~")
-    if os.path.exists(os.path.join(home, ".config", "mcp", "config.enc")):
-        return True
-    return False
+    return is_relay_configured()
 
 
 def main() -> None:
