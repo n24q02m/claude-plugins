@@ -25,6 +25,7 @@ _SPEC.loader.exec_module(_MOD)
 check_pair = _MOD._check_pair
 similar = _MOD._similar
 strip_diacritics = _MOD._strip_diacritics
+is_skippable = _MOD._is_skippable
 
 
 _failures: list[str] = []
@@ -152,6 +153,41 @@ def test_case_10_similar_helper() -> None:
     )
 
 
+
+def test_case_11_is_skippable_helper() -> None:
+    print("Case 11: _is_skippable helper sanity")
+    # Skippable directories
+    _assert(is_skippable(".git/config"), "skips .git dir")
+    _assert(is_skippable("node_modules/pkg/index.js"), "skips node_modules dir")
+    _assert(is_skippable("dist/bundle.js"), "skips dist dir")
+    _assert(is_skippable("build/main.o"), "skips build dir")
+    _assert(is_skippable(".venv/bin/python"), "skips .venv dir")
+    _assert(is_skippable("venv/bin/python"), "skips venv dir")
+    _assert(is_skippable("__pycache__/foo.pyc"), "skips __pycache__ dir")
+
+    # Specific skippable filenames
+    _assert(is_skippable("bun.lockb"), "skips bun.lockb")
+    _assert(is_skippable("package-lock.json"), "skips package-lock.json")
+    _assert(is_skippable("yarn.lock"), "skips yarn.lock")
+    _assert(is_skippable("uv.lock"), "skips uv.lock")
+    _assert(is_skippable("poetry.lock"), "skips poetry.lock")
+    _assert(is_skippable("Cargo.lock"), "skips Cargo.lock")
+    _assert(is_skippable("go.sum"), "skips go.sum")
+
+    # Skippable suffixes
+    _assert(is_skippable("image.png"), "skips .png")
+    _assert(is_skippable("script.min.js"), "skips .min.js")
+    _assert(is_skippable("styles.min.css"), "skips .min.css")
+    _assert(is_skippable("video.mp4"), "skips .mp4")
+    _assert(is_skippable("font.woff2"), "skips .woff2")
+
+    # NOT skippable
+    _assert(not is_skippable("src/main.py"), "does not skip src/main.py")
+    _assert(not is_skippable("README.md"), "does not skip README.md")
+    _assert(not is_skippable("scripts/preserve-diacritics.py"), "does not skip script itself")
+
+
+
 def main() -> int:
     tests = [
         test_case_1_em_dash_to_dashdash,
@@ -167,6 +203,7 @@ def main() -> int:
         test_case_8_partial_diacritic_unchanged_passes,
         test_case_9_strip_diacritics_helper,
         test_case_10_similar_helper,
+        test_case_11_is_skippable_helper,
     ]
     for t in tests:
         t()
