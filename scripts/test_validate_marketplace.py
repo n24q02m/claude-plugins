@@ -155,5 +155,15 @@ class TestValidateMarketplace(unittest.TestCase):
             validate_marketplace.validate_marketplace()
             mock_exit.assert_called_with(1)
 
+    def test_load_marketplace_failure(self):
+        """Should fail if marketplace.json cannot be loaded."""
+        with patch('builtins.open', side_effect=Exception("Read error")):
+            with patch('sys.exit', side_effect=SystemExit(1)) as mock_exit, \
+                 patch('builtins.print') as mock_print:
+                with self.assertRaises(SystemExit) as cm:
+                    validate_marketplace.validate_marketplace()
+                self.assertEqual(cm.exception.code, 1)
+                mock_print.assert_any_call("::error ::Failed to load marketplace.json: Read error")
+
 if __name__ == '__main__':
     unittest.main()
