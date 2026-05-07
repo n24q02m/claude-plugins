@@ -242,15 +242,13 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
                 violations.append(("vietnamese-diacritic-strip", old, new))
 
     # Rule 3: Emoji removed / replaced.
-    # Performance: Skip regex search on new string if no emojis existed in the old string to be removed
-    old_emoji = _EMOJI_RE.findall(old)
-    if old_emoji:
-        new_emoji = _EMOJI_RE.findall(new)
-        if len(old_emoji) > len(new_emoji):
+    # Performance: Use subn to count and strip emojis in one pass.
+    old_no_emoji, old_emoji_count = _EMOJI_RE.subn("", old)
+    if old_emoji_count > 0:
+        new_no_emoji, new_emoji_count = _EMOJI_RE.subn("", new)
+        if old_emoji_count > new_emoji_count:
             # Confirm similarity so that full-paragraph rewrites don't trip it.
-            old_no_emoji = _EMOJI_RE.sub("", old).strip()
-            new_no_emoji = _EMOJI_RE.sub("", new).strip()
-            if _similar(old_no_emoji, new_no_emoji):
+            if _similar(old_no_emoji.strip(), new_no_emoji.strip()):
                 violations.append(("emoji-removed", old, new))
 
     return violations
