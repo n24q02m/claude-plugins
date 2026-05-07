@@ -37,20 +37,36 @@ def validate_marketplace():
             errors.append("marketplace.json: No plugins defined")
 
         for plugin in plugins:
-            name = plugin.get("name", "Unknown")
+            name = plugin.get("name")
+            if name is None:
+                name = "Unknown"
+            elif not isinstance(name, str):
+                errors.append(
+                    f"Plugin {sanitize_log(str(name))}: name must be a string"
+                )
+                continue
+
             if not PLUGIN_NAME_PATTERN.fullmatch(name):
-                errors.append(f"Plugin {name}: invalid name format (must match ^[a-zA-Z0-9-]+$)")
+                errors.append(
+                    f"Plugin {name}: invalid name format (must match ^[a-zA-Z0-9-]+$)"
+                )
                 continue
 
             source = plugin.get("source")
-            if not source:
+            if source is None:
                 errors.append(f"Plugin {name}: missing source")
+                continue
+
+            if not isinstance(source, str):
+                errors.append(f"Plugin {name}: source must be a string")
                 continue
 
             # Security check: prevent path traversal
             norm_source = os.path.normpath(source)
             if os.path.isabs(norm_source) or norm_source.startswith(".."):
-                errors.append(f"Plugin {name}: invalid source path (path traversal blocked)")
+                errors.append(
+                    f"Plugin {name}: invalid source path (path traversal blocked)"
+                )
                 continue
 
             plugin_dir = norm_source
@@ -108,7 +124,9 @@ def validate_marketplace():
                             except FileNotFoundError:
                                 pass
                             except Exception as e:
-                                errors.append(f"{name}/skills/{skill_name}: Failed to read SKILL.md: {e}")
+                                errors.append(
+                                    f"{name}/skills/{skill_name}: Failed to read SKILL.md: {e}"
+                                )
             except (FileNotFoundError, NotADirectoryError):
                 pass
 
