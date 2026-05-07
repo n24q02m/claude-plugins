@@ -1,1 +1,63 @@
-{"name": "Test", "metadata": {}, "owner": "test", "plugins": [{"name": "test-plugin", "source": 123}]}
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "n24q02m-plugins",
+  "metadata": {
+    "description": "8 MCP servers: web search, memory, Notion, email, Telegram, Godot, code review",
+    "version": "1.0.0",
+    "pluginRoot": "./plugins"
+  },
+  "owner": {
+    "name": "n24q02m",
+    "email": "n24q02m@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "wet-mcp",
+      "source": "./plugins/wet-mcp",
+      "description": "Web search, content extraction, media download",
+      "category": "research"
+    },
+    {
+      "name": "mnemo-mcp",
+      "source": "./plugins/mnemo-mcp",
+      "description": "Persistent AI memory across sessions",
+      "category": "productivity"
+    },
+    {
+      "name": "better-notion-mcp",
+      "source": "./plugins/better-notion-mcp",
+      "description": "Notion API — 10 composite tools, ~95% coverage",
+      "category": "productivity"
+    },
+    {
+      "name": "better-email-mcp",
+      "source": "./plugins/better-email-mcp",
+      "description": "Email IMAP/SMTP — multi-account management",
+      "category": "communication"
+    },
+    {
+      "name": "better-godot-mcp",
+      "source": "./plugins/better-godot-mcp",
+      "description": "Godot Engine — 17 composite tools for game development",
+      "category": "development"
+    },
+    {
+      "name": "better-telegram-mcp",
+      "source": "./plugins/better-telegram-mcp",
+      "description": "Telegram dual-mode (Bot API + MTProto) — messages, chats, media, contacts",
+      "category": "communication"
+    },
+    {
+      "name": "better-code-review-graph",
+      "source": "./plugins/better-code-review-graph",
+      "description": "Knowledge graph for token-efficient code reviews",
+      "category": "development"
+    },
+    {
+      "name": "imagine-mcp",
+      "source": "./plugins/imagine-mcp",
+      "description": "Image/video understanding + generation across Gemini, OpenAI, Grok",
+      "category": "multimodal"
+    }
+  ]
+}
