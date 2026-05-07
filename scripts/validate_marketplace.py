@@ -96,7 +96,8 @@ def validate_marketplace():
                             # Optimization: Use EAFP to avoid redundant os.path.exists stat syscalls before open
                             try:
                                 with open(skill_file, encoding="utf-8") as f:
-                                    content = f.read()
+                                    # Optimization: read only first 100 characters for partial check
+                                    content = f.read(100)
                                 if not content.startswith("---"):
                                     errors.append(
                                         f"{name}/skills/{skill_name}: SKILL.md missing frontmatter"
