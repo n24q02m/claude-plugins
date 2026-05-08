@@ -1,0 +1,55 @@
+---
+title: MCP n24q02m
+description: Unified docs for 8 MCP servers + mcp-core foundation library
+template: splash
+hero:
+  tagline: Unified docs for 8 MCP servers + the mcp-core foundation library — production-grade, plugin-friendly, multi-user.
+  image:
+    file: ../../assets/logo.svg
+  actions:
+    - text: Get started
+      link: /get-started/install-claude-code/
+      icon: right-arrow
+      variant: primary
+    - text: Browse on GitHub
+      link: https://github.com/n24q02m/claude-plugins
+      icon: external
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What is this?
+
+A curated stack of MCP (Model Context Protocol) servers for Claude Code, Codex, Gemini CLI, Cursor, and Windsurf — sharing one foundation library (`mcp-core`) and one plugin marketplace (`n24q02m/claude-plugins`).
+
+Each server is published as a Claude Code plugin, an npm or PyPI package (per language), and a Docker image on GHCR. Setup takes one command.
+
+## The servers
+
+<CardGrid>
+  <LinkCard title="mcp-core (Foundation)" href="/servers/mcp-core/architecture/" description="Shared transport, OAuth AS, lifecycle. Used by every server." />
+  <LinkCard title="wet-mcp" href="/servers/wet-mcp/setup/" description="Web search + content extraction + docs indexing." />
+  <LinkCard title="mnemo-mcp" href="/servers/mnemo-mcp/setup/" description="Persistent AI memory with hybrid search." />
+  <LinkCard title="better-code-review-graph" href="/servers/better-code-review-graph/setup/" description="Knowledge graph for token-efficient code reviews." />
+  <LinkCard title="imagine-mcp" href="/servers/imagine-mcp/setup/" description="Image and video understanding + generation across providers." />
+  <LinkCard title="better-telegram-mcp" href="/servers/better-telegram-mcp/setup/" description="Telegram (Bot API + MTProto) for AI agents." />
+  <LinkCard title="better-notion-mcp" href="/servers/better-notion-mcp/setup/" description="Markdown-first Notion API server." />
+  <LinkCard title="better-email-mcp" href="/servers/better-email-mcp/setup/" description="Email (IMAP + SMTP) composite tools." />
+  <LinkCard title="better-godot-mcp" href="/servers/better-godot-mcp/setup/" description="Godot Engine integration." />
+</CardGrid>
+
+## Why these and not just any MCP server?
+
+- **One foundation, nine consumers**: every server reuses `mcp-core`'s transport, OAuth AS, lifecycle, and multi-user primitives. No bespoke auth code per server.
+- **Multi-user by construction**: `remote-relay` and `remote-oauth` modes scope credentials per-JWT-sub. Self-host once, share with a team.
+- **Composite tools, not raw API mirrors**: each server's tool list is curated for AI-agent ergonomics — fewer round-trips, less prompt clutter.
+- **Production-grade releases**: signed Docker images, semantic-versioned packages, automated CI (CodeQL, secret scanning, push protection, Dependabot).
+
+## Common workflows
+
+<CardGrid>
+  <LinkCard title="Plugin marketplace" href="/get-started/plugin-marketplace/" description="One command to install any server in Claude Code." />
+  <LinkCard title="Modes overview" href="/get-started/modes-overview/" description="stdio / local-relay / remote-relay / remote-oauth — when to use each." />
+  <LinkCard title="Multi-user setup" href="/get-started/multi-user/" description="Per-JWT-sub credential storage." />
+  <LinkCard title="Reference" href="/reference/server-comparison/" description="Side-by-side comparison of all 9 servers." />
+</CardGrid>
