@@ -4,10 +4,11 @@
 import concurrent.futures
 import json
 import os
-import re
 import urllib.request
 import urllib.error
 import threading
+
+from utils import sanitize_log, PLUGIN_NAME_PATTERN
 
 # In-memory cache for API responses to avoid redundant calls
 _cache = {}
@@ -55,12 +56,6 @@ def get_latest_tag_api(repo):
         _cache[repo] = result
     return result
 
-def sanitize_log(msg: str) -> str:
-    """Sanitize strings for GitHub Actions log commands."""
-    return str(msg).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
-
-# Pre-compile regex at module level to avoid cache lookup overhead in concurrent loops
-PLUGIN_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9-]+$")
 
 
 def check_plugin(plugin):
