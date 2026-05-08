@@ -7,8 +7,12 @@ on:
   issues:
     types: [opened, reopened]
 
+permissions: {}
+
 jobs:
   email-notify:
+    permissions:
+      contents: read
     name: Email Notification
     if: >-
       github.actor != github.repository_owner
