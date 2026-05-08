@@ -170,6 +170,45 @@ class TestValidateMarketplace(unittest.TestCase):
             validate_marketplace.validate_marketplace()
             mock_exit.assert_called_with(1)
 
+    def test_load_marketplace_failure(self):
+        """Should fail if marketplace.json cannot be loaded."""
+        with (
+            patch("builtins.open", side_effect=Exception("Read error")),
+            patch("sys.exit", side_effect=SystemExit(1)) as mock_exit,
+            patch("builtins.print") as mock_print,
+        ):
+            with self.assertRaises(SystemExit) as cm:
+                validate_marketplace.validate_marketplace()
+            self.assertEqual(cm.exception.code, 1)
+            mock_print.assert_any_call("::error ::Failed to load marketplace.json: Read error")
+            mock_exit.assert_called()
+
+
+class TestSanitizeLog(unittest.TestCase):
+    def test_sanitize_no_special_chars(self):
+        """Should return the same string if no special characters are present."""
+        self.assertEqual(validate_marketplace.sanitize_log("hello world"), "hello world")
+
+    def test_sanitize_percent(self):
+        """Should replace % with %25."""
+        self.assertEqual(validate_marketplace.sanitize_log("percent % sign"), "percent %25 sign")
+
+    def test_sanitize_carriage_return(self):
+        """Should replace \\r with %0D."""
+        self.assertEqual(validate_marketplace.sanitize_log("carriage\rreturn"), "carriage%0Dreturn")
+
+    def test_sanitize_newline(self):
+        """Should replace \\n with %0A."""
+        self.assertEqual(validate_marketplace.sanitize_log("new\nline"), "new%0Aline")
+
+    def test_sanitize_all_special_chars(self):
+        """Should replace all special characters correctly."""
+        self.assertEqual(validate_marketplace.sanitize_log("%\r\n"), "%25%0D%0A")
+
+    def test_sanitize_non_string(self):
+        """Should handle non-string input by converting it to string first."""
+        self.assertEqual(validate_marketplace.sanitize_log(123), "123")
+
 
 if __name__ == "__main__":
     unittest.main()
