@@ -2,6 +2,8 @@
 
 8 MCP servers for Claude Code, Codex, and other AI coding agents.
 
+**Full documentation: [mcp.n24q02m.com](https://mcp.n24q02m.com)** — unified docs for all 8 servers + the `mcp-core` foundation library. Covers setup methods, modes (stdio / local-relay / remote-relay / remote-oauth), multi-user deployment, and per-server tool reference.
+
 ## Install
 
 ```bash
