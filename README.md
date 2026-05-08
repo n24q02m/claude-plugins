@@ -24,6 +24,16 @@
 </details>
 <!-- END: AUTO-GENERATED-CROSS-PROMO -->
 
+## Table of contents
+
+- [Install](#install)
+- [Plugins](#plugins)
+- [Configuration](#configuration)
+- [Skills](#skills)
+- [Other MCP Clients](#other-mcp-clients)
+- [License](#license)
+
+
 
 8 MCP servers for Claude Code, Codex, and other AI coding agents.
 
