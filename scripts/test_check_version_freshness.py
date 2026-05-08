@@ -245,6 +245,16 @@ class TestCheckVersionFreshness(unittest.TestCase):
         self.assertEqual(result["status"], "up-to-date")
         self.assertEqual(result["marketplace_ver"], "3.4.5")
 
+    def test_sanitize_log(self):
+        """Test GitHub Actions log sanitization."""
+        self.assertEqual(check_version_freshness.sanitize_log(""), "")
+        self.assertEqual(check_version_freshness.sanitize_log("hello"), "hello")
+        self.assertEqual(check_version_freshness.sanitize_log("100%"), "100%25")
+        self.assertEqual(check_version_freshness.sanitize_log("line1\nline2"), "line1%0Aline2")
+        self.assertEqual(check_version_freshness.sanitize_log("line1\rline2"), "line1%0Dline2")
+        self.assertEqual(check_version_freshness.sanitize_log("%\n\r"), "%25%0A%0D")
+        self.assertEqual(check_version_freshness.sanitize_log(123), "123")
+
 
 if __name__ == "__main__":
     unittest.main()
