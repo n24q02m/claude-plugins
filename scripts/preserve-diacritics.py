@@ -225,11 +225,18 @@ def _yield_diff_pairs(files: list[str]) -> Iterator[tuple[str, int, str, str]]:
             yield from _flush(current_file, hunk_plus_start)
 
 
+# Build translation table for combining characters once at module load.
+# Operates at C-speed without altering strict semantics of the original logic.
+_COMBINING_TABLE = dict.fromkeys(
+    c for c in range(sys.maxunicode + 1) if unicodedata.combining(chr(c))
+)
+
 def _strip_diacritics(s: str) -> str:
     """Return NFD-stripped lowercase form with đ->d, Đ->D."""
     s = s.replace("đ", "d").replace("Đ", "D")
     nfd = unicodedata.normalize("NFD", s)
-    return "".join(c for c in nfd if not unicodedata.combining(c))
+    # Using translate is correct for all combining chars across Unicode
+    return nfd.translate(_COMBINING_TABLE)
 
 
 def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
