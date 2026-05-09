@@ -212,9 +212,19 @@ All environment variables are **optional** -- mnemo works with zero env vars in 
 | `JINA_AI_API_KEY` | -- | Jina AI: embedding + reranking (highest priority) |
 | `GEMINI_API_KEY` | -- | Gemini: LLM + embedding (free tier) |
 | `OPENAI_API_KEY` | -- | OpenAI: LLM + embedding |
+| `ANTHROPIC_API_KEY` | -- | Anthropic: LLM dispatch (Phase 1 multi-provider auto-detect) |
+| `XAI_API_KEY` | -- | xAI/Grok: LLM dispatch (Phase 1 multi-provider auto-detect) |
 | `COHERE_API_KEY` | -- | Cohere: embedding + reranking |
+| `LLM_MODELS` | -- | LLM model overrides, format `provider=model,...` (Phase 1) |
 | `DB_PATH` | `~/.mnemo-mcp/memories.db` | Database location |
-| `SYNC_ENABLED` | `false` | Enable rclone sync |
+| `DEDUP_THRESHOLD` | `0.92` | Embedding similarity threshold for capture dedup short-circuit (Phase 1) |
+| `RECENCY_HALF_LIFE_DAYS` | `30` | Temporal decay half-life for retrieval scoring (Phase 1 RRF + rerank) |
+| `ARCHIVE_AFTER_DAYS` | `90` | Soft-archive threshold via importance × recency policy (Phase 1) |
+| `ARCHIVE_TRIGGER_EVERY` | `100` | Auto-archive sweep on every N captures (Phase 1) |
+| `CAPTURE_AUTO_ENABLED` | `false` | Opt-in PostToolUse hook for auto-capture on Write/Edit (Phase 1 plugin trinity) |
+| `CAPTURE_CONTEXT_TYPE_DEFAULT` | `conversation` | Default context_type for capture action (Phase 1) |
+| `RERANK_ENABLED` | `true` | Toggle cross-encoder rerank chain (qwen3 → Jina → Cohere) |
+| `SYNC_ENABLED` | `false` | Enable Google Drive sync |
 | `LOG_LEVEL` | `INFO` | Logging level |
 
 ### Provider Priority
