@@ -155,9 +155,26 @@ jobs:
           git add -A
           if git diff --cached --quiet; then
             printf "No changes to sync\n"
-          else
-            COMMIT_MSG="chore(plugins): sync $REPO to $VERSION"
-            git commit -m "$COMMIT_MSG"
-            git push
-            printf "Pushed sync for %s %s\n" "$REPO" "$VERSION"
+            exit 0
           fi
+          COMMIT_MSG="chore(plugins): sync $REPO to $VERSION"
+          git commit -m "$COMMIT_MSG"
+          # Retry push on race with concurrent plugin-sync runs.
+          # Concurrency group serializes most cases, but rapid
+          # repository_dispatch bursts can still produce push-time
+          # races (rejected: fetch first). Rebase + retry handles them.
+          attempt=0
+          max_attempts=5
+          until git push; do
+            attempt=$((attempt + 1))
+            if [ "$attempt" -ge "$max_attempts" ]; then
+              printf "::error::Push failed after %d attempts\n" "$attempt"
+              exit 1
+            fi
+            printf "Push rejected (attempt %d/%d), rebasing onto origin/main and retrying\n" \
+              "$attempt" "$max_attempts"
+            git fetch origin main
+            git rebase origin/main
+            sleep $((attempt * 2))
+          done
+          printf "Pushed sync for %s %s (after %d attempt(s))\n" "$REPO" "$VERSION" "$((attempt + 1))"
