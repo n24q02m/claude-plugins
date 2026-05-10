@@ -54,6 +54,8 @@ UNICODE_REPLACEMENTS: dict[str, list[str]] = {
 _VN_BASE = "àảãáạâấầẩẫậăắằẳẵặèẻẽéẹêếềểễệìỉĩíịòỏõóọôốồổỗộơớờởỡợùủũúụưứừửữựỳỷỹýỵđ"
 VIETNAMESE_DIACRITIC_CHARS: set[str] = set(_VN_BASE + _VN_BASE.upper())
 
+_COMBINING_CHARS_TBL: dict[int, None] | None = None
+
 # Emoji detection: any codepoint in common emoji blocks.
 _EMOJI_RE = re.compile(
     "["
@@ -227,9 +229,18 @@ def _yield_diff_pairs(files: list[str]) -> Iterator[tuple[str, int, str, str]]:
 
 def _strip_diacritics(s: str) -> str:
     """Return NFD-stripped lowercase form with đ->d, Đ->D."""
+    global _COMBINING_CHARS_TBL
+    if _COMBINING_CHARS_TBL is None:
+        # Optimization: Pre-compute the translation table lazily on first use to avoid
+        # a ~150ms startup penalty, then use str.translate instead of a generator expression
+        # to strip diacritics significantly faster per call.
+        _COMBINING_CHARS_TBL = dict.fromkeys(
+            c for c in range(sys.maxunicode + 1) if unicodedata.combining(chr(c))
+        )
+
     s = s.replace("đ", "d").replace("Đ", "D")
     nfd = unicodedata.normalize("NFD", s)
-    return "".join(c for c in nfd if not unicodedata.combining(c))
+    return nfd.translate(_COMBINING_CHARS_TBL)
 
 
 def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
