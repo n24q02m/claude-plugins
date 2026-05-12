@@ -27,7 +27,9 @@ def _is_configured() -> bool:
 
 def main() -> None:
     try:
-        data = json.load(sys.stdin)
+        # Prevent memory exhaustion DoS from unbounded stdin reads
+        raw_data = sys.stdin.read(1024 * 1024)
+        data = json.loads(raw_data)
         if not isinstance(data, dict):
             print(json.dumps({
                 "decision": "block",
