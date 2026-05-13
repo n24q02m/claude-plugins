@@ -29,7 +29,7 @@ def _is_configured() -> bool:
 
 def main() -> None:
     try:
-        data = json.load(sys.stdin)
+        data = json.loads(sys.stdin.read(1024 * 1024))
         if not isinstance(data, dict):
             print(json.dumps({
                 "decision": "block",
