@@ -4,12 +4,15 @@
 Blocking -- Telegram tools cannot function without credentials.
 Allows config and help tools through so the user can initiate setup.
 """
+
 import json
 import os
 import sys
 
 # Add plugins root to sys.path for shared utilities
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.append(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 from mcp_common import is_relay_configured
 
 SERVER_NAME = "better-telegram-mcp"
@@ -29,18 +32,27 @@ def _is_configured() -> bool:
 
 def main() -> None:
     try:
-        data = json.load(sys.stdin)
+        raw_data = sys.stdin.read(1024 * 1024)
+        data = json.loads(raw_data)
         if not isinstance(data, dict):
-            print(json.dumps({
-                "decision": "block",
-                "reason": "Invalid input: payload must be a JSON dictionary",
-            }))
+            print(
+                json.dumps(
+                    {
+                        "decision": "block",
+                        "reason": "Invalid input: payload must be a JSON dictionary",
+                    }
+                )
+            )
             sys.exit(2)
     except Exception:
-        print(json.dumps({
-            "decision": "block",
-            "reason": "Invalid input: payload must be a JSON dictionary",
-        }))
+        print(
+            json.dumps(
+                {
+                    "decision": "block",
+                    "reason": "Invalid input: payload must be a JSON dictionary",
+                }
+            )
+        )
         sys.exit(2)
 
     tool_name = data.get("tool_name")
@@ -50,15 +62,19 @@ def main() -> None:
         sys.exit(0)
 
     if not _is_configured():
-        print(json.dumps({
-            "decision": "block",
-            "reason": (
-                "better-telegram-mcp credentials not configured. "
-                "Set TELEGRAM_PHONE (user mode) or TELEGRAM_BOT_TOKEN (bot mode) "
-                "in your MCP server environment, "
-                "or use the config tool with action='status' for setup instructions."
-            ),
-        }))
+        print(
+            json.dumps(
+                {
+                    "decision": "block",
+                    "reason": (
+                        "better-telegram-mcp credentials not configured. "
+                        "Set TELEGRAM_PHONE (user mode) or TELEGRAM_BOT_TOKEN (bot mode) "
+                        "in your MCP server environment, "
+                        "or use the config tool with action='status' for setup instructions."
+                    ),
+                }
+            )
+        )
         sys.exit(2)
 
     sys.exit(0)
