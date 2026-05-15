@@ -171,7 +171,9 @@ def _yield_diff_pairs(files: list[str]) -> Iterator[tuple[str, int, str, str]]:
         plus_line_no = 0
         hunk_plus_start = 0
 
-        def _flush(file_path: str, start_line: int) -> Iterator[tuple[str, int, str, str]]:
+        def _flush(
+            file_path: str, start_line: int
+        ) -> Iterator[tuple[str, int, str, str]]:
             for idx in range(min(len(removed), len(added))):
                 yield (file_path, start_line + idx, removed[idx], added[idx])
             removed.clear()
@@ -225,11 +227,19 @@ def _yield_diff_pairs(files: list[str]) -> Iterator[tuple[str, int, str, str]]:
             yield from _flush(current_file, hunk_plus_start)
 
 
+_combining_table = None
+
+
 def _strip_diacritics(s: str) -> str:
     """Return NFD-stripped lowercase form with đ->d, Đ->D."""
+    global _combining_table
+    if _combining_table is None:
+        _combining_table = dict.fromkeys(
+            c for c in range(sys.maxunicode + 1) if unicodedata.combining(chr(c))
+        )
     s = s.replace("đ", "d").replace("Đ", "D")
     nfd = unicodedata.normalize("NFD", s)
-    return "".join(c for c in nfd if not unicodedata.combining(c))
+    return nfd.translate(_combining_table)
 
 
 def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
