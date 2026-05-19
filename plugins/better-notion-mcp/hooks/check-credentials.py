@@ -5,12 +5,15 @@ Non-blocking -- server handles unconfigured state internally via lazy relay
 trigger (returns setup instructions with relay URL on first tool call).
 Notion uses OAuth via claude.ai proxy in HTTP mode.
 """
+
 import json
 import os
 import sys
 
 # Add plugins root to sys.path for shared utilities
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.append(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 from mcp_common import is_relay_configured
 
 SERVER_NAME = "better-notion-mcp"
@@ -27,18 +30,27 @@ def _is_configured() -> bool:
 
 def main() -> None:
     try:
-        data = json.load(sys.stdin)
+        # Prevent memory exhaustion DoS with bounded read
+        data = json.loads(sys.stdin.read(1024 * 1024))
         if not isinstance(data, dict):
-            print(json.dumps({
-                "decision": "block",
-                "reason": "Invalid input: payload must be a JSON dictionary",
-            }))
+            print(
+                json.dumps(
+                    {
+                        "decision": "block",
+                        "reason": "Invalid input: payload must be a JSON dictionary",
+                    }
+                )
+            )
             sys.exit(2)
     except Exception:
-        print(json.dumps({
-            "decision": "block",
-            "reason": "Invalid input: payload must be a JSON dictionary",
-        }))
+        print(
+            json.dumps(
+                {
+                    "decision": "block",
+                    "reason": "Invalid input: payload must be a JSON dictionary",
+                }
+            )
+        )
         sys.exit(2)
 
     tool_name = data.get("tool_name")
@@ -51,12 +63,16 @@ def main() -> None:
         sys.exit(0)
 
     # Non-blocking hint: let server handle unconfigured state
-    print(json.dumps({
-        "message": (
-            "better-notion-mcp: credentials not yet configured. "
-            "The server will provide setup instructions."
-        ),
-    }))
+    print(
+        json.dumps(
+            {
+                "message": (
+                    "better-notion-mcp: credentials not yet configured. "
+                    "The server will provide setup instructions."
+                ),
+            }
+        )
+    )
     sys.exit(0)
 
 
