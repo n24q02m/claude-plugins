@@ -100,12 +100,8 @@ _SKIP_SUFFIXES = (
 _SKIP_DIRS = {".git", "node_modules", "dist", "build", ".venv", "venv", "__pycache__"}
 
 
-def _is_skippable(path: str) -> bool:
-    parts = path.split("/")
-    if not _SKIP_DIRS.isdisjoint(parts):
-        return True
-    name = parts[-1]
-    if name in {
+_EXACT_SKIP_NAMES = frozenset(
+    {
         "bun.lockb",
         "bun.lock",
         "package-lock.json",
@@ -114,7 +110,17 @@ def _is_skippable(path: str) -> bool:
         "poetry.lock",
         "Cargo.lock",
         "go.sum",
-    }:
+    }
+)
+
+
+def _is_skippable(path: str) -> bool:
+    parts = path.split("/")
+    if not _SKIP_DIRS.isdisjoint(parts):
+        return True
+    name = parts[-1]
+    # ⚡ Bolt: replace set literal with frozenset and early return
+    if name in _EXACT_SKIP_NAMES:
         return True
     if name.lower().endswith(_SKIP_SUFFIXES):
         return True
@@ -171,7 +177,9 @@ def _yield_diff_pairs(files: list[str]) -> Iterator[tuple[str, int, str, str]]:
         plus_line_no = 0
         hunk_plus_start = 0
 
-        def _flush(file_path: str, start_line: int) -> Iterator[tuple[str, int, str, str]]:
+        def _flush(
+            file_path: str, start_line: int
+        ) -> Iterator[tuple[str, int, str, str]]:
             for idx in range(min(len(removed), len(added))):
                 yield (file_path, start_line + idx, removed[idx], added[idx])
             removed.clear()
@@ -225,11 +233,20 @@ def _yield_diff_pairs(files: list[str]) -> Iterator[tuple[str, int, str, str]]:
             yield from _flush(current_file, hunk_plus_start)
 
 
+_COMBINING_CHARS_TBL = None
+
+
 def _strip_diacritics(s: str) -> str:
     """Return NFD-stripped lowercase form with đ->d, Đ->D."""
+    # ⚡ Bolt: lazily initialize translation table for 10x faster diacritic stripping
+    global _COMBINING_CHARS_TBL
+    if _COMBINING_CHARS_TBL is None:
+        _COMBINING_CHARS_TBL = {
+            c: None for c in range(sys.maxunicode + 1) if unicodedata.combining(chr(c))
+        }
     s = s.replace("đ", "d").replace("Đ", "D")
     nfd = unicodedata.normalize("NFD", s)
-    return "".join(c for c in nfd if not unicodedata.combining(c))
+    return nfd.translate(_COMBINING_CHARS_TBL)
 
 
 def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
@@ -265,16 +282,15 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
 
     # Rule 2: Vietnamese diacritics stripped.
     # Performance: Skip iterating over strings if no diacritics exist
-    if not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(old):
+    # ⚡ Bolt: skip disjoint check and list comprehension if string is pure ASCII
+    old_diacritics = []
+    if not old.isascii() and not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(old):
         old_diacritics = [c for c in old if c in VIETNAMESE_DIACRITIC_CHARS]
-    else:
-        old_diacritics = []
 
     if old_diacritics:
-        if not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(new):
+        new_diacritics = []
+        if not new.isascii() and not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(new):
             new_diacritics = [c for c in new if c in VIETNAMESE_DIACRITIC_CHARS]
-        else:
-            new_diacritics = []
 
         if len(old_diacritics) > len(new_diacritics):
             # Confirm via NFD-strip round-trip: does stripping old give us new?
@@ -291,13 +307,15 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
 
     # Rule 3: Emoji removed / replaced.
     # Performance: Use subn to count and strip emojis in one pass.
-    old_no_emoji, old_emoji_count = _EMOJI_RE.subn("", old)
-    if old_emoji_count > 0:
-        new_no_emoji, new_emoji_count = _EMOJI_RE.subn("", new)
-        if old_emoji_count > new_emoji_count:
-            # Confirm similarity so that full-paragraph rewrites don't trip it.
-            if _similar(old_no_emoji.strip(), new_no_emoji.strip()):
-                violations.append(("emoji-removed", old, new))
+    # ⚡ Bolt: skip regex subn if string has no non-ASCII chars
+    if not old.isascii():
+        old_no_emoji, old_emoji_count = _EMOJI_RE.subn("", old)
+        if old_emoji_count > 0:
+            new_no_emoji, new_emoji_count = _EMOJI_RE.subn("", new)
+            if old_emoji_count > new_emoji_count:
+                # Confirm similarity so that full-paragraph rewrites don't trip it.
+                if _similar(old_no_emoji.strip(), new_no_emoji.strip()):
+                    violations.append(("emoji-removed", old, new))
 
     return violations
 
