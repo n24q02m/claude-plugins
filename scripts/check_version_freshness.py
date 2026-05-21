@@ -24,7 +24,7 @@ def get_latest_tag_api(repo):
     url = f"https://api.github.com/repos/{repo}/releases/latest"
     headers = {
         "Accept": "application/vnd.github.v3+json",
-        "User-Agent": "Marketplace-Version-Checker"
+        "User-Agent": "Marketplace-Version-Checker",
     }
 
     # Support both GITHUB_TOKEN and GH_TOKEN for authenticated requests
@@ -57,7 +57,6 @@ def get_latest_tag_api(repo):
     return result
 
 
-
 def check_plugin(plugin):
     """Check a single plugin's version against its latest GitHub release."""
     name = plugin["name"]
@@ -66,7 +65,7 @@ def check_plugin(plugin):
             "status": "error",
             "name": name,
             "marketplace_ver": "unknown",
-            "error": "invalid name format"
+            "error": "invalid name format",
         }
 
     source = plugin["source"]
@@ -76,7 +75,7 @@ def check_plugin(plugin):
             "status": "error",
             "name": name,
             "marketplace_ver": "unknown",
-            "error": "invalid source path"
+            "error": "invalid source path",
         }
 
     source = norm_source
@@ -137,7 +136,7 @@ def check_plugin(plugin):
             "status": "error",
             "name": name,
             "marketplace_ver": marketplace_ver,
-            "error": latest_tag # status is "error", latest_tag contains the error message
+            "error": latest_tag,  # status is "error", latest_tag contains the error message
         }
 
 
@@ -153,9 +152,7 @@ def check_version_freshness():
     stale = []
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        futures = {
-            executor.submit(check_plugin, p): p for p in marketplace["plugins"]
-        }
+        futures = {executor.submit(check_plugin, p): p for p in marketplace["plugins"]}
         for future in concurrent.futures.as_completed(futures):
             res = future.result()
             name = res["name"]
@@ -179,9 +176,7 @@ def check_version_freshness():
                     f"::error ::{sanitize_log(f'{name} timed out checking release (marketplace={marketplace_ver})')}"
                 )
             elif status == "error":
-                print(
-                    "::error ::" + sanitize_log(f"{name} error: {res['error']}")
-                )
+                print("::error ::" + sanitize_log(f"{name} error: {res['error']}"))
 
     if stale:
         print(f"\n{len(stale)} plugin(s) need sync")

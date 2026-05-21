@@ -8,7 +8,6 @@ import sys
 from utils import sanitize_log, PLUGIN_NAME_PATTERN
 
 
-
 def validate_marketplace():
     """Validate marketplace.json and all referenced plugins."""
     errors = []
