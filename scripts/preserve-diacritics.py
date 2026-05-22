@@ -171,7 +171,9 @@ def _yield_diff_pairs(files: list[str]) -> Iterator[tuple[str, int, str, str]]:
         plus_line_no = 0
         hunk_plus_start = 0
 
-        def _flush(file_path: str, start_line: int) -> Iterator[tuple[str, int, str, str]]:
+        def _flush(
+            file_path: str, start_line: int
+        ) -> Iterator[tuple[str, int, str, str]]:
             for idx in range(min(len(removed), len(added))):
                 yield (file_path, start_line + idx, removed[idx], added[idx])
             removed.clear()

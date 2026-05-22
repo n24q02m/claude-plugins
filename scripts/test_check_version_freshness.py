@@ -163,7 +163,11 @@ class TestCheckVersionFreshness(unittest.TestCase):
             return MagicMock()
 
         with (
-            patch("check_version_freshness.open", create=True, side_effect=mock_open_fallback),
+            patch(
+                "check_version_freshness.open",
+                create=True,
+                side_effect=mock_open_fallback,
+            ),
             patch("json.load", return_value={"version": "2.0.0"}),
         ):
             result = check_version_freshness.check_plugin(plugin)
@@ -184,7 +188,9 @@ class TestCheckVersionFreshness(unittest.TestCase):
         mock_response.__enter__.return_value = mock_response
         mock_urlopen.return_value = mock_response
 
-        with patch("check_version_freshness.open", create=True, side_effect=FileNotFoundError):
+        with patch(
+            "check_version_freshness.open", create=True, side_effect=FileNotFoundError
+        ):
             check_version_freshness.check_plugin(plugin)
             check_version_freshness.check_plugin(plugin)
 
@@ -196,9 +202,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
 
     @patch.dict("os.environ", {"GITHUB_TOKEN": "secret-token"}, clear=False)
     @patch("check_version_freshness.urllib.request.urlopen")
-    def test_check_plugin_uses_auth_header(
-        self, mock_urlopen
-    ):
+    def test_check_plugin_uses_auth_header(self, mock_urlopen):
         plugin = {"name": "auth-plugin", "source": "./plugins/auth-plugin"}
 
         mock_response = MagicMock()
@@ -222,9 +226,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
     # ------------------------------------------------------------------
 
     @patch("check_version_freshness.urllib.request.urlopen")
-    def test_check_plugin_uses_snake_case_tag_name(
-        self, mock_urlopen
-    ):
+    def test_check_plugin_uses_snake_case_tag_name(self, mock_urlopen):
         """API payload uses tag_name; tagName (camelCase) would regress to empty tag."""
         plugin = {"name": "regression-plugin", "source": "./plugins/regression-plugin"}
 
@@ -250,8 +252,12 @@ class TestCheckVersionFreshness(unittest.TestCase):
         self.assertEqual(check_version_freshness.sanitize_log(""), "")
         self.assertEqual(check_version_freshness.sanitize_log("hello"), "hello")
         self.assertEqual(check_version_freshness.sanitize_log("100%"), "100%25")
-        self.assertEqual(check_version_freshness.sanitize_log("line1\nline2"), "line1%0Aline2")
-        self.assertEqual(check_version_freshness.sanitize_log("line1\rline2"), "line1%0Dline2")
+        self.assertEqual(
+            check_version_freshness.sanitize_log("line1\nline2"), "line1%0Aline2"
+        )
+        self.assertEqual(
+            check_version_freshness.sanitize_log("line1\rline2"), "line1%0Dline2"
+        )
         self.assertEqual(check_version_freshness.sanitize_log("%\n\r"), "%25%0A%0D")
         self.assertEqual(check_version_freshness.sanitize_log(123), "123")
 

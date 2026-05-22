@@ -153,7 +153,6 @@ def test_case_10_similar_helper() -> None:
     )
 
 
-
 def test_case_11_is_skippable_helper() -> None:
     print("Case 11: _is_skippable helper sanity")
     # Skippable directories
@@ -184,8 +183,10 @@ def test_case_11_is_skippable_helper() -> None:
     # NOT skippable
     _assert(not is_skippable("src/main.py"), "does not skip src/main.py")
     _assert(not is_skippable("README.md"), "does not skip README.md")
-    _assert(not is_skippable("scripts/preserve-diacritics.py"), "does not skip script itself")
-
+    _assert(
+        not is_skippable("scripts/preserve-diacritics.py"),
+        "does not skip script itself",
+    )
 
 
 def main() -> int:

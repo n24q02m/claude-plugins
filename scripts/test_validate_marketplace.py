@@ -180,22 +180,30 @@ class TestValidateMarketplace(unittest.TestCase):
             with self.assertRaises(SystemExit) as cm:
                 validate_marketplace.validate_marketplace()
             self.assertEqual(cm.exception.code, 1)
-            mock_print.assert_any_call("::error ::Failed to load marketplace.json: Read error")
+            mock_print.assert_any_call(
+                "::error ::Failed to load marketplace.json: Read error"
+            )
             mock_exit.assert_called()
 
 
 class TestSanitizeLog(unittest.TestCase):
     def test_sanitize_no_special_chars(self):
         """Should return the same string if no special characters are present."""
-        self.assertEqual(validate_marketplace.sanitize_log("hello world"), "hello world")
+        self.assertEqual(
+            validate_marketplace.sanitize_log("hello world"), "hello world"
+        )
 
     def test_sanitize_percent(self):
         """Should replace % with %25."""
-        self.assertEqual(validate_marketplace.sanitize_log("percent % sign"), "percent %25 sign")
+        self.assertEqual(
+            validate_marketplace.sanitize_log("percent % sign"), "percent %25 sign"
+        )
 
     def test_sanitize_carriage_return(self):
         """Should replace \\r with %0D."""
-        self.assertEqual(validate_marketplace.sanitize_log("carriage\rreturn"), "carriage%0Dreturn")
+        self.assertEqual(
+            validate_marketplace.sanitize_log("carriage\rreturn"), "carriage%0Dreturn"
+        )
 
     def test_sanitize_newline(self):
         """Should replace \\n with %0A."""
