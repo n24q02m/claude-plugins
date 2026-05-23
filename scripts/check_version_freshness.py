@@ -37,7 +37,10 @@ def get_latest_tag_api(repo):
         with urllib.request.urlopen(req, timeout=30) as response:
             data = json.loads(response.read().decode())
             # GitHub REST API returns snake_case tag_name (gh CLI returns camelCase).
-            tag = data.get("tag_name", "").lstrip("v")
+            tag = data.get("tag_name", "")
+            if not isinstance(tag, str):
+                tag = ""
+            tag = tag.lstrip("v")
             result = ("ok", tag)
     except urllib.error.HTTPError as e:
         if e.code == 404:
@@ -59,16 +62,23 @@ def get_latest_tag_api(repo):
 
 def check_plugin(plugin):
     """Check a single plugin's version against its latest GitHub release."""
-    name = plugin["name"]
-    if not PLUGIN_NAME_PATTERN.fullmatch(name):
+    name = plugin.get("name")
+    if not isinstance(name, str) or not PLUGIN_NAME_PATTERN.fullmatch(name):
         return {
             "status": "error",
-            "name": name,
+            "name": str(name) if name is not None else "Unknown",
             "marketplace_ver": "unknown",
             "error": "invalid name format",
         }
 
-    source = plugin["source"]
+    source = plugin.get("source")
+    if not isinstance(source, str):
+        return {
+            "status": "error",
+            "name": name,
+            "marketplace_ver": "unknown",
+            "error": "invalid source path",
+        }
     norm_source = os.path.normpath(source)
     if os.path.isabs(norm_source) or norm_source.startswith(".."):
         return {

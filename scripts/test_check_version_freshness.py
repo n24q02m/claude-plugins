@@ -50,6 +50,20 @@ class TestCheckVersionFreshness(unittest.TestCase):
         self.assertEqual(result["status"], "error")
         self.assertEqual(result["error"], "invalid name format")
 
+    @patch("check_version_freshness.urllib.request.urlopen")
+    def test_check_plugin_non_string_name(self, mock_urlopen):
+        plugin = {"name": 123, "source": "./plugins/invalid"}
+        result = check_version_freshness.check_plugin(plugin)
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["error"], "invalid name format")
+
+    @patch("check_version_freshness.urllib.request.urlopen")
+    def test_check_plugin_non_string_source(self, mock_urlopen):
+        plugin = {"name": "valid-name", "source": ["invalid"]}
+        result = check_version_freshness.check_plugin(plugin)
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["error"], "invalid source path")
+
     def test_check_plugin_path_traversal(self):
         plugin = {"name": "test-plugin", "source": "../../../etc/passwd"}
         res = check_version_freshness.check_plugin(plugin)
@@ -246,6 +260,24 @@ class TestCheckVersionFreshness(unittest.TestCase):
 
         self.assertEqual(result["status"], "up-to-date")
         self.assertEqual(result["marketplace_ver"], "3.4.5")
+
+    @patch("check_version_freshness.urllib.request.urlopen")
+    def test_check_plugin_non_string_tag_name(self, mock_urlopen):
+        """API payload returns non-string tag_name."""
+        plugin = {"name": "regression-plugin", "source": "./plugins/regression-plugin"}
+
+        mock_response = MagicMock()
+        mock_response.read.return_value = json.dumps({"tag_name": 123}).encode()
+        mock_response.__enter__.return_value = mock_response
+        mock_urlopen.return_value = mock_response
+
+        with (
+            patch("check_version_freshness.open", create=True),
+            patch("json.load", return_value={"version": "3.4.5"}),
+        ):
+            result = check_version_freshness.check_plugin(plugin)
+
+        self.assertEqual(result["status"], "stale")
 
     def test_sanitize_log(self):
         """Test GitHub Actions log sanitization."""
