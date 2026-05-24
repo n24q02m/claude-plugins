@@ -59,16 +59,23 @@ def get_latest_tag_api(repo):
 
 def check_plugin(plugin):
     """Check a single plugin's version against its latest GitHub release."""
-    name = plugin["name"]
-    if not PLUGIN_NAME_PATTERN.fullmatch(name):
+    name = plugin.get("name")
+    if not isinstance(name, str) or not PLUGIN_NAME_PATTERN.fullmatch(name):
         return {
             "status": "error",
-            "name": name,
+            "name": name if isinstance(name, str) else "unknown",
             "marketplace_ver": "unknown",
             "error": "invalid name format",
         }
 
-    source = plugin["source"]
+    source = plugin.get("source")
+    if not isinstance(source, str):
+        return {
+            "status": "error",
+            "name": name,
+            "marketplace_ver": "unknown",
+            "error": "invalid source type",
+        }
     norm_source = os.path.normpath(source)
     if os.path.isabs(norm_source) or norm_source.startswith(".."):
         return {
