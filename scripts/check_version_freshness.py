@@ -175,9 +175,13 @@ def check_version_freshness():
                     f"::warning ::{sanitize_log(f'{name} is stale: marketplace={marketplace_ver}, latest={latest_tag}')}"
                 )
             elif status == "up-to-date":
-                print(f"{name}: up-to-date ({marketplace_ver})")
+                print(sanitize_log(f"{name}: up-to-date ({marketplace_ver})"))
             elif status == "no-release":
-                print(f"{name}: no release found (marketplace={marketplace_ver})")
+                print(
+                    sanitize_log(
+                        f"{name}: no release found (marketplace={marketplace_ver})"
+                    )
+                )
             elif status == "timeout":
                 print(
                     f"::error ::{sanitize_log(f'{name} timed out checking release (marketplace={marketplace_ver})')}"
