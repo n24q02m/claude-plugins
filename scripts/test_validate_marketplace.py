@@ -6,7 +6,7 @@ import os
 import json
 import shutil
 import tempfile
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import validate_marketplace
 
 
