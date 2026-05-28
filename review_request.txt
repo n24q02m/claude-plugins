@@ -1,0 +1,3 @@
+I have removed the unused imports `MagicMock` and `sys` from `plugins/better-notion-mcp/hooks/tests/test_check_credentials.py`.
+This was flagged as an F401 violation by ruff.
+Verified with `ruff check` and by running the tests.
