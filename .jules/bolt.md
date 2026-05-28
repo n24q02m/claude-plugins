@@ -1,0 +1,3 @@
+## 2025-05-14 - Optimized Unicode normalization in pre-commit hook
+**Learning:** Nested loops with repeated `str.replace` calls are O(N*M) where N is the number of replacements and M is the string length. Even for small M, the constant factor of creating new string objects in Python is significant. Using `set.isdisjoint` for early-exit and `str.translate` for bulk character removal provides a significant speedup for mostly-ASCII diff payloads.
+**Action:** Replace nested replacement loops with a combination of `isdisjoint` guards, single-pass `str.translate` for characters, and sorted-length replacements for multi-character strings.

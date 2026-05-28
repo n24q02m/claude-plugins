@@ -49,6 +49,7 @@ UNICODE_REPLACEMENTS: dict[str, list[str]] = {
     "\u00b7": ["*", "."],  # middle dot
     "\u2022": ["*", "-"],  # bullet
 }
+_TRACKED_UNI_SET = set(UNICODE_REPLACEMENTS.keys())
 
 # Vietnamese precomposed letters (NFC). Lowercase + uppercase.
 _VN_BASE = "àảãáạâấầẩẫậăắằẳẵặèẻẽéẹêếềểễệìỉĩíịòỏõóọôốồổỗộơớờởỡợùủũúụưứừửữựỳỷỹýỵđ"
@@ -273,17 +274,27 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
     old_skel = old
     new_skel = new
     hit_uni: list[str] = []
-    for uni, ascii_forms in UNICODE_REPLACEMENTS.items():
-        if uni in old and uni not in new:
-            # Optimization: Replace generator-based any() with explicit loop
-            # and early truthiness check to bypass unnecessary instantiation overhead.
-            for form in ascii_forms:
-                if form in new:
-                    hit_uni.append(uni)
-                    old_skel = old_skel.replace(uni, "")
-                    for f in ascii_forms:
-                        new_skel = new_skel.replace(f, "")
-                    break
+
+    # Optimization: Use a pre-calculated set for a fast membership check to
+    # skip the loop if no tracked Unicode characters are present in "old".
+    if not _TRACKED_UNI_SET.isdisjoint(old):
+        to_strip_new: set[str] = set()
+        for uni, ascii_forms in UNICODE_REPLACEMENTS.items():
+            if uni in old and uni not in new:
+                for form in ascii_forms:
+                    if form in new:
+                        hit_uni.append(uni)
+                        to_strip_new.update(ascii_forms)
+                        break
+        if hit_uni:
+            # Optimization: Use str.translate with a pre-built table for single-pass
+            # removal of all hit Unicode characters in old_skel.
+            old_skel = old.translate(str.maketrans("", "", "".join(hit_uni)))
+            # Optimization: Replace matched ASCII forms in descending order of length
+            # to ensure the longest matches are removed first (e.g. "---" before "--")
+            # and avoid redundant operations.
+            for f in sorted(to_strip_new, key=len, reverse=True):
+                new_skel = new_skel.replace(f, "")
     if hit_uni and _similar(old_skel.strip(), new_skel.strip()):
         for uni in hit_uni:
             violations.append((f"unicode-punct {uni!r}->ascii", old, new))
