@@ -1,4 +1,29 @@
+import json
 import os
+import sys
+from typing import Any, Dict
+
+
+def read_mcp_hook_input() -> Dict[str, Any]:
+    """Reads and validates MCP hook input from stdin."""
+    try:
+        # Use bounded read to prevent memory exhaustion DoS
+        data = json.loads(sys.stdin.read(1024 * 1024))
+        if isinstance(data, dict):
+            return data
+    except Exception:
+        pass
+
+    # Fail consistently for invalid input
+    print(
+        json.dumps(
+            {
+                "decision": "block",
+                "reason": "Invalid input: payload must be a JSON dictionary",
+            }
+        )
+    )
+    sys.exit(2)
 
 
 def is_relay_configured() -> bool:
