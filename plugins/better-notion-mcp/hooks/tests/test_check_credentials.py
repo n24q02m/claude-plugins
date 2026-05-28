@@ -3,7 +3,6 @@ from unittest.mock import patch, MagicMock
 import json
 import io
 import os
-import sys
 import importlib.util
 
 # Load the hook module
