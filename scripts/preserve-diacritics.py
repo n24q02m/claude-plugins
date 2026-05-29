@@ -128,11 +128,22 @@ def _is_skippable(path: str) -> bool:
     return False
 
 
-def _run_git(args: list[str]) -> str:
+def _run_git(args: list[str], pathspecs: list[str] | None = None) -> str:
     """Run git returning UTF-8 decoded stdout. Windows cp1252 default would
     mangle Vietnamese/Unicode — force UTF-8 explicitly."""
-    raw = subprocess.check_output(["git", *args])
-    return raw.decode("utf-8", errors="replace")
+    cmd = ["git"] + args
+    if pathspecs:
+        cmd.append("--")
+        cmd.extend(pathspecs)
+    # Use shell=False (default) and explicitly separate pathspecs with --
+    # to prevent option injection.
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        check=True,
+        text=False,
+    )
+    return result.stdout.decode("utf-8", errors="replace")
 
 
 def _staged_files() -> list[str]:
@@ -165,9 +176,8 @@ def _yield_diff_pairs(files: list[str]) -> Iterator[tuple[str, int, str, str]]:
                     "-U0",
                     "--no-color",
                     "--no-prefix",
-                    "--",
-                    *batch,
-                ]
+                ],
+                pathspecs=batch,
             )
         except subprocess.CalledProcessError:
             continue
