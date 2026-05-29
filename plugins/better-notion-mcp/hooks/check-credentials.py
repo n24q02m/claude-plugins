@@ -14,7 +14,7 @@ import sys
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
-from mcp_common import is_relay_configured
+from mcp_common import is_relay_configured, read_mcp_hook_input
 
 SERVER_NAME = "better-notion-mcp"
 CREDENTIAL_KEYS = ["NOTION_TOKEN"]
@@ -29,28 +29,7 @@ def _is_configured() -> bool:
 
 
 def main() -> None:
-    try:
-        data = json.loads(sys.stdin.read(1024 * 1024))
-        if not isinstance(data, dict):
-            print(
-                json.dumps(
-                    {
-                        "decision": "block",
-                        "reason": "Invalid input: payload must be a JSON dictionary",
-                    }
-                )
-            )
-            sys.exit(2)
-    except Exception:
-        print(
-            json.dumps(
-                {
-                    "decision": "block",
-                    "reason": "Invalid input: payload must be a JSON dictionary",
-                }
-            )
-        )
-        sys.exit(2)
+    data = read_mcp_hook_input()
 
     tool_name = data.get("tool_name")
     if not isinstance(tool_name, str):

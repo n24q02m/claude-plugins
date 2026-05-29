@@ -2,6 +2,8 @@ import unittest
 from unittest.mock import patch, MagicMock
 import os
 import sys
+import io
+import json
 
 # Add plugins directory to sys.path to import mcp_common
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -9,6 +11,23 @@ import mcp_common
 
 
 class TestMcpCommon(unittest.TestCase):
+
+    @patch("sys.stdin", io.StringIO(json.dumps({"tool_name": "test"})))
+    def test_read_mcp_hook_input_valid(self):
+        data = mcp_common.read_mcp_hook_input()
+        self.assertEqual(data, {"tool_name": "test"})
+
+    @patch("sys.stdin", io.StringIO("invalid json"))
+    def test_read_mcp_hook_input_invalid_json(self):
+        with self.assertRaises(SystemExit) as cm:
+            mcp_common.read_mcp_hook_input()
+        self.assertEqual(cm.exception.code, 2)
+
+    @patch("sys.stdin", io.StringIO('["not a dict"]'))
+    def test_read_mcp_hook_input_not_dict(self):
+        with self.assertRaises(SystemExit) as cm:
+            mcp_common.read_mcp_hook_input()
+        self.assertEqual(cm.exception.code, 2)
 
     @patch.dict(os.environ, {"LOCALAPPDATA": "/fake/localappdata"}, clear=True)
     @patch("os.path.exists")

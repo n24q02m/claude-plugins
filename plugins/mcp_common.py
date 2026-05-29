@@ -1,4 +1,33 @@
 import os
+import sys
+import json
+
+
+def read_mcp_hook_input() -> dict:
+    """Reads and parses a bounded JSON payload from sys.stdin safely."""
+    try:
+        data = json.loads(sys.stdin.read(1024 * 1024))
+        if not isinstance(data, dict):
+            print(
+                json.dumps(
+                    {
+                        "decision": "block",
+                        "reason": "Invalid input: payload must be a JSON dictionary",
+                    }
+                )
+            )
+            sys.exit(2)
+        return data
+    except Exception:
+        print(
+            json.dumps(
+                {
+                    "decision": "block",
+                    "reason": "Invalid input: payload must be a JSON dictionary",
+                }
+            )
+        )
+        sys.exit(2)
 
 
 def is_relay_configured() -> bool:
