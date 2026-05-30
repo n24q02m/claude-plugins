@@ -138,7 +138,7 @@ Single multi-user mode (relay form for App-Password providers + bundled Outlook 
 ```bash
 docker run -p 8080:8080 \
   -e PORT=8080 \
-  -e HOST=0.0.0.0 \ #Attach to loopback network interface in order to allow host-container communication
+  -e HOST=0.0.0.0 \ #Attach to all network interfaces in order to allow host-container communication
   -e PUBLIC_URL=https://your-domain.com \
   -e DCR_SERVER_SECRET=$(openssl rand -hex 32) \
   n24q02m/better-email-mcp:latest
