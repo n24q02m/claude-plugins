@@ -4,8 +4,105 @@
 import json
 import os
 import sys
+import concurrent.futures
 
 from utils import sanitize_log, PLUGIN_NAME_PATTERN
+
+
+def _validate_plugin(plugin):
+    """Validate a single plugin and return a list of errors."""
+    errors = []
+    name = plugin.get("name")
+    if name is None:
+        name = "Unknown"
+    elif not isinstance(name, str):
+        errors.append(f"Plugin {sanitize_log(str(name))}: name must be a string")
+        return errors
+
+    if not PLUGIN_NAME_PATTERN.fullmatch(name):
+        errors.append(
+            f"Plugin {name}: invalid name format (must match ^[a-zA-Z0-9-]+$)"
+        )
+        return errors
+
+    source = plugin.get("source")
+    if source is None:
+        errors.append(f"Plugin {name}: missing source")
+        return errors
+
+    if not isinstance(source, str):
+        errors.append(f"Plugin {name}: source must be a string")
+        return errors
+
+    # Security check: prevent path traversal
+    norm_source = os.path.normpath(source)
+    if os.path.isabs(norm_source) or norm_source.startswith(".."):
+        errors.append(f"Plugin {name}: invalid source path (path traversal blocked)")
+        return errors
+
+    plugin_dir = norm_source
+
+    # Check plugin.json exists and is valid
+    pjson = os.path.join(plugin_dir, ".claude-plugin", "plugin.json")
+    # Optimization: Use EAFP to avoid redundant os.path.exists stat syscalls before open
+    try:
+        with open(pjson, encoding="utf-8") as f:
+            pdata = json.load(f)
+        # Optimization: Use tuple literal over list literal for slight interpreter-level improvement
+        for req in ("name", "description", "mcpServers"):
+            if req not in pdata:
+                errors.append(f"{name}: plugin.json missing {req}")
+    except FileNotFoundError:
+        errors.append(f"{name}: missing {pjson}")
+        return errors
+    except Exception as e:
+        errors.append(f"{name}: Failed to parse {pjson}: {e}")
+
+    # Check gemini-extension.json has version (optional file)
+    gext = os.path.join(plugin_dir, "gemini-extension.json")
+    # Optimization: Use EAFP to avoid redundant os.path.exists stat syscalls before open
+    try:
+        with open(gext, encoding="utf-8") as f:
+            gdata = json.load(f)
+        if "version" not in gdata:
+            errors.append(f"{name}: gemini-extension.json missing version")
+    except FileNotFoundError:
+        pass
+    except Exception as e:
+        errors.append(f"{name}: Failed to parse {gext}: {e}")
+
+    # Check skills have frontmatter
+    skills_dir = os.path.join(plugin_dir, "skills")
+    # Optimization: Use EAFP to avoid redundant os.path.isdir stat syscalls before os.scandir
+    try:
+        with os.scandir(skills_dir) as entries:
+            for entry in entries:
+                if entry.is_dir():
+                    skill_name = entry.name
+                    skill_file = os.path.join(entry.path, "SKILL.md")
+                    # Optimization: Use EAFP to avoid redundant os.path.exists stat syscalls before open
+                    try:
+                        with open(skill_file, encoding="utf-8") as f:
+                            # Optimization: read only first 100 characters for partial check
+                            content = f.read(100)
+                        if not content.startswith("---"):
+                            errors.append(
+                                f"{name}/skills/{skill_name}: SKILL.md missing frontmatter"
+                            )
+                        if len(content.strip()) < 50:
+                            errors.append(
+                                f"{name}/skills/{skill_name}: SKILL.md too short"
+                            )
+                    except FileNotFoundError:
+                        pass
+                    except Exception as e:
+                        errors.append(
+                            f"{name}/skills/{skill_name}: Failed to read SKILL.md: {e}"
+                        )
+    except (FileNotFoundError, NotADirectoryError):
+        pass
+
+    return errors
 
 
 def validate_marketplace():
@@ -29,100 +126,14 @@ def validate_marketplace():
         if not plugins:
             errors.append("marketplace.json: No plugins defined")
 
-        for plugin in plugins:
-            name = plugin.get("name")
-            if name is None:
-                name = "Unknown"
-            elif not isinstance(name, str):
-                errors.append(
-                    f"Plugin {sanitize_log(str(name))}: name must be a string"
-                )
-                continue
-
-            if not PLUGIN_NAME_PATTERN.fullmatch(name):
-                errors.append(
-                    f"Plugin {name}: invalid name format (must match ^[a-zA-Z0-9-]+$)"
-                )
-                continue
-
-            source = plugin.get("source")
-            if source is None:
-                errors.append(f"Plugin {name}: missing source")
-                continue
-
-            if not isinstance(source, str):
-                errors.append(f"Plugin {name}: source must be a string")
-                continue
-
-            # Security check: prevent path traversal
-            norm_source = os.path.normpath(source)
-            if os.path.isabs(norm_source) or norm_source.startswith(".."):
-                errors.append(
-                    f"Plugin {name}: invalid source path (path traversal blocked)"
-                )
-                continue
-
-            plugin_dir = norm_source
-
-            # Check plugin.json exists and is valid
-            pjson = os.path.join(plugin_dir, ".claude-plugin", "plugin.json")
-            # Optimization: Use EAFP to avoid redundant os.path.exists stat syscalls before open
-            try:
-                with open(pjson, encoding="utf-8") as f:
-                    pdata = json.load(f)
-                # Optimization: Use tuple literal over list literal for slight interpreter-level improvement
-                for req in ("name", "description", "mcpServers"):
-                    if req not in pdata:
-                        errors.append(f"{name}: plugin.json missing {req}")
-            except FileNotFoundError:
-                errors.append(f"{name}: missing {pjson}")
-                continue
-            except Exception as e:
-                errors.append(f"{name}: Failed to parse {pjson}: {e}")
-
-            # Check gemini-extension.json has version (optional file)
-            gext = os.path.join(plugin_dir, "gemini-extension.json")
-            # Optimization: Use EAFP to avoid redundant os.path.exists stat syscalls before open
-            try:
-                with open(gext, encoding="utf-8") as f:
-                    gdata = json.load(f)
-                if "version" not in gdata:
-                    errors.append(f"{name}: gemini-extension.json missing version")
-            except FileNotFoundError:
-                pass
-            except Exception as e:
-                errors.append(f"{name}: Failed to parse {gext}: {e}")
-
-            # Check skills have frontmatter
-            skills_dir = os.path.join(plugin_dir, "skills")
-            # Optimization: Use EAFP to avoid redundant os.path.isdir stat syscalls before os.scandir
-            try:
-                with os.scandir(skills_dir) as entries:
-                    for entry in entries:
-                        if entry.is_dir():
-                            skill_name = entry.name
-                            skill_file = os.path.join(entry.path, "SKILL.md")
-                            # Optimization: Use EAFP to avoid redundant os.path.exists stat syscalls before open
-                            try:
-                                with open(skill_file, encoding="utf-8") as f:
-                                    # Optimization: read only first 100 characters for partial check
-                                    content = f.read(100)
-                                if not content.startswith("---"):
-                                    errors.append(
-                                        f"{name}/skills/{skill_name}: SKILL.md missing frontmatter"
-                                    )
-                                if len(content.strip()) < 50:
-                                    errors.append(
-                                        f"{name}/skills/{skill_name}: SKILL.md too short"
-                                    )
-                            except FileNotFoundError:
-                                pass
-                            except Exception as e:
-                                errors.append(
-                                    f"{name}/skills/{skill_name}: Failed to read SKILL.md: {e}"
-                                )
-            except (FileNotFoundError, NotADirectoryError):
-                pass
+        else:
+            # Optimization: Parallelize I/O-bound tasks using ThreadPoolExecutor
+            # to mitigate performance impact of repeated synchronous file reads
+            # and directory traversals.
+            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+                for plugin_errors in executor.map(_validate_plugin, plugins):
+                    if plugin_errors:
+                        errors.extend(plugin_errors)
 
     if errors:
         print("Validation errors:")
