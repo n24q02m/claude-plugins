@@ -121,7 +121,7 @@ For private deployments (single user or team), clone the repo and run via Docker
 git clone https://github.com/n24q02m/better-telegram-mcp.git
 cd better-telegram-mcp
 cp .env.example .env
-# edit .env: PUBLIC_URL=https://your-domain.com, MCP_DCR_SERVER_SECRET=<32+ random bytes>
+# edit .env: PUBLIC_URL=https://your-domain.com, DCR_SERVER_SECRET=<32+ random bytes>
 docker compose up -d
 ```
 
@@ -168,9 +168,9 @@ HTTP mode credentials are entered via the browser-based relay form, not env vars
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
 | `PUBLIC_URL` | Self-host | -- | Public URL of the server (enables multi-user) |
-| `MCP_DCR_SERVER_SECRET` | Self-host | -- | DCR server secret (32+ random bytes) |
-| `HOST` | Self-host | `127.0.0.1` | Bind address (`0.0.0.0` for Docker) |
-| `PORT` | Self-host | `8000` | HTTP port |
+| `DCR_SERVER_SECRET` | Self-host | -- | DCR server secret (32+ random bytes) |
+| `HOST` | Self-host | `0.0.0.0` | Bind address |
+| `PORT` | Self-host | `8080` | HTTP port |
 
 The bundled Telegram dev `api_id` (`37984984`) and `api_hash` (`2f5f4c76c4de7c07302380c788390100`) are public dev credentials baked into the source.
 

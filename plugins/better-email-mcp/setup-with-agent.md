@@ -133,12 +133,15 @@ Run your own multi-user instance:
 
 ```bash
 docker run -p 8080:8080 \
+  -e PORT=8080 \
+  -e HOST=0.0.0.0 \
   -e PUBLIC_URL=https://your-domain.com \
-  -e DCR_SERVER_SECRET=$(openssl rand -hex 32) \
   n24q02m/better-email-mcp:latest
 ```
 
 Optional overrides:
+- `CREDENTIAL_SECRET` — per-user credential store encryption key. Optional: auto-generated to a 0600 file if unset; set it (e.g. `$(openssl rand -hex 32)`) to keep stores decryptable across restarts.
+- `MCP_AUTH_DISABLE=1` — skip Bearer JWT verification (for deploys behind an external auth gateway)
 - `OUTLOOK_CLIENT_ID` — override the bundled public Azure client (rarely needed)
 - `OUTLOOK_EMAIL` — workaround for Microsoft device-code responses missing the email field
 
@@ -168,8 +171,10 @@ Share this password out-of-band (Signal/email/SMS) with anyone you invite to use
 | `EMAIL_IMAP_HOST` | No (custom only) | -- | Custom IMAP hostname when `EMAIL_PROVIDER=custom`. |
 | `EMAIL_CREDENTIALS` | Alternative (multi-account) | -- | Legacy `user@gmail.com:app-password` format. Multi-account: comma-separated. Custom IMAP: `user@custom.com:pass:imap.custom.com`. |
 | `PUBLIC_URL` | Yes (http) | -- | Server's public URL for OAuth redirects (http mode only). |
-| `DCR_SERVER_SECRET` | Yes (http) | -- | HMAC secret for stateless client registration (http mode only). |
-| `PORT` | No | `8080` | Server port (http mode only). |
+| `CREDENTIAL_SECRET` | No (http) | auto-generated | Per-user credential store encryption key; auto-generated to a 0600 file if unset. Set to keep stores decryptable across restarts. |
+| `MCP_AUTH_DISABLE` | No (http) | -- | Set to `1` to skip Bearer JWT verification (for deploys behind an external auth gateway). |
+| `PORT` | No | `0` (OS-assigned) | Server port (http mode only). |
+| `HOST` | No | -- | Bind address (http mode); set `0.0.0.0` to expose the container. |
 | `OUTLOOK_CLIENT_ID` | No | `d56f8c71-9f7c-43f4-9934-be29cb6e77b0` (bundled public client) | Custom Azure AD public client for self-hosted Outlook OAuth2. |
 | `OUTLOOK_EMAIL` | No | -- | Workaround when Microsoft device-code response omits the email field — sets token persistence key. |
 

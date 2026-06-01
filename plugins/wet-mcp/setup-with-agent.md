@@ -115,7 +115,7 @@ HTTP mode runs as a persistent multi-user server with browser-based credential s
 
 ```bash
 docker run -d --name wet-mcp-http \
-  -p 8084:8084 \
+  -p 8080:8080 \
   -v wet-data:/data \
   -e MCP_TRANSPORT=http \
   -e PUBLIC_URL=https://wet.example.com \
@@ -215,7 +215,7 @@ All environment variables are **optional**. The server works in local mode (ONNX
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `SYNC_ENABLED` | No | `false` | Enable Google Drive sync |
+| `SYNC_ENABLED` | No | `true` | Enable Google Drive sync |
 | `GOOGLE_DRIVE_CLIENT_ID` | No | bundled public client | OAuth client ID. HTTP mode auto-uses bundled public Desktop client |
 | `GOOGLE_DRIVE_CLIENT_SECRET` | No | bundled public secret | OAuth client secret (Desktop public client per Google docs) |
 | `SYNC_FOLDER` | No | `wet-mcp` | Google Drive folder name |

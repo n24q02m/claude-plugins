@@ -160,7 +160,6 @@ Host your own multi-user OAuth server. Always-OAuth, single multi-user mode (per
 |:---------|:------------|
 | `TRANSPORT_MODE=http` | Selects HTTP transport. |
 | `PUBLIC_URL` | Public URL of your server (e.g. `https://your-domain.com`). Used for OAuth redirects. |
-| `DCR_SERVER_SECRET` | HMAC secret for stateless Dynamic Client Registration. Generate via `openssl rand -hex 32`. |
 | `NOTION_OAUTH_CLIENT_ID` | Your Notion Public Integration client ID. |
 | `NOTION_OAUTH_CLIENT_SECRET` | Your Notion Public Integration client secret. |
 
@@ -183,10 +182,11 @@ Share this password out-of-band (Signal/email/SMS) with anyone you invite to use
 ```bash
 docker run -p 8080:8080 \
   -e TRANSPORT_MODE=http \
+  -e PORT=8080 \
+  -e HOST=0.0.0.0 \
   -e PUBLIC_URL=https://your-domain.com \
   -e NOTION_OAUTH_CLIENT_ID=your-client-id \
   -e NOTION_OAUTH_CLIENT_SECRET=your-client-secret \
-  -e DCR_SERVER_SECRET=$(openssl rand -hex 32) \
   n24q02m/better-notion-mcp:latest
 ```
 
@@ -224,8 +224,9 @@ No manual token setup. Users authorize via Notion's OAuth flow in the browser.
 | `PUBLIC_URL` | Yes (http) | -- | Server's public URL for OAuth redirects. |
 | `NOTION_OAUTH_CLIENT_ID` | Yes (http) | -- | Notion Public Integration client ID. |
 | `NOTION_OAUTH_CLIENT_SECRET` | Yes (http) | -- | Notion Public Integration client secret. |
-| `DCR_SERVER_SECRET` | Yes (http) | -- | HMAC secret for stateless Dynamic Client Registration. |
-| `PORT` | No | `8080` | Server port. |
+| `MCP_AUTH_DISABLE` | No (http) | -- | Set to `1` to skip Bearer JWT verification (for deploys behind an external auth gateway). |
+| `PORT` | No | `0` (OS-assigned) | Server port. |
+| `HOST` | No | -- | Bind address (http mode); set `0.0.0.0` to expose the container. |
 
 ## Troubleshooting
 

@@ -137,16 +137,17 @@ Single multi-user mode (relay form for App-Password providers + bundled Outlook 
 
 ```bash
 # HOST=0.0.0.0 binds all interfaces so the host can reach the container;
-# PORT pins the listen port (without it the server picks a random one).
+# PORT pins the listen port (without it the server picks a random OS-assigned one).
 docker run -p 8080:8080 \
   -e PORT=8080 \
   -e HOST=0.0.0.0 \
   -e PUBLIC_URL=https://your-domain.com \
-  -e DCR_SERVER_SECRET=$(openssl rand -hex 32) \
   n24q02m/better-email-mcp:latest
 ```
 
 Optional environment overrides:
+- `CREDENTIAL_SECRET` — encryption key for the per-user credential store. Optional: if unset, a 32-byte secret is auto-generated and persisted to a 0600 file. Set it (e.g. `$(openssl rand -hex 32)`) to keep per-user stores decryptable across container restarts.
+- `MCP_AUTH_DISABLE=1` — skip Bearer JWT verification (only for deploys behind an external auth gateway).
 - `OUTLOOK_CLIENT_ID` — override the bundled Azure public client (rarely needed; the bundled `d56f8c71-9f7c-43f4-9934-be29cb6e77b0` works out of the box)
 - `OUTLOOK_EMAIL` — workaround for Microsoft device-code responses missing the email field; sets the token persistence key (`tokens/<email>.json`)
 
@@ -223,8 +224,10 @@ EMAIL_IMAP_HOST=imap.custom.com
 | `EMAIL_IMAP_HOST` | No (custom only) | -- | Custom IMAP hostname when `EMAIL_PROVIDER=custom`. |
 | `EMAIL_CREDENTIALS` | Alternative (multi-account) | -- | Legacy format `user@gmail.com:app-password` (comma-separated for multi-account; `user@custom.com:pass:imap.custom.com` for custom IMAP). |
 | `PUBLIC_URL` | Yes (http) | -- | Server's public URL for OAuth redirects. |
-| `DCR_SERVER_SECRET` | Yes (http) | -- | HMAC secret for stateless Dynamic Client Registration. |
-| `PORT` | No | `8080` | Server port (http mode). |
+| `CREDENTIAL_SECRET` | No (http) | auto-generated | Encryption key for the per-user credential store. If unset, a 32-byte secret is auto-generated and persisted to a 0600 file; set it to keep stores decryptable across restarts. |
+| `MCP_AUTH_DISABLE` | No (http) | -- | Set to `1` to skip Bearer JWT verification (for deploys behind an external auth gateway). |
+| `PORT` | No | `0` (OS-assigned) | Server port (http mode). |
+| `HOST` | No | -- | Bind address (http mode); set `0.0.0.0` to expose the container. |
 | `OUTLOOK_CLIENT_ID` | No | `d56f8c71-9f7c-43f4-9934-be29cb6e77b0` (bundled public client) | Override the bundled Azure AD public client for self-hosted Outlook OAuth2. |
 | `OUTLOOK_EMAIL` | No | -- | Workaround when Microsoft device-code response omits the email field — sets token persistence key. |
 

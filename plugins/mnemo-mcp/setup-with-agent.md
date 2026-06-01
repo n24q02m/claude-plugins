@@ -163,11 +163,11 @@ All environment variables are **optional**. The server works in local mode (ONNX
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `SYNC_ENABLED` | No | `true` | Enable Google Drive sync |
-| `SYNC_PROVIDER` | No | `drive` | rclone provider type (drive, dropbox, s3, etc.) |
-| `SYNC_REMOTE` | No | `gdrive` | rclone remote name |
-| `SYNC_FOLDER` | No | `mnemo-mcp` | Remote folder name |
+| `SYNC_ENABLED` | No | `true` | Enable sync (native Google Drive API via httpx, or S3) |
+| `SYNC_FOLDER` | No | `mnemo-mcp` | Google Drive folder name |
 | `SYNC_INTERVAL` | No | `300` | Auto-sync interval in seconds (0=manual) |
+| `SYNC_S3_BUCKET` | No | `` | S3-compatible bucket (R2/B2/MinIO); set to use S3 instead of Google Drive |
+| `SYNC_S3_ENDPOINT` | No | `` | Custom S3 endpoint URL (for R2/B2/MinIO) |
 
 ### HTTP Mode (Self-Hosting Only)
 
