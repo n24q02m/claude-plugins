@@ -131,12 +131,14 @@ Use the n24q02m-hosted instance:
 
 On first call the server initiates the **OAuth flow**. Outlook/Hotmail/Live accounts get a Microsoft device-code link (powered by the bundled public Outlook OAuth client `d56f8c71-9f7c-43f4-9934-be29cb6e77b0` — Thunderbird-pattern public client per Google/Microsoft installed-app convention; no user-side Azure app registration needed). Gmail / Yahoo / iCloud / custom IMAP accounts use the relay paste form.
 
-### 3.2. Self-host with docker-compose
+### 3.2. Self-host with docker
 
 Single multi-user mode (relay form for App-Password providers + bundled Outlook OAuth):
 
 ```bash
 docker run -p 8080:8080 \
+  -e PORT=8080 \
+  -e HOST=0.0.0.0 \ #Attach to all network interfaces in order to allow host-container communication
   -e PUBLIC_URL=https://your-domain.com \
   -e DCR_SERVER_SECRET=$(openssl rand -hex 32) \
   n24q02m/better-email-mcp:latest
