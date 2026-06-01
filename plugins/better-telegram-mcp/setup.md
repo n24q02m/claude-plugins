@@ -145,7 +145,7 @@ For private deployments (single user or team):
    git clone https://github.com/n24q02m/better-telegram-mcp.git
    cd better-telegram-mcp
    cp .env.example .env
-   # edit .env: set PUBLIC_URL=https://your-domain.com and DCR_SERVER_SECRET (random 32+ bytes)
+   # edit .env: set PUBLIC_URL=https://your-domain.com and MCP_DCR_SERVER_SECRET (random 32+ bytes; legacy DCR_SERVER_SECRET still works)
    ```
 
 2. Bundled Telegram dev credentials (`api_id=37984984`, `api_hash=2f5f4c76c4de7c07302380c788390100`) are baked into the image -- you do **not** need to register at my.telegram.org. Each user authenticates through the relay form by entering their own phone number and OTP code.
@@ -198,7 +198,7 @@ HTTP mode credentials are entered via the browser-based relay form, not env vars
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
 | `PUBLIC_URL` | Self-host | -- | Public URL of the server (enables multi-user) |
-| `DCR_SERVER_SECRET` | Self-host | -- | DCR server secret (32+ random bytes) |
+| `MCP_DCR_SERVER_SECRET` | Self-host | -- | DCR server secret (32+ random bytes); legacy `DCR_SERVER_SECRET` still accepted |
 | `HOST` | Self-host | `0.0.0.0` | Bind address |
 | `PORT` | Self-host | `8080` | HTTP port |
 
