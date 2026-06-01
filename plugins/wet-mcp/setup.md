@@ -120,7 +120,7 @@ HTTP mode runs as a persistent multi-user server with browser-based credential s
 1. Run the server in HTTP mode:
    ```bash
    docker run -d --name wet-mcp-http \
-     -p 8084:8084 \
+     -p 8080:8080 \
      -v wet-data:/data \
      -e MCP_TRANSPORT=http \
      -e PUBLIC_URL=https://wet.example.com \
@@ -215,7 +215,7 @@ All environment variables are **optional**. See [docs/setup-with-agent.md](setup
 | `SERPER_API_KEY` | -- | Serper search API key (premium search) |
 | `GITHUB_TOKEN` | auto-detect | GitHub token for docs discovery |
 | `WET_AUTO_SEARXNG` | `true` | Auto-start embedded SearXNG |
-| `SYNC_ENABLED` | `false` | Enable Google Drive sync |
+| `SYNC_ENABLED` | `true` | Enable Google Drive sync |
 | `LOG_LEVEL` | `INFO` | Logging level |
 
 ### Provider Priority

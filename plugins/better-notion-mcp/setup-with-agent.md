@@ -159,8 +159,9 @@ Share this password out-of-band (Signal/email/SMS) with anyone you invite to use
 | `PUBLIC_URL` | Yes (http) | -- | Server's public URL for OAuth redirects. |
 | `NOTION_OAUTH_CLIENT_ID` | Yes (http) | -- | Notion Public Integration client ID. |
 | `NOTION_OAUTH_CLIENT_SECRET` | Yes (http) | -- | Notion Public Integration client secret. |
-| `DCR_SERVER_SECRET` | Yes (http) | -- | HMAC secret for stateless client registration. |
-| `PORT` | No | `8080` | Server port (http mode only). |
+| `MCP_AUTH_DISABLE` | No (http) | -- | Set to `1` to skip Bearer JWT verification (for deploys behind an external auth gateway). |
+| `PORT` | No | `0` (OS-assigned) | Server port (http mode only). |
+| `HOST` | No | -- | Bind address (http mode); set `0.0.0.0` to expose the container. |
 
 ## Authentication
 

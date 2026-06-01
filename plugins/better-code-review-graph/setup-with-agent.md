@@ -72,8 +72,8 @@ All environment variables are **optional**. The server works with local ONNX emb
 |:---------|:---------|:--------|:------------|
 | `TRANSPORT_MODE` | No | `stdio` | Set to `http` to enable HTTP transport (multi-user). |
 | `PUBLIC_URL` | Yes (http) | -- | Server's public URL for relay form. |
-| `DCR_SERVER_SECRET` | Yes (http) | -- | HMAC secret for stateless Dynamic Client Registration. |
-| `PORT` | No | `8080` | Server port (http mode only). |
+| `MCP_DCR_SERVER_SECRET` | Yes (http) | -- | HMAC secret for stateless Dynamic Client Registration. |
+| `MCP_PORT` | No | `8080` | Server port (http mode only). |
 
 ### General
 

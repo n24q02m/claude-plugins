@@ -75,8 +75,8 @@ export GEMINI_API_KEY="AIza..."
 | `EMBEDDING_MODEL` | No | auto-detect | Cloud embedding model name |
 | `TRANSPORT_MODE` | No | `stdio` | Set to `http` to enable HTTP transport (multi-user). |
 | `PUBLIC_URL` | Yes (http) | -- | Server's public URL for relay form. |
-| `DCR_SERVER_SECRET` | Yes (http) | -- | HMAC secret for stateless Dynamic Client Registration. |
-| `PORT` | No | `8080` | Server port (http mode only). |
+| `MCP_DCR_SERVER_SECRET` | Yes (http) | -- | HMAC secret for stateless Dynamic Client Registration. |
+| `MCP_PORT` | No | `8080` | Server port (http mode only). |
 | `LOG_LEVEL` | No | `INFO` | Logging level |
 
 ### Embedding Provider Priority

@@ -199,7 +199,7 @@ To sync memories across machines:
 - **Stdio mode**: Set `SYNC_ENABLED=true` and provide a Google Drive OAuth token at `~/.mnemo-mcp/tokens/google_drive.json` (chmod 600). Manual token creation required.
 - **HTTP mode**: Set `SYNC_ENABLED=true` on the server, use the relay form's "Connect Google Drive" button -- the bundled Desktop OAuth client completes the flow in your browser.
 
-For other rclone providers (Dropbox, S3), set `SYNC_PROVIDER=dropbox` etc. in env vars.
+For S3-compatible storage (R2 / B2 / MinIO) instead of Google Drive, set `SYNC_S3_BUCKET` (plus `SYNC_S3_ENDPOINT` / `SYNC_S3_ACCESS_KEY_ID` / `SYNC_S3_SECRET_ACCESS_KEY` as needed) -- the backend auto-resolves to S3 when a bucket is set. Sync is native (Google Drive API via httpx, or S3); no rclone is involved.
 
 ## Environment Variable Reference
 
@@ -222,7 +222,6 @@ All environment variables are **optional** -- mnemo works with zero env vars in 
 | `ARCHIVE_AFTER_DAYS` | `90` | Soft-archive threshold via importance × recency policy (Phase 1) |
 | `ARCHIVE_TRIGGER_EVERY` | `100` | Auto-archive sweep on every N captures (Phase 1) |
 | `CAPTURE_AUTO_ENABLED` | `false` | Opt-in PostToolUse hook for auto-capture on Write/Edit (Phase 1 plugin trinity) |
-| `CAPTURE_CONTEXT_TYPE_DEFAULT` | `conversation` | Default context_type for capture action (Phase 1) |
 | `RERANK_ENABLED` | `true` | Toggle cross-encoder rerank chain (qwen3 → Jina → Cohere) |
 | `SYNC_ENABLED` | `true` | Enable Google Drive sync |
 | `LOG_LEVEL` | `INFO` | Logging level |
