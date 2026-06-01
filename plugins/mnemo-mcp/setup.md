@@ -120,8 +120,8 @@ Host your own multi-user mnemo server. Always-multi-user (per-JWT-sub credential
 |:---------|:------------|
 | `TRANSPORT_MODE=http` | Selects HTTP transport. |
 | `PUBLIC_URL` | Public URL of your server (e.g. `https://your-domain.com`). Used for OAuth redirects and the `/authorize` setup page. |
-| `DCR_SERVER_SECRET` | HMAC secret for stateless Dynamic Client Registration. Generate via `openssl rand -hex 32`. |
-| `PORT` | (optional, default `8080`) Server port. |
+| `MCP_DCR_SERVER_SECRET` | HMAC secret for stateless Dynamic Client Registration. Generate via `openssl rand -hex 32`. |
+| `MCP_PORT` | (optional, default `8080`) Server port. |
 
 ### Optional Env (per-deployment defaults)
 
@@ -150,7 +150,7 @@ Share this password out-of-band (Signal/email/SMS) with anyone you invite to use
 docker run -p 8080:8080 \
   -e TRANSPORT_MODE=http \
   -e PUBLIC_URL=https://your-domain.com \
-  -e DCR_SERVER_SECRET=$(openssl rand -hex 32) \
+  -e MCP_DCR_SERVER_SECRET=$(openssl rand -hex 32) \
   -v mnemo-data:/data \
   n24q02m/mnemo-mcp:latest
 ```
@@ -190,7 +190,7 @@ export GEMINI_API_KEY="AIza..."
 
 ### Option B: Relay Form (HTTP Mode)
 
-Use HTTP mode (Method 3 self-host) and complete the form in the browser. No env vars needed beyond the HTTP server's required env (`TRANSPORT_MODE`, `PUBLIC_URL`, `DCR_SERVER_SECRET`).
+Use HTTP mode (Method 3 self-host) and complete the form in the browser. No env vars needed beyond the HTTP server's required env (`TRANSPORT_MODE`, `PUBLIC_URL`, `MCP_DCR_SERVER_SECRET`).
 
 ### Sync Setup (Optional)
 
@@ -217,14 +217,14 @@ All environment variables are **optional** -- mnemo works with zero env vars in 
 | `COHERE_API_KEY` | -- | Cohere: embedding + reranking |
 | `LLM_MODELS` | -- | LLM model overrides, format `provider=model,...` (Phase 1) |
 | `DB_PATH` | `~/.mnemo-mcp/memories.db` | Database location |
-| `DEDUP_THRESHOLD` | `0.92` | Embedding similarity threshold for capture dedup short-circuit (Phase 1) |
-| `RECENCY_HALF_LIFE_DAYS` | `30` | Temporal decay half-life for retrieval scoring (Phase 1 RRF + rerank) |
+| `DEDUP_THRESHOLD` | `0.9` | Embedding similarity threshold for capture dedup short-circuit (Phase 1) |
+| `RECENCY_HALF_LIFE_DAYS` | `7` | Temporal decay half-life for retrieval scoring (Phase 1 RRF + rerank) |
 | `ARCHIVE_AFTER_DAYS` | `90` | Soft-archive threshold via importance × recency policy (Phase 1) |
 | `ARCHIVE_TRIGGER_EVERY` | `100` | Auto-archive sweep on every N captures (Phase 1) |
 | `CAPTURE_AUTO_ENABLED` | `false` | Opt-in PostToolUse hook for auto-capture on Write/Edit (Phase 1 plugin trinity) |
 | `CAPTURE_CONTEXT_TYPE_DEFAULT` | `conversation` | Default context_type for capture action (Phase 1) |
 | `RERANK_ENABLED` | `true` | Toggle cross-encoder rerank chain (qwen3 → Jina → Cohere) |
-| `SYNC_ENABLED` | `false` | Enable Google Drive sync |
+| `SYNC_ENABLED` | `true` | Enable Google Drive sync |
 | `LOG_LEVEL` | `INFO` | Logging level |
 
 ### Provider Priority

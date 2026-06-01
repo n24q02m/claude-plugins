@@ -163,7 +163,7 @@ All environment variables are **optional**. The server works in local mode (ONNX
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `SYNC_ENABLED` | No | `false` | Enable rclone sync |
+| `SYNC_ENABLED` | No | `true` | Enable Google Drive sync |
 | `SYNC_PROVIDER` | No | `drive` | rclone provider type (drive, dropbox, s3, etc.) |
 | `SYNC_REMOTE` | No | `gdrive` | rclone remote name |
 | `SYNC_FOLDER` | No | `mnemo-mcp` | Remote folder name |
@@ -175,8 +175,8 @@ All environment variables are **optional**. The server works in local mode (ONNX
 |:---------|:---------|:--------|:------------|
 | `TRANSPORT_MODE` | No (`stdio`) | `stdio` | Set to `http` to enable HTTP transport (multi-user, bundled GDrive OAuth). |
 | `PUBLIC_URL` | Yes (http) | -- | Server's public URL for OAuth redirects and `/authorize` setup page. |
-| `DCR_SERVER_SECRET` | Yes (http) | -- | HMAC secret for stateless Dynamic Client Registration. Generate via `openssl rand -hex 32`. |
-| `PORT` | No | `8080` | Server port (http mode only). |
+| `MCP_DCR_SERVER_SECRET` | Yes (http) | -- | HMAC secret for stateless Dynamic Client Registration. Generate via `openssl rand -hex 32`. |
+| `MCP_PORT` | No | `8080` | Server port (http mode only). |
 
 ### General
 
@@ -202,7 +202,7 @@ Quick start:
 docker run -p 8080:8080 \
   -e TRANSPORT_MODE=http \
   -e PUBLIC_URL=https://your-domain.com \
-  -e DCR_SERVER_SECRET=$(openssl rand -hex 32) \
+  -e MCP_DCR_SERVER_SECRET=$(openssl rand -hex 32) \
   -v mnemo-data:/data \
   n24q02m/mnemo-mcp:latest
 ```
