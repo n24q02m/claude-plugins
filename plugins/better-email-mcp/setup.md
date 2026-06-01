@@ -136,9 +136,11 @@ On first call the server initiates the **OAuth flow**. Outlook/Hotmail/Live acco
 Single multi-user mode (relay form for App-Password providers + bundled Outlook OAuth):
 
 ```bash
+# HOST=0.0.0.0 binds all interfaces so the host can reach the container;
+# PORT pins the listen port (without it the server picks a random one).
 docker run -p 8080:8080 \
   -e PORT=8080 \
-  -e HOST=0.0.0.0 \ #Attach to all network interfaces in order to allow host-container communication
+  -e HOST=0.0.0.0 \
   -e PUBLIC_URL=https://your-domain.com \
   -e DCR_SERVER_SECRET=$(openssl rand -hex 32) \
   n24q02m/better-email-mcp:latest
