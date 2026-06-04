@@ -299,28 +299,29 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
             violations.append((f"unicode-punct {uni!r}->ascii", old, new))
 
     # Rule 2: Vietnamese diacritics stripped.
-    # Performance: Skip iterating over strings if no diacritics exist
-    if not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(old):
-        old_diacritics = [c for c in old if c in VIETNAMESE_DIACRITIC_CHARS]
-    else:
-        old_diacritics = []
+    # Performance: Use generator expression with sum() to avoid unnecessary list allocation.
+    # Expected impact: O(1) space complexity instead of O(N) for intermediate lists.
+    # We keep the isdisjoint check as an early exit to avoid iterating if no diacritics are present.
+    old_vn_count = (
+        sum(1 for c in old if c in VIETNAMESE_DIACRITIC_CHARS)
+        if not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(old)
+        else 0
+    )
 
-    if old_diacritics:
-        if not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(new):
-            new_diacritics = [c for c in new if c in VIETNAMESE_DIACRITIC_CHARS]
-        else:
-            new_diacritics = []
+    if old_vn_count > 0:
+        new_vn_count = (
+            sum(1 for c in new if c in VIETNAMESE_DIACRITIC_CHARS)
+            if not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(new)
+            else 0
+        )
 
-        if len(old_diacritics) > len(new_diacritics):
+        if old_vn_count > new_vn_count:
             # Confirm via NFD-strip round-trip: does stripping old give us new?
             old_stripped = _strip_diacritics(old)
             new_lower = new.replace("đ", "d").replace("Đ", "D")
             if old_stripped.strip().lower() == new_lower.strip().lower():
                 violations.append(("vietnamese-diacritic-strip", old, new))
-            elif (
-                _similar(old_stripped, new_lower)
-                and len(old_diacritics) - len(new_diacritics) >= 2
-            ):
+            elif _similar(old_stripped, new_lower) and old_vn_count - new_vn_count >= 2:
                 # Many diacritics vanished but content otherwise similar.
                 violations.append(("vietnamese-diacritic-strip", old, new))
 
