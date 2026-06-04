@@ -16,7 +16,6 @@ sys.path.append(
 )
 from mcp_common import is_relay_configured
 
-SERVER_NAME = "better-notion-mcp"
 CREDENTIAL_KEYS = ["NOTION_TOKEN"]
 EXEMPT_SUFFIXES = ("__setup", "__help", "__config")
 
