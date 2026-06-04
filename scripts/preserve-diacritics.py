@@ -50,6 +50,10 @@ UNICODE_REPLACEMENTS: dict[str, list[str]] = {
     "\u2022": ["*", "-"],  # bullet
 }
 
+# Optimization: Pre-compute the set of tracked Unicode punctuation marks
+# for O(1) membership testing and fast-path disjoint checks.
+_UNICODE_PUNCT_CHARS = frozenset(UNICODE_REPLACEMENTS.keys())
+
 # Vietnamese precomposed letters (NFC). Lowercase + uppercase.
 _VN_BASE = "àảãáạâấầẩẫậăắằẳẵặèẻẽéẹêếềểễệìỉĩíịòỏõóọôốồổỗộơớờởỡợùủũúụưứừửữựỳỷỹýỵđ"
 VIETNAMESE_DIACRITIC_CHARS: set[str] = set(_VN_BASE + _VN_BASE.upper())
@@ -283,17 +287,22 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
     old_skel = old
     new_skel = new
     hit_uni: list[str] = []
-    for uni, ascii_forms in UNICODE_REPLACEMENTS.items():
-        if uni in old and uni not in new:
-            # Optimization: Replace generator-based any() with explicit loop
-            # and early truthiness check to bypass unnecessary instantiation overhead.
-            for form in ascii_forms:
-                if form in new:
-                    hit_uni.append(uni)
-                    old_skel = old_skel.replace(uni, "")
-                    for f in ascii_forms:
-                        new_skel = new_skel.replace(f, "")
-                    break
+
+    # Optimization: Skip expensive scanning if no tracked Unicode punctuation exists in 'old'.
+    # This allows early exit (O(N) string scan vs O(N*M) scanning) for most
+    # Vietnamese/Unicode-heavy lines that don't use these specific punctuation marks.
+    if not _UNICODE_PUNCT_CHARS.isdisjoint(old):
+        for uni, ascii_forms in UNICODE_REPLACEMENTS.items():
+            if uni in old and uni not in new:
+                # Optimization: Replace generator-based any() with explicit loop
+                # and early truthiness check to bypass unnecessary instantiation overhead.
+                for form in ascii_forms:
+                    if form in new:
+                        hit_uni.append(uni)
+                        old_skel = old_skel.replace(uni, "")
+                        for f in ascii_forms:
+                            new_skel = new_skel.replace(f, "")
+                        break
     if hit_uni and _similar(old_skel.strip(), new_skel.strip()):
         for uni in hit_uni:
             violations.append((f"unicode-punct {uni!r}->ascii", old, new))
