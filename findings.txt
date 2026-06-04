@@ -1,0 +1,3 @@
+1. Centralized utility tests: When code is extracted into a shared utility module (like utils.py), it is best practice to also centralize its tests in a corresponding test file (like test_utils.py) and remove redundant copies from other test files to improve maintainability.
+2. GitHub Actions log sanitization: Standard characters to sanitize in GitHub Actions log commands are %, \r, and \n, replacing them with %25, %0D, and %0A respectively.
+3. Python Regex matching: The re.match() function matches from the beginning of the string, and the $ anchor in a regex can match at the very end of the string OR before a newline at the end of the string. To strictly avoid newlines at the end, use re.fullmatch() or ensure the newline is handled.
