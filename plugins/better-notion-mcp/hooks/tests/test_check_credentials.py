@@ -18,12 +18,14 @@ class TestCheckCredentials(unittest.TestCase):
 
     @patch.dict(os.environ, {"NOTION_TOKEN": "secret_123"}, clear=True)
     def test_is_configured_token(self):
+        check_credentials.is_relay_configured.cache_clear()
         self.assertTrue(check_credentials._is_configured())
 
     @patch.dict(os.environ, {}, clear=True)
     @patch("os.path.exists")
     @patch("os.path.expanduser")
     def test_is_configured_file(self, mock_expanduser, mock_exists):
+        check_credentials.is_relay_configured.cache_clear()
         mock_expanduser.return_value = "/home/user"
         # Mocking exists to return True only for the home config path
         mock_exists.side_effect = lambda p: p == "/home/user/.config/mcp/config.enc"
@@ -32,12 +34,14 @@ class TestCheckCredentials(unittest.TestCase):
     @patch.dict(os.environ, {}, clear=True)
     @patch("os.path.exists")
     def test_not_configured(self, mock_exists):
+        check_credentials.is_relay_configured.cache_clear()
         mock_exists.return_value = False
         self.assertFalse(check_credentials._is_configured())
 
     @patch("sys.stdin", io.StringIO(json.dumps({"tool_name": "any_tool__setup"})))
     @patch("sys.exit", side_effect=SystemExit)
     def test_main_exempt_tool(self, mock_exit):
+        check_credentials.is_relay_configured.cache_clear()
         with self.assertRaises(SystemExit):
             check_credentials.main()
         mock_exit.assert_called_with(0)
@@ -48,6 +52,7 @@ class TestCheckCredentials(unittest.TestCase):
     @patch("sys.exit", side_effect=SystemExit)
     @patch("sys.stdout", new_callable=io.StringIO)
     def test_main_not_configured_hint(self, mock_stdout, mock_exit, mock_exists):
+        check_credentials.is_relay_configured.cache_clear()
         mock_exists.return_value = False
         with self.assertRaises(SystemExit):
             check_credentials.main()
@@ -62,6 +67,7 @@ class TestCheckCredentials(unittest.TestCase):
     @patch("sys.stdin", io.StringIO(json.dumps({"tool_name": "list_pages"})))
     @patch("sys.exit", side_effect=SystemExit)
     def test_main_configured_allowed(self, mock_exit):
+        check_credentials.is_relay_configured.cache_clear()
         with self.assertRaises(SystemExit):
             check_credentials.main()
         mock_exit.assert_called_with(0)
@@ -70,6 +76,7 @@ class TestCheckCredentials(unittest.TestCase):
     @patch("sys.exit", side_effect=SystemExit(2))
     @patch("sys.stdout", new_callable=io.StringIO)
     def test_main_invalid_json(self, mock_stdout, mock_exit):
+        check_credentials.is_relay_configured.cache_clear()
         with self.assertRaises(SystemExit) as cm:
             check_credentials.main()
 
@@ -85,6 +92,7 @@ class TestCheckCredentials(unittest.TestCase):
     @patch("sys.exit", side_effect=SystemExit(2))
     @patch("sys.stdout", new_callable=io.StringIO)
     def test_main_not_dict_json(self, mock_stdout, mock_exit):
+        check_credentials.is_relay_configured.cache_clear()
         with self.assertRaises(SystemExit) as cm:
             check_credentials.main()
 

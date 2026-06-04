@@ -13,6 +13,7 @@ class TestMcpCommon(unittest.TestCase):
     @patch.dict(os.environ, {"LOCALAPPDATA": "/fake/localappdata"}, clear=True)
     @patch("os.path.exists")
     def test_is_relay_configured_localappdata(self, mock_exists):
+        mcp_common.is_relay_configured.cache_clear()
         # Mock exists to return True for the LOCALAPPDATA path
         mock_exists.side_effect = lambda p: p == os.path.join(
             "/fake/localappdata", "mcp", "config.enc"
@@ -22,6 +23,7 @@ class TestMcpCommon(unittest.TestCase):
     @patch.dict(os.environ, {"APPDATA": "/fake/appdata"}, clear=True)
     @patch("os.path.exists")
     def test_is_relay_configured_appdata(self, mock_exists):
+        mcp_common.is_relay_configured.cache_clear()
         # Mock exists to return True for the APPDATA path
         mock_exists.side_effect = lambda p: p == os.path.join(
             "/fake/appdata", "mcp", "Config", "config.enc"
@@ -32,6 +34,7 @@ class TestMcpCommon(unittest.TestCase):
     @patch("os.path.expanduser")
     @patch("os.path.exists")
     def test_is_relay_configured_home(self, mock_exists, mock_expanduser):
+        mcp_common.is_relay_configured.cache_clear()
         mock_expanduser.return_value = "/fake/home"
         # Mock exists to return True for the home config path
         mock_exists.side_effect = lambda p: p == os.path.join(
@@ -43,6 +46,7 @@ class TestMcpCommon(unittest.TestCase):
     @patch("os.path.expanduser")
     @patch("os.path.exists")
     def test_is_relay_configured_not_found(self, mock_exists, mock_expanduser):
+        mcp_common.is_relay_configured.cache_clear()
         mock_expanduser.return_value = "/fake/home"
         mock_exists.return_value = False
         self.assertFalse(mcp_common.is_relay_configured())

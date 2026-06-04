@@ -1,6 +1,9 @@
+import functools
 import os
 
 
+# Optimization: Cache the result to avoid repeated filesystem I/O for a configuration that rarely changes during execution. Expected impact: O(1) subsequent calls.
+@functools.lru_cache(maxsize=1)
 def is_relay_configured() -> bool:
     """Checks if mcp-relay-core is configured by looking for config.enc."""
     # mcp-relay-core stores config.enc in a shared 'mcp' directory
