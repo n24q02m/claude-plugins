@@ -54,6 +54,8 @@ UNICODE_REPLACEMENTS: dict[str, list[str]] = {
 _VN_BASE = "àảãáạâấầẩẫậăắằẳẵặèẻẽéẹêếềểễệìỉĩíịòỏõóọôốồổỗộơớờởỡợùủũúụưứừửữựỳỷỹýỵđ"
 VIETNAMESE_DIACRITIC_CHARS: set[str] = set(_VN_BASE + _VN_BASE.upper())
 
+_HUNK_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@")
+
 # Emoji detection: any codepoint in common emoji blocks.
 _EMOJI_RE = re.compile(
     "["
@@ -221,7 +223,7 @@ def _yield_diff_pairs(files: list[str]) -> Iterator[tuple[str, int, str, str]]:
             if line.startswith("@@"):
                 if current_file:
                     yield from _flush(current_file, hunk_plus_start)
-                m = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@", line)
+                m = _HUNK_RE.match(line)
                 if m:
                     hunk_plus_start = int(m.group(1))
                     plus_line_no = hunk_plus_start
@@ -300,18 +302,18 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
 
     # Rule 2: Vietnamese diacritics stripped.
     # Performance: Skip iterating over strings if no diacritics exist
+    old_diacritics_count = 0
     if not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(old):
-        old_diacritics = [c for c in old if c in VIETNAMESE_DIACRITIC_CHARS]
-    else:
-        old_diacritics = []
+        old_diacritics_count = sum(1 for c in old if c in VIETNAMESE_DIACRITIC_CHARS)
 
-    if old_diacritics:
+    if old_diacritics_count > 0:
+        new_diacritics_count = 0
         if not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(new):
-            new_diacritics = [c for c in new if c in VIETNAMESE_DIACRITIC_CHARS]
-        else:
-            new_diacritics = []
+            new_diacritics_count = sum(
+                1 for c in new if c in VIETNAMESE_DIACRITIC_CHARS
+            )
 
-        if len(old_diacritics) > len(new_diacritics):
+        if old_diacritics_count > new_diacritics_count:
             # Confirm via NFD-strip round-trip: does stripping old give us new?
             old_stripped = _strip_diacritics(old)
             new_lower = new.replace("đ", "d").replace("Đ", "D")
@@ -319,7 +321,7 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
                 violations.append(("vietnamese-diacritic-strip", old, new))
             elif (
                 _similar(old_stripped, new_lower)
-                and len(old_diacritics) - len(new_diacritics) >= 2
+                and old_diacritics_count - new_diacritics_count >= 2
             ):
                 # Many diacritics vanished but content otherwise similar.
                 violations.append(("vietnamese-diacritic-strip", old, new))
