@@ -54,6 +54,9 @@ UNICODE_REPLACEMENTS: dict[str, list[str]] = {
 _VN_BASE = "àảãáạâấầẩẫậăắằẳẵặèẻẽéẹêếềểễệìỉĩíịòỏõóọôốồổỗộơớờởỡợùủũúụưứừửữựỳỷỹýỵđ"
 VIETNAMESE_DIACRITIC_CHARS: set[str] = set(_VN_BASE + _VN_BASE.upper())
 
+# Hunk header detection in git diffs
+_HUNK_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@")
+
 # Emoji detection: any codepoint in common emoji blocks.
 _EMOJI_RE = re.compile(
     "["
@@ -221,7 +224,7 @@ def _yield_diff_pairs(files: list[str]) -> Iterator[tuple[str, int, str, str]]:
             if line.startswith("@@"):
                 if current_file:
                     yield from _flush(current_file, hunk_plus_start)
-                m = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@", line)
+                m = _HUNK_RE.match(line)
                 if m:
                     hunk_plus_start = int(m.group(1))
                     plus_line_no = hunk_plus_start
