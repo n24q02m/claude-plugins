@@ -301,17 +301,17 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
     # Rule 2: Vietnamese diacritics stripped.
     # Performance: Skip iterating over strings if no diacritics exist
     if not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(old):
-        old_diacritics = [c for c in old if c in VIETNAMESE_DIACRITIC_CHARS]
+        old_diacritics_count = sum(1 for c in old if c in VIETNAMESE_DIACRITIC_CHARS)
     else:
-        old_diacritics = []
+        old_diacritics_count = 0
 
-    if old_diacritics:
+    if old_diacritics_count > 0:
         if not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(new):
-            new_diacritics = [c for c in new if c in VIETNAMESE_DIACRITIC_CHARS]
+            new_diacritics_count = sum(1 for c in new if c in VIETNAMESE_DIACRITIC_CHARS)
         else:
-            new_diacritics = []
+            new_diacritics_count = 0
 
-        if len(old_diacritics) > len(new_diacritics):
+        if old_diacritics_count > new_diacritics_count:
             # Confirm via NFD-strip round-trip: does stripping old give us new?
             old_stripped = _strip_diacritics(old)
             new_lower = new.replace("đ", "d").replace("Đ", "D")
@@ -319,7 +319,7 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
                 violations.append(("vietnamese-diacritic-strip", old, new))
             elif (
                 _similar(old_stripped, new_lower)
-                and len(old_diacritics) - len(new_diacritics) >= 2
+                and old_diacritics_count - new_diacritics_count >= 2
             ):
                 # Many diacritics vanished but content otherwise similar.
                 violations.append(("vietnamese-diacritic-strip", old, new))
