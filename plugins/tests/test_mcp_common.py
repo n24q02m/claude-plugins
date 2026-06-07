@@ -47,6 +47,28 @@ class TestMcpCommon(unittest.TestCase):
         mock_exists.return_value = False
         self.assertFalse(mcp_common.is_relay_configured())
 
+    @patch("sys.stdin.read", return_value='{"key": "value"}')
+    def test_read_mcp_hook_input_valid(self, mock_read):
+        data = mcp_common.read_mcp_hook_input()
+        self.assertEqual(data, {"key": "value"})
+        mock_read.assert_called_once_with(1024 * 1024)
+
+    @patch("sys.stdin.read", return_value="invalid json")
+    @patch("sys.exit", side_effect=SystemExit)
+    @patch("sys.stdout.write")
+    def test_read_mcp_hook_input_invalid_json(self, mock_stdout, mock_exit, mock_read):
+        with self.assertRaises(SystemExit):
+            mcp_common.read_mcp_hook_input()
+        mock_exit.assert_called_once_with(2)
+
+    @patch("sys.stdin.read", return_value='["not a dict"]')
+    @patch("sys.exit", side_effect=SystemExit)
+    @patch("sys.stdout.write")
+    def test_read_mcp_hook_input_not_dict(self, mock_stdout, mock_exit, mock_read):
+        with self.assertRaises(SystemExit):
+            mcp_common.read_mcp_hook_input()
+        mock_exit.assert_called_once_with(2)
+
 
 if __name__ == "__main__":
     unittest.main()
