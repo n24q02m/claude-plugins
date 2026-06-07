@@ -1,4 +1,5 @@
 import json
+import os
 import unittest
 import urllib.error
 from unittest.mock import MagicMock, patch
@@ -57,10 +58,9 @@ class TestCheckVersionFreshness(unittest.TestCase):
         self.assertEqual(res["error"], "invalid source path")
 
     @patch("os.path.realpath")
-    @patch("os.getcwd")
-    def test_check_plugin_symlink_traversal(self, mock_getcwd, mock_realpath):
-        mock_getcwd.return_value = "/app"
-        mock_realpath.return_value = "/etc/passwd"
+    def test_check_plugin_symlink_traversal(self, mock_realpath):
+        # get_safe_path calls realpath(base_dir) then realpath(joined)
+        mock_realpath.side_effect = ["/app", "/etc/passwd"]
         plugin = {"name": "test-plugin", "source": "plugins/malicious"}
         res = check_version_freshness.check_plugin(plugin)
         self.assertEqual(res["status"], "error")
