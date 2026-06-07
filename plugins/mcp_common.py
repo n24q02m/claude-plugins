@@ -1,6 +1,8 @@
+import functools
 import os
 
 
+@functools.lru_cache()
 def is_relay_configured() -> bool:
     """Checks if mcp-relay-core is configured by looking for config.enc."""
     # mcp-relay-core stores config.enc in a shared 'mcp' directory
