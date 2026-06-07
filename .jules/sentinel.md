@@ -1,0 +1,4 @@
+## 2025-05-14 - Unsafe subprocess call in preserve-diacritics.py
+**Vulnerability:** The `_run_git` helper in `scripts/preserve-diacritics.py` did not consistently enforce the `--` separator between git commands/options and pathspecs, which could lead to option injection if filenames or arguments were maliciously crafted.
+**Learning:** Using a list for `subprocess.run` arguments is safer than a string, but it doesn't protect against option injection where an argument starting with a dash is interpreted as an option by the invoked program. Programs like `git` provide a `--` separator specifically to mitigate this.
+**Prevention:** Consistently use the `--` separator for all `git` subprocess calls, especially when passing lists of files or user-provided strings. Enforcing this at the utility function level (e.g., making pathspecs keyword-only and always appending the separator) provides a robust defense.

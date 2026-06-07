@@ -128,27 +128,30 @@ def _is_skippable(path: str) -> bool:
     return False
 
 
-def _run_git(args: list[str], pathspecs: list[str] | None = None) -> str:
+def _run_git(args: list[str], *, pathspecs: list[str] | None = None) -> str:
     """Run git returning UTF-8 decoded stdout. Windows cp1252 default would
     mangle Vietnamese/Unicode — force UTF-8 explicitly."""
     cmd = ["git"] + args
-    if pathspecs:
+    if pathspecs is not None:
+        # Use -- to separate options from filenames if pathspecs are provided.
         cmd.append("--")
         cmd.extend(pathspecs)
-    # Use shell=False (default) and explicitly separate pathspecs with --
-    # to prevent option injection.
+    # Use shell=False (default) explicitly to prevent option injection.
     result = subprocess.run(
         cmd,
         capture_output=True,
         check=True,
         text=False,
+        shell=False,
     )
     return result.stdout.decode("utf-8", errors="replace")
 
 
 def _staged_files() -> list[str]:
     """Files added or modified in the staged index (no deletions, no renames-only)."""
-    out = _run_git(["diff", "--cached", "--name-only", "--diff-filter=AM"])
+    out = _run_git(
+        ["diff", "--cached", "--name-only", "--diff-filter=AM"], pathspecs=[]
+    )
     return [line for line in out.splitlines() if line]
 
 
