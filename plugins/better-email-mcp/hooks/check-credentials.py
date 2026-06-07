@@ -40,7 +40,7 @@ def main() -> None:
                 )
             )
             sys.exit(2)
-    except Exception:
+    except json.JSONDecodeError:
         print(
             json.dumps(
                 {
