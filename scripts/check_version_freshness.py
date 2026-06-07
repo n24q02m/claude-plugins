@@ -8,7 +8,7 @@ import urllib.request
 import urllib.error
 import threading
 
-from utils import sanitize_log, PLUGIN_NAME_PATTERN
+from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path
 
 # In-memory cache for API responses to avoid redundant calls
 _cache = {}
@@ -78,16 +78,7 @@ def check_plugin(plugin):
         }
     # Robust path validation: resolve symlinks and ensure path is within project root
     try:
-        abs_root = os.path.abspath(os.getcwd())
-        abs_source = os.path.realpath(os.path.join(abs_root, source))
-        if os.path.commonpath([abs_root, abs_source]) != abs_root:
-            return {
-                "status": "error",
-                "name": name,
-                "marketplace_ver": "unknown",
-                "error": "invalid source path",
-            }
-        source = os.path.relpath(abs_source, abs_root)
+        source = get_safe_path(os.getcwd(), source)
     except (OSError, ValueError):
         return {
             "status": "error",

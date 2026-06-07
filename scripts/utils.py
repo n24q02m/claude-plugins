@@ -1,9 +1,19 @@
+import os
 import re
 
 
 def sanitize_log(msg: str) -> str:
     """Sanitize strings for GitHub Actions log commands."""
     return str(msg).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+
+def get_safe_path(base_dir: str, sub_path: str) -> str:
+    """Resolve sub_path relative to base_dir and ensure it remains within base_dir."""
+    abs_base = os.path.realpath(base_dir)
+    abs_target = os.path.realpath(os.path.join(abs_base, sub_path))
+    if os.path.commonpath([abs_base, abs_target]) != abs_base:
+        raise ValueError("Path traversal detected")
+    return os.path.relpath(abs_target, abs_base)
 
 
 # Pre-compile regex at module level to avoid cache lookup overhead

@@ -5,7 +5,7 @@ import json
 import os
 import sys
 
-from utils import sanitize_log, PLUGIN_NAME_PATTERN
+from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path
 
 
 def validate_marketplace():
@@ -55,14 +55,13 @@ def validate_marketplace():
                 continue
 
             # Security check: prevent path traversal
-            norm_source = os.path.normpath(source)
-            if os.path.isabs(norm_source) or norm_source.startswith(".."):
+            try:
+                plugin_dir = get_safe_path(os.getcwd(), source)
+            except (OSError, ValueError):
                 errors.append(
                     f"Plugin {name}: invalid source path (path traversal blocked)"
                 )
                 continue
-
-            plugin_dir = norm_source
 
             # Check plugin.json exists and is valid
             pjson = os.path.join(plugin_dir, ".claude-plugin", "plugin.json")

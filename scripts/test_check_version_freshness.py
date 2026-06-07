@@ -60,7 +60,8 @@ class TestCheckVersionFreshness(unittest.TestCase):
     @patch("os.getcwd")
     def test_check_plugin_symlink_traversal(self, mock_getcwd, mock_realpath):
         mock_getcwd.return_value = "/app"
-        mock_realpath.return_value = "/etc/passwd"
+        # First call for abs_base, second for abs_target
+        mock_realpath.side_effect = ["/app", "/etc/passwd"]
         plugin = {"name": "test-plugin", "source": "plugins/malicious"}
         res = check_version_freshness.check_plugin(plugin)
         self.assertEqual(res["status"], "error")
