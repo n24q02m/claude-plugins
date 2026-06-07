@@ -49,6 +49,7 @@ UNICODE_REPLACEMENTS: dict[str, list[str]] = {
     "\u00b7": ["*", "."],  # middle dot
     "\u2022": ["*", "-"],  # bullet
 }
+UNICODE_PUNCT_CHARS: set[str] = set(UNICODE_REPLACEMENTS.keys())
 
 # Vietnamese precomposed letters (NFC). Lowercase + uppercase.
 _VN_BASE = "àảãáạâấầẩẫậăắằẳẵặèẻẽéẹêếềểễệìỉĩíịòỏõóọôốồổỗộơớờởỡợùủũúụưứừửữựỳỷỹýỵđ"
@@ -283,8 +284,12 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
     old_skel = old
     new_skel = new
     hit_uni: list[str] = []
-    for uni, ascii_forms in UNICODE_REPLACEMENTS.items():
-        if uni in old and uni not in new:
+
+    # Optimization: Use set intersection to find candidates before scanning
+    potential_uni = UNICODE_PUNCT_CHARS.intersection(old)
+    for uni in potential_uni:
+        if uni not in new:
+            ascii_forms = UNICODE_REPLACEMENTS[uni]
             # Optimization: Replace generator-based any() with explicit loop
             # and early truthiness check to bypass unnecessary instantiation overhead.
             for form in ascii_forms:
