@@ -66,7 +66,7 @@ Systematic review of stored memories to maintain quality. Finds duplicates, dete
 - Contains "temporary", "workaround", "until X is fixed"
 - References removed/renamed files, deprecated APIs, old URLs
 - Predates a major migration or refactor (check project history)
-- Contains "TODO" or "will be" — was it done?
+- Contains task markers or future-tense promises (e.g., "to-do", "will be") — check if the action was completed
 
 ## Contradiction Resolution Rules
 
