@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 import os
 import sys
+import json
 
 # Add plugins directory to sys.path to import mcp_common
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -68,6 +69,14 @@ class TestMcpCommon(unittest.TestCase):
         with self.assertRaises(SystemExit):
             mcp_common.read_mcp_hook_input()
         mock_exit.assert_called_once_with(2)
+
+    @patch("sys.stdin.read", side_effect=RuntimeError("unexpected error"))
+    @patch("sys.exit")
+    def test_read_mcp_hook_input_bubbles_unexpected_exception(
+        self, mock_exit, mock_read
+    ):
+        with self.assertRaises(RuntimeError):
+            mcp_common.read_mcp_hook_input()
 
 
 if __name__ == "__main__":
