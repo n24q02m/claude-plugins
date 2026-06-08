@@ -69,6 +69,12 @@ class TestMcpCommon(unittest.TestCase):
             mcp_common.read_mcp_hook_input()
         mock_exit.assert_called_once_with(2)
 
+    @patch("sys.stdin.read", side_effect=RuntimeError("Unexpected error"))
+    def test_read_mcp_hook_input_unexpected_exception(self, mock_read):
+        # Ensure unrelated exceptions are not swallowed
+        with self.assertRaises(RuntimeError):
+            mcp_common.read_mcp_hook_input()
+
 
 if __name__ == "__main__":
     unittest.main()
