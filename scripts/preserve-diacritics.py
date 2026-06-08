@@ -49,6 +49,7 @@ UNICODE_REPLACEMENTS: dict[str, list[str]] = {
     "\u00b7": ["*", "."],  # middle dot
     "\u2022": ["*", "-"],  # bullet
 }
+UNICODE_PUNCT_SET = frozenset(UNICODE_REPLACEMENTS.keys())
 
 # Vietnamese precomposed letters (NFC). Lowercase + uppercase.
 _VN_BASE = "àảãáạâấầẩẫậăắằẳẵặèẻẽéẹêếềểễệìỉĩíịòỏõóọôốồổỗộơớờởỡợùủũúụưứừửữựỳỷỹýỵđ"
@@ -283,8 +284,12 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
     old_skel = old
     new_skel = new
     hit_uni: list[str] = []
-    for uni, ascii_forms in UNICODE_REPLACEMENTS.items():
-        if uni in old and uni not in new:
+
+    # Optimization: Use frozenset.intersection() to find all present characters in
+    # a single O(N) pass, avoiding redundant scans for each key in UNICODE_REPLACEMENTS.
+    for uni in UNICODE_PUNCT_SET.intersection(old):
+        if uni not in new:
+            ascii_forms = UNICODE_REPLACEMENTS[uni]
             # Optimization: Replace generator-based any() with explicit loop
             # and early truthiness check to bypass unnecessary instantiation overhead.
             for form in ascii_forms:
@@ -299,19 +304,22 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
             violations.append((f"unicode-punct {uni!r}->ascii", old, new))
 
     # Rule 2: Vietnamese diacritics stripped.
-    # Performance: Skip iterating over strings if no diacritics exist
-    if not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(old):
-        old_diacritics = [c for c in old if c in VIETNAMESE_DIACRITIC_CHARS]
-    else:
-        old_diacritics = []
+    # Performance: Skip iterating over strings if no diacritics exist.
+    # Using sum() with a generator expression reduces space complexity to O(1).
+    old_diacritics_count = (
+        sum(1 for c in old if c in VIETNAMESE_DIACRITIC_CHARS)
+        if not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(old)
+        else 0
+    )
 
-    if old_diacritics:
-        if not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(new):
-            new_diacritics = [c for c in new if c in VIETNAMESE_DIACRITIC_CHARS]
-        else:
-            new_diacritics = []
+    if old_diacritics_count > 0:
+        new_diacritics_count = (
+            sum(1 for c in new if c in VIETNAMESE_DIACRITIC_CHARS)
+            if not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(new)
+            else 0
+        )
 
-        if len(old_diacritics) > len(new_diacritics):
+        if old_diacritics_count > new_diacritics_count:
             # Confirm via NFD-strip round-trip: does stripping old give us new?
             old_stripped = _strip_diacritics(old)
             new_lower = new.replace("đ", "d").replace("Đ", "D")
@@ -319,7 +327,7 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
                 violations.append(("vietnamese-diacritic-strip", old, new))
             elif (
                 _similar(old_stripped, new_lower)
-                and len(old_diacritics) - len(new_diacritics) >= 2
+                and old_diacritics_count - new_diacritics_count >= 2
             ):
                 # Many diacritics vanished but content otherwise similar.
                 violations.append(("vietnamese-diacritic-strip", old, new))
