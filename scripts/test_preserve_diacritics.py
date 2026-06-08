@@ -8,8 +8,6 @@ These tests exercise the pure check function (_check_pair) with hand-crafted
 before/after line pairs, avoiding the need for a real git repo.
 """
 
-from __future__ import annotations
-
 import importlib.util
 import sys
 from pathlib import Path
