@@ -15,7 +15,6 @@ sys.path.append(
 )
 from mcp_common import is_relay_configured, read_mcp_hook_input
 
-SERVER_NAME = "better-email-mcp"
 CREDENTIAL_KEYS = ["EMAIL_CREDENTIALS"]
 EXEMPT_SUFFIXES = ("__setup", "__help", "__config")
 
