@@ -1,7 +1,6 @@
-import os
-
-
+import functools
 import json
+import os
 import sys
 
 
@@ -35,6 +34,7 @@ def read_mcp_hook_input() -> dict:
         sys.exit(2)
 
 
+@functools.lru_cache
 def is_relay_configured() -> bool:
     """Checks if mcp-relay-core is configured by looking for config.enc."""
     # mcp-relay-core stores config.enc in a shared 'mcp' directory
