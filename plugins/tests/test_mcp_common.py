@@ -61,6 +61,12 @@ class TestMcpCommon(unittest.TestCase):
             mcp_common.read_mcp_hook_input()
         mock_exit.assert_called_once_with(2)
 
+    @patch("sys.stdin.read", side_effect=RuntimeError("Unexpected error"))
+    def test_read_mcp_hook_input_unexpected_exception(self, mock_read):
+        with self.assertRaises(RuntimeError) as cm:
+            mcp_common.read_mcp_hook_input()
+        self.assertEqual(str(cm.exception), "Unexpected error")
+
     @patch("sys.stdin.read", return_value='["not a dict"]')
     @patch("sys.exit", side_effect=SystemExit)
     @patch("sys.stdout.write")
