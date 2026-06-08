@@ -8,13 +8,17 @@ import shutil
 import tempfile
 from unittest.mock import patch
 import validate_marketplace
+import utils
 
 
 class TestValidateMarketplace(unittest.TestCase):
     def setUp(self):
-        self.test_dir = tempfile.mkdtemp()
+        self.test_dir = os.path.realpath(tempfile.mkdtemp())
         self.old_cwd = os.getcwd()
         os.chdir(self.test_dir)
+
+        self.real_project_root = utils.PROJECT_ROOT
+        utils.PROJECT_ROOT = self.test_dir
 
         # Create minimal structure
         os.makedirs(".claude-plugin")
@@ -41,6 +45,7 @@ class TestValidateMarketplace(unittest.TestCase):
             json.dump(self.valid_plugin, f)
 
     def tearDown(self):
+        utils.PROJECT_ROOT = self.real_project_root
         os.chdir(self.old_cwd)
         shutil.rmtree(self.test_dir)
 

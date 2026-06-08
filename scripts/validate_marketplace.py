@@ -56,7 +56,7 @@ def validate_marketplace():
 
             # Security check: prevent path traversal
             try:
-                plugin_dir = get_safe_path(os.getcwd(), source)
+                plugin_dir = get_safe_path(source)
             except (OSError, ValueError):
                 errors.append(
                     f"Plugin {name}: invalid source path (path traversal blocked)"

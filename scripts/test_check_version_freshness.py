@@ -50,6 +50,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
         self.assertEqual(result["status"], "error")
         self.assertEqual(result["error"], "invalid name format")
 
+    @patch("utils.PROJECT_ROOT", "/app")
     def test_check_plugin_path_traversal(self):
         plugin = {"name": "test-plugin", "source": "../../../etc/passwd"}
         res = check_version_freshness.check_plugin(plugin)
@@ -57,9 +58,8 @@ class TestCheckVersionFreshness(unittest.TestCase):
         self.assertEqual(res["error"], "invalid source path")
 
     @patch("os.path.realpath")
-    @patch("os.getcwd")
-    def test_check_plugin_symlink_traversal(self, mock_getcwd, mock_realpath):
-        mock_getcwd.return_value = "/app"
+    @patch("utils.PROJECT_ROOT", "/app")
+    def test_check_plugin_symlink_traversal(self, mock_realpath):
         # First call for abs_base, second for abs_target
         mock_realpath.side_effect = ["/app", "/etc/passwd"]
         plugin = {"name": "test-plugin", "source": "plugins/malicious"}

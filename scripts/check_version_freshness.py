@@ -78,7 +78,7 @@ def check_plugin(plugin):
         }
     # Robust path validation: resolve symlinks and ensure path is within project root
     try:
-        source = get_safe_path(os.getcwd(), source)
+        source = get_safe_path(source)
     except (OSError, ValueError):
         return {
             "status": "error",
