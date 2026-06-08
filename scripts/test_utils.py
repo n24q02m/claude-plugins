@@ -1,5 +1,6 @@
+import os
 import unittest
-from utils import sanitize_log, PLUGIN_NAME_PATTERN
+from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path
 
 
 class TestUtils(unittest.TestCase):
@@ -27,6 +28,17 @@ class TestUtils(unittest.TestCase):
         """Should handle non-string input by converting it to string first."""
         self.assertEqual(sanitize_log(123), "123")
 
+    def test_sanitize_log_empty(self):
+        """Should handle empty string."""
+        self.assertEqual(sanitize_log(""), "")
+
+    def test_sanitize_log_mixed(self):
+        """Should handle mixed special characters and normal text."""
+        self.assertEqual(
+            sanitize_log("Error: 100% fail\r\nNext line"),
+            "Error: 100%25 fail%0D%0ANext line",
+        )
+
     def test_plugin_name_pattern_valid(self):
         """Should match valid plugin names."""
         valid_names = ["plugin-name", "plugin123", "123-plugin", "a", "A", "A-b-C-1"]
@@ -47,6 +59,30 @@ class TestUtils(unittest.TestCase):
         for name in invalid_names:
             with self.subTest(name=name):
                 self.assertFalse(PLUGIN_NAME_PATTERN.fullmatch(name))
+
+    def test_get_safe_path_valid(self):
+        """Should return relative path for valid sub-paths."""
+        base = "/tmp/base"
+        self.assertEqual(get_safe_path(base, "sub/path"), "sub/path")
+        self.assertEqual(get_safe_path(base, "./sub/path"), "sub/path")
+        # absolute path within base
+        self.assertEqual(get_safe_path(base, "/tmp/base/sub/path"), "sub/path")
+
+    def test_get_safe_path_traversal(self):
+        """Should raise ValueError for path traversal attempts."""
+        base = "/tmp/base"
+        with self.assertRaises(ValueError):
+            get_safe_path(base, "../traversal")
+        with self.assertRaises(ValueError):
+            get_safe_path(base, "/etc/passwd")
+
+    def test_get_safe_path_real_paths(self):
+        """Should handle real paths and symbolic links via realpath."""
+        # Using current directory as a safe base for testing realpath logic
+        cwd = os.getcwd()
+        self.assertEqual(get_safe_path(cwd, "."), ".")
+        with self.assertRaises(ValueError):
+            get_safe_path(cwd, "..")
 
 
 if __name__ == "__main__":
