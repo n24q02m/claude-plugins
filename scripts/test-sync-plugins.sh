@@ -107,12 +107,77 @@ test_sync_plugins() {
   ROOT="$old_root"
 }
 
+# --- error handling test ---
+
+test_sync_error_handling() {
+  local tmp
+  tmp=$(mktemp -d)
+  # Ensure we can delete it even if we chmod it
+  trap 'chmod -R 700 "$tmp" 2>/dev/null || true; rm -rf "$tmp"' RETURN
+
+  local repos="$tmp/repos"
+  mkdir -p "$repos/test-plugin/.claude-plugin"
+  touch "$repos/test-plugin/.claude-plugin/plugin.json"
+
+  # Override globals
+  local old_plugins=("${PLUGINS[@]}")
+  local old_repos_dir="$REPOS_DIR"
+  local old_root="$ROOT"
+
+  # Set environment variables for the sub-shell
+  export REPOS_DIR="$repos"
+  export ROOT="$tmp/root"
+  export TEST_PLUGINS="test-plugin"
+
+  # Create root and make it read-only to trigger failure in mkdir/cp
+  mkdir -p "$ROOT"
+  chmod 555 "$ROOT"
+  # Actually, to prevent creating the 'plugins' subdir:
+  chmod 500 "$ROOT"
+
+  # Run sync in a fresh bash process to ensure set -e is respected
+  # and won't be disabled by being in an 'if' condition.
+  # Evaluate script path in parent shell to avoid relative path issues.
+  local script_path
+  script_path="$(cd "$(dirname "$0")" && pwd)/sync-plugins.sh"
+
+  local exit_code=0
+  # Run bash with inherited environment variables
+  bash -e -c "
+    # Override PLUGINS before sourcing, OR source then override
+    # Sourcing first to get the function, then overriding the array
+    source '$script_path' || exit 99
+    PLUGINS=(\$TEST_PLUGINS)
+    sync_plugins
+  " >/dev/null 2>&1 || exit_code=$?
+
+  if [ "$exit_code" -eq 0 ]; then
+    printf "%s\n" "FAIL: sync_plugins should have failed due to read-only ROOT"
+    FAIL=$((FAIL + 1))
+  elif [ "$exit_code" -eq 99 ]; then
+    printf "%s\n" "FAIL: setup error in test_sync_error_handling (source failed)"
+    FAIL=$((FAIL + 1))
+  else
+    printf "%s\n" "PASS: sync_plugins failed as expected on I/O error"
+    PASS=$((PASS + 1))
+  fi
+
+  # Restore globals
+  PLUGINS=("${old_plugins[@]}")
+  REPOS_DIR="$old_repos_dir"
+  ROOT="$old_root"
+}
+
 printf "%s\n" "=== has_files tests ==="
 test_has_files
 
 printf "%s\n" ""
 printf "%s\n" "=== sync_plugins integration test ==="
 test_sync_plugins
+
+printf "%s\n" ""
+printf "%s\n" "=== sync_plugins error handling test ==="
+test_sync_error_handling
 
 printf "%s\n" ""
 printf "%s\n" "Results: $PASS passed, $FAIL failed"
