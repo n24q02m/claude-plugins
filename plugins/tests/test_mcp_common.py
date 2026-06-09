@@ -61,6 +61,13 @@ class TestMcpCommon(unittest.TestCase):
             mcp_common.read_mcp_hook_input()
         mock_exit.assert_called_once_with(2)
 
+    @patch("sys.stdin.read", side_effect=OSError("Read error"))
+    @patch("sys.exit", side_effect=SystemExit)
+    def test_read_mcp_hook_input_oserror(self, mock_exit, mock_read):
+        with self.assertRaises(SystemExit):
+            mcp_common.read_mcp_hook_input()
+        mock_exit.assert_called_once_with(2)
+
     @patch("sys.stdin.read", side_effect=RuntimeError("Unexpected error"))
     def test_read_mcp_hook_input_unexpected_exception(self, mock_read):
         with self.assertRaises(RuntimeError) as cm:
