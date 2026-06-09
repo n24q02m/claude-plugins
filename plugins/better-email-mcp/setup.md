@@ -95,6 +95,30 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
    export EMAIL_APP_PASSWORD="abcd efgh ijkl mnop"
    ```
 
+## For multiple accounts
+
+1. Add to your MCP client config:
+   ```json
+   {
+     "mcpServers": {
+       "better-email-mcp": {
+         "command": "docker",
+         "args": [
+           "run", "-i", "--rm",
+           "-e", "EMAIL_CREDENTIALS",
+           "-e", "MCP_TRANSPORT=stdio",
+           "n24q02m/better-email-mcp:latest"
+         ]
+       }
+     }
+   }
+   ```
+
+2. Set env vars in your shell profile:
+   ```bash
+   export EMAIL_CREDENTIALS="user@custom.com:pass:imap.custom.com"
+   ```
+
 ## Why upgrade to HTTP mode?
 
 Stdio mode is the default and works for single-user local development. Consider switching to **HTTP mode** when you need any of:
