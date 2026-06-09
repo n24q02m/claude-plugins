@@ -16,12 +16,6 @@ spec.loader.exec_module(check_credentials)
 
 class TestCheckCredentials(unittest.TestCase):
 
-    def setUp(self):
-        # Clear the cache for mcp_common.is_relay_configured
-        import mcp_common
-
-        mcp_common.is_relay_configured.cache_clear()
-
     @patch.dict(os.environ, {"TELEGRAM_PHONE": "123456789"}, clear=True)
     def test_is_configured_phone(self):
         self.assertTrue(check_credentials._is_configured())
