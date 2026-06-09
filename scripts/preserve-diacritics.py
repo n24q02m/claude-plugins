@@ -128,11 +128,11 @@ def _is_skippable(path: str) -> bool:
     return False
 
 
-def _run_git(args: list[str], *, pathspecs: list[str] | None = None) -> str:
+def _run_git(args: list[str], pathspecs: list[str] | None = None) -> str:
     """Run git returning UTF-8 decoded stdout. Windows cp1252 default would
     mangle Vietnamese/Unicode — force UTF-8 explicitly."""
     cmd = ["git"] + args
-    if pathspecs is not None:
+    if pathspecs:
         cmd.append("--")
         cmd.extend(pathspecs)
     # Use shell=False (default) and explicitly separate pathspecs with --
