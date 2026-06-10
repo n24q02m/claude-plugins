@@ -15,7 +15,6 @@ sys.path.append(
 )
 from mcp_common import is_relay_configured, read_mcp_hook_input
 
-SERVER_NAME = "better-telegram-mcp"
 # Either TELEGRAM_PHONE (user mode) or TELEGRAM_BOT_TOKEN (bot mode) is required.
 # TELEGRAM_API_ID / TELEGRAM_API_HASH have built-in defaults and are not checked here.
 CREDENTIAL_KEYS = ["TELEGRAM_PHONE", "TELEGRAM_BOT_TOKEN"]
