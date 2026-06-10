@@ -7,6 +7,12 @@
  * (so Starlight "Edit this page" links jump to canonical source, not
  * the generated copy).
  *
+ * Also synthesizes an `index.md` landing page per server section so the
+ * bare section root `mcp.n24q02m.com/servers/<name>/` renders a real page
+ * instead of 404ing (Starlight only routes directories that contain an
+ * index file). The landing pulls its tagline from the plugin manifest and
+ * links every sibling page in the section.
+ *
  * Run via:
  *   node docs/scripts/sync-plugin-docs.mjs
  *
@@ -43,8 +49,78 @@ const PLUGIN_FILES = [
 
 const REPO_RAW_BASE = 'https://github.com/n24q02m/claude-plugins/edit/main/plugins';
 
+// mcp-core is a foundation library, not a runnable server — frame it that way
+// and skip the marketplace-install pointer (it has no end-user install flow).
+const FOUNDATION = 'mcp-core';
+const FOUNDATION_DESCRIPTION =
+  'Foundation library for the n24q02m MCP stack — shared Streamable HTTP transport, ' +
+  'OAuth 2.1 Authorization Server, lifecycle management, and credential-relay primitives ' +
+  'consumed by every server. Not a runnable MCP server.';
+
 async function pathExists(p) {
   try { await stat(p); return true; } catch { return false; }
+}
+
+// "setup-with-agent.md" -> "Setup with agent"
+function titleFromFile(file) {
+  const base = file.replace(/\.md$/, '').replace(/-/g, ' ');
+  return base.charAt(0).toUpperCase() + base.slice(1);
+}
+
+// Read display name + tagline from the plugin manifest (best-effort).
+async function readPluginMeta(pluginName) {
+  const manifest = join(PLUGINS_DIR, pluginName, '.claude-plugin', 'plugin.json');
+  if (await pathExists(manifest)) {
+    try {
+      const pj = JSON.parse(await readFile(manifest, 'utf-8'));
+      return { name: pj.name || pluginName, description: pj.description || '' };
+    } catch {
+      // malformed manifest — fall through to defaults
+    }
+  }
+  return { name: pluginName, description: '' };
+}
+
+// YAML-safe scalar (descriptions contain ":" and em dashes).
+function yamlQuote(value) {
+  return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\s*\n\s*/g, ' ').trim()}"`;
+}
+
+// Synthesize the section landing page so /servers/<name>/ resolves.
+function buildIndex(pluginName, meta, copiedFiles) {
+  const isFoundation = pluginName === FOUNDATION;
+  const description =
+    meta.description || (isFoundation ? FOUNDATION_DESCRIPTION : `${pluginName} — part of the n24q02m MCP server stack.`);
+  const repoUrl = `https://github.com/n24q02m/${pluginName}`;
+  const editUrl = `${REPO_RAW_BASE}/${pluginName}/.claude-plugin/plugin.json`;
+
+  const pageLinks = copiedFiles
+    .filter((f) => f !== 'index.md' && f !== 'overview.md')
+    .map((f) => `- [${titleFromFile(f)}](./${f.replace(/\.md$/, '')}/)`)
+    .join('\n');
+
+  const lines = [
+    '---',
+    `title: ${yamlQuote(meta.name || pluginName)}`,
+    `description: ${yamlQuote(description)}`,
+    `editUrl: ${editUrl}`,
+    '---',
+    '',
+    description,
+    '',
+    '## In this section',
+    '',
+    pageLinks,
+    '',
+    '## Source',
+    '',
+    `- [GitHub: n24q02m/${pluginName}](${repoUrl})`,
+  ];
+  if (!isFoundation) {
+    lines.push('- Install via the [n24q02m plugin marketplace](/get-started/plugin-marketplace/)');
+  }
+  lines.push('');
+  return lines.join('\n');
 }
 
 async function syncOne(pluginName, file) {
@@ -102,17 +178,22 @@ async function main() {
   let totalCopied = 0;
   let pluginsWithContent = 0;
   for (const name of plugins) {
-    let copiedForPlugin = 0;
+    const copiedFiles = [];
     for (const file of PLUGIN_FILES) {
       if (await syncOne(name, file)) {
-        copiedForPlugin += 1;
+        copiedFiles.push(file);
       }
     }
-    if (copiedForPlugin > 0) {
+    if (copiedFiles.length > 0) {
+      // Generate the section landing page unless the source already ships one.
+      if (!copiedFiles.includes('index.md')) {
+        const meta = await readPluginMeta(name);
+        await writeFile(join(TARGET_DIR, name, 'index.md'), buildIndex(name, meta, copiedFiles), 'utf-8');
+      }
       pluginsWithContent += 1;
-      console.log(`  ${name}: ${copiedForPlugin} file(s)`);
+      console.log(`  ${name}: ${copiedFiles.length} file(s) + index`);
     }
-    totalCopied += copiedForPlugin;
+    totalCopied += copiedFiles.length;
   }
 
   console.log(`\n✓ Synced ${totalCopied} file(s) across ${pluginsWithContent} plugin(s).`);
