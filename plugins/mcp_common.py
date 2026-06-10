@@ -1,6 +1,4 @@
 import os
-
-
 import json
 import sys
 
@@ -23,7 +21,7 @@ def read_mcp_hook_input() -> dict:
             )
             sys.exit(2)
         return data
-    except Exception:
+    except (json.JSONDecodeError, UnicodeDecodeError):
         print(
             json.dumps(
                 {
