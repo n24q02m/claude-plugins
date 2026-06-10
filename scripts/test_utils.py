@@ -51,3 +51,20 @@ class TestUtils(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_get_safe_path_valid(self):
+        """Should return relative path for valid sub_path."""
+        import os
+        from utils import get_safe_path
+
+        base = os.getcwd()
+        self.assertEqual(get_safe_path(base, "scripts"), "scripts")
+
+    def test_get_safe_path_traversal(self):
+        """Should raise ValueError for path traversal."""
+        import os
+        from utils import get_safe_path
+
+        base = os.path.join(os.getcwd(), "scripts")
+        with self.assertRaises(ValueError):
+            get_safe_path(base, "../README.md")
