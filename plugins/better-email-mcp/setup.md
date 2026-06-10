@@ -114,9 +114,13 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
    }
    ```
 
-2. Set env vars in your shell profile:
+2. Set env vars in your shell profile. `EMAIL_CREDENTIALS` is **comma-separated
+   between accounts** and **colon-separated within** each account
+   (`email:password`, plus an optional `:imap_host:imap_port` for custom
+   domains; Outlook/Hotmail accounts need only the email — OAuth runs
+   automatically):
    ```bash
-   export EMAIL_CREDENTIALS="user@custom.com:pass:imap.custom.com"
+   export EMAIL_CREDENTIALS="user1@gmail.com:app_password1,user2@custom.com:password2:imap.custom.com"
    ```
 
 ## Why upgrade to HTTP mode?
