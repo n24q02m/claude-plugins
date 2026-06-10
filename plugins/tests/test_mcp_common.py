@@ -10,6 +10,10 @@ import mcp_common
 
 class TestMcpCommon(unittest.TestCase):
 
+    def setUp(self):
+        # Clear the lru_cache for is_relay_configured to ensure fresh results for each test
+        mcp_common.is_relay_configured.cache_clear()
+
     @patch.dict(os.environ, {"LOCALAPPDATA": "/fake/localappdata"}, clear=True)
     @patch("os.path.exists")
     def test_is_relay_configured_localappdata(self, mock_exists):
@@ -68,6 +72,20 @@ class TestMcpCommon(unittest.TestCase):
         with self.assertRaises(SystemExit):
             mcp_common.read_mcp_hook_input()
         mock_exit.assert_called_once_with(2)
+
+    @patch.dict(os.environ, {"LOCALAPPDATA": "/fake/localappdata"}, clear=True)
+    @patch("os.path.exists")
+    def test_is_relay_configured_caching(self, mock_exists):
+        # Mock exists to return True for the LOCALAPPDATA path
+        mock_exists.return_value = True
+
+        # First call should call os.path.exists
+        self.assertTrue(mcp_common.is_relay_configured())
+        self.assertEqual(mock_exists.call_count, 1)
+
+        # Second call should use cache and not call os.path.exists again
+        self.assertTrue(mcp_common.is_relay_configured())
+        self.assertEqual(mock_exists.call_count, 1)
 
 
 if __name__ == "__main__":
