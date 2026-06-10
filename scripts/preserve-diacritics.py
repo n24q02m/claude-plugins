@@ -50,6 +50,8 @@ UNICODE_REPLACEMENTS: dict[str, list[str]] = {
     "\u2022": ["*", "-"],  # bullet
 }
 
+_TRACKED_UNICODE_CHARS = frozenset(UNICODE_REPLACEMENTS.keys())
+
 # Vietnamese precomposed letters (NFC). Lowercase + uppercase.
 _VN_BASE = "àảãáạâấầẩẫậăắằẳẵặèẻẽéẹêếềểễệìỉĩíịòỏõóọôốồổỗộơớờởỡợùủũúụưứừửữựỳỷỹýỵđ"
 VIETNAMESE_DIACRITIC_CHARS: set[str] = set(_VN_BASE + _VN_BASE.upper())
@@ -283,17 +285,22 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
     old_skel = old
     new_skel = new
     hit_uni: list[str] = []
-    for uni, ascii_forms in UNICODE_REPLACEMENTS.items():
-        if uni in old and uni not in new:
-            # Optimization: Replace generator-based any() with explicit loop
-            # and early truthiness check to bypass unnecessary instantiation overhead.
-            for form in ascii_forms:
-                if form in new:
-                    hit_uni.append(uni)
-                    old_skel = old_skel.replace(uni, "")
-                    for f in ascii_forms:
-                        new_skel = new_skel.replace(f, "")
-                    break
+
+    # Fast-path: if no tracked characters exist in 'old', skip scan entirely.
+    if not _TRACKED_UNICODE_CHARS.isdisjoint(old):
+        # O(N) intersection to find ONLY characters present in 'old' before loop.
+        for uni in _TRACKED_UNICODE_CHARS.intersection(old):
+            if uni not in new:
+                ascii_forms = UNICODE_REPLACEMENTS[uni]
+                # Optimization: Replace generator-based any() with explicit loop
+                # and early truthiness check to bypass unnecessary instantiation overhead.
+                for form in ascii_forms:
+                    if form in new:
+                        hit_uni.append(uni)
+                        old_skel = old_skel.replace(uni, "")
+                        for f in ascii_forms:
+                            new_skel = new_skel.replace(f, "")
+                        break
     if hit_uni and _similar(old_skel.strip(), new_skel.strip()):
         for uni in hit_uni:
             violations.append((f"unicode-punct {uni!r}->ascii", old, new))
