@@ -1,5 +1,7 @@
 import unittest
-from utils import sanitize_log, PLUGIN_NAME_PATTERN
+import os
+import tempfile
+from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path
 
 
 class TestUtils(unittest.TestCase):
@@ -47,6 +49,35 @@ class TestUtils(unittest.TestCase):
         for name in invalid_names:
             with self.subTest(name=name):
                 self.assertFalse(PLUGIN_NAME_PATTERN.fullmatch(name))
+
+    def test_get_safe_path_valid(self):
+        """Should return relative path for valid sub-paths."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            sub_dir = os.path.join(tmpdir, "sub")
+            os.makedirs(sub_dir)
+
+            # Simple sub-path
+            self.assertEqual(get_safe_path(tmpdir, "sub"), "sub")
+            # Sub-path with .
+            self.assertEqual(get_safe_path(tmpdir, "./sub"), "sub")
+            # Sub-path with .. that stays inside
+            self.assertEqual(get_safe_path(tmpdir, "sub/../sub"), "sub")
+            # Base directory itself
+            self.assertEqual(get_safe_path(tmpdir, "."), ".")
+
+    def test_get_safe_path_traversal(self):
+        """Should raise ValueError for path traversal outside base_dir."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Traversal using ..
+            with self.assertRaisesRegex(ValueError, "Path traversal detected"):
+                get_safe_path(tmpdir, "..")
+
+            with self.assertRaisesRegex(ValueError, "Path traversal detected"):
+                get_safe_path(tmpdir, "../etc/passwd")
+
+            # Absolute path traversal (if it goes outside)
+            with self.assertRaisesRegex(ValueError, "Path traversal detected"):
+                get_safe_path(tmpdir, "/etc/passwd")
 
 
 if __name__ == "__main__":
