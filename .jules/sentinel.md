@@ -7,3 +7,8 @@
 **Vulnerability:** Weak path traversal checks in `scripts/check_version_freshness.py` and `scripts/validate_marketplace.py` relied on `os.path.normpath` and `startswith("..")`, which could be bypassed via symlinks or absolute paths.
 **Learning:** Robust path validation requires resolving paths fully using `os.path.realpath` and verifying that the resolved path is contained within the intended base directory using `os.path.commonpath`.
 **Prevention:** Use a centralized `get_safe_path` utility for all file system operations involving user-supplied or external paths to ensure they remain within the project boundary.
+
+## 2026-06-10 - Specific Exception Handling in MCP Hooks
+**Vulnerability:** Broad Exception handling (`except Exception:`) in `read_mcp_hook_input` could swallow unexpected runtime errors (like `AttributeError` or `MemoryError`), making them difficult to diagnose and potentially causing the hook to exit with a generic "Invalid input" message even if the input was valid but the code failed.
+**Learning:** Catching specific exceptions (`json.JSONDecodeError`, `UnicodeDecodeError`) ensures that only expected parsing failures trigger the error path, while allowing other bugs to propagate and be caught by standard error logging or debugging tools.
+**Prevention:** Avoid bare `except:` or broad `except Exception:` blocks. Always identify and catch the specific exceptions that are expected to occur in a given block of code.
