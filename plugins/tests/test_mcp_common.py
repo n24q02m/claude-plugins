@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import os
 import sys
 
@@ -9,6 +9,10 @@ import mcp_common
 
 
 class TestMcpCommon(unittest.TestCase):
+    def setUp(self):
+        # Clear the lru_cache to prevent stale results leaking across test cases
+        # since we are mutating environment variables and mocking filesystem calls.
+        mcp_common.is_relay_configured.cache_clear()
 
     @patch.dict(os.environ, {"LOCALAPPDATA": "/fake/localappdata"}, clear=True)
     @patch("os.path.exists")
