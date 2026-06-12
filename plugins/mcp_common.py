@@ -3,6 +3,7 @@ import os
 
 import json
 import sys
+import functools
 
 
 def read_mcp_hook_input() -> dict:
@@ -35,8 +36,11 @@ def read_mcp_hook_input() -> dict:
         sys.exit(2)
 
 
+@functools.lru_cache(maxsize=None)
 def is_relay_configured() -> bool:
-    """Checks if mcp-relay-core is configured by looking for config.enc."""
+    """Checks if mcp-relay-core is configured by looking for config.enc.
+    Optimization: Cached to avoid repeated expensive filesystem checks during execution.
+    """
     # mcp-relay-core stores config.enc in a shared 'mcp' directory
     # Optimization: Use sequential checks to short-circuit early and
     # avoid constructing unused paths or unnecessary memory allocations.
