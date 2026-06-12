@@ -2,7 +2,7 @@
 
 > Give this file to your AI agent to automatically set up better-notion-mcp.
 
-> **2026-05-02 Update (v<auto>+)**: Plugin install (Option 1) now uses pure stdio mode with `NOTION_TOKEN` env var.
+> **2026-05-02 Update**: Plugin install (Option 1) now uses pure stdio mode with `NOTION_TOKEN` env var.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 > If you relied on the relay form to enter your token, please:
 > 1. Set `NOTION_TOKEN` directly in plugin config (Option 1), OR

@@ -2,7 +2,7 @@
 
 > Give this file to your AI agent to automatically set up better-code-review-graph.
 
-> **2026-05-02 Update (v<auto>+)**: Plugin install (Option 1) now uses pure stdio mode. API keys are optional env vars.
+> **2026-05-02 Update**: Plugin install (Option 1) now uses pure stdio mode. API keys are optional env vars.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 > If you relied on the relay form to enter API keys, please:
 > 1. Set the env var directly in plugin config (Option 1), OR

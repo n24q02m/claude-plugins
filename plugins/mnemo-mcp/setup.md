@@ -1,6 +1,6 @@
 # Mnemo MCP -- Manual Setup Guide
 
-> **2026-05-02 Update (v<auto>+)**: Plugin install (Method 1) now uses pure stdio mode with local SQLite storage. No required env vars -- mnemo works out-of-box.
+> **2026-05-02 Update**: Plugin install (Method 1) now uses pure stdio mode with local SQLite storage. No required env vars -- mnemo works out-of-box.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 > Optional cloud providers (Jina/Gemini/OpenAI/Cohere) and Google Drive sync are still supported -- set them via env vars (Method 1) or configure them through the relay form in HTTP mode (Method 3 self-host).
 
