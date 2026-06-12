@@ -1,6 +1,6 @@
 # Imagine MCP -- Manual Setup Guide
 
-> **2026-05-02 Update (v<auto>+)**: Plugin install (Method 1) now uses pure stdio mode with provider API key env vars.
+> **2026-05-02 Update**: Plugin install (Method 1) now uses pure stdio mode with provider API key env vars.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 > If you relied on the relay form to enter your keys, please:
 > 1. Set at least one of `GEMINI_API_KEY` / `OPENAI_API_KEY` / `XAI_API_KEY` directly in plugin config (Method 1), OR

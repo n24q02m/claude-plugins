@@ -2,13 +2,12 @@
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "n24q02m-plugins",
   "metadata": {
-    "description": "8 MCP servers: web search, memory, Notion, email, Telegram, Godot, code review",
+    "description": "8 MCP servers: web search, memory, Notion, email, Telegram, Godot, code review, image/video understanding + generation",
     "version": "1.0.0",
     "pluginRoot": "./plugins"
   },
   "owner": {
-    "name": "n24q02m",
-    "email": "n24q02m@gmail.com"
+    "name": "n24q02m"
   },
   "plugins": [
     {
@@ -26,7 +25,7 @@
     {
       "name": "better-notion-mcp",
       "source": "./plugins/better-notion-mcp",
-      "description": "Notion API — 10 composite tools, ~95% coverage",
+      "description": "Notion API — 11 composite tools, ~95% coverage",
       "category": "productivity"
     },
     {

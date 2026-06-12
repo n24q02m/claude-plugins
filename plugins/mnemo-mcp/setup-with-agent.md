@@ -2,7 +2,7 @@
 
 > Give this file to your AI agent to automatically set up mnemo-mcp.
 
-> **2026-05-02 Update (v<auto>+)**: Plugin install (Option 1) now uses pure stdio mode with local SQLite storage. No required env vars -- mnemo works out-of-box.
+> **2026-05-02 Update**: Plugin install (Option 1) now uses pure stdio mode with local SQLite storage. No required env vars -- mnemo works out-of-box.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 > Optional cloud providers (Jina/Gemini/OpenAI/Cohere) and Google Drive sync are still supported -- set them via env vars (Option 1/2) or configure them through the relay form in HTTP mode (see setup-manual.md "Method 3 (Docker HTTP — Self-host)").
 
