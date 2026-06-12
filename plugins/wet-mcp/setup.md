@@ -207,10 +207,10 @@ All environment variables are **optional**. See [docs/setup-with-agent.md](setup
 | `JINA_AI_API_KEY` | -- | Jina AI: search + extraction + embedding + reranking |
 | `GEMINI_API_KEY` | -- | Gemini: LLM + embedding (free tier) |
 | `OPENAI_API_KEY` | -- | OpenAI: LLM + embedding |
-| `ANTHROPIC_API_KEY` | -- | Anthropic: LLM dispatch (Phase 1 multi-provider, fed to web-core selector inference) |
-| `XAI_API_KEY` | -- | xAI/Grok: LLM dispatch (Phase 1 multi-provider) |
+| `ANTHROPIC_API_KEY` | -- | Anthropic: LLM dispatch for content-selector inference |
+| `XAI_API_KEY` | -- | xAI/Grok: LLM dispatch for content-selector inference |
 | `COHERE_API_KEY` | -- | Cohere: embedding + reranking |
-| `WEB_CORE_LLM_MODEL` | auto-detect | Override LLM model used by web-core ScrapingAgent selector inference (Phase 1) |
+| `WEB_CORE_LLM_MODEL` | auto-detect | Override the LLM model used for content-selector inference |
 | `BRAVE_API_KEY` | -- | Brave Search API key (premium search) |
 | `SERPER_API_KEY` | -- | Serper search API key (premium search) |
 | `GITHUB_TOKEN` | auto-detect | GitHub token for docs discovery |
