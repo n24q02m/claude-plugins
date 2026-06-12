@@ -199,7 +199,7 @@ To sync memories across machines:
 - **Stdio mode**: Set `SYNC_ENABLED=true` and provide a Google Drive OAuth token at `~/.mnemo-mcp/tokens/google_drive.json` (chmod 600). Manual token creation required.
 - **HTTP mode**: Set `SYNC_ENABLED=true` on the server, use the relay form's "Connect Google Drive" button -- the bundled Desktop OAuth client completes the flow in your browser.
 
-For S3-compatible storage (R2 / B2 / MinIO) instead of Google Drive, set `SYNC_S3_BUCKET` (plus `SYNC_S3_ENDPOINT` / `SYNC_S3_ACCESS_KEY_ID` / `SYNC_S3_SECRET_ACCESS_KEY` as needed) -- the backend auto-resolves to S3 when a bucket is set. Sync is native (Google Drive API via httpx, or S3); no rclone is involved.
+For S3-compatible storage (R2 / B2 / MinIO) instead of Google Drive, set `SYNC_S3_BUCKET` (plus `SYNC_S3_ENDPOINT` / `SYNC_S3_ACCESS_KEY_ID` / `SYNC_S3_SECRET_ACCESS_KEY` as needed) -- the backend auto-resolves to S3 when a bucket is set. Sync is native (Google Drive API or S3); no rclone is involved.
 
 ## Environment Variable Reference
 

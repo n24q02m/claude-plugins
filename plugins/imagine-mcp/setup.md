@@ -180,15 +180,15 @@ understand(
 )
 ```
 
-Expected: `{"text": "This is a cat...", "model": "gemini-3.1-flash-lite-preview", ...}`
+Expected: `{"text": "This is a cat...", "model": "<model-id>", ...}`
 
 ## Environment Variable Reference
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
 | `GEMINI_API_KEY` | At least one | -- | Google AI Studio (Gemini) API key. Stdio mode requires >=1 of the 3 provider keys. |
-| `OPENAI_API_KEY` | At least one | -- | OpenAI API key (GPT-5.4 understanding + gpt-image generation). |
-| `XAI_API_KEY` | At least one | -- | xAI (Grok) API key (Grok 4.20 understanding + Aurora generation). |
+| `OPENAI_API_KEY` | At least one | -- | OpenAI API key (image understanding + generation). |
+| `XAI_API_KEY` | At least one | -- | xAI (Grok) API key (image understanding + generation). |
 | `TRANSPORT_MODE` | No | `stdio` | Set to `http` for HTTP transport (multi-user paste-token). |
 | `MCP_TRANSPORT` | No | -- | Equivalent to `TRANSPORT_MODE` (alias for parity). |
 | `PUBLIC_URL` | Yes (http) | -- | Server's public URL for HTTP self-host. |

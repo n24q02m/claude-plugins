@@ -163,7 +163,7 @@ All environment variables are **optional**. The server works in local mode (ONNX
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `SYNC_ENABLED` | No | `true` | Enable sync (native Google Drive API via httpx, or S3) |
+| `SYNC_ENABLED` | No | `true` | Enable sync (native Google Drive API or S3) |
 | `SYNC_FOLDER` | No | `mnemo-mcp` | Google Drive folder name |
 | `SYNC_INTERVAL` | No | `300` | Auto-sync interval in seconds (0=manual) |
 | `SYNC_S3_BUCKET` | No | `` | S3-compatible bucket (R2/B2/MinIO); set to use S3 instead of Google Drive |

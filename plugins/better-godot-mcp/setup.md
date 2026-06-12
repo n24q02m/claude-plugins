@@ -1,6 +1,6 @@
 # Better Godot MCP -- Manual Setup Guide
 
-> **2026-05-02 Update (v\<auto\>+)**: Plugin install (Method 1) uses stdio mode (no auth required for godot).
+> **Note**: Plugin install (Method 1) uses stdio mode -- no auth required for godot.
 > The previous default of HTTP transport has been changed to stdio.
 > If you relied on HTTP mode, set `MCP_TRANSPORT=http` or pass `--http` flag.
 
