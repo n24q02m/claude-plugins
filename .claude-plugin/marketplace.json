@@ -13,7 +13,7 @@
     {
       "name": "wet-mcp",
       "source": "./plugins/wet-mcp",
-      "description": "Web search, content extraction, media download",
+      "description": "Web search, content extraction, library docs & media — 5-strategy scraping, no API keys",
       "category": "research"
     },
     {
@@ -25,7 +25,7 @@
     {
       "name": "better-notion-mcp",
       "source": "./plugins/better-notion-mcp",
-      "description": "Notion API — 11 composite tools, ~95% coverage",
+      "description": "Markdown-first Notion for AI agents — pages, databases, blocks & comments in one call",
       "category": "productivity"
     },
     {
