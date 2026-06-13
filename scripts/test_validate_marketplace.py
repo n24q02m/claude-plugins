@@ -16,6 +16,9 @@ class TestValidateMarketplace(unittest.TestCase):
         self.old_cwd = os.getcwd()
         os.chdir(self.test_dir)
 
+        self.old_project_root = validate_marketplace._PROJECT_ROOT
+        validate_marketplace._PROJECT_ROOT = self.test_dir
+
         # Create minimal structure
         os.makedirs(".claude-plugin")
         self.marketplace_path = ".claude-plugin/marketplace.json"
@@ -41,6 +44,7 @@ class TestValidateMarketplace(unittest.TestCase):
             json.dump(self.valid_plugin, f)
 
     def tearDown(self):
+        validate_marketplace._PROJECT_ROOT = self.old_project_root
         os.chdir(self.old_cwd)
         shutil.rmtree(self.test_dir)
 
