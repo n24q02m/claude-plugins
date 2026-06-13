@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate marketplace.json structure and plugin integrity."""
 
+import itertools
 import concurrent.futures
 import json
 import os
@@ -9,7 +10,7 @@ import sys
 from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path
 
 
-def _validate_plugin(plugin: dict) -> list[str]:
+def _validate_plugin(plugin: dict, base_dir: str) -> list[str]:
     """Helper function to validate a single plugin, returns list of error messages."""
     errors = []
     name = plugin.get("name")
@@ -37,7 +38,7 @@ def _validate_plugin(plugin: dict) -> list[str]:
 
     # Security check: prevent path traversal
     try:
-        plugin_dir = get_safe_path(os.getcwd(), source)
+        plugin_dir = get_safe_path(base_dir, source)
     except (OSError, ValueError):
         errors.append(f"Plugin {name}: invalid source path (path traversal blocked)")
         return errors
@@ -127,9 +128,12 @@ def validate_marketplace():
             errors.append("marketplace.json: No plugins defined")
 
         # Optimization: use ThreadPoolExecutor to parallelize I/O bound plugin validation checks
+        base_dir = os.getcwd()
         with concurrent.futures.ThreadPoolExecutor() as executor:
             # Flatten lists of errors from futures
-            for plugin_errors in executor.map(_validate_plugin, plugins):
+            for plugin_errors in executor.map(
+                _validate_plugin, plugins, itertools.repeat(base_dir)
+            ):
                 errors.extend(plugin_errors)
 
     if errors:
