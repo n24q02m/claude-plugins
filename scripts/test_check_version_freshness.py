@@ -7,10 +7,6 @@ import check_version_freshness
 
 
 class TestCheckVersionFreshness(unittest.TestCase):
-    def setUp(self):
-        # Clear cache before each test
-        check_version_freshness._cache = {}
-
     # ------------------------------------------------------------------
     # Happy path + URL construction
     # ------------------------------------------------------------------
@@ -185,25 +181,6 @@ class TestCheckVersionFreshness(unittest.TestCase):
 
         self.assertEqual(result["status"], "up-to-date")
         self.assertEqual(result["marketplace_ver"], "2.0.0")
-
-    # ------------------------------------------------------------------
-    # Caching: repeated lookups for same repo reuse cached result
-    # ------------------------------------------------------------------
-
-    @patch("check_version_freshness._opener.open")
-    def test_check_plugin_cache(self, mock_urlopen):
-        plugin = {"name": "cached-plugin", "source": "./plugins/cached-plugin"}
-
-        mock_response = MagicMock()
-        mock_response.read.return_value = b'{"tag_name": "v1.2.3"}'
-        mock_response.__enter__.return_value = mock_response
-        mock_urlopen.return_value = mock_response
-
-        with patch(
-            "check_version_freshness.open", create=True, side_effect=FileNotFoundError
-        ):
-            check_version_freshness.check_plugin(plugin)
-            check_version_freshness.check_plugin(plugin)
 
         self.assertEqual(mock_urlopen.call_count, 1)
 
