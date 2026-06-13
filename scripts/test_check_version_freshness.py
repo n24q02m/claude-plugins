@@ -9,7 +9,7 @@ import check_version_freshness
 class TestCheckVersionFreshness(unittest.TestCase):
     def setUp(self):
         # Clear cache before each test
-        check_version_freshness._cache = {}
+        check_version_freshness.get_latest_tag_api.cache_clear()
 
     # ------------------------------------------------------------------
     # Happy path + URL construction
