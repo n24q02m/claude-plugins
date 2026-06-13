@@ -1,7 +1,8 @@
 import unittest
 import os
 import tempfile
-from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path
+from unittest.mock import patch
+from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path, _cached_realpath
 
 
 class TestUtils(unittest.TestCase):
@@ -78,6 +79,25 @@ class TestUtils(unittest.TestCase):
             # Absolute path traversal (if it goes outside)
             with self.assertRaisesRegex(ValueError, "Path traversal detected"):
                 get_safe_path(tmpdir, "/etc/passwd")
+
+    def test_cached_realpath_optimization(self):
+        """Should verify that _cached_realpath is indeed caching."""
+        # Clear cache to ensure clean state
+        _cached_realpath.cache_clear()
+
+        with patch("os.path.realpath", side_effect=os.path.realpath) as mock_realpath:
+            path = os.getcwd()
+            # First call should hit realpath
+            _cached_realpath(path)
+            self.assertEqual(mock_realpath.call_count, 1)
+
+            # Second call should be cached
+            _cached_realpath(path)
+            self.assertEqual(mock_realpath.call_count, 1)
+
+            # Different path should hit realpath again
+            _cached_realpath("/")
+            self.assertEqual(mock_realpath.call_count, 2)
 
 
 if __name__ == "__main__":
