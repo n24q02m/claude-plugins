@@ -79,6 +79,48 @@ class TestUtils(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Path traversal detected"):
                 get_safe_path(tmpdir, "/etc/passwd")
 
+    def test_get_safe_path_absolute_inside(self):
+        """Should allow absolute paths that resolve inside the base directory."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            real_tmpdir = os.path.realpath(tmpdir)
+            inner_path = os.path.join(real_tmpdir, "allowed")
+            os.makedirs(inner_path)
+
+            self.assertEqual(get_safe_path(real_tmpdir, inner_path), "allowed")
+
+    def test_get_safe_path_symlinks(self):
+        """Should handle symlinks correctly, blocking traversal."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            real_tmpdir = os.path.realpath(tmpdir)
+
+            # Internal symlink
+            target_dir = os.path.join(real_tmpdir, "target")
+            os.makedirs(target_dir)
+            link_path = os.path.join(real_tmpdir, "link")
+            os.symlink(target_dir, link_path)
+
+            self.assertEqual(get_safe_path(real_tmpdir, "link"), "target")
+
+            # External symlink
+            with tempfile.TemporaryDirectory() as external_dir:
+                real_external = os.path.realpath(external_dir)
+                external_link = os.path.join(real_tmpdir, "external_link")
+                os.symlink(real_external, external_link)
+
+                with self.assertRaisesRegex(ValueError, "Path traversal detected"):
+                    get_safe_path(real_tmpdir, "external_link")
+
+    def test_get_safe_path_complex_dots(self):
+        """Should handle complex paths with multiple dot segments."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            real_tmpdir = os.path.realpath(tmpdir)
+            os.makedirs(os.path.join(real_tmpdir, "a/b/c"))
+
+            self.assertEqual(get_safe_path(real_tmpdir, "a/./b/../b/c"), "a/b/c")
+
+            with self.assertRaisesRegex(ValueError, "Path traversal detected"):
+                get_safe_path(real_tmpdir, "a/b/../../..")
+
 
 if __name__ == "__main__":
     unittest.main()
