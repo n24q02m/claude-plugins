@@ -51,7 +51,7 @@ class TestMcpCommon(unittest.TestCase):
     def test_read_mcp_hook_input_valid(self, mock_read):
         data = mcp_common.read_mcp_hook_input()
         self.assertEqual(data, {"key": "value"})
-        mock_read.assert_called_once_with(1024 * 1024)
+        mock_read.assert_called_once_with(64 * 1024)
 
     @patch("sys.stdin.read", return_value="invalid json")
     @patch("sys.exit", side_effect=SystemExit)
@@ -60,6 +60,18 @@ class TestMcpCommon(unittest.TestCase):
         with self.assertRaises(SystemExit):
             mcp_common.read_mcp_hook_input()
         mock_exit.assert_called_once_with(2)
+
+    @patch("sys.stdin.read")
+    @patch("sys.exit", side_effect=SystemExit)
+    @patch("sys.stdout.write")
+    def test_read_mcp_hook_input_too_large(self, mock_stdout, mock_exit, mock_read):
+        # Simulate truncation by sys.stdin.read(64 * 1024)
+        large_input = '{"key": "' + "a" * 70000 + '"}'
+        mock_read.return_value = large_input[: 64 * 1024]
+        with self.assertRaises(SystemExit):
+            mcp_common.read_mcp_hook_input()
+        mock_exit.assert_called_once_with(2)
+        mock_read.assert_called_once_with(64 * 1024)
 
     @patch("sys.stdin.read", return_value='["not a dict"]')
     @patch("sys.exit", side_effect=SystemExit)
