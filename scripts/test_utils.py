@@ -1,6 +1,7 @@
 import unittest
 import os
 import tempfile
+from unittest.mock import patch
 from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path
 
 
@@ -49,6 +50,21 @@ class TestUtils(unittest.TestCase):
         for name in invalid_names:
             with self.subTest(name=name):
                 self.assertFalse(PLUGIN_NAME_PATTERN.fullmatch(name))
+
+    @patch("os.path.realpath", wraps=os.path.realpath)
+    def test_cached_realpath(self, mock_realpath):
+        """Should cache repeated identical calls to os.path.realpath."""
+        from utils import _cached_realpath
+
+        _cached_realpath.cache_clear()
+
+        path = "/fake/path"
+        _cached_realpath(path)
+        _cached_realpath(path)
+        _cached_realpath(path)
+
+        # It should only have called os.path.realpath once
+        self.assertEqual(mock_realpath.call_count, 1)
 
     def test_get_safe_path_valid(self):
         """Should return relative path for valid sub-paths."""

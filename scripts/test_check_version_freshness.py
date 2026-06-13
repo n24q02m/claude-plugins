@@ -1,4 +1,5 @@
 import json
+import os
 import unittest
 import urllib.error
 from unittest.mock import MagicMock, patch
@@ -9,7 +10,12 @@ import check_version_freshness
 class TestCheckVersionFreshness(unittest.TestCase):
     def setUp(self):
         # Clear cache before each test
-        check_version_freshness._cache = {}
+        check_version_freshness.get_latest_tag_api.cache_clear()
+        self.old_project_root = check_version_freshness._PROJECT_ROOT
+        check_version_freshness._PROJECT_ROOT = os.getcwd()
+
+    def tearDown(self):
+        check_version_freshness._PROJECT_ROOT = self.old_project_root
 
     # ------------------------------------------------------------------
     # Happy path + URL construction
@@ -56,16 +62,23 @@ class TestCheckVersionFreshness(unittest.TestCase):
         self.assertEqual(res["status"], "error")
         self.assertEqual(res["error"], "invalid source path")
 
+    @patch("utils._cached_realpath")
     @patch("os.path.realpath")
-    @patch("os.getcwd")
-    def test_check_plugin_symlink_traversal(self, mock_getcwd, mock_realpath):
-        mock_getcwd.return_value = "/app"
-        # First call for abs_base, second for abs_target
-        mock_realpath.side_effect = ["/app", "/etc/passwd"]
-        plugin = {"name": "test-plugin", "source": "plugins/malicious"}
-        res = check_version_freshness.check_plugin(plugin)
-        self.assertEqual(res["status"], "error")
-        self.assertEqual(res["error"], "invalid source path")
+    def test_check_plugin_symlink_traversal(self, mock_realpath, mock_cached_realpath):
+        mock_cached_realpath.return_value = "/app"
+        # First call inside utils.py is for abs_target since we mocked _cached_realpath for abs_base
+        mock_realpath.side_effect = ["/etc/passwd"]
+
+        # We need to make sure _PROJECT_ROOT is set to /app so it uses it
+        old_root = check_version_freshness._PROJECT_ROOT
+        check_version_freshness._PROJECT_ROOT = "/app"
+        try:
+            plugin = {"name": "test-plugin", "source": "plugins/malicious"}
+            res = check_version_freshness.check_plugin(plugin)
+            self.assertEqual(res["status"], "error")
+            self.assertEqual(res["error"], "invalid source path")
+        finally:
+            check_version_freshness._PROJECT_ROOT = old_root
 
     @patch("check_version_freshness._opener.open")
     def test_check_plugin_invalid_name_space(self, mock_urlopen):
