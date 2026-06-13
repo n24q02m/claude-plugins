@@ -10,8 +10,6 @@ Prints progress markers to stderr and the synthesised Markdown answer
 callers should hit the tool directly.
 """
 
-from __future__ import annotations
-
 import argparse
 import asyncio
 import json
