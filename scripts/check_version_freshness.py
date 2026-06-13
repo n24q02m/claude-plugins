@@ -6,9 +6,30 @@ import json
 import os
 import urllib.request
 import urllib.error
+import urllib.parse
 import threading
 
 from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path
+
+
+class NoAuthRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Custom redirect handler that strips the Authorization header on cross-origin redirects."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        m = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if m is not None:
+            # Check if the hostname has changed
+            old_host = urllib.parse.urlparse(req.full_url).hostname
+            new_host = urllib.parse.urlparse(newurl).hostname
+            if old_host != new_host:
+                # Strip Authorization header to prevent token leakage (SSRF mitigation)
+                for header in ["Authorization", "Cookie", "authorization", "cookie"]:
+                    if m.has_header(header):
+                        m.remove_header(header)
+        return m
+
+
+_opener = urllib.request.build_opener(NoAuthRedirectHandler)
 
 # In-memory cache for API responses to avoid redundant calls
 _cache = {}
@@ -34,7 +55,7 @@ def get_latest_tag_api(repo):
 
     req = urllib.request.Request(url, headers=headers)
     try:
-        with urllib.request.urlopen(req, timeout=30) as response:
+        with _opener.open(req, timeout=30) as response:
             data = json.loads(response.read().decode())
             # GitHub REST API returns snake_case tag_name (gh CLI returns camelCase).
             tag = data.get("tag_name", "").lstrip("v")

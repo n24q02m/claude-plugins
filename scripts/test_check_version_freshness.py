@@ -15,7 +15,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
     # Happy path + URL construction
     # ------------------------------------------------------------------
 
-    @patch("check_version_freshness.urllib.request.urlopen")
+    @patch("check_version_freshness._opener.open")
     def test_check_plugin_valid_name(self, mock_urlopen):
         plugin = {"name": "valid-plugin-123", "source": "./plugins/valid-plugin-123"}
 
@@ -43,7 +43,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
     # Input validation (no network)
     # ------------------------------------------------------------------
 
-    @patch("check_version_freshness.urllib.request.urlopen")
+    @patch("check_version_freshness._opener.open")
     def test_check_plugin_invalid_name_injection(self, mock_urlopen):
         plugin = {"name": "invalid; rm -rf /", "source": "./plugins/invalid"}
         result = check_version_freshness.check_plugin(plugin)
@@ -67,21 +67,21 @@ class TestCheckVersionFreshness(unittest.TestCase):
         self.assertEqual(res["status"], "error")
         self.assertEqual(res["error"], "invalid source path")
 
-    @patch("check_version_freshness.urllib.request.urlopen")
+    @patch("check_version_freshness._opener.open")
     def test_check_plugin_invalid_name_space(self, mock_urlopen):
         plugin = {"name": "plugin name", "source": "./plugins/plugin"}
         result = check_version_freshness.check_plugin(plugin)
         self.assertEqual(result["status"], "error")
         mock_urlopen.assert_not_called()
 
-    @patch("check_version_freshness.urllib.request.urlopen")
+    @patch("check_version_freshness._opener.open")
     def test_check_plugin_invalid_name_underscore(self, mock_urlopen):
         plugin = {"name": "plugin_with_underscore", "source": "./plugins/p"}
         result = check_version_freshness.check_plugin(plugin)
         self.assertEqual(result["status"], "error")
         mock_urlopen.assert_not_called()
 
-    @patch("check_version_freshness.urllib.request.urlopen")
+    @patch("check_version_freshness._opener.open")
     def test_check_plugin_invalid_name_newline(self, mock_urlopen):
         plugin = {"name": "plugin-name\n", "source": "./plugins/p"}
         result = check_version_freshness.check_plugin(plugin)
@@ -92,7 +92,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
     # Status transitions: stale / no-release / timeout / error
     # ------------------------------------------------------------------
 
-    @patch("check_version_freshness.urllib.request.urlopen")
+    @patch("check_version_freshness._opener.open")
     def test_check_plugin_stale(self, mock_urlopen):
         plugin = {"name": "stale-plugin", "source": "./plugins/stale-plugin"}
 
@@ -111,7 +111,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
         self.assertEqual(result["marketplace_ver"], "1.0.0")
         self.assertEqual(result["latest_tag"], "1.1.0")
 
-    @patch("check_version_freshness.urllib.request.urlopen")
+    @patch("check_version_freshness._opener.open")
     def test_check_plugin_no_release_404(self, mock_urlopen):
         plugin = {
             "name": "no-release-plugin",
@@ -129,7 +129,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
 
         self.assertEqual(result["status"], "no-release")
 
-    @patch("check_version_freshness.urllib.request.urlopen")
+    @patch("check_version_freshness._opener.open")
     def test_check_plugin_timeout(self, mock_urlopen):
         plugin = {"name": "timeout-plugin", "source": "./plugins/timeout-plugin"}
         mock_urlopen.side_effect = urllib.error.URLError(reason=TimeoutError())
@@ -142,7 +142,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
 
         self.assertEqual(result["status"], "timeout")
 
-    @patch("check_version_freshness.urllib.request.urlopen")
+    @patch("check_version_freshness._opener.open")
     def test_check_plugin_error_generic(self, mock_urlopen):
         plugin = {"name": "error-plugin", "source": "./plugins/error-plugin"}
         mock_urlopen.side_effect = urllib.error.URLError(reason="boom")
@@ -159,7 +159,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
     # Fallback: gemini-extension.json
     # ------------------------------------------------------------------
 
-    @patch("check_version_freshness.urllib.request.urlopen")
+    @patch("check_version_freshness._opener.open")
     def test_check_plugin_gemini_fallback(self, mock_urlopen):
         plugin = {"name": "gemini-plugin", "source": "./plugins/gemini-plugin"}
 
@@ -190,7 +190,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
     # Caching: repeated lookups for same repo reuse cached result
     # ------------------------------------------------------------------
 
-    @patch("check_version_freshness.urllib.request.urlopen")
+    @patch("check_version_freshness._opener.open")
     def test_check_plugin_cache(self, mock_urlopen):
         plugin = {"name": "cached-plugin", "source": "./plugins/cached-plugin"}
 
@@ -212,7 +212,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
     # ------------------------------------------------------------------
 
     @patch.dict("os.environ", {"GITHUB_TOKEN": "secret-token"}, clear=False)
-    @patch("check_version_freshness.urllib.request.urlopen")
+    @patch("check_version_freshness._opener.open")
     def test_check_plugin_uses_auth_header(self, mock_urlopen):
         plugin = {"name": "auth-plugin", "source": "./plugins/auth-plugin"}
 
@@ -233,10 +233,63 @@ class TestCheckVersionFreshness(unittest.TestCase):
         self.assertEqual(req.headers.get("Authorization"), "token secret-token")
 
     # ------------------------------------------------------------------
+    # SSRF Mitigation: NoAuthRedirectHandler
+    # ------------------------------------------------------------------
+
+    def test_no_auth_redirect_handler_cross_origin(self):
+        """Should strip Authorization header when redirecting to a different origin."""
+        req = urllib.request.Request(
+            "https://api.github.com/test",
+            headers={"Authorization": "token secret", "Cookie": "session=123"},
+        )
+        handler = check_version_freshness.NoAuthRedirectHandler()
+        # Mock the underlying redirect_request to just return a Request object
+        # with the new URL and the old headers.
+        with patch("urllib.request.HTTPRedirectHandler.redirect_request") as mock_super:
+            mock_super.return_value = urllib.request.Request(
+                "https://raw.githubusercontent.com/test",
+                headers=req.headers,
+            )
+            redirected_req = handler.redirect_request(
+                req,
+                MagicMock(),
+                302,
+                "Found",
+                MagicMock(),
+                "https://raw.githubusercontent.com/test",
+            )
+            self.assertNotIn("Authorization", redirected_req.headers)
+            self.assertNotIn("Cookie", redirected_req.headers)
+            self.assertNotIn("authorization", redirected_req.headers)
+
+    def test_no_auth_redirect_handler_same_origin(self):
+        """Should retain Authorization header when redirecting to the same origin."""
+        req = urllib.request.Request(
+            "https://api.github.com/test",
+            headers={"Authorization": "token secret", "Cookie": "session=123"},
+        )
+        handler = check_version_freshness.NoAuthRedirectHandler()
+        with patch("urllib.request.HTTPRedirectHandler.redirect_request") as mock_super:
+            mock_super.return_value = urllib.request.Request(
+                "https://api.github.com/test2",
+                headers=req.headers,
+            )
+            redirected_req = handler.redirect_request(
+                req,
+                MagicMock(),
+                302,
+                "Found",
+                MagicMock(),
+                "https://api.github.com/test2",
+            )
+            self.assertIn("Authorization", redirected_req.headers)
+            self.assertIn("Cookie", redirected_req.headers)
+
+    # ------------------------------------------------------------------
     # Regression: GitHub REST API returns snake_case tag_name, not camelCase
     # ------------------------------------------------------------------
 
-    @patch("check_version_freshness.urllib.request.urlopen")
+    @patch("check_version_freshness._opener.open")
     def test_check_plugin_uses_snake_case_tag_name(self, mock_urlopen):
         """API payload uses tag_name; tagName (camelCase) would regress to empty tag."""
         plugin = {"name": "regression-plugin", "source": "./plugins/regression-plugin"}
