@@ -11,6 +11,8 @@ import threading
 
 from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path
 
+_PROJECT_ROOT = os.getcwd()
+
 
 class NoAuthRedirectHandler(urllib.request.HTTPRedirectHandler):
     """Custom redirect handler that strips the Authorization header on cross-origin redirects."""
@@ -99,7 +101,7 @@ def check_plugin(plugin):
         }
     # Robust path validation: resolve symlinks and ensure path is within project root
     try:
-        source = get_safe_path(os.getcwd(), source)
+        source = get_safe_path(_PROJECT_ROOT, source)
     except (OSError, ValueError):
         return {
             "status": "error",
