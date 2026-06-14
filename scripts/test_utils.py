@@ -1,7 +1,8 @@
 import unittest
 import os
 import tempfile
-from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path
+from unittest.mock import patch
+from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path, _cached_realpath
 
 
 class TestUtils(unittest.TestCase):
@@ -64,6 +65,20 @@ class TestUtils(unittest.TestCase):
             self.assertEqual(get_safe_path(tmpdir, "sub/../sub"), "sub")
             # Base directory itself
             self.assertEqual(get_safe_path(tmpdir, "."), ".")
+
+    @patch("os.path.realpath")
+    def test_cached_realpath_optimization(self, mock_realpath):
+        """Should cache repeated calls to os.path.realpath for the same path."""
+        _cached_realpath.cache_clear()
+        self.addCleanup(_cached_realpath.cache_clear)
+        mock_realpath.side_effect = lambda x: x
+
+        path = "/test/path"
+        _cached_realpath(path)
+        _cached_realpath(path)
+        _cached_realpath(path)
+
+        mock_realpath.assert_called_once_with(path)
 
     def test_get_safe_path_traversal(self):
         """Should raise ValueError for path traversal outside base_dir."""
