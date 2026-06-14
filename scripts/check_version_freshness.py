@@ -34,6 +34,7 @@ _opener = urllib.request.build_opener(NoAuthRedirectHandler)
 # In-memory cache for API responses to avoid redundant calls
 _cache = {}
 _cache_lock = threading.Lock()
+_PROJECT_ROOT = os.getcwd()
 
 
 def get_latest_tag_api(repo):
@@ -99,7 +100,7 @@ def check_plugin(plugin):
         }
     # Robust path validation: resolve symlinks and ensure path is within project root
     try:
-        source = get_safe_path(os.getcwd(), source)
+        source = get_safe_path(_PROJECT_ROOT, source)
     except (OSError, ValueError):
         return {
             "status": "error",
