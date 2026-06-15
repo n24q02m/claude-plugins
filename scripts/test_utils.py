@@ -1,7 +1,8 @@
 import unittest
 import os
 import tempfile
-from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path
+from unittest.mock import patch
+from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path, _cached_realpath
 
 
 class TestUtils(unittest.TestCase):
@@ -78,6 +79,20 @@ class TestUtils(unittest.TestCase):
             # Absolute path traversal (if it goes outside)
             with self.assertRaisesRegex(ValueError, "Path traversal detected"):
                 get_safe_path(tmpdir, "/etc/passwd")
+
+    def test_cached_realpath_efficiency(self):
+        """Verify os.path.realpath is called only once for repeated inputs."""
+        self.addCleanup(_cached_realpath.cache_clear)
+        with patch("os.path.realpath") as mock_realpath:
+            mock_realpath.return_value = "/fake/path"
+
+            # Call multiple times with the same input
+            _cached_realpath("/test/input")
+            _cached_realpath("/test/input")
+            _cached_realpath("/test/input")
+
+            # Assert underlying function was called only once
+            mock_realpath.assert_called_once_with("/test/input")
 
 
 if __name__ == "__main__":

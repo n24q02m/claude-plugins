@@ -35,6 +35,9 @@ _opener = urllib.request.build_opener(NoAuthRedirectHandler)
 _cache = {}
 _cache_lock = threading.Lock()
 
+# Cache current working directory to reduce syscall overhead in validation loops
+_PROJECT_ROOT = os.getcwd()
+
 
 def get_latest_tag_api(repo):
     """Fetch the latest stable release tag from GitHub API."""
@@ -99,7 +102,7 @@ def check_plugin(plugin):
         }
     # Robust path validation: resolve symlinks and ensure path is within project root
     try:
-        source = get_safe_path(os.getcwd(), source)
+        source = get_safe_path(_PROJECT_ROOT, source)
     except (OSError, ValueError):
         return {
             "status": "error",
