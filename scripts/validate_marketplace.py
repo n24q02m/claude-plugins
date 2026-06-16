@@ -8,6 +8,9 @@ import sys
 
 from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path
 
+# Cache current working directory to reduce redundant I/O syscalls in multithreaded operations
+_PROJECT_ROOT = os.getcwd()
+
 
 def _validate_plugin(plugin: dict) -> list[str]:
     """Helper function to validate a single plugin, returns list of error messages."""
@@ -37,7 +40,8 @@ def _validate_plugin(plugin: dict) -> list[str]:
 
     # Security check: prevent path traversal
     try:
-        plugin_dir = get_safe_path(os.getcwd(), source)
+        # Optimization: use cached _PROJECT_ROOT instead of calling os.getcwd() repeatedly
+        plugin_dir = get_safe_path(_PROJECT_ROOT, source)
     except (OSError, ValueError):
         errors.append(f"Plugin {name}: invalid source path (path traversal blocked)")
         return errors
