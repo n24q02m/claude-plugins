@@ -12,3 +12,8 @@
 **Vulnerability:** The `scripts/check_version_freshness.py` script fetched GitHub API data using `urllib.request.urlopen` with a GitHub token in the `Authorization` header. If the API returned a redirect to a different domain, the default `HTTPRedirectHandler` passed the `Authorization` header to the new origin, creating an SSRF data-leakage risk.
 **Learning:** Python's default `urllib` redirect handlers automatically forward all headers to the redirect target. Sensitive headers, particularly `Authorization` and `Cookie`, must be explicitly stripped when following cross-origin redirects to prevent token exfiltration.
 **Prevention:** To prevent `Authorization` header leakage (SSRF) during HTTP redirects when using Python's `urllib.request`, the project uses a custom `NoAuthRedirectHandler` (inheriting from `urllib.request.HTTPRedirectHandler`) that explicitly strips sensitive headers like `Authorization` and `Cookie` when the redirect destination hostname differs from the original request hostname.
+
+## 2024-06-25 - Reduce MCP Hook Input Limit
+**Vulnerability:** The `read_mcp_hook_input` function in `plugins/mcp_common.py` allowed up to 1MB of input, which creates a risk of large input exhaustion / Denial of Service.
+**Learning:** Limiting maximum input payload sizes to the smallest reasonable size reduces the risk of denial of service by exhausting server resources.
+**Prevention:** Hardened the maximum size read from stdin to 64KB to mitigate large input exhaustion.

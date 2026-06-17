@@ -6,12 +6,12 @@ import sys
 
 
 def read_mcp_hook_input() -> dict:
-    """Reads and parses a JSON payload from sys.stdin safely (max 1MB).
+    """Reads and parses a JSON payload from sys.stdin safely (max 64KB).
 
     Exits with code 2 if the payload is invalid JSON, too large, or not a dict.
     """
     try:
-        data = json.loads(sys.stdin.read(1024 * 1024))
+        data = json.loads(sys.stdin.read(64 * 1024))
         if not isinstance(data, dict):
             print(
                 json.dumps(
