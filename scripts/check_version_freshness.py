@@ -7,7 +7,7 @@ import os
 import urllib.request
 import urllib.error
 import urllib.parse
-import threading
+import functools
 
 from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path
 
@@ -32,16 +32,11 @@ class NoAuthRedirectHandler(urllib.request.HTTPRedirectHandler):
 _opener = urllib.request.build_opener(NoAuthRedirectHandler)
 
 # In-memory cache for API responses to avoid redundant calls
-_cache = {}
-_cache_lock = threading.Lock()
 
 
+@functools.lru_cache(maxsize=None)
 def get_latest_tag_api(repo):
     """Fetch the latest stable release tag from GitHub API."""
-    with _cache_lock:
-        if repo in _cache:
-            return _cache[repo]
-
     url = f"https://api.github.com/repos/{repo}/releases/latest"
     headers = {
         "Accept": "application/vnd.github.v3+json",
@@ -73,8 +68,6 @@ def get_latest_tag_api(repo):
     except Exception as e:
         result = ("error", str(e))
 
-    with _cache_lock:
-        _cache[repo] = result
     return result
 
 
