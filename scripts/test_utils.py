@@ -79,6 +79,36 @@ class TestUtils(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Path traversal detected"):
                 get_safe_path(tmpdir, "/etc/passwd")
 
+    def test_get_safe_path_null_bytes(self):
+        """Should raise ValueError for paths containing null bytes."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with self.assertRaisesRegex(ValueError, "Path contains null bytes"):
+                get_safe_path(tmpdir, "file.txt\0secret")
+            with self.assertRaisesRegex(ValueError, "Path contains null bytes"):
+                get_safe_path(tmpdir + "\0", "file.txt")
+
+    def test_get_safe_path_symlink_traversal(self):
+        """Should raise ValueError for paths that escape via symlinks."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = os.path.join(tmpdir, "base")
+            outside = os.path.join(tmpdir, "outside")
+            os.makedirs(base)
+            os.makedirs(outside)
+
+            # Create a symlink in base pointing to outside
+            os.symlink(outside, os.path.join(base, "link"))
+
+            with self.assertRaisesRegex(ValueError, "Path traversal detected"):
+                get_safe_path(base, "link/secret.txt")
+
+    def test_get_safe_path_lexical_traversal(self):
+        """Should raise ValueError for lexical traversal even if it doesn't exist."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Complex lexical traversal that resolves to outside
+            # but might be hard to catch without lexical checks
+            with self.assertRaisesRegex(ValueError, "Path traversal detected"):
+                get_safe_path(tmpdir, "sub/../../outside")
+
 
 if __name__ == "__main__":
     unittest.main()
