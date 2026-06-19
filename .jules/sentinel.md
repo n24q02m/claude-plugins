@@ -17,3 +17,8 @@
 **Vulnerability:** Incomplete path traversal protection. Although the existing implementation used physical path resolution, it lacked lexical validation as defense-in-depth and did not explicitly reject null bytes, which could lead to inconsistent behavior or bypassed checks in certain environments.
 **Learning:** Multi-layered path validation (null byte check -> lexical check -> physical check) ensures a "fail-closed" security posture. Lexical checks using `abspath` prevent traversal attempts using `..` components even before the target files exist, while physical checks using `realpath` prevent escaping via symlinks.
 **Prevention:** Always combine lexical and physical path validation for any utility handling untrusted path inputs. Ensure all inputs are checked for null bytes before processing.
+
+## 2024-06-20 - Limit MCP Hook Input Size to Prevent Exhaustion
+**Vulnerability:** The centralized `read_mcp_hook_input` function in `plugins/mcp_common.py` read up to 1MB of data from `sys.stdin`. Since the process loads this entirely into memory and then parses it via `json.loads`, supplying an exceptionally large payload could exhaust memory and compute resources.
+**Learning:** Even centralized boundary protections can introduce Denial of Service (DoS) risks if the allowed input bounds are too generous. In this context, 1MB is unnecessarily large for expected MCP hook payloads.
+**Prevention:** Hardened `read_mcp_hook_input` in `plugins/mcp_common.py` to only read up to 64KB from `sys.stdin` to mitigate large input exhaustion risks.
