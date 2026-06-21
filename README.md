@@ -51,25 +51,42 @@ Or browse all plugins: run `/plugin` and go to the **Discover** tab.
 
 ## Plugins
 
-| Plugin | Category | Description | Env Vars |
+| Plugin | Category | Description | Config (env / userConfig) |
 |--------|----------|-------------|----------|
-| **wet-mcp** | Research | Web search, content extraction, media download | `API_KEYS` (optional) |
-| **mnemo-mcp** | Productivity | Persistent AI memory across sessions | `API_KEYS` (optional) |
-| **better-notion-mcp** | Productivity | Notion API — 10 tools, ~95% coverage | `NOTION_TOKEN` |
-| **better-email-mcp** | Communication | Email IMAP/SMTP — multi-account | `EMAIL_CREDENTIALS` |
-| **better-telegram-mcp** | Communication | Telegram dual-mode (Bot + MTProto) — messages, chats, media | `TELEGRAM_BOT_TOKEN` |
-| **better-godot-mcp** | Development | Godot Engine — 17 composite tools for game dev | `GODOT_PATH` (optional) |
-| **better-code-review-graph** | Development | Knowledge graph for code reviews | `API_KEYS` (optional) |
-| **imagine-mcp** | Multimodal | Image/video understanding + generation across Gemini, OpenAI, Grok | `GEMINI_API_KEY`, `OPENAI_API_KEY`, `XAI_API_KEY` (any optional) |
+| **wet-mcp** | Research | Web search, content extraction, library docs, media download | All optional: `JINA_AI_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY`, `GITHUB_TOKEN` |
+| **mnemo-mcp** | Productivity | Persistent AI memory across sessions | All optional: `JINA_AI_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY` |
+| **better-notion-mcp** | Productivity | Notion API — 11 composite tools, ~95% coverage | `NOTION_TOKEN` (required) |
+| **better-email-mcp** | Communication | Email IMAP/SMTP — multi-account | `EMAIL_CREDENTIALS` (required) |
+| **better-telegram-mcp** | Communication | Telegram dual-mode (Bot API + MTProto) — messages, chats, media | `TELEGRAM_BOT_TOKEN` (optional; required for bot mode) |
+| **better-godot-mcp** | Development | Godot Engine — 17 composite tools for game dev | `GODOT_PATH`, `GODOT_PROJECT_PATH` (both optional) |
+| **better-code-review-graph** | Development | Knowledge graph for token-efficient code reviews | All optional: `JINA_AI_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY` |
+| **imagine-mcp** | Multimodal | Image/video understanding + generation across Gemini, OpenAI, Grok | All optional: `XAI_API_KEY` (default provider), `GEMINI_API_KEY`, `OPENAI_API_KEY` |
 
 ## Configuration
 
-After installing, configure env vars in `~/.claude/settings.local.json` under the `env` block, or `export` in your shell profile. Plugins that need credentials (email, telegram, notion stdio) require them to function. Others (wet, mnemo, CRG) work in local mode without API keys.
+When you run `/plugin install`, Claude Code prompts for that plugin's credentials (declared in each plugin's `userConfig`) and stores sensitive values in your system keychain. You can also set them via the `env` block in `~/.claude/settings.local.json`, or `export` them in your shell profile.
 
-### Cloud Embedding (wet-mcp, mnemo-mcp, better-code-review-graph)
+`better-notion-mcp` and `better-email-mcp` require credentials to function. `better-telegram-mcp` needs a bot token only for bot mode. `wet-mcp`, `mnemo-mcp`, and `better-code-review-graph` run fully locally with no API keys (local ONNX embedding/reranking) — keys only enable optional cloud providers.
+
+### Cloud providers (wet-mcp, mnemo-mcp, better-code-review-graph)
+
+Each provider is a separate, optional env var. None is required:
 
 ```
-API_KEYS=GOOGLE_API_KEY:xxx,COHERE_API_KEY:yyy
+JINA_AI_API_KEY=jina_xxx
+GEMINI_API_KEY=AIza...
+OPENAI_API_KEY=sk-...
+COHERE_API_KEY=xxx
+```
+
+Provider priority (wet-mcp / CRG): embedding Jina AI > Gemini > OpenAI > Cohere > local ONNX; reranking Jina AI > Cohere > local ONNX.
+
+### imagine-mcp
+
+```
+XAI_API_KEY=xai-...      # default provider
+GEMINI_API_KEY=AIza...   # optional alternative
+OPENAI_API_KEY=sk-...    # optional alternative
 ```
 
 ### Telegram
@@ -77,6 +94,8 @@ API_KEYS=GOOGLE_API_KEY:xxx,COHERE_API_KEY:yyy
 ```
 TELEGRAM_BOT_TOKEN=123456:ABC-DEF...
 ```
+
+Required for bot mode (from [@BotFather](https://t.me/BotFather)); leave empty for user mode.
 
 ### Email
 
@@ -94,19 +113,27 @@ NOTION_TOKEN=ntn_xxx
 
 Get your token from [notion.so/my-integrations](https://www.notion.so/my-integrations).
 
+### Godot
+
+```
+GODOT_PATH=/path/to/godot           # optional; auto-detects from PATH if empty
+GODOT_PROJECT_PATH=/path/to/project # optional default project root
+```
+
 ## Skills
 
-Each plugin includes skills (slash commands):
+Each plugin ships skills, invoked in Claude Code as `<plugin>:<skill>`:
 
 | Plugin | Skills |
 |--------|--------|
-| wet-mcp | `/fact-check`, `/compare` |
-| mnemo-mcp | `/session-handoff`, `/knowledge-audit` |
-| better-telegram-mcp | `/setup-bot`, `/channel-post` |
-| better-code-review-graph | `/review-delta`, `/review-pr`, `/refactor-check` |
-| better-notion-mcp | `/organize-database`, `/bulk-update` |
-| better-email-mcp | `/inbox-review`, `/follow-up` |
-| better-godot-mcp | `/build-scene`, `/debug-issue`, `/add-mechanic` |
+| wet-mcp | `fact-check`, `compare`, `research-topic`, `lock-project-stack` |
+| mnemo-mcp | `session-handoff`, `knowledge-audit`, `recall-context`, `memory-commit`, `passport-bootstrap` |
+| better-notion-mcp | `organize-database`, `bulk-update` |
+| better-email-mcp | `inbox-review`, `follow-up` |
+| better-telegram-mcp | `setup-bot`, `channel-post` |
+| better-godot-mcp | `build-scene`, `debug-issue`, `add-mechanic` |
+| better-code-review-graph | `review-pr`, `review-delta`, `refactor-check` |
+| imagine-mcp | `image-describe` |
 
 ## Other MCP Clients
 
@@ -119,7 +146,7 @@ uvx --python 3.13 wet-mcp
 uvx --python 3.13 mnemo-mcp
 uvx --python 3.13 better-telegram-mcp
 uvx --python 3.13 better-code-review-graph
-uvx imagine-mcp
+uvx --python 3.13 imagine-mcp
 ```
 
 **TypeScript plugins** (npx / bunx / docker):
