@@ -22,3 +22,8 @@
 **Vulnerability:** The centralized `read_mcp_hook_input` function in `mcp_common.py` previously read up to 1MB of data from `stdin`, which could expose the process to resource exhaustion via large payload processing.
 **Learning:** Limiting untrusted input buffer sizes to the smallest functionally required size prevents malicious or malformed inputs from exhausting available memory and CPU resources. The previous 1MB limit was excessively large for standard JSON hook payloads.
 **Prevention:** Reduce the maximum read limit from `stdin` to a conservative threshold (e.g., 64KB instead of 1MB) to proactively mitigate potential Denial of Service (DoS) vectors in execution environments.
+
+## 2026-06-23 - Harden MCP Hook Input Reading
+**Vulnerability:** The `read_mcp_hook_input` function in `mcp_common.py` used a fixed-size read of 64KB (previously 1MB) without explicit overflow detection. If the input exceeded the limit, it would be silently truncated, leading to parsing errors or potentially bypassing size-based restrictions if handled incorrectly.
+**Learning:** Bounded reads should always be accompanied by explicit length checks to detect when input exceeds the intended threshold. Reading `limit + 1` characters is an effective way to differentiate between input that fits exactly and input that overflows.
+**Prevention:** Implement explicit overflow checks for all untrusted input streams. Reduce buffer sizes to the minimum necessary for the expected use case (e.g., 32KB for MCP hook payloads).

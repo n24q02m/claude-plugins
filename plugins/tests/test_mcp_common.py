@@ -51,7 +51,7 @@ class TestMcpCommon(unittest.TestCase):
     def test_read_mcp_hook_input_valid(self, mock_read):
         data = mcp_common.read_mcp_hook_input()
         self.assertEqual(data, {"key": "value"})
-        mock_read.assert_called_once_with(64 * 1024)
+        mock_read.assert_called_once_with(32 * 1024 + 1)
 
     @patch("sys.stdin.read", return_value="invalid json")
     @patch("sys.exit", side_effect=SystemExit)

@@ -1,17 +1,29 @@
 import os
-
-
 import json
 import sys
 
 
 def read_mcp_hook_input() -> dict:
-    """Reads and parses a JSON payload from sys.stdin safely (max 64KB).
+    """Reads and parses a JSON payload from sys.stdin safely (max 32KB).
 
     Exits with code 2 if the payload is invalid JSON, too large, or not a dict.
     """
+    limit = 32 * 1024
     try:
-        data = json.loads(sys.stdin.read(64 * 1024))
+        # Read one extra byte to explicitly detect overflow
+        raw_data = sys.stdin.read(limit + 1)
+        if len(raw_data) > limit:
+            print(
+                json.dumps(
+                    {
+                        "decision": "block",
+                        "reason": f"Invalid input: payload exceeds {limit // 1024}KB limit",
+                    }
+                )
+            )
+            sys.exit(2)
+
+        data = json.loads(raw_data)
         if not isinstance(data, dict):
             print(
                 json.dumps(
@@ -24,6 +36,7 @@ def read_mcp_hook_input() -> dict:
             sys.exit(2)
         return data
     except Exception:
+        # Catch-all to ensure a 'fail-closed' posture as per project guidelines
         print(
             json.dumps(
                 {
