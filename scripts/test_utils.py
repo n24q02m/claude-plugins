@@ -109,6 +109,22 @@ class TestUtils(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Path traversal detected"):
                 get_safe_path(tmpdir, "sub/../../outside")
 
+    def test_get_safe_path_symlink_dotdot_bypass(self):
+        """Should raise ValueError for symlink followed by .. that escapes base."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = os.path.join(tmpdir, "base")
+            outside = os.path.join(tmpdir, "outside")
+            os.makedirs(base)
+            os.makedirs(outside)
+
+            # base/link -> outside
+            os.symlink(outside, os.path.join(base, "link"))
+
+            # link/../outside resolves physically to outside
+            # Lexically it resolves to base/outside (if base/link/.. is simplified)
+            with self.assertRaisesRegex(ValueError, "Path traversal detected"):
+                get_safe_path(base, "link/../outside/secret.txt")
+
 
 if __name__ == "__main__":
     unittest.main()
