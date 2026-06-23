@@ -12,8 +12,6 @@ silently damages Vietnamese content + typography. Rule: feedback_vietnamese_diac
 Pure additions of diacritics / Unicode punctuation (progress) always PASS.
 """
 
-from __future__ import annotations
-
 import io
 import re
 import subprocess
