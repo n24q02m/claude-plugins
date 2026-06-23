@@ -175,26 +175,31 @@ async function main() {
     return;
   }
 
-  let totalCopied = 0;
-  let pluginsWithContent = 0;
-  for (const name of plugins) {
-    const copiedFiles = [];
-    for (const file of PLUGIN_FILES) {
-      if (await syncOne(name, file)) {
-        copiedFiles.push(file);
+  const results = await Promise.all(
+    plugins.map(async (name) => {
+      const syncedFiles = await Promise.all(
+        PLUGIN_FILES.map(async (file) => {
+          const synced = await syncOne(name, file);
+          return synced ? file : null;
+        })
+      );
+      const copiedFiles = syncedFiles.filter(Boolean);
+
+      if (copiedFiles.length > 0) {
+        // Generate the section landing page unless the source already ships one.
+        if (!copiedFiles.includes('index.md')) {
+          const meta = await readPluginMeta(name);
+          await writeFile(join(TARGET_DIR, name, 'index.md'), buildIndex(name, meta, copiedFiles), 'utf-8');
+        }
+        console.log(`  ${name}: ${copiedFiles.length} file(s) + index`);
+        return copiedFiles.length;
       }
-    }
-    if (copiedFiles.length > 0) {
-      // Generate the section landing page unless the source already ships one.
-      if (!copiedFiles.includes('index.md')) {
-        const meta = await readPluginMeta(name);
-        await writeFile(join(TARGET_DIR, name, 'index.md'), buildIndex(name, meta, copiedFiles), 'utf-8');
-      }
-      pluginsWithContent += 1;
-      console.log(`  ${name}: ${copiedFiles.length} file(s) + index`);
-    }
-    totalCopied += copiedFiles.length;
-  }
+      return 0;
+    })
+  );
+
+  const totalCopied = results.reduce((sum, count) => sum + count, 0);
+  const pluginsWithContent = results.filter((count) => count > 0).length;
 
   console.log(`\n✓ Synced ${totalCopied} file(s) across ${pluginsWithContent} plugin(s).`);
 }
