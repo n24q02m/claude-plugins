@@ -19,7 +19,7 @@
  * Wired automatically via package.json prebuild + predev hooks.
  */
 
-import { readdir, mkdir, readFile, writeFile, rm, stat } from 'node:fs/promises';
+import { readdir, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -57,10 +57,6 @@ const FOUNDATION_DESCRIPTION =
   'OAuth 2.1 Authorization Server, lifecycle management, and credential-relay primitives ' +
   'consumed by every server. Not a runnable MCP server.';
 
-async function pathExists(p) {
-  try { await stat(p); return true; } catch { return false; }
-}
-
 // "setup-with-agent.md" -> "Setup with agent"
 function titleFromFile(file) {
   const base = file.replace(/\.md$/, '').replace(/-/g, ' ');
@@ -70,15 +66,13 @@ function titleFromFile(file) {
 // Read display name + tagline from the plugin manifest (best-effort).
 async function readPluginMeta(pluginName) {
   const manifest = join(PLUGINS_DIR, pluginName, '.claude-plugin', 'plugin.json');
-  if (await pathExists(manifest)) {
-    try {
-      const pj = JSON.parse(await readFile(manifest, 'utf-8'));
-      return { name: pj.name || pluginName, description: pj.description || '' };
-    } catch {
-      // malformed manifest — fall through to defaults
-    }
+  try {
+    const pj = JSON.parse(await readFile(manifest, 'utf-8'));
+    return { name: pj.name || pluginName, description: pj.description || '' };
+  } catch {
+    // missing or malformed manifest — fall through to defaults
+    return { name: pluginName, description: '' };
   }
-  return { name: pluginName, description: '' };
 }
 
 // YAML-safe scalar (descriptions contain ":" and em dashes).
@@ -125,9 +119,12 @@ function buildIndex(pluginName, meta, copiedFiles) {
 
 async function syncOne(pluginName, file) {
   const src = join(PLUGINS_DIR, pluginName, file);
-  if (!(await pathExists(src))) return false;
-
-  const content = await readFile(src, 'utf-8');
+  let content;
+  try {
+    content = await readFile(src, 'utf-8');
+  } catch {
+    return false;
+  }
 
   // Inject editUrl into frontmatter so "Edit this page" points to source.
   // If file already has frontmatter, append; else create one.
@@ -161,12 +158,15 @@ async function main() {
   // Clean target dir to avoid stale files when source removed
   await rm(TARGET_DIR, { recursive: true, force: true });
 
-  if (!(await pathExists(PLUGINS_DIR))) {
+  let entries;
+  try {
+    entries = await readdir(PLUGINS_DIR, { withFileTypes: true });
+  } catch {
     console.error(`ERROR: plugins dir not found at ${PLUGINS_DIR}`);
     process.exit(1);
   }
 
-  const plugins = (await readdir(PLUGINS_DIR, { withFileTypes: true }))
+  const plugins = entries
     .filter((d) => d.isDirectory())
     .map((d) => d.name);
 
