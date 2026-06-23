@@ -1,7 +1,7 @@
 ---
 name: knowledge-audit
 description: Review and clean up stored memories — find duplicates, contradictions, stale entries, and consolidate
-argument-hint: "[topic or 'all']"
+argument-hint: "(topic or 'all')"
 ---
 
 # Knowledge Audit
@@ -11,7 +11,7 @@ Systematic review of stored memories to maintain quality. Finds duplicates, dete
 ## Steps
 
 1. **Scope the audit**:
-   - If topic specified: `memory(action="search", query="[topic]")` to find all related memories
+   - If topic specified: `memory(action="search", query="(topic)")` to find all related memories
    - If "all": `memory(action="list")` to get full inventory, then `memory(action="stats")` for overview
    - Group memories by tag/category for systematic review
 
@@ -19,7 +19,7 @@ Systematic review of stored memories to maintain quality. Finds duplicates, dete
    - Search for memories with similar content or overlapping keywords
    - Compare pairs that cover the same topic
    - Decision: keep the more detailed/recent one, delete the other
-   - Use `memory(action="delete", id="[duplicate-id]")` for removals
+   - Use `memory(action="delete", id="(duplicate-id)")` for removals
 
 3. **Detect contradictions**:
    - Look for memories that make opposing claims about the same topic
@@ -34,7 +34,7 @@ Systematic review of stored memories to maintain quality. Finds duplicates, dete
    - Memories referencing specific versions that are now outdated
    - Memories about temporary workarounds that may have been resolved
    - Memories about tools/libraries that have been replaced
-   - Action: mark as stale with `memory(action="update", ...)` adding `[STALE]` prefix, or delete if clearly obsolete
+   - Action: mark as stale with `memory(action="update", ...)` adding `(STALE)` prefix, or delete if clearly obsolete
 
 5. **Consolidate overlapping memories**:
    - Multiple memories about the same topic that each have partial info
@@ -43,21 +43,22 @@ Systematic review of stored memories to maintain quality. Finds duplicates, dete
    - Use `memory(action="consolidate", ...)` if available, otherwise manual merge
 
 6. **Produce audit report**:
+
    ```
-   ## Knowledge Audit — [topic/all] — [date]
+   ## Knowledge Audit — (topic/all) — (date)
 
    ### Summary
-   - Total memories reviewed: [N]
-   - Duplicates removed: [N]
-   - Contradictions resolved: [N]
-   - Stale entries flagged/removed: [N]
-   - Memories consolidated: [N merged into M]
+   - Total memories reviewed: (N)
+   - Duplicates removed: (N)
+   - Contradictions resolved: (N)
+   - Stale entries flagged/removed: (N)
+   - Memories consolidated: (N merged into M)
 
    ### Actions Taken
-   - [list of specific changes]
+   - (list of specific changes)
 
    ### Recommendations
-   - [any patterns noticed, e.g., "many memories lack WHY context"]
+   - (any patterns noticed, e.g., "many memories lack WHY context")
    ```
 
 ## Staleness Indicators
@@ -66,7 +67,7 @@ Systematic review of stored memories to maintain quality. Finds duplicates, dete
 - Contains "temporary", "workaround", "until X is fixed"
 - References removed/renamed files, deprecated APIs, old URLs
 - Predates a major migration or refactor (check project history)
-- Contains "TODO" or "will be" — was it done?
+- Contains markers like "TODO" or "will be" — was it done?
 
 ## Contradiction Resolution Rules
 
@@ -94,7 +95,7 @@ hygiene:
 7. **Stale entities**: entity rows that no longer link to any active
    memory (their last `memory_entity_links` row points at an archived /
    superseded memory).
-   - Detect: `memory(action="entity_search", name="<entity>")` returning
+   - Detect: `memory(action="entity_search", name="(entity)")` returning
      0 currently-valid hits → candidate stale.
    - Action: confirm with the user, then delete the orphaned entity row
      (cascade removes edges).
@@ -110,7 +111,7 @@ hygiene:
 9. **Contradicting / superseded chains**: a memory in a supersession
    chain still surfaces in default `memory.get` results because someone
    left `valid_to = NULL` on an old fact.
-   - Detect: `memory(action="history", entity_id=<x>)` returning multiple
+   - Detect: `memory(action="history", entity_id=(x))` returning multiple
      rows with `valid_to = NULL` for the same entity.
    - Action: pick the most-recent / most-correct row and update
      `valid_to` on the others to the supersession timestamp.
@@ -128,7 +129,7 @@ hygiene:
     and `new_state_hash`. A gap in the chain (audit row absent for an
     update) signals a bug or out-of-band write.
     - Detect: `SELECT m.id FROM memories m LEFT JOIN memory_audit a
-      ON a.memory_id = m.id WHERE a.id IS NULL`.
+ON a.memory_id = m.id WHERE a.id IS NULL`.
     - Action: investigate which path wrote the row; do NOT rewrite the
       audit history (preserves tamper-detection guarantees).
 
