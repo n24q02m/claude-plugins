@@ -283,17 +283,22 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
     old_skel = old
     new_skel = new
     hit_uni: list[str] = []
-    for uni, ascii_forms in UNICODE_REPLACEMENTS.items():
+    ascii_to_strip: set[str] = set()
+    for uni, forms in UNICODE_REPLACEMENTS.items():
         if uni in old and uni not in new:
-            # Optimization: Replace generator-based any() with explicit loop
-            # and early truthiness check to bypass unnecessary instantiation overhead.
-            for form in ascii_forms:
-                if form in new:
+            for f in forms:
+                if f in new:
                     hit_uni.append(uni)
-                    old_skel = old_skel.replace(uni, "")
-                    for f in ascii_forms:
-                        new_skel = new_skel.replace(f, "")
+                    ascii_to_strip.update(forms)
                     break
+
+    if hit_uni:
+        old_skel = old.translate(str.maketrans("", "", "".join(hit_uni)))
+        # Pattern sort by length DESC is critical to match longest sequences first
+        pattern = "|".join(
+            re.escape(f) for f in sorted(ascii_to_strip, key=len, reverse=True)
+        )
+        new_skel = re.sub(pattern, "", new)
     if hit_uni and _similar(old_skel.strip(), new_skel.strip()):
         for uni in hit_uni:
             violations.append((f"unicode-punct {uni!r}->ascii", old, new))
