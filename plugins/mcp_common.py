@@ -1,6 +1,4 @@
 import os
-
-
 import json
 import sys
 
@@ -33,6 +31,57 @@ def read_mcp_hook_input() -> dict:
             )
         )
         sys.exit(2)
+
+
+def check_mcp_credentials(
+    server_name: str,
+    credential_keys: list[str],
+    exempt_suffixes: tuple[str, ...] = ("__setup", "__help", "__config"),
+    is_blocking: bool = False,
+    custom_message: str | None = None,
+) -> None:
+    """Shared logic for checking credentials in MCP PreToolUse hooks.
+
+    Exits with code 0 if configured or tool is exempt.
+    Exits with code 2 if blocking and not configured.
+    Prints a message and exits with code 0 if non-blocking and not configured.
+    """
+    data = read_mcp_hook_input()
+    tool_name = data.get("tool_name", "")
+    if not isinstance(tool_name, str):
+        tool_name = ""
+
+    if tool_name.endswith(exempt_suffixes):
+        sys.exit(0)
+
+    is_configured = (
+        any(os.environ.get(k) for k in credential_keys) or is_relay_configured()
+    )
+
+    if is_configured:
+        sys.exit(0)
+
+    if is_blocking:
+        print(
+            json.dumps(
+                {
+                    "decision": "block",
+                    "reason": custom_message
+                    or f"{server_name} credentials not configured.",
+                }
+            )
+        )
+        sys.exit(2)
+    else:
+        print(
+            json.dumps(
+                {
+                    "message": custom_message
+                    or f"{server_name}: credentials not yet configured.",
+                }
+            )
+        )
+        sys.exit(0)
 
 
 def is_relay_configured() -> bool:
