@@ -71,6 +71,31 @@ def get_latest_tag_api(repo):
     return result
 
 
+def _get_marketplace_version(source):
+    """Retrieve the plugin version from its manifest file (plugin.json or gemini-extension.json)."""
+    pjson_path = os.path.join(source, ".claude-plugin", "plugin.json")
+    gext_path = os.path.join(source, "gemini-extension.json")
+
+    # Priority: .claude-plugin/plugin.json, fallback: gemini-extension.json
+    try:
+        with open(pjson_path) as f:
+            pdata = json.load(f)
+        return pdata.get("version", "unknown")
+    except FileNotFoundError:
+        try:
+            with open(gext_path) as f:
+                gdata = json.load(f)
+            return gdata.get("version", "unknown")
+        except FileNotFoundError:
+            return "unknown"
+        except (OSError, json.JSONDecodeError) as e:
+            print(f"::warning ::{sanitize_log(f'Failed to parse {gext_path}: {e}')}")
+            return "unknown"
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"::warning ::{sanitize_log(f'Failed to parse {pjson_path}: {e}')}")
+        return "unknown"
+
+
 def check_plugin(plugin):
     """Check a single plugin's version against its latest GitHub release."""
     name = plugin.get("name")
@@ -101,64 +126,22 @@ def check_plugin(plugin):
             "error": "invalid source path",
         }
 
-    # Priority: .claude-plugin/plugin.json, fallback: gemini-extension.json
-    pjson_path = os.path.join(source, ".claude-plugin", "plugin.json")
-    gext_path = os.path.join(source, "gemini-extension.json")
-
-    marketplace_ver = "unknown"
-    # Optimization: Use EAFP to avoid redundant os.path.exists stat syscalls before open
-    try:
-        with open(pjson_path) as f:
-            pdata = json.load(f)
-        marketplace_ver = pdata.get("version", "unknown")
-    except FileNotFoundError:
-        try:
-            with open(gext_path) as f:
-                gdata = json.load(f)
-            marketplace_ver = gdata.get("version", "unknown")
-        except FileNotFoundError:
-            pass
-        except (OSError, json.JSONDecodeError) as e:
-            print(f"::warning ::{sanitize_log(f'Failed to parse {gext_path}: {e}')}")
-    except (OSError, json.JSONDecodeError) as e:
-        print(f"::warning ::{sanitize_log(f'Failed to parse {pjson_path}: {e}')}")
+    marketplace_ver = _get_marketplace_version(source)
 
     # Get latest stable release from source repo via API
     status, latest_tag = get_latest_tag_api(f"n24q02m/{name}")
 
+    result = {"name": name, "marketplace_ver": marketplace_ver, "status": status}
+
     if status == "ok":
         if marketplace_ver != latest_tag:
-            return {
-                "status": "stale",
-                "name": name,
-                "marketplace_ver": marketplace_ver,
-                "latest_tag": latest_tag,
-            }
+            result.update({"status": "stale", "latest_tag": latest_tag})
         else:
-            return {
-                "status": "up-to-date",
-                "name": name,
-                "marketplace_ver": marketplace_ver,
-            }
-    elif status == "no-release":
-        return {
-            "status": "no-release",
-            "name": name,
-            "marketplace_ver": marketplace_ver,
-        }
-    elif status == "timeout":
-        return {
-            "status": "timeout",
-            "name": name,
-            "marketplace_ver": marketplace_ver,
-        }
-    else:
-        return {
-            "status": "error",
-            "name": name,
-            "marketplace_ver": marketplace_ver,
-            "error": latest_tag,  # status is "error", latest_tag contains the error message
-        }
+            result["status"] = "up-to-date"
+    elif status == "error":
+        result["error"] = latest_tag
+
+    return result
 
 
 def check_version_freshness():
