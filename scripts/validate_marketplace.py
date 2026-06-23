@@ -10,8 +10,8 @@ import sys
 from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path
 
 
-def _validate_plugin(plugin: dict, base_dir: str) -> list[str]:
-    """Helper function to validate a single plugin, returns list of error messages."""
+def _validate_plugin_name(plugin: dict) -> tuple[str, list[str]]:
+    """Validate plugin name and return it with any errors found."""
     errors = []
     name = plugin.get("name")
 
@@ -19,31 +19,42 @@ def _validate_plugin(plugin: dict, base_dir: str) -> list[str]:
         name = "Unknown"
     elif not isinstance(name, str):
         errors.append(f"Plugin {sanitize_log(str(name))}: name must be a string")
-        return errors
+        return "Unknown", errors
 
     if not PLUGIN_NAME_PATTERN.fullmatch(name):
         errors.append(
             f"Plugin {name}: invalid name format (must match ^[a-zA-Z0-9-]+$)"
         )
-        return errors
 
+    return name, errors
+
+
+def _validate_plugin_source(
+    name: str, plugin: dict, base_dir: str
+) -> tuple[str | None, list[str]]:
+    """Validate plugin source and return resolved plugin_dir with any errors."""
+    errors = []
     source = plugin.get("source")
     if source is None:
         errors.append(f"Plugin {name}: missing source")
-        return errors
+        return None, errors
 
     if not isinstance(source, str):
         errors.append(f"Plugin {name}: source must be a string")
-        return errors
+        return None, errors
 
     # Security check: prevent path traversal
     try:
         plugin_dir = get_safe_path(base_dir, source)
+        return plugin_dir, errors
     except (OSError, ValueError):
         errors.append(f"Plugin {name}: invalid source path (path traversal blocked)")
-        return errors
+        return None, errors
 
-    # Check plugin.json exists and is valid
+
+def _validate_plugin_json(name: str, plugin_dir: str) -> tuple[list[str], bool]:
+    """Validate plugin.json and return errors and whether to continue validation."""
+    errors = []
     pjson = os.path.join(plugin_dir, ".claude-plugin", "plugin.json")
     # Optimization: Use EAFP to avoid redundant os.path.exists stat syscalls before open
     try:
@@ -53,13 +64,21 @@ def _validate_plugin(plugin: dict, base_dir: str) -> list[str]:
         for req in ("name", "description", "mcpServers"):
             if req not in pdata:
                 errors.append(f"{name}: plugin.json missing {req}")
+        return errors, True
     except FileNotFoundError:
         errors.append(f"{name}: missing {pjson}")
-        return errors  # Stop checking files if the directory/plugin.json is missing
+        return (
+            errors,
+            False,
+        )  # Stop checking files if the directory/plugin.json is missing
     except Exception as e:
         errors.append(f"{name}: Failed to parse {pjson}: {e}")
+        return errors, True
 
-    # Check gemini-extension.json has version (optional file)
+
+def _validate_gemini_extension(name: str, plugin_dir: str) -> list[str]:
+    """Validate gemini-extension.json and return any errors found."""
+    errors = []
     gext = os.path.join(plugin_dir, "gemini-extension.json")
     # Optimization: Use EAFP to avoid redundant os.path.exists stat syscalls before open
     try:
@@ -71,8 +90,12 @@ def _validate_plugin(plugin: dict, base_dir: str) -> list[str]:
         pass
     except Exception as e:
         errors.append(f"{name}: Failed to parse {gext}: {e}")
+    return errors
 
-    # Check skills have frontmatter
+
+def _validate_skills(name: str, plugin_dir: str) -> list[str]:
+    """Validate plugin skills and return any errors found."""
+    errors = []
     skills_dir = os.path.join(plugin_dir, "skills")
     # Optimization: Use EAFP to avoid redundant os.path.isdir stat syscalls before os.scandir
     try:
@@ -102,8 +125,31 @@ def _validate_plugin(plugin: dict, base_dir: str) -> list[str]:
                         )
     except (FileNotFoundError, NotADirectoryError):
         pass
-
     return errors
+
+
+def _validate_plugin(plugin: dict, base_dir: str) -> list[str]:
+    """Helper function to validate a single plugin, returns list of error messages."""
+    name, name_errors = _validate_plugin_name(plugin)
+    if any("name must be a string" in e for e in name_errors):
+        return name_errors
+
+    plugin_dir, source_errors = _validate_plugin_source(name, plugin, base_dir)
+    all_errors = name_errors + source_errors
+
+    if not plugin_dir:
+        return all_errors
+
+    json_errors, should_continue = _validate_plugin_json(name, plugin_dir)
+    all_errors.extend(json_errors)
+
+    if not should_continue:
+        return all_errors
+
+    all_errors.extend(_validate_gemini_extension(name, plugin_dir))
+    all_errors.extend(_validate_skills(name, plugin_dir))
+
+    return all_errors
 
 
 def validate_marketplace():
