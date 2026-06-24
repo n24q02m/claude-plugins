@@ -117,13 +117,15 @@ _SKIP_FILES = frozenset(
 
 
 def _is_skippable(path: str) -> bool:
+    # Optimization: Check suffixes first to avoid string allocation
+    # and split overhead for common binary and generated files.
+    if path.lower().endswith(_SKIP_SUFFIXES):
+        return True
     parts = path.split("/")
     if not _SKIP_DIRS.isdisjoint(parts):
         return True
     name = parts[-1]
     if name in _SKIP_FILES:
-        return True
-    if name.lower().endswith(_SKIP_SUFFIXES):
         return True
     return False
 
