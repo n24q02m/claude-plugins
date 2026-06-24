@@ -286,6 +286,31 @@ class TestCheckVersionFreshness(unittest.TestCase):
             self.assertIn("Cookie", redirected_req.headers)
 
     # ------------------------------------------------------------------
+
+    def test_no_auth_redirect_handler_https_downgrade(self):
+        """Should strip Authorization header when redirecting from https to http on same host."""
+        req = urllib.request.Request(
+            "https://api.github.com/test",
+            headers={"Authorization": "token secret", "Cookie": "session=123"},
+        )
+        handler = check_version_freshness.NoAuthRedirectHandler()
+        with patch("urllib.request.HTTPRedirectHandler.redirect_request") as mock_super:
+            mock_super.return_value = urllib.request.Request(
+                "http://api.github.com/test2",
+                headers=req.headers,
+            )
+            redirected_req = handler.redirect_request(
+                req,
+                MagicMock(),
+                302,
+                "Found",
+                MagicMock(),
+                "http://api.github.com/test2",
+            )
+            self.assertNotIn("Authorization", redirected_req.headers)
+            self.assertNotIn("Cookie", redirected_req.headers)
+
+    # ------------------------------------------------------------------
     # Regression: GitHub REST API returns snake_case tag_name, not camelCase
     # ------------------------------------------------------------------
 
