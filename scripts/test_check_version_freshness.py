@@ -242,14 +242,18 @@ class TestCheckVersionFreshness(unittest.TestCase):
             "https://api.github.com/test",
             headers={"Authorization": "token secret", "Cookie": "session=123"},
         )
+        req.add_unredirected_header("Authorization", "token unredirected")
+        req.add_unredirected_header("Cookie", "session=456")
         handler = check_version_freshness.NoAuthRedirectHandler()
         # Mock the underlying redirect_request to just return a Request object
         # with the new URL and the old headers.
         with patch("urllib.request.HTTPRedirectHandler.redirect_request") as mock_super:
-            mock_super.return_value = urllib.request.Request(
+            mock_req = urllib.request.Request(
                 "https://raw.githubusercontent.com/test",
                 headers=req.headers,
             )
+            mock_req.unredirected_hdrs = req.unredirected_hdrs.copy()
+            mock_super.return_value = mock_req
             redirected_req = handler.redirect_request(
                 req,
                 MagicMock(),
@@ -261,6 +265,37 @@ class TestCheckVersionFreshness(unittest.TestCase):
             self.assertNotIn("Authorization", redirected_req.headers)
             self.assertNotIn("Cookie", redirected_req.headers)
             self.assertNotIn("authorization", redirected_req.headers)
+            self.assertNotIn("Authorization", redirected_req.unredirected_hdrs)
+            self.assertNotIn("Cookie", redirected_req.unredirected_hdrs)
+            self.assertNotIn("authorization", redirected_req.unredirected_hdrs)
+            self.assertNotIn("cookie", redirected_req.unredirected_hdrs)
+
+    def test_no_auth_redirect_handler_https_to_http_downgrade(self):
+        """Should strip headers when redirecting from HTTPS to HTTP on same origin."""
+        req = urllib.request.Request(
+            "https://api.github.com/test",
+            headers={"Authorization": "token secret", "Cookie": "session=123"},
+        )
+        req.add_unredirected_header("Authorization", "token unredirected")
+        handler = check_version_freshness.NoAuthRedirectHandler()
+        with patch("urllib.request.HTTPRedirectHandler.redirect_request") as mock_super:
+            mock_req = urllib.request.Request(
+                "http://api.github.com/test2",
+                headers=req.headers,
+            )
+            mock_req.unredirected_hdrs = req.unredirected_hdrs.copy()
+            mock_super.return_value = mock_req
+            redirected_req = handler.redirect_request(
+                req,
+                MagicMock(),
+                302,
+                "Found",
+                MagicMock(),
+                "http://api.github.com/test2",
+            )
+            self.assertNotIn("Authorization", redirected_req.headers)
+            self.assertNotIn("Cookie", redirected_req.headers)
+            self.assertNotIn("Authorization", redirected_req.unredirected_hdrs)
 
     def test_no_auth_redirect_handler_same_origin(self):
         """Should retain Authorization header when redirecting to the same origin."""
