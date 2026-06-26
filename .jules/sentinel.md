@@ -22,3 +22,17 @@
 **Vulnerability:** The centralized `read_mcp_hook_input` function in `mcp_common.py` previously read up to 1MB of data from `stdin`, which could expose the process to resource exhaustion via large payload processing.
 **Learning:** Limiting untrusted input buffer sizes to the smallest functionally required size prevents malicious or malformed inputs from exhausting available memory and CPU resources. The previous 1MB limit was excessively large for standard JSON hook payloads.
 **Prevention:** Reduce the maximum read limit from `stdin` to a conservative threshold (e.g., 64KB instead of 1MB) to proactively mitigate potential Denial of Service (DoS) vectors in execution environments.
+
+## 2024-06-26 - SSRF Header Leakage and urllib.request nuances
+**Vulnerability:**
+The `NoAuthRedirectHandler` in `scripts/check_version_freshness.py` intended to prevent SSRF by stripping `Authorization` and `Cookie` headers during redirects to different hosts. However, it suffered from two issues:
+1. It didn't account for scheme downgrades (e.g., HTTPS to HTTP on the same host), meaning a token could leak via a downgrade attack to plaintext HTTP.
+2. `urllib.request` maintains an internal `unredirected_hdrs` dictionary for headers that shouldn't typically survive redirects. Due to inconsistent capitalization handling and the fact that `remove_header()` primarily operates on the main `headers` dictionary, keys inside `unredirected_hdrs` were not reliably deleted when stripping sensitive headers across origins.
+
+**Learning:**
+1. In Python's `urllib.request`, simply using `remove_header()` is insufficient to comprehensively strip headers during redirects because of how the underlying request objects manage `unredirected_hdrs`. Capitalization differences between how headers were added versus how `remove_header` looks them up can leave sensitive keys in `unredirected_hdrs` intact, which are then transmitted to the redirect target.
+2. When preventing SSRF/credential leakage on redirect handlers, scheme validation (preventing HTTPS to HTTP downgrades) is just as critical as cross-origin host validation.
+
+**Prevention:**
+1. Explicitly check for scheme downgrades (`req.scheme == 'https' and new_req.scheme == 'http'`) in redirect handlers alongside cross-origin checks.
+2. When scrubbing headers from `urllib.request.Request` objects, always iterate explicitly over `list(req.unredirected_hdrs.keys())` and perform case-insensitive key deletion to ensure sensitive headers are fully purged.

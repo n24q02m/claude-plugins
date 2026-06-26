@@ -285,6 +285,53 @@ class TestCheckVersionFreshness(unittest.TestCase):
             self.assertIn("Authorization", redirected_req.headers)
             self.assertIn("Cookie", redirected_req.headers)
 
+    def test_no_auth_redirect_handler_scheme_downgrade(self):
+        """Should strip Authorization header when redirecting from HTTPS to HTTP on same origin."""
+        req = urllib.request.Request(
+            "https://api.github.com/test",
+            headers={"Authorization": "token secret", "Cookie": "session=123"},
+        )
+        handler = check_version_freshness.NoAuthRedirectHandler()
+        with patch("urllib.request.HTTPRedirectHandler.redirect_request") as mock_super:
+            mock_super.return_value = urllib.request.Request(
+                "http://api.github.com/test2",
+                headers=req.headers,
+            )
+            redirected_req = handler.redirect_request(
+                req,
+                MagicMock(),
+                302,
+                "Found",
+                MagicMock(),
+                "http://api.github.com/test2",
+            )
+            self.assertNotIn("Authorization", redirected_req.headers)
+            self.assertNotIn("Cookie", redirected_req.headers)
+
+    def test_no_auth_redirect_handler_unredirected_hdrs(self):
+        """Should strip unredirected headers across origins."""
+        req = urllib.request.Request("https://api.github.com/test")
+        req.unredirected_hdrs["Authorization"] = "token secret"
+        req.unredirected_hdrs["cookie"] = "session=123"
+
+        handler = check_version_freshness.NoAuthRedirectHandler()
+        with patch("urllib.request.HTTPRedirectHandler.redirect_request") as mock_super:
+            mock_req = urllib.request.Request("https://attacker.com/test")
+            mock_req.unredirected_hdrs = req.unredirected_hdrs.copy()
+            mock_super.return_value = mock_req
+            redirected_req = handler.redirect_request(
+                req,
+                MagicMock(),
+                302,
+                "Found",
+                MagicMock(),
+                "https://attacker.com/test",
+            )
+            self.assertNotIn("Authorization", redirected_req.unredirected_hdrs)
+            self.assertNotIn("authorization", redirected_req.unredirected_hdrs)
+            self.assertNotIn("cookie", redirected_req.unredirected_hdrs)
+            self.assertNotIn("Cookie", redirected_req.unredirected_hdrs)
+
     # ------------------------------------------------------------------
     # Regression: GitHub REST API returns snake_case tag_name, not camelCase
     # ------------------------------------------------------------------

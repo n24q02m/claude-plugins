@@ -19,13 +19,24 @@ class NoAuthRedirectHandler(urllib.request.HTTPRedirectHandler):
         m = super().redirect_request(req, fp, code, msg, headers, newurl)
         if m is not None:
             # Check if the hostname has changed
-            old_host = urllib.parse.urlparse(req.full_url).hostname
-            new_host = urllib.parse.urlparse(newurl).hostname
-            if old_host != new_host:
+            old_url = urllib.parse.urlparse(req.full_url)
+            new_url = urllib.parse.urlparse(newurl)
+            old_host = old_url.hostname
+            new_host = new_url.hostname
+
+            # Check for HTTPS to HTTP downgrade
+            scheme_downgrade = old_url.scheme == "https" and new_url.scheme == "http"
+
+            if old_host != new_host or scheme_downgrade:
                 # Strip Authorization header to prevent token leakage (SSRF mitigation)
                 for header in ["Authorization", "Cookie", "authorization", "cookie"]:
                     if m.has_header(header):
                         m.remove_header(header)
+
+                # Explicitly handle unredirected_hdrs due to urllib internal inconsistencies
+                for k in list(m.unredirected_hdrs.keys()):
+                    if k.lower() in ["authorization", "cookie"]:
+                        del m.unredirected_hdrs[k]
         return m
 
 
