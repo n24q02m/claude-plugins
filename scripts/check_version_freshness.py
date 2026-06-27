@@ -13,19 +13,27 @@ from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path
 
 
 class NoAuthRedirectHandler(urllib.request.HTTPRedirectHandler):
-    """Custom redirect handler that strips the Authorization header on cross-origin redirects."""
+    """Custom redirect handler that strips the Authorization header on cross-origin redirects or HTTPS downgrades."""
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         m = super().redirect_request(req, fp, code, msg, headers, newurl)
         if m is not None:
-            # Check if the hostname has changed
-            old_host = urllib.parse.urlparse(req.full_url).hostname
-            new_host = urllib.parse.urlparse(newurl).hostname
-            if old_host != new_host:
+            # Check if the hostname has changed or there is an HTTPS-to-HTTP downgrade
+            old_parsed = urllib.parse.urlparse(req.full_url)
+            new_parsed = urllib.parse.urlparse(newurl)
+
+            if old_parsed.hostname != new_parsed.hostname or (
+                old_parsed.scheme == "https" and new_parsed.scheme == "http"
+            ):
                 # Strip Authorization header to prevent token leakage (SSRF mitigation)
                 for header in ["Authorization", "Cookie", "authorization", "cookie"]:
                     if m.has_header(header):
                         m.remove_header(header)
+                    # Also strip from unredirected_hdrs
+                    if header in m.unredirected_hdrs:
+                        del m.unredirected_hdrs[header]
+                    if header.capitalize() in m.unredirected_hdrs:
+                        del m.unredirected_hdrs[header.capitalize()]
         return m
 
 
