@@ -22,3 +22,8 @@
 **Vulnerability:** The centralized `read_mcp_hook_input` function in `mcp_common.py` previously read up to 1MB of data from `stdin`, which could expose the process to resource exhaustion via large payload processing.
 **Learning:** Limiting untrusted input buffer sizes to the smallest functionally required size prevents malicious or malformed inputs from exhausting available memory and CPU resources. The previous 1MB limit was excessively large for standard JSON hook payloads.
 **Prevention:** Reduce the maximum read limit from `stdin` to a conservative threshold (e.g., 64KB instead of 1MB) to proactively mitigate potential Denial of Service (DoS) vectors in execution environments.
+
+## 2026-06-21 - Strip Sensitive Headers from unredirected_hdrs
+**Vulnerability:** In Python's `urllib.request`, custom redirect handlers like `NoAuthRedirectHandler` rely on `remove_header()` to strip sensitive headers on cross-origin or downgrade redirects. However, `remove_header()` only removes the first match, prioritizing `headers` over `unredirected_hdrs`. If a header exists in both, it leaks. Furthermore, downgrades (HTTPS to HTTP) were not properly triggering the strip logic, risking token leakage on same-origin downgrades.
+**Learning:** `urllib.request.Request` stores headers in both `headers` and `unredirected_hdrs`. `remove_header` is insufficient if the header exists in both. Downgrades (HTTPS to HTTP) are just as dangerous as cross-origin redirects.
+**Prevention:** Explicitly delete sensitive headers from `unredirected_hdrs` in addition to calling `remove_header()`. Ensure redirect handlers explicitly check for scheme downgrades (HTTPS to HTTP) in addition to cross-origin changes when stripping sensitive headers.
