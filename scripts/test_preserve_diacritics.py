@@ -202,6 +202,14 @@ def test_case_12_run_git_error() -> None:
             _assert(True, "propagates CalledProcessError")
 
 
+def test_case_13_staged_files_helper() -> None:
+    print("Case 13: _staged_files helper sanity")
+    with patch.object(_MOD, "_run_git") as mock_run_git:
+        mock_run_git.return_value = "file1.py\nfile2.txt\n\n"
+        files = _MOD._staged_files()
+        _assert(files == ["file1.py", "file2.txt"], "correctly parses staged files")
+
+
 def main() -> int:
     tests = [
         test_case_1_em_dash_to_dashdash,
@@ -219,6 +227,7 @@ def main() -> int:
         test_case_10_similar_helper,
         test_case_11_is_skippable_helper,
         test_case_12_run_git_error,
+        test_case_13_staged_files_helper,
     ]
     for t in tests:
         t()
