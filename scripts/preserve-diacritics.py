@@ -236,6 +236,7 @@ def _yield_diff_pairs(files: list[str]) -> Iterator[tuple[str, int, str, str]]:
                 removed.append(line[1:])
             elif line.startswith("+"):
                 added.append(line[1:])
+                plus_line_no += 1
             elif current_file:
                 # context line (unlikely with -U0) — flush
                 yield from _flush(current_file, hunk_plus_start)
