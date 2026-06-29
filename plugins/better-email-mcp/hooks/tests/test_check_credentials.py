@@ -18,7 +18,9 @@ class TestCheckCredentials(unittest.TestCase):
 
     @patch.dict(os.environ, {"EMAIL_CREDENTIALS": "some_creds"}, clear=True)
     def test_is_configured_env(self):
-        self.assertTrue(check_credentials._is_configured())
+        self.assertTrue(
+            check_credentials.check_mcp_credentials(check_credentials.CREDENTIAL_KEYS)
+        )
 
     @patch.dict(os.environ, {}, clear=True)
     @patch("os.path.exists")
@@ -27,13 +29,17 @@ class TestCheckCredentials(unittest.TestCase):
         mock_expanduser.return_value = "/home/user"
         # Mocking exists to return True only for the home config path
         mock_exists.side_effect = lambda p: p == "/home/user/.config/mcp/config.enc"
-        self.assertTrue(check_credentials._is_configured())
+        self.assertTrue(
+            check_credentials.check_mcp_credentials(check_credentials.CREDENTIAL_KEYS)
+        )
 
     @patch.dict(os.environ, {}, clear=True)
     @patch("os.path.exists")
     def test_not_configured(self, mock_exists):
         mock_exists.return_value = False
-        self.assertFalse(check_credentials._is_configured())
+        self.assertFalse(
+            check_credentials.check_mcp_credentials(check_credentials.CREDENTIAL_KEYS)
+        )
 
     @patch("sys.stdin", io.StringIO(json.dumps({"tool_name": "any_tool__setup"})))
     @patch("sys.exit", side_effect=SystemExit)

@@ -6,14 +6,14 @@ Allows config and help tools through so the user can initiate setup.
 """
 
 import json
-import os
 import sys
+import os
 
 # Add plugins root to sys.path for shared utilities
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
-from mcp_common import is_relay_configured, read_mcp_hook_input
+from mcp_common import check_mcp_credentials, read_mcp_hook_input
 
 SERVER_NAME = "better-telegram-mcp"
 # Either TELEGRAM_PHONE (user mode) or TELEGRAM_BOT_TOKEN (bot mode) is required.
@@ -21,13 +21,6 @@ SERVER_NAME = "better-telegram-mcp"
 CREDENTIAL_KEYS = ["TELEGRAM_PHONE", "TELEGRAM_BOT_TOKEN"]
 # Tools that work without credentials
 EXEMPT_SUFFIXES = ("__setup", "__help", "__config")
-
-
-def _is_configured() -> bool:
-    for k in CREDENTIAL_KEYS:
-        if os.environ.get(k):
-            return True
-    return is_relay_configured()
 
 
 def main() -> None:
@@ -39,7 +32,7 @@ def main() -> None:
     if tool_name.endswith(EXEMPT_SUFFIXES):
         sys.exit(0)
 
-    if not _is_configured():
+    if not check_mcp_credentials(CREDENTIAL_KEYS):
         print(
             json.dumps(
                 {

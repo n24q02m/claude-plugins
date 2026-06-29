@@ -14,18 +14,11 @@ import sys
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
-from mcp_common import is_relay_configured, read_mcp_hook_input
+from mcp_common import check_mcp_credentials, read_mcp_hook_input
 
 SERVER_NAME = "better-notion-mcp"
 CREDENTIAL_KEYS = ["NOTION_TOKEN"]
 EXEMPT_SUFFIXES = ("__setup", "__help", "__config")
-
-
-def _is_configured() -> bool:
-    for k in CREDENTIAL_KEYS:
-        if os.environ.get(k):
-            return True
-    return is_relay_configured()
 
 
 def main() -> None:
@@ -37,7 +30,7 @@ def main() -> None:
     if tool_name.endswith(EXEMPT_SUFFIXES):
         sys.exit(0)
 
-    if _is_configured():
+    if check_mcp_credentials(CREDENTIAL_KEYS):
         sys.exit(0)
 
     # Non-blocking hint: let server handle unconfigured state

@@ -54,3 +54,13 @@ def is_relay_configured() -> bool:
     if os.path.exists(os.path.join(home, ".config", "mcp", "config.enc")):
         return True
     return False
+
+
+def check_mcp_credentials(credential_keys: list[str]) -> bool:
+    """Checks if any of the provided credential keys are set in the environment,
+    or if mcp-relay-core is configured.
+    """
+    for k in credential_keys:
+        if os.environ.get(k):
+            return True
+    return is_relay_configured()

@@ -69,6 +69,20 @@ class TestMcpCommon(unittest.TestCase):
             mcp_common.read_mcp_hook_input()
         mock_exit.assert_called_once_with(2)
 
+    @patch.dict(os.environ, {"TEST_KEY": "test_value"}, clear=True)
+    def test_check_mcp_credentials_env(self):
+        self.assertTrue(mcp_common.check_mcp_credentials(["TEST_KEY"]))
+
+    @patch.dict(os.environ, {}, clear=True)
+    @patch("mcp_common.is_relay_configured", return_value=True)
+    def test_check_mcp_credentials_relay(self, mock_relay):
+        self.assertTrue(mcp_common.check_mcp_credentials(["TEST_KEY"]))
+
+    @patch.dict(os.environ, {}, clear=True)
+    @patch("mcp_common.is_relay_configured", return_value=False)
+    def test_check_mcp_credentials_not_configured(self, mock_relay):
+        self.assertFalse(mcp_common.check_mcp_credentials(["TEST_KEY"]))
+
 
 if __name__ == "__main__":
     unittest.main()
