@@ -10,20 +10,13 @@ def read_mcp_hook_input() -> dict:
 
     Exits with code 2 if the payload is invalid JSON, too large, or not a dict.
     """
+    data = None
     try:
         data = json.loads(sys.stdin.read(64 * 1024))
-        if not isinstance(data, dict):
-            print(
-                json.dumps(
-                    {
-                        "decision": "block",
-                        "reason": "Invalid input: payload must be a JSON dictionary",
-                    }
-                )
-            )
-            sys.exit(2)
-        return data
     except Exception:
+        pass
+
+    if not isinstance(data, dict):
         print(
             json.dumps(
                 {
@@ -33,6 +26,8 @@ def read_mcp_hook_input() -> dict:
             )
         )
         sys.exit(2)
+
+    return data
 
 
 def is_relay_configured() -> bool:
