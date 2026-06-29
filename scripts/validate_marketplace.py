@@ -81,25 +81,24 @@ def _validate_plugin(plugin: dict, base_dir: str) -> list[str]:
                 if entry.is_dir():
                     skill_name = entry.name
                     skill_file = os.path.join(entry.path, "SKILL.md")
-                    # Optimization: Use EAFP to avoid redundant os.path.exists stat syscalls before open
-                    try:
-                        with open(skill_file, encoding="utf-8") as f:
-                            # Optimization: read only first 100 characters for partial check
-                            content = f.read(100)
-                        if not content.startswith("---"):
+                    # Optimization: Use LBYL for SKILL.md as it may be frequently missing in skill directories
+                    if os.path.isfile(skill_file):
+                        try:
+                            with open(skill_file, encoding="utf-8") as f:
+                                # Optimization: read only first 100 characters for partial check
+                                content = f.read(100)
+                            if not content.startswith("---"):
+                                errors.append(
+                                    f"{name}/skills/{skill_name}: SKILL.md missing frontmatter"
+                                )
+                            if len(content.strip()) < 50:
+                                errors.append(
+                                    f"{name}/skills/{skill_name}: SKILL.md too short"
+                                )
+                        except Exception as e:
                             errors.append(
-                                f"{name}/skills/{skill_name}: SKILL.md missing frontmatter"
+                                f"{name}/skills/{skill_name}: Failed to read SKILL.md: {e}"
                             )
-                        if len(content.strip()) < 50:
-                            errors.append(
-                                f"{name}/skills/{skill_name}: SKILL.md too short"
-                            )
-                    except FileNotFoundError:
-                        pass
-                    except Exception as e:
-                        errors.append(
-                            f"{name}/skills/{skill_name}: Failed to read SKILL.md: {e}"
-                        )
     except (FileNotFoundError, NotADirectoryError):
         pass
 
