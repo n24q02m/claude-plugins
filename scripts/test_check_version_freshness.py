@@ -346,6 +346,71 @@ class TestCheckVersionFreshness(unittest.TestCase):
         self.assertEqual(result["status"], "up-to-date")
         self.assertEqual(result["marketplace_ver"], "3.4.5")
 
+    # ------------------------------------------------------------------
+    # main loop: check_version_freshness
+    # ------------------------------------------------------------------
+
+    @patch("check_version_freshness.check_plugin")
+    @patch("check_version_freshness.open", create=True)
+    @patch("json.load")
+    @patch("builtins.print")
+    def test_check_version_freshness_success(
+        self, mock_print, mock_json_load, mock_open, mock_check_plugin
+    ):
+        # Setup marketplace
+        mock_json_load.return_value = {
+            "plugins": [
+                {"name": "p1", "source": "s1"},
+                {"name": "p2", "source": "s2"},
+                {"name": "p3", "source": "s3"},
+                {"name": "p4", "source": "s4"},
+                {"name": "p5", "source": "s5"},
+            ]
+        }
+
+        # Setup check_plugin results
+        mock_check_plugin.side_effect = [
+            {
+                "name": "p1",
+                "status": "stale",
+                "marketplace_ver": "1.0",
+                "latest_tag": "1.1",
+            },
+            {"name": "p2", "status": "up-to-date", "marketplace_ver": "2.0"},
+            {"name": "p3", "status": "no-release", "marketplace_ver": "3.0"},
+            {"name": "p4", "status": "timeout", "marketplace_ver": "4.0"},
+            {
+                "name": "p5",
+                "status": "error",
+                "marketplace_ver": "5.0",
+                "error": "test-err",
+            },
+        ]
+
+        check_version_freshness.check_version_freshness()
+
+        # Verify prints (sanitize_log is called internally, but we can check for substring)
+        calls = [c[0][0] for c in mock_print.call_args_list]
+
+        self.assertTrue(any("p1 is stale" in s for s in calls))
+        self.assertTrue(any("p2: up-to-date" in s for s in calls))
+        self.assertTrue(any("p3: no release found" in s for s in calls))
+        self.assertTrue(any("p4 timed out" in s for s in calls))
+        self.assertTrue(any("p5 error: test-err" in s for s in calls))
+        self.assertTrue(any("1 plugin(s) need sync" in s for s in calls))
+
+    @patch("check_version_freshness.open", create=True)
+    @patch("builtins.print")
+    def test_check_version_freshness_load_failure(self, mock_print, mock_open):
+        mock_open.side_effect = OSError("read error")
+
+        check_version_freshness.check_version_freshness()
+
+        calls = [c[0][0] for c in mock_print.call_args_list]
+        self.assertTrue(
+            any("Failed to load marketplace.json: read error" in s for s in calls)
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
