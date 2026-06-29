@@ -39,7 +39,7 @@ chosen.
    | "I prefer", "I always want", "default to" | `preference` |
    | "X is at version Y", env vars, API shapes, file locations | `fact` |
    | "to do X you run Y then Z", procedure, how-to | `skill` |
-   | "todo", "remember to", deadline, "by Friday" | `task` |
+   | "to-do", "remember to", deadline, "by Friday" | `task` |
    | none of the above (general context) | `conversation` |
 
    When ambiguous, ask the user one short question. Do not silently

@@ -57,7 +57,7 @@ Systematic review of stored memories to maintain quality. Finds duplicates, dete
    - [list of specific changes]
 
    ### Recommendations
-   - [any patterns noticed, e.g., "many memories lack WHY context"]
+   - e.g., "many memories lack WHY context"
    ```
 
 ## Staleness Indicators
@@ -66,7 +66,7 @@ Systematic review of stored memories to maintain quality. Finds duplicates, dete
 - Contains "temporary", "workaround", "until X is fixed"
 - References removed/renamed files, deprecated APIs, old URLs
 - Predates a major migration or refactor (check project history)
-- Contains "TODO" or "will be" — was it done?
+- Contains task markers (e.g., "to-do", "will be") — was it done?
 
 ## Contradiction Resolution Rules
 
