@@ -282,20 +282,29 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
     # Strategy: strip ALL tracked unicode punct from `old` and ALL their ASCII
     # forms from `new`; if the resulting skeletons match (similarity), this is
     # a mechanical normalization, not a content rewrite.
-    old_skel = old
-    new_skel = new
     hit_uni: list[str] = []
+    to_strip_ascii: set[str] = set()
     for uni, ascii_forms in UNICODE_REPLACEMENTS.items():
         if uni in old and uni not in new:
-            # Optimization: Replace generator-based any() with explicit loop
-            # and early truthiness check to bypass unnecessary instantiation overhead.
+            # Optimization: replaced nested replace calls with single-pass accumulation
+            # to avoid inconsistent results and O(N^2) string allocations.
             for form in ascii_forms:
                 if form in new:
                     hit_uni.append(uni)
-                    old_skel = old_skel.replace(uni, "")
-                    for f in ascii_forms:
-                        new_skel = new_skel.replace(f, "")
+                    to_strip_ascii.update(ascii_forms)
                     break
+
+    if hit_uni:
+        # Strategy: strip ALL tracked unicode punct from `old` and ALL their ASCII
+        # forms from `new`. We use str.translate for single-char removal in old
+        # and length-sorted replacement for new to ensure correctness.
+        old_skel = old.translate(str.maketrans("", "", "".join(hit_uni)))
+        new_skel = new
+        for f in sorted(to_strip_ascii, key=len, reverse=True):
+            new_skel = new_skel.replace(f, "")
+    else:
+        old_skel = old
+        new_skel = new
     if hit_uni and _similar(old_skel.strip(), new_skel.strip()):
         for uni in hit_uni:
             violations.append((f"unicode-punct {uni!r}->ascii", old, new))
