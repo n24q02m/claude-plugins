@@ -45,6 +45,29 @@ jobs:
         env:
           SMTP_CREDENTIAL: ${{ secrets.SMTP_CREDENTIAL }}
 
+      - name: Sanitize inputs
+        run: |
+          python3 -c "
+          import os
+          import uuid
+
+          title = os.environ.get('RAW_TITLE', '')
+          body = os.environ.get('RAW_BODY', '')
+
+          # Sanitize title: single line, no leading/trailing whitespace
+          sanitized_title = ' '.join(title.splitlines()).strip()
+          delimiter = f'EOF_{uuid.uuid4().hex}'
+
+          with open(os.environ['GITHUB_ENV'], 'a') as f:
+              f.write(f'SANITIZED_TITLE={sanitized_title}\n')
+              f.write(f'SANITIZED_BODY<<{delimiter}\n')
+              f.write(body + '\n')
+              f.write(f'{delimiter}\n')
+          "
+        env:
+          RAW_TITLE: ${{ github.event.issue.title || github.event.pull_request.title }}
+          RAW_BODY: ${{ github.event.issue.body || github.event.pull_request.body || 'No description provided.' }}
+
       - name: Send email notification
         uses: dawidd6/action-send-mail@94de994a9f6fffee200243214e17002e2920bb59 # v18
         with:
@@ -56,16 +79,16 @@ jobs:
             [${{ github.event.repository.name }}]
             ${{ github.event_name == 'issues' && 'Issue' || 'PR' }}
             #${{ github.event.issue.number || github.event.pull_request.number }}:
-            ${{ github.event.issue.title || github.event.pull_request.title }}
+            ${{ env.SANITIZED_TITLE }}
           to: ${{ env.SMTP_USER }}
           from: GitHub Notify <${{ env.SMTP_USER }}>
           body: |
             ${{ github.event_name == 'issues' && 'New issue' || 'New pull request' }} in ${{ github.repository }}
 
-            Title: ${{ github.event.issue.title || github.event.pull_request.title }}
+            Title: ${{ env.SANITIZED_TITLE }}
             Author: ${{ github.actor }}
             URL: ${{ github.event.issue.html_url || github.event.pull_request.html_url }}
             Action: ${{ github.event.action }}
 
             ---
-            ${{ github.event.issue.body || github.event.pull_request.body || 'No description provided.' }}
+            ${{ env.SANITIZED_BODY }}
