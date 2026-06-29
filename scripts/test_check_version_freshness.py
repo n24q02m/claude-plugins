@@ -455,6 +455,54 @@ class TestCheckVersionFreshness(unittest.TestCase):
             ("ok", "2.0.0"),
         )
 
+    # Direct tests for get_latest_tag_api
+    # ------------------------------------------------------------------
+
+    @patch("check_version_freshness._opener.open")
+    def test_get_latest_tag_api_success(self, mock_urlopen):
+        mock_response = MagicMock()
+        mock_response.read.return_value = b'{"tag_name": "v1.2.3"}'
+        mock_response.__enter__.return_value = mock_response
+        mock_urlopen.return_value = mock_response
+
+        status, tag = check_version_freshness.get_latest_tag_api("org/repo")
+        self.assertEqual(status, "ok")
+        self.assertEqual(tag, "1.2.3")
+
+    @patch("check_version_freshness._opener.open")
+    def test_get_latest_tag_api_404(self, mock_urlopen):
+        mock_urlopen.side_effect = urllib.error.HTTPError(
+            "url", 404, "Not Found", {}, None
+        )
+
+        status, tag = check_version_freshness.get_latest_tag_api("org/repo")
+        self.assertEqual(status, "no-release")
+        self.assertIsNone(tag)
+
+    @patch("check_version_freshness._opener.open")
+    def test_get_latest_tag_api_timeout(self, mock_urlopen):
+        mock_urlopen.side_effect = urllib.error.URLError(reason=TimeoutError())
+
+        status, tag = check_version_freshness.get_latest_tag_api("org/repo")
+        self.assertEqual(status, "timeout")
+        self.assertIsNone(tag)
+
+    @patch("check_version_freshness._opener.open")
+    def test_get_latest_tag_api_url_error(self, mock_urlopen):
+        mock_urlopen.side_effect = urllib.error.URLError(reason="some error")
+
+        status, tag = check_version_freshness.get_latest_tag_api("org/repo")
+        self.assertEqual(status, "error")
+        self.assertIn("some error", tag)
+
+    @patch("check_version_freshness._opener.open")
+    def test_get_latest_tag_api_generic_exception(self, mock_urlopen):
+        mock_urlopen.side_effect = Exception("unexpected")
+
+        status, tag = check_version_freshness.get_latest_tag_api("org/repo")
+        self.assertEqual(status, "error")
+        self.assertEqual(tag, "unexpected")
+
 
 if __name__ == "__main__":
     unittest.main()
