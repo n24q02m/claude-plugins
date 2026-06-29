@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# UserPromptSubmit hook -- pre-warm wet-mcp docs cache when the user's
-# prompt mentions a known Tier 1 library import.
+# UserPromptSubmit hook -- pre-warm wet-mcp docs cache when the user prompt
+# mentions a known Tier 1 library import.
 #
 # Spec section 12.2 NICE + Phase 3 plan task 10. Best-effort only;
 # never blocks the prompt and exits 0 on any error.
 #
 # How it works:
-#   1. Read the user's prompt from $CLAUDE_USER_PROMPT (or stdin).
+#   1. Read the user prompt from $CLAUDE_USER_PROMPT (or stdin).
 #   2. Extract library identifiers from common import keyword patterns
 #      (Python, JavaScript/TypeScript, Go).
 #   3. For each match that is a Tier 1 library, fire-and-forget a
@@ -30,73 +30,13 @@ if [ -z "$PROMPT" ]; then
     exit 0
 fi
 
-# Tier 1 library aliases the wet-mcp registry currently knows about.
-# The list mirrors tests/fixtures/libraries/tier1_libraries.json so the
-# hook stays useful without a runtime DB lookup. Extend cautiously --
-# extra entries cost a no-op warmup, missing entries are silent.
-TIER1_LIBRARIES=(
-    "fastapi"
-    "pydantic"
-    "starlette"
-    "uvicorn"
-    "react"
-    "next"
-    "vue"
-    "svelte"
-    "django"
-    "flask"
-    "numpy"
-    "pandas"
-    "polars"
-    "scikit-learn"
-    "pytorch"
-    "tensorflow"
-    "transformers"
-    "langchain"
-    "anthropic"
-    "openai"
-)
+# Extract candidate identifiers from the prompt and match against Tier 1 list.
+# Now using a python script for better maintainability and robustness.
+UNIQUE_HITS=$(printf "%s" "$PROMPT" | python3 "$(dirname "$0")/extract_prewarm_libraries.py")
 
-# Extract candidate identifiers from the prompt.
-# Patterns covered:
-#   from <pkg> import ...
-#   import <pkg>
-#   import { ... } from "<pkg>"     (JS/TS)
-#   import <pkg> from "..."         (default-import; package follows from)
-#   require("<pkg>")
-CANDIDATES=$(
-    {
-        printf "%s\n" "$PROMPT" | grep -oE 'from[[:space:]]+[a-zA-Z0-9_.-]+' | awk '{print $2}'
-        printf "%s\n" "$PROMPT" | grep -oE 'import[[:space:]]+[a-zA-Z0-9_.-]+' | awk '{print $2}'
-        printf "%s\n" "$PROMPT" | grep -oE 'require\("[a-zA-Z0-9_.@/-]+"\)' | sed -E 's/require\("([^"]+)"\)/\1/'
-        printf "%s\n" "$PROMPT" | grep -oE 'from[[:space:]]+"[a-zA-Z0-9_.@/-]+"' | sed -E 's/from[[:space:]]+"([^"]+)"/\1/'
-    } 2>/dev/null | sort -u | head -20 || true
-)
-
-if [ -z "$CANDIDATES" ]; then
+if [ -z "$UNIQUE_HITS" ]; then
     exit 0
 fi
-
-# Match candidates against Tier 1 list (case-insensitive, strip path
-# prefixes for sub-imports like "react/jsx-runtime" -> "react").
-HITS=()
-while IFS= read -r raw; do
-    [ -z "$raw" ] && continue
-    base=$(printf "%s" "$raw" | tr 'A-Z' 'a-z' | sed -E 's|/.*$||;s|^@[^/]+/||')
-    for known in "${TIER1_LIBRARIES[@]}"; do
-        if [ "$base" = "$known" ]; then
-            HITS+=("$known")
-            break
-        fi
-    done
-done <<< "$CANDIDATES"
-
-if [ ${#HITS[@]} -eq 0 ]; then
-    exit 0
-fi
-
-# Deduplicate hits.
-UNIQUE_HITS=$(printf "%s\n" "${HITS[@]}" | sort -u)
 
 # Fire-and-forget docs_resolve warmup. We use the wet-mcp CLI in
 # headless mode if available; otherwise log to stderr and exit so the
@@ -115,9 +55,9 @@ else
     # Advisory-only fallback: tell the operator which libraries would
     # have been warmed if the wet-mcp CLI were on PATH.
     {
-        printf '[wet-mcp UserPromptSubmit hook] would prewarm: '
-        printf '%s ' "${UNIQUE_HITS[@]}"
-        printf '\n'
+        printf "[wet-mcp UserPromptSubmit hook] would prewarm: "
+        # Use awk to join UNIQUE_HITS by space for the advisory log
+        printf "%s" "$UNIQUE_HITS" | awk "{printf \"%s \", \$0} END {printf \"\n\"}"
     } >&2
 fi
 
