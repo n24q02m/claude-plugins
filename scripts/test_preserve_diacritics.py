@@ -8,6 +8,8 @@ These tests exercise the pure check function (_check_pair) with hand-crafted
 before/after line pairs, avoiding the need for a real git repo.
 """
 
+import subprocess
+from unittest.mock import patch
 import importlib.util
 import sys
 from pathlib import Path
@@ -187,6 +189,19 @@ def test_case_11_is_skippable_helper() -> None:
     )
 
 
+def test_case_12_run_git_error() -> None:
+    print("Case 12: _run_git handles subprocess error")
+    with patch("subprocess.run") as mock_run:
+        mock_run.side_effect = subprocess.CalledProcessError(
+            returncode=1, cmd=["git", "diff"]
+        )
+        try:
+            _MOD._run_git(["diff"])
+            _assert(False, "should have raised CalledProcessError")
+        except subprocess.CalledProcessError:
+            _assert(True, "propagates CalledProcessError")
+
+
 def main() -> int:
     tests = [
         test_case_1_em_dash_to_dashdash,
@@ -203,6 +218,7 @@ def main() -> int:
         test_case_9_strip_diacritics_helper,
         test_case_10_similar_helper,
         test_case_11_is_skippable_helper,
+        test_case_12_run_git_error,
     ]
     for t in tests:
         t()
@@ -212,7 +228,7 @@ def main() -> int:
         for f in _failures:
             print(f"  - {f}")
         return 1
-    print(f"OK: {len(tests) * 1} assertions all passed")
+    print(f"OK: {len(tests)} assertions all passed")
     return 0
 
 
