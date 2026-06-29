@@ -7,7 +7,6 @@ import os
 import urllib.request
 import urllib.error
 import urllib.parse
-import functools
 
 from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path
 
@@ -41,12 +40,16 @@ class NoAuthRedirectHandler(urllib.request.HTTPRedirectHandler):
 
 _opener = urllib.request.build_opener(NoAuthRedirectHandler)
 
+
 # In-memory cache for API responses to avoid redundant calls
+_latest_tag_cache = {}
 
 
-@functools.lru_cache(maxsize=None)
 def get_latest_tag_api(repo):
     """Fetch the latest stable release tag from GitHub API."""
+    if repo in _latest_tag_cache:
+        return _latest_tag_cache[repo]
+
     url = f"https://api.github.com/repos/{repo}/releases/latest"
     headers = {
         "Accept": "application/vnd.github.v3+json",
@@ -78,7 +81,60 @@ def get_latest_tag_api(repo):
     except Exception as e:
         result = ("error", str(e))
 
+    _latest_tag_cache[repo] = result
     return result
+
+
+def _fetch_latest_tags_graphql(owner, repo_names):
+    """Fetch latest release tags for multiple repos in a single GraphQL call."""
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    if not token:
+        return
+
+    # Filter out repos already in cache
+    repos_to_fetch = [r for r in repo_names if f"{owner}/{r}" not in _latest_tag_cache]
+    if not repos_to_fetch:
+        return
+
+    # Build aliases for GraphQL (must start with letter and be alphanumeric)
+    def to_alias(name):
+        return "repo_" + name.replace("-", "_")
+
+    # Construct the GraphQL query
+    query_parts = []
+    for repo in repos_to_fetch:
+        alias = to_alias(repo)
+        query_parts.append(
+            f'{alias}: repository(owner: "{owner}", name: "{repo}") {{ '
+            "latestRelease { tagName } }"
+        )
+
+    query = "query { " + " ".join(query_parts) + " }"
+    url = "https://api.github.com/graphql"
+    headers = {
+        "Authorization": f"token {token}",
+        "Content-Type": "application/json",
+        "User-Agent": "Marketplace-Version-Checker",
+    }
+    data = json.dumps({"query": query}).encode()
+
+    req = urllib.request.Request(url, data=data, headers=headers)
+    try:
+        with _opener.open(req, timeout=30) as response:
+            result_data = json.loads(response.read().decode())
+            if "data" in result_data:
+                for repo in repos_to_fetch:
+                    alias = to_alias(repo)
+                    repo_data = result_data["data"].get(alias)
+                    full_repo = f"{owner}/{repo}"
+                    if repo_data and repo_data.get("latestRelease"):
+                        tag = repo_data["latestRelease"]["tagName"].lstrip("v")
+                        _latest_tag_cache[full_repo] = ("ok", tag)
+                    elif repo_data:
+                        _latest_tag_cache[full_repo] = ("no-release", None)
+    except Exception as e:
+        # Silently fall back to REST if GraphQL fails
+        print(f"::debug ::GraphQL batch fetch failed: {e}")
 
 
 def _get_marketplace_version(source):
@@ -106,7 +162,7 @@ def _get_marketplace_version(source):
         return "unknown"
 
 
-def check_plugin(plugin):
+def check_plugin(plugin, owner):
     """Check a single plugin's version against its latest GitHub release."""
     name = plugin.get("name")
     if not isinstance(name, str) or not PLUGIN_NAME_PATTERN.fullmatch(name):
@@ -139,7 +195,7 @@ def check_plugin(plugin):
     marketplace_ver = _get_marketplace_version(source)
 
     # Get latest stable release from source repo via API
-    status, latest_tag = get_latest_tag_api(f"n24q02m/{name}")
+    status, latest_tag = get_latest_tag_api(f"{owner}/{name}")
 
     result = {"name": name, "marketplace_ver": marketplace_ver, "status": status}
 
@@ -163,10 +219,20 @@ def check_version_freshness():
         print(f"::error ::{sanitize_log(f'Failed to load marketplace.json: {e}')}")
         return
 
+    owner = marketplace.get("owner", {}).get("name", "n24q02m")
+    plugin_names = [
+        p.get("name") for p in marketplace.get("plugins", []) if p.get("name")
+    ]
+
+    # Pre-populate cache using GraphQL batch fetch if possible
+    _fetch_latest_tags_graphql(owner, plugin_names)
+
     stale = []
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        futures = {executor.submit(check_plugin, p): p for p in marketplace["plugins"]}
+        futures = {
+            executor.submit(check_plugin, p, owner): p for p in marketplace["plugins"]
+        }
         for future in concurrent.futures.as_completed(futures):
             res = future.result()
             name = res["name"]
