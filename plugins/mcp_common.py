@@ -1,6 +1,4 @@
 import os
-
-
 import json
 import sys
 
@@ -54,3 +52,46 @@ def is_relay_configured() -> bool:
     if os.path.exists(os.path.join(home, ".config", "mcp", "config.enc")):
         return True
     return False
+
+
+def check_mcp_credentials(
+    server_name: str,
+    credential_keys: list[str],
+    is_blocking: bool = False,
+    custom_message: str | None = None,
+) -> None:
+    """Centralized credential checking for MCP hooks.
+
+    Checks environment variables and relay configuration.
+    Exits with 0 if configured or tool is exempt.
+    If unconfigured:
+        - If is_blocking=True: prints 'block' decision and exits with 2.
+        - If is_blocking=False: prints 'message' hint and exits with 0.
+    """
+    data = read_mcp_hook_input()
+    tool_name = data.get("tool_name", "")
+    if not isinstance(tool_name, str):
+        tool_name = ""
+
+    exempt_suffixes = ("__setup", "__help", "__config")
+    if tool_name.endswith(exempt_suffixes):
+        sys.exit(0)
+
+    configured = (
+        any(os.environ.get(k) for k in credential_keys) or is_relay_configured()
+    )
+
+    if configured:
+        sys.exit(0)
+
+    if is_blocking:
+        reason = custom_message or f"{server_name} credentials not configured."
+        print(json.dumps({"decision": "block", "reason": reason}))
+        sys.exit(2)
+    else:
+        message = (
+            custom_message
+            or f"{server_name}: credentials not yet configured. The server will provide setup instructions."
+        )
+        print(json.dumps({"message": message}))
+        sys.exit(0)

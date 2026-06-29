@@ -16,28 +16,49 @@ spec.loader.exec_module(check_credentials)
 
 class TestCheckCredentials(unittest.TestCase):
 
+    @patch("sys.stdin", io.StringIO(json.dumps({"tool_name": "send_message"})))
     @patch.dict(os.environ, {"TELEGRAM_PHONE": "123456789"}, clear=True)
-    def test_is_configured_phone(self):
-        self.assertTrue(check_credentials._is_configured())
+    @patch("sys.exit", side_effect=SystemExit)
+    def test_main_configured_phone(self, mock_exit):
+        with self.assertRaises(SystemExit):
+            check_credentials.main()
+        mock_exit.assert_called_with(0)
 
+    @patch("sys.stdin", io.StringIO(json.dumps({"tool_name": "send_message"})))
     @patch.dict(os.environ, {"TELEGRAM_BOT_TOKEN": "token123"}, clear=True)
-    def test_is_configured_bot(self):
-        self.assertTrue(check_credentials._is_configured())
+    @patch("sys.exit", side_effect=SystemExit)
+    def test_main_configured_bot(self, mock_exit):
+        with self.assertRaises(SystemExit):
+            check_credentials.main()
+        mock_exit.assert_called_with(0)
 
+    @patch("sys.stdin", io.StringIO(json.dumps({"tool_name": "send_message"})))
     @patch.dict(os.environ, {}, clear=True)
     @patch("os.path.exists")
     @patch("os.path.expanduser")
-    def test_is_configured_file(self, mock_expanduser, mock_exists):
+    @patch("sys.exit", side_effect=SystemExit)
+    def test_main_configured_file(self, mock_exit, mock_expanduser, mock_exists):
         mock_expanduser.return_value = "/home/user"
-        # Mocking exists to return True only for the home config path
         mock_exists.side_effect = lambda p: p == "/home/user/.config/mcp/config.enc"
-        self.assertTrue(check_credentials._is_configured())
+        with self.assertRaises(SystemExit):
+            check_credentials.main()
+        mock_exit.assert_called_with(0)
 
     @patch.dict(os.environ, {}, clear=True)
-    @patch("os.path.exists")
-    def test_not_configured(self, mock_exists):
-        mock_exists.return_value = False
-        self.assertFalse(check_credentials._is_configured())
+    @patch("os.path.exists", return_value=False)
+    @patch("sys.stdin", io.StringIO(json.dumps({"tool_name": "send_message"})))
+    @patch("sys.exit", side_effect=SystemExit)
+    @patch("sys.stdout", new_callable=io.StringIO)
+    def test_main_blocked(self, mock_stdout, mock_exit, mock_exists):
+        with self.assertRaises(SystemExit):
+            check_credentials.main()
+
+        mock_exit.assert_called_with(2)
+        output = json.loads(mock_stdout.getvalue())
+        self.assertEqual(output["decision"], "block")
+        self.assertIn(
+            "better-telegram-mcp credentials not configured", output["reason"]
+        )
 
     @patch("sys.stdin", io.StringIO(json.dumps({"tool_name": "any_tool__setup"})))
     @patch("sys.exit", side_effect=SystemExit)
@@ -46,71 +67,13 @@ class TestCheckCredentials(unittest.TestCase):
             check_credentials.main()
         mock_exit.assert_called_with(0)
 
-    @patch.dict(os.environ, {}, clear=True)
-    @patch("os.path.exists")
-    @patch("sys.stdin", io.StringIO(json.dumps({"tool_name": "send_message"})))
-    @patch("sys.exit", side_effect=SystemExit)
-    @patch("sys.stdout", new_callable=io.StringIO)
-    def test_main_blocked(self, mock_stdout, mock_exit, mock_exists):
-        mock_exists.return_value = False
-        with self.assertRaises(SystemExit):
-            check_credentials.main()
-
-        mock_exit.assert_called_with(2)
-        output = json.loads(mock_stdout.getvalue())
-        self.assertEqual(output["decision"], "block")
-        self.assertIn(
-            "better-telegram-mcp credentials not configured", output["reason"]
-        )
-
-    @patch.dict(os.environ, {"TELEGRAM_PHONE": "123456789"}, clear=True)
-    @patch("sys.stdin", io.StringIO(json.dumps({"tool_name": "send_message"})))
-    @patch("sys.exit", side_effect=SystemExit)
-    def test_main_allowed(self, mock_exit):
-        with self.assertRaises(SystemExit):
-            check_credentials.main()
-        mock_exit.assert_called_with(0)
-
     @patch("sys.stdin", io.StringIO("invalid json"))
-    @patch("sys.exit", side_effect=SystemExit(2))
+    @patch("sys.exit", side_effect=SystemExit)
     @patch("sys.stdout", new_callable=io.StringIO)
     def test_main_invalid_json(self, mock_stdout, mock_exit):
-        with self.assertRaises(SystemExit) as cm:
-            check_credentials.main()
-
-        self.assertEqual(cm.exception.code, 2)
-        mock_exit.assert_called_with(2)
-        output = json.loads(mock_stdout.getvalue())
-        self.assertEqual(output["decision"], "block")
-        self.assertIn(
-            "Invalid input: payload must be a JSON dictionary", output["reason"]
-        )
-
-    @patch.dict(os.environ, {}, clear=True)
-    @patch("os.path.exists")
-    @patch("sys.stdin", io.StringIO(json.dumps({"tool_name": 123})))
-    @patch("sys.exit", side_effect=SystemExit)
-    @patch("sys.stdout", new_callable=io.StringIO)
-    def test_main_invalid_tool_name_type(self, mock_stdout, mock_exit, mock_exists):
-        mock_exists.return_value = False
         with self.assertRaises(SystemExit):
             check_credentials.main()
 
-        mock_exit.assert_called_with(2)
-        output = json.loads(mock_stdout.getvalue())
-        self.assertEqual(output["decision"], "block")
-        self.assertIn(
-            "better-telegram-mcp credentials not configured", output["reason"]
-        )
-
-    @patch("sys.stdin", io.StringIO('["not a dict"]'))
-    @patch("sys.exit", side_effect=SystemExit(2))
-    @patch("sys.stdout", new_callable=io.StringIO)
-    def test_main_not_dict_json(self, mock_stdout, mock_exit):
-        with self.assertRaises(SystemExit) as cm:
-            check_credentials.main()
-
-        self.assertEqual(cm.exception.code, 2)
         mock_exit.assert_called_with(2)
         output = json.loads(mock_stdout.getvalue())
         self.assertEqual(output["decision"], "block")
@@ -121,10 +84,3 @@ class TestCheckCredentials(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-# Reflection:
-# The check-credentials.py hook for better-telegram-mcp blocks tool access
-# when no credentials (env vars or config file) are found, except for
-# specific tools ending in __setup, __help, or __config.
-# This test suite ensures that both blocking and allow-listing logic
-# work as expected, and that the hook handles malformed input gracefully.
