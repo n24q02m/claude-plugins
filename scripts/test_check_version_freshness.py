@@ -346,6 +346,31 @@ class TestCheckVersionFreshness(unittest.TestCase):
         self.assertEqual(result["status"], "up-to-date")
         self.assertEqual(result["marketplace_ver"], "3.4.5")
 
+    # ------------------------------------------------------------------
+    # Error handling for marketplace.json loading
+    # ------------------------------------------------------------------
+
+    @patch("check_version_freshness.open", side_effect=OSError("Disk error"))
+    @patch("builtins.print")
+    def test_check_version_freshness_load_oserror(self, mock_print, mock_open):
+        check_version_freshness.check_version_freshness()
+        mock_print.assert_called_once()
+        args, _ = mock_print.call_args
+        self.assertIn("Failed to load marketplace.json: Disk error", args[0])
+        self.assertIn("::error ::", args[0])
+
+    @patch("check_version_freshness.open", create=True)
+    @patch("json.load", side_effect=json.JSONDecodeError("Expecting value", "", 0))
+    @patch("builtins.print")
+    def test_check_version_freshness_load_json_error(
+        self, mock_print, mock_json_load, mock_open
+    ):
+        check_version_freshness.check_version_freshness()
+        mock_print.assert_called_once()
+        args, _ = mock_print.call_args
+        self.assertIn("Failed to load marketplace.json: Expecting value", args[0])
+        self.assertIn("::error ::", args[0])
+
 
 if __name__ == "__main__":
     unittest.main()
