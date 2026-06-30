@@ -9,7 +9,7 @@ import check_version_freshness
 class TestCheckVersionFreshness(unittest.TestCase):
     def setUp(self):
         # Clear cache before each test
-        check_version_freshness.get_latest_tag_api.cache_clear()
+        check_version_freshness._latest_tag_cache.clear()
 
     # ------------------------------------------------------------------
     # Happy path + URL construction
@@ -28,7 +28,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
             patch("check_version_freshness.open", create=True),
             patch("json.load", return_value={"version": "1.0.0"}),
         ):
-            result = check_version_freshness.check_plugin(plugin)
+            result = check_version_freshness.check_plugin(plugin, "n24q02m")
 
         self.assertEqual(result["status"], "up-to-date")
         mock_urlopen.assert_called_once()
@@ -46,13 +46,13 @@ class TestCheckVersionFreshness(unittest.TestCase):
     @patch("check_version_freshness._opener.open")
     def test_check_plugin_invalid_name_injection(self, mock_urlopen):
         plugin = {"name": "invalid; rm -rf /", "source": "./plugins/invalid"}
-        result = check_version_freshness.check_plugin(plugin)
+        result = check_version_freshness.check_plugin(plugin, "n24q02m")
         self.assertEqual(result["status"], "error")
         self.assertEqual(result["error"], "invalid name format")
 
     def test_check_plugin_path_traversal(self):
         plugin = {"name": "test-plugin", "source": "../../../etc/passwd"}
-        res = check_version_freshness.check_plugin(plugin)
+        res = check_version_freshness.check_plugin(plugin, "n24q02m")
         self.assertEqual(res["status"], "error")
         self.assertEqual(res["error"], "invalid source path")
 
@@ -63,28 +63,28 @@ class TestCheckVersionFreshness(unittest.TestCase):
         # First call for abs_base, second for abs_target
         mock_realpath.side_effect = ["/app", "/etc/passwd"]
         plugin = {"name": "test-plugin", "source": "plugins/malicious"}
-        res = check_version_freshness.check_plugin(plugin)
+        res = check_version_freshness.check_plugin(plugin, "n24q02m")
         self.assertEqual(res["status"], "error")
         self.assertEqual(res["error"], "invalid source path")
 
     @patch("check_version_freshness._opener.open")
     def test_check_plugin_invalid_name_space(self, mock_urlopen):
         plugin = {"name": "plugin name", "source": "./plugins/plugin"}
-        result = check_version_freshness.check_plugin(plugin)
+        result = check_version_freshness.check_plugin(plugin, "n24q02m")
         self.assertEqual(result["status"], "error")
         mock_urlopen.assert_not_called()
 
     @patch("check_version_freshness._opener.open")
     def test_check_plugin_invalid_name_underscore(self, mock_urlopen):
         plugin = {"name": "plugin_with_underscore", "source": "./plugins/p"}
-        result = check_version_freshness.check_plugin(plugin)
+        result = check_version_freshness.check_plugin(plugin, "n24q02m")
         self.assertEqual(result["status"], "error")
         mock_urlopen.assert_not_called()
 
     @patch("check_version_freshness._opener.open")
     def test_check_plugin_invalid_name_newline(self, mock_urlopen):
         plugin = {"name": "plugin-name\n", "source": "./plugins/p"}
-        result = check_version_freshness.check_plugin(plugin)
+        result = check_version_freshness.check_plugin(plugin, "n24q02m")
         self.assertEqual(result["status"], "error")
         mock_urlopen.assert_not_called()
 
@@ -105,7 +105,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
             patch("check_version_freshness.open", create=True),
             patch("json.load", return_value={"version": "1.0.0"}),
         ):
-            result = check_version_freshness.check_plugin(plugin)
+            result = check_version_freshness.check_plugin(plugin, "n24q02m")
 
         self.assertEqual(result["status"], "stale")
         self.assertEqual(result["marketplace_ver"], "1.0.0")
@@ -125,7 +125,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
             patch("check_version_freshness.open", create=True),
             patch("json.load", return_value={"version": "1.0.0"}),
         ):
-            result = check_version_freshness.check_plugin(plugin)
+            result = check_version_freshness.check_plugin(plugin, "n24q02m")
 
         self.assertEqual(result["status"], "no-release")
 
@@ -138,7 +138,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
             patch("check_version_freshness.open", create=True),
             patch("json.load", return_value={"version": "1.0.0"}),
         ):
-            result = check_version_freshness.check_plugin(plugin)
+            result = check_version_freshness.check_plugin(plugin, "n24q02m")
 
         self.assertEqual(result["status"], "timeout")
 
@@ -151,7 +151,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
             patch("check_version_freshness.open", create=True),
             patch("json.load", return_value={"version": "1.0.0"}),
         ):
-            result = check_version_freshness.check_plugin(plugin)
+            result = check_version_freshness.check_plugin(plugin, "n24q02m")
 
         self.assertEqual(result["status"], "error")
 
@@ -181,7 +181,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
             ),
             patch("json.load", return_value={"version": "2.0.0"}),
         ):
-            result = check_version_freshness.check_plugin(plugin)
+            result = check_version_freshness.check_plugin(plugin, "n24q02m")
 
         self.assertEqual(result["status"], "up-to-date")
         self.assertEqual(result["marketplace_ver"], "2.0.0")
@@ -202,8 +202,8 @@ class TestCheckVersionFreshness(unittest.TestCase):
         with patch(
             "check_version_freshness.open", create=True, side_effect=FileNotFoundError
         ):
-            check_version_freshness.check_plugin(plugin)
-            check_version_freshness.check_plugin(plugin)
+            check_version_freshness.check_plugin(plugin, "n24q02m")
+            check_version_freshness.check_plugin(plugin, "n24q02m")
 
         self.assertEqual(mock_urlopen.call_count, 1)
 
@@ -225,7 +225,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
             patch("check_version_freshness.open", create=True),
             patch("json.load", return_value={"version": "1.0.0"}),
         ):
-            check_version_freshness.check_plugin(plugin)
+            check_version_freshness.check_plugin(plugin, "n24q02m")
 
         args, _ = mock_urlopen.call_args
         req = args[0]
@@ -341,7 +341,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
             patch("check_version_freshness.open", create=True),
             patch("json.load", return_value={"version": "3.4.5"}),
         ):
-            result = check_version_freshness.check_plugin(plugin)
+            result = check_version_freshness.check_plugin(plugin, "n24q02m")
 
         self.assertEqual(result["status"], "up-to-date")
         self.assertEqual(result["marketplace_ver"], "3.4.5")
@@ -370,6 +370,90 @@ class TestCheckVersionFreshness(unittest.TestCase):
         args, _ = mock_print.call_args
         self.assertIn("Failed to load marketplace.json: Expecting value", args[0])
         self.assertIn("::error ::", args[0])
+    # GraphQL Batch Fetching
+    # ------------------------------------------------------------------
+
+    @patch.dict("os.environ", {"GITHUB_TOKEN": "secret-token"}, clear=False)
+    @patch("check_version_freshness._opener.open")
+    def test_fetch_latest_tags_graphql_success(self, mock_urlopen):
+        owner = "test-owner"
+        repo_names = ["repo-a", "repo-b"]
+
+        mock_response = MagicMock()
+        mock_response.read.return_value = json.dumps(
+            {
+                "data": {
+                    "repo_repo_a": {"latestRelease": {"tagName": "v1.2.3"}},
+                    "repo_repo_b": {"latestRelease": {"tagName": "v2.0.0"}},
+                }
+            }
+        ).encode()
+        mock_response.__enter__.return_value = mock_response
+        mock_urlopen.return_value = mock_response
+
+        check_version_freshness._fetch_latest_tags_graphql(owner, repo_names)
+
+        self.assertEqual(
+            check_version_freshness._latest_tag_cache.get("test-owner/repo-a"),
+            ("ok", "1.2.3"),
+        )
+        self.assertEqual(
+            check_version_freshness._latest_tag_cache.get("test-owner/repo-b"),
+            ("ok", "2.0.0"),
+        )
+        self.assertEqual(mock_urlopen.call_count, 1)
+
+    @patch.dict("os.environ", {"GITHUB_TOKEN": "secret-token"}, clear=False)
+    @patch("check_version_freshness._opener.open")
+    def test_check_version_freshness_uses_graphql(self, mock_urlopen):
+        # Mock marketplace.json
+        marketplace_data = {
+            "owner": {"name": "test-owner"},
+            "plugins": [
+                {"name": "plugin-a", "source": "./plugins/plugin-a"},
+                {"name": "plugin-b", "source": "./plugins/plugin-b"},
+            ],
+        }
+
+        # Mock GraphQL response
+        mock_response = MagicMock()
+        mock_response.read.return_value = json.dumps(
+            {
+                "data": {
+                    "repo_plugin_a": {"latestRelease": {"tagName": "v1.0.0"}},
+                    "repo_plugin_b": {"latestRelease": {"tagName": "v2.0.0"}},
+                }
+            }
+        ).encode()
+        mock_response.__enter__.return_value = mock_response
+        mock_urlopen.return_value = mock_response
+
+        with (
+            patch("builtins.open", create=True),
+            patch("json.load", return_value=marketplace_data),
+            patch(
+                "check_version_freshness._get_marketplace_version", return_value="1.0.0"
+            ),
+        ):
+            # We don't want to actually run the ThreadPoolExecutor logic fully if it's too complex to mock perfectly,
+            # but we want to see if GraphQL is called.
+            # Actually, check_version_freshness calls _fetch_latest_tags_graphql first.
+            check_version_freshness.check_version_freshness()
+
+        # Verify GraphQL was called
+        args, _ = mock_urlopen.call_args
+        req = args[0]
+        self.assertEqual(req.full_url, "https://api.github.com/graphql")
+
+        # Verify cache was populated
+        self.assertEqual(
+            check_version_freshness._latest_tag_cache.get("test-owner/plugin-a"),
+            ("ok", "1.0.0"),
+        )
+        self.assertEqual(
+            check_version_freshness._latest_tag_cache.get("test-owner/plugin-b"),
+            ("ok", "2.0.0"),
+        )
 
 
 if __name__ == "__main__":
