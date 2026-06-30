@@ -202,6 +202,39 @@ def test_case_12_run_git_error() -> None:
             _assert(True, "propagates CalledProcessError")
 
 
+def test_case_13_run_git_success() -> None:
+    print("Case 13: _run_git returns decoded stdout")
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value.stdout = b"some output\n"
+        res = _MOD._run_git(["rev-parse", "--show-toplevel"])
+        _assert(res == "some output\n", "returns decoded stdout")
+        mock_run.assert_called_once()
+        args, kwargs = mock_run.call_args
+        _assert(args[0] == ["git", "rev-parse", "--show-toplevel"], "calls correct cmd")
+
+
+def test_case_14_run_git_with_pathspecs() -> None:
+    print("Case 14: _run_git handles pathspecs")
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value.stdout = b"file.txt\n"
+        res = _MOD._run_git(["ls-files"], pathspecs=["file.txt"])
+        _assert(res == "file.txt\n", "returns output")
+        args, kwargs = mock_run.call_args
+        _assert(
+            args[0] == ["git", "ls-files", "--", "file.txt"], "adds -- and pathspecs"
+        )
+
+
+def test_case_15_run_git_unicode_decode_error() -> None:
+    print("Case 15: _run_git handles invalid UTF-8 with replace")
+    with patch("subprocess.run") as mock_run:
+        # 0xFF is invalid UTF-8
+        mock_run.return_value.stdout = b"valid \xff invalid"
+        res = _MOD._run_git(["diff"])
+        # \ufffd is the replacement character
+        _assert(res == "valid \ufffd invalid", "uses replace for invalid utf-8")
+
+
 def main() -> int:
     tests = [
         test_case_1_em_dash_to_dashdash,
@@ -219,6 +252,9 @@ def main() -> int:
         test_case_10_similar_helper,
         test_case_11_is_skippable_helper,
         test_case_12_run_git_error,
+        test_case_13_run_git_success,
+        test_case_14_run_git_with_pathspecs,
+        test_case_15_run_git_unicode_decode_error,
     ]
     for t in tests:
         t()
