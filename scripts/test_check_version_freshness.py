@@ -370,6 +370,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
         args, _ = mock_print.call_args
         self.assertIn("Failed to load marketplace.json: Expecting value", args[0])
         self.assertIn("::error ::", args[0])
+
     # GraphQL Batch Fetching
     # ------------------------------------------------------------------
 
