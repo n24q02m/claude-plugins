@@ -27,14 +27,13 @@ class NoAuthRedirectHandler(urllib.request.HTTPRedirectHandler):
             # Check if the hostname has changed or if there's an HTTPS to HTTP downgrade
             if old_host != new_host or (old_scheme == "https" and new_scheme == "http"):
                 # Strip Authorization header to prevent token leakage (SSRF mitigation)
-                for header in ["Authorization", "Cookie", "authorization", "cookie"]:
-                    if m.has_header(header):
-                        m.remove_header(header)
-                    keys_to_remove = [
-                        k for k in m.unredirected_hdrs if k.lower() == header.lower()
-                    ]
-                    for k in keys_to_remove:
-                        del m.unredirected_hdrs[k]
+                headers_to_remove = ("authorization", "cookie")
+                for k in [k for k in m.headers if k.lower() in headers_to_remove]:
+                    del m.headers[k]
+                for k in [
+                    k for k in m.unredirected_hdrs if k.lower() in headers_to_remove
+                ]:
+                    del m.unredirected_hdrs[k]
         return m
 
 

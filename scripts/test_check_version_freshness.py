@@ -247,6 +247,12 @@ class TestCheckVersionFreshness(unittest.TestCase):
         handler = check_version_freshness.NoAuthRedirectHandler()
         # Mock the underlying redirect_request to just return a Request object
         # with the new URL and the old headers.
+        # Inject multiple cases of sensitive headers
+        req.headers["AUTHORIZATION"] = "token uppercase"
+        req.headers["authorization"] = "token lowercase"
+        req.headers["COOKIE"] = "session uppercase"
+        req.headers["cookie"] = "session lowercase"
+
         with patch("urllib.request.HTTPRedirectHandler.redirect_request") as mock_super:
             mock_req = urllib.request.Request(
                 "https://raw.githubusercontent.com/test",
@@ -370,6 +376,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
         args, _ = mock_print.call_args
         self.assertIn("Failed to load marketplace.json: Expecting value", args[0])
         self.assertIn("::error ::", args[0])
+
     # GraphQL Batch Fetching
     # ------------------------------------------------------------------
 
