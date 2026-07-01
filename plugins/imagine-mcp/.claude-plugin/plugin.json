@@ -1,7 +1,7 @@
 {
   "name": "imagine-mcp",
   "description": "Image/video understanding & generation across Gemini, OpenAI, Grok",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "userConfig": {
     "XAI_API_KEY": {
       "type": "string",
