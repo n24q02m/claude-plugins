@@ -171,9 +171,9 @@ All environment variables are **optional**. The server works in local mode (ONNX
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `EMBEDDING_BACKEND` | No | auto-detect | `cloud` or `local` (Qwen3). Auto: API keys present -> cloud, else local |
+| `EMBEDDING_BACKEND` | No | auto-detect | `cloud` or `local`. Auto: API keys present -> cloud, else local |
 | `EMBEDDING_MODEL` | No | auto-detect | Cloud embedding model name |
-| `EMBEDDING_DIMS` | No | `0` (auto=768) | Embedding dimensions |
+| `EMBEDDING_DIMS` | No | `0` (auto) | Embedding dimensions |
 | `RERANK_ENABLED` | No | `true` | Enable reranking after search |
 | `RERANK_BACKEND` | No | auto-detect | `cloud` or `local`. Auto: Cohere/Jina key -> cloud, else local |
 | `RERANK_MODEL` | No | auto-detect | Cloud rerank model name |

@@ -57,7 +57,7 @@ See each server's `/tools/` page for the per-server list.
 
 Raw API mirrors leak too much surface to the agent. Example: Notion's REST API has 30+ endpoints — most agents don't need pagination, retries, schema lookups exposed. A composite `notion.create_page(title, content_md)` does pagination + parent lookup + markdown→blocks conversion in one call.
 
-Memory `feedback_mcp_tool_layout.md` (mcp-dev skill) tracks the rule.
+This N+2 layout is a stack-wide convention across all servers.
 
 ## Adding a new tool
 

@@ -71,7 +71,7 @@ Relay is the server's response when a tool needs credentials and none exist yet 
 
 ## What `redirect_url` does
 
-After credential submission, server calls `window.location.replace(redirect_url)` so the user's browser tab returns to the client's "we've got your creds, retrying tool call now" page. **Do not** show a static "you can close this tab" message — that's the [`feedback_relay_form_must_follow_redirect.md`](https://github.com/n24q02m/n24q02m/blob/main/skills/mcp-dev/references/relay-flow.md) anti-pattern (mcp-core PR #116, fix landed 2026-04-22).
+After credential submission, server calls `window.location.replace(redirect_url)` so the user's browser tab returns to the client's "we've got your creds, retrying tool call now" page. **Do not** show a static "you can close this tab" message — the browser must follow the redirect back to the client so the tool call retries automatically.
 
 ## What encryption is used
 
@@ -88,7 +88,7 @@ Form fields are server-specific. Common patterns:
 - **OAuth-redirect**: button "Sign in with Notion / Google / Microsoft" that takes you to the upstream OAuth provider, returns to `/oauth/callback`, then redirects back to your client.
 - **Multi-field**: paste multiple tokens at once (`better-email-mcp` with separate IMAP and SMTP credentials).
 
-Per `feedback_relay_mode_ui_parity.md`, the same form is rendered in `local-relay` and `remote-relay` for the same server. Storage scope differs; UX is identical.
+The same form is rendered in `local-relay` and `remote-relay` for the same server. Storage scope differs; UX is identical.
 
 ## Anti-patterns
 

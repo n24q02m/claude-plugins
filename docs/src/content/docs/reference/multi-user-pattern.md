@@ -77,7 +77,7 @@ Identity (the `sub`) is delegated to an upstream IdP — usually GitHub for OSS 
 
 ## Anti-patterns
 
-- Shared `config.enc` (single-user storage) in `remote-relay` mode → first user's creds get overwritten by second user's. Server MUST refuse to start if it can't verify per-sub storage is wired. (`feedback_remote_relay_multi_user_enforcement.md`).
+- Shared `config.enc` (single-user storage) in `remote-relay` mode → first user's creds get overwritten by second user's. Server MUST refuse to start if it can't verify per-sub storage is wired.
 - Passing creds in URL query string (`?token=xxx`) → leaks via referer headers + access logs.
 - Not rotating `KEYRING_SECRET` on team-member offboarding → ex-team-member can decrypt past bundles if they exfiltrated the secret.
 

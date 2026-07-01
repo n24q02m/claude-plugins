@@ -81,9 +81,9 @@ export GEMINI_API_KEY="AIza..."
 
 ### Embedding Provider Priority
 
-Cloud auto-detection order: Jina AI > Gemini > OpenAI > Cohere > Local ONNX (Qwen3)
+Cloud auto-detection order: Jina AI > Gemini > OpenAI > Cohere > local ONNX model
 
-All embeddings are stored at 768 dimensions. Switching providers does NOT invalidate existing vectors.
+All embeddings are stored at a fixed embedding dimension. Switching providers does NOT invalidate existing vectors.
 
 ### Supported Languages
 

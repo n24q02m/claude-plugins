@@ -44,7 +44,6 @@ const PLUGIN_FILES = [
   'migration.md',
   'shared-services.md',
   // imagine-mcp specific:
-  'models.md',
 ];
 
 const REPO_RAW_BASE = 'https://github.com/n24q02m/claude-plugins/edit/main/plugins';

@@ -22,7 +22,7 @@ All MCP servers across this stack share this priority hierarchy. Note: 2 plugins
 
 ## Option 1: Claude Code Plugin (Recommended)
 
-Plugin marketplace install runs the server in **pure stdio mode**. mnemo works with **zero required env vars** -- it falls back to local SQLite + local Qwen3 ONNX embedding. Cloud providers and GDrive sync are optional.
+Plugin marketplace install runs the server in **pure stdio mode**. mnemo works with **zero required env vars** -- it falls back to local SQLite + a local ONNX model embedding. Cloud providers and GDrive sync are optional.
 
 ### Credential prompts at install
 
@@ -134,9 +134,9 @@ All environment variables are **optional**. The server works in local mode (ONNX
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `EMBEDDING_BACKEND` | No | auto-detect | `cloud` or `local` (Qwen3). Auto: API keys present -> cloud, else local |
+| `EMBEDDING_BACKEND` | No | auto-detect | `cloud` or `local`. Auto: API keys present -> cloud, else local |
 | `EMBEDDING_MODEL` | No | auto-detect | Cloud embedding model name |
-| `EMBEDDING_DIMS` | No | `0` (auto=768) | Embedding dimensions |
+| `EMBEDDING_DIMS` | No | `0` (auto) | Embedding dimensions |
 | `RERANK_ENABLED` | No | `true` | Enable reranking (improves search precision) |
 | `RERANK_BACKEND` | No | auto-detect | `cloud` or `local`. Auto: Jina/Cohere key -> cloud, else local |
 | `RERANK_MODEL` | No | auto-detect | Cloud reranker model name |
@@ -224,7 +224,7 @@ Client config:
 
 ### Stdio Mode (Local SQLite + Optional Env Cloud Keys)
 
-mnemo works without any credentials -- it falls back to local SQLite + local Qwen3 ONNX embedding. Optionally set cloud API keys (Jina/Gemini/OpenAI/Cohere) as env vars for higher-quality results.
+mnemo works without any credentials -- it falls back to local SQLite + a local ONNX model embedding. Optionally set cloud API keys (Jina/Gemini/OpenAI/Cohere) as env vars for higher-quality results.
 
 For Google Drive sync in stdio mode, manually create the OAuth token at `~/.mnemo-mcp/tokens/google_drive.json` (chmod 600). For browser-based OAuth, use HTTP mode.
 

@@ -26,7 +26,7 @@ All MCP servers across this stack share this priority hierarchy. Note: 2 plugins
 
 ## Method 1: Claude Code Plugin (Recommended)
 
-Plugin marketplace install runs the server in **pure stdio mode**. mnemo works with **zero required env vars** -- it falls back to local SQLite + local Qwen3 ONNX embedding. Cloud providers and GDrive sync are optional.
+Plugin marketplace install runs the server in **pure stdio mode**. mnemo works with **zero required env vars** -- it falls back to local SQLite + a local ONNX model embedding. Cloud providers and GDrive sync are optional.
 
 ### Credential prompts at install
 
@@ -203,7 +203,7 @@ For S3-compatible storage (R2 / B2 / MinIO) instead of Google Drive, set `SYNC_S
 
 ## Environment Variable Reference
 
-All environment variables are **optional** -- mnemo works with zero env vars in stdio mode (local SQLite + local Qwen3 ONNX). See [docs/setup-with-agent.md](setup-with-agent.md#environment-variables) for the complete table.
+All environment variables are **optional** -- mnemo works with zero env vars in stdio mode (local SQLite + a local ONNX model). See [docs/setup-with-agent.md](setup-with-agent.md#environment-variables) for the complete table.
 
 ### Key Variables
 
@@ -222,14 +222,14 @@ All environment variables are **optional** -- mnemo works with zero env vars in 
 | `ARCHIVE_AFTER_DAYS` | `90` | Soft-archive threshold via importance × recency policy (Phase 1) |
 | `ARCHIVE_TRIGGER_EVERY` | `100` | Auto-archive sweep on every N captures (Phase 1) |
 | `CAPTURE_AUTO_ENABLED` | `false` | Opt-in PostToolUse hook for auto-capture on Write/Edit (Phase 1 plugin trinity) |
-| `RERANK_ENABLED` | `true` | Toggle cross-encoder rerank chain (qwen3 → Jina → Cohere) |
+| `RERANK_ENABLED` | `true` | Toggle cross-encoder rerank chain (local → Jina → Cohere) |
 | `SYNC_ENABLED` | `true` | Enable Google Drive sync |
 | `LOG_LEVEL` | `INFO` | Logging level |
 
 ### Provider Priority
 
-- **Embedding**: Jina AI > Gemini > OpenAI > Cohere > Local ONNX (Qwen3)
-- **Reranking**: Jina AI > Cohere > Local ONNX (Qwen3)
+- **Embedding**: Jina AI > Gemini > OpenAI > Cohere > local ONNX model
+- **Reranking**: Jina AI > Cohere > local ONNX model
 - **LLM**: Gemini > OpenAI > Disabled (heuristic fallback)
 
 ## Troubleshooting
