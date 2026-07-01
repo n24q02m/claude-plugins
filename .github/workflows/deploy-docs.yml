@@ -15,7 +15,6 @@ on:
       - 'plugins/*/trust-model.md'
       - 'plugins/*/migration.md'
       - 'plugins/*/shared-services.md'
-      - 'plugins/*/models.md'
       - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 

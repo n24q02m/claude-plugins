@@ -220,7 +220,7 @@ All environment variables are **optional**. See [docs/setup-with-agent.md](setup
 
 ### Provider Priority
 
-- **Embedding**: Jina AI > Gemini > OpenAI > Cohere > Local ONNX (Qwen3)
-- **Reranking**: Jina AI > Cohere > Local ONNX (Qwen3)
+- **Embedding**: Jina AI > Gemini > OpenAI > Cohere > local ONNX model
+- **Reranking**: Jina AI > Cohere > local ONNX model
 - **LLM**: Gemini > OpenAI > Disabled
 - **Search**: Brave > Serper > Jina AI > SearXNG (always available locally)
