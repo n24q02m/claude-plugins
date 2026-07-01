@@ -10,6 +10,8 @@ Prints progress markers to stderr and the synthesised Markdown answer
 callers should hit the tool directly.
 """
 
+from __future__ import annotations
+
 import argparse
 import asyncio
 import json
@@ -33,7 +35,7 @@ async def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--synthesis-model",
         default=None,
-        help="Override LLM model for synthesis (e.g. a provider/model string).",
+        help="Override LLM model for synthesis (e.g. gemini-3-flash-preview).",
     )
     parser.add_argument(
         "--token-budget",
