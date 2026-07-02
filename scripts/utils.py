@@ -1,10 +1,18 @@
 import os
+import functools
 import re
 
 
 def sanitize_log(msg: str) -> str:
     """Sanitize strings for GitHub Actions log commands."""
     return str(msg).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+
+@functools.lru_cache(maxsize=128)
+def _resolve_base_dir(base_dir: str) -> tuple[str, str]:
+    """Cache base directory resolution for performance."""
+    abs_base = os.path.abspath(base_dir)
+    return abs_base, os.path.realpath(abs_base)
 
 
 def get_safe_path(base_dir: str, sub_path: str) -> str:
@@ -21,9 +29,12 @@ def get_safe_path(base_dir: str, sub_path: str) -> str:
     if "\0" in base_dir or "\0" in sub_path:
         raise ValueError("Path contains null bytes")
 
+    # Optimization: Cache base_dir resolution since it's called repeatedly with the same base_dir
+    # in parallel validation loops.
+    abs_base, real_base = _resolve_base_dir(base_dir)
+
     # Layer 1: Lexical check (defense-in-depth)
     # This prevents simple traversal using '..' even if the files don't exist yet.
-    abs_base = os.path.abspath(base_dir)
     abs_target = os.path.abspath(os.path.join(abs_base, sub_path))
     if os.path.commonpath([abs_base, abs_target]) != abs_base:
         raise ValueError("Path traversal detected (lexical)")
@@ -32,7 +43,6 @@ def get_safe_path(base_dir: str, sub_path: str) -> str:
     # Resolve the real path of the base and the target.
     # We resolve the target by joining it with the real base to ensure symlinks
     # are followed correctly and '..' components are resolved physically.
-    real_base = os.path.realpath(abs_base)
     real_target = os.path.realpath(os.path.join(real_base, sub_path))
 
     if os.path.commonpath([real_base, real_target]) != real_base:
