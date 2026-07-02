@@ -121,6 +121,7 @@ All environment variables are **optional**. The server works in local mode (ONNX
 |:---------|:---------|:--------|:------------|
 | `JINA_AI_API_KEY` | No | -- | Jina AI key: embedding + reranking (highest priority) |
 | `GEMINI_API_KEY` | No | -- | Google Gemini key: LLM (importance scoring, graph extraction) + embedding |
+| `GOOGLE_VERTEX_EXPRESS_API_KEY` | No | -- | Vertex AI Express: Gemini via API key, no Service Account. Get it at https://cloud.google.com/vertex-ai/generative-ai/docs/start/express-mode/overview |
 | `OPENAI_API_KEY` | No | -- | OpenAI key: LLM + embedding (lower priority than Gemini) |
 | `COHERE_API_KEY` | No | -- | Cohere key: embedding + reranking |
 

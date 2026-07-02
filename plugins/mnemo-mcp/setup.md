@@ -211,6 +211,7 @@ All environment variables are **optional** -- mnemo works with zero env vars in 
 |:---------|:--------|:------------|
 | `JINA_AI_API_KEY` | -- | Jina AI: embedding + reranking (highest priority) |
 | `GEMINI_API_KEY` | -- | Gemini: LLM + embedding (free tier) |
+| `GOOGLE_VERTEX_EXPRESS_API_KEY` | -- | Vertex AI Express: Gemini via API key, no Service Account. Get it at https://cloud.google.com/vertex-ai/generative-ai/docs/start/express-mode/overview |
 | `OPENAI_API_KEY` | -- | OpenAI: LLM + embedding |
 | `ANTHROPIC_API_KEY` | -- | Anthropic: LLM dispatch (Phase 1 multi-provider auto-detect) |
 | `XAI_API_KEY` | -- | xAI/Grok: LLM dispatch (Phase 1 multi-provider auto-detect) |
