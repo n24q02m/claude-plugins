@@ -187,6 +187,7 @@ Expected: `{"text": "This is a cat...", "model": "<model-id>", ...}`
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
 | `GEMINI_API_KEY` | At least one | -- | Google AI Studio (Gemini) API key. Stdio mode requires >=1 of the 3 provider keys. |
+| `GOOGLE_VERTEX_EXPRESS_API_KEY` | No | -- | Vertex AI Express: Gemini via API key, no Service Account. Get it at https://cloud.google.com/vertex-ai/generative-ai/docs/start/express-mode/overview |
 | `OPENAI_API_KEY` | At least one | -- | OpenAI API key (image understanding + generation). |
 | `XAI_API_KEY` | At least one | -- | xAI (Grok) API key (image understanding + generation). |
 | `TRANSPORT_MODE` | No | `stdio` | Set to `http` for HTTP transport (multi-user paste-token). |

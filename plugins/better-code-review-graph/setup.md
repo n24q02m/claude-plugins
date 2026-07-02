@@ -69,6 +69,7 @@ export GEMINI_API_KEY="AIza..."
 |:---------|:---------|:--------|:------------|
 | `JINA_AI_API_KEY` | No | -- | Jina AI: embedding + reranking (highest priority) |
 | `GEMINI_API_KEY` | No | -- | Gemini: embedding (free tier). Also accepts `GOOGLE_API_KEY` |
+| `GOOGLE_VERTEX_EXPRESS_API_KEY` | No | -- | Vertex AI Express: Gemini via API key, no Service Account. Get it at https://cloud.google.com/vertex-ai/generative-ai/docs/start/express-mode/overview |
 | `OPENAI_API_KEY` | No | -- | OpenAI: embedding |
 | `COHERE_API_KEY` | No | -- | Cohere: embedding + reranking. Also accepts `CO_API_KEY` |
 | `EMBEDDING_BACKEND` | No | auto-detect | `cloud` or `local` (ONNX) |

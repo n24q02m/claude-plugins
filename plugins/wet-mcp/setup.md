@@ -206,6 +206,7 @@ All environment variables are **optional**. See [docs/setup-with-agent.md](setup
 |:---------|:--------|:------------|
 | `JINA_AI_API_KEY` | -- | Jina AI: search + extraction + embedding + reranking |
 | `GEMINI_API_KEY` | -- | Gemini: LLM + embedding (free tier) |
+| `GOOGLE_VERTEX_EXPRESS_API_KEY` | -- | Vertex AI Express: Gemini via API key, no Service Account. Get it at https://cloud.google.com/vertex-ai/generative-ai/docs/start/express-mode/overview |
 | `OPENAI_API_KEY` | -- | OpenAI: LLM + embedding |
 | `ANTHROPIC_API_KEY` | -- | Anthropic: LLM dispatch for content-selector inference |
 | `XAI_API_KEY` | -- | xAI/Grok: LLM dispatch for content-selector inference |

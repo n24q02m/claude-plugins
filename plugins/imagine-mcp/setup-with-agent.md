@@ -164,6 +164,7 @@ Share this password out-of-band (Signal/email/SMS) with anyone you invite to use
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
 | `GEMINI_API_KEY` | At least one (stdio) | -- | Google AI Studio (Gemini) API key. |
+| `GOOGLE_VERTEX_EXPRESS_API_KEY` | No | -- | Vertex AI Express: Gemini via API key, no Service Account. Get it at https://cloud.google.com/vertex-ai/generative-ai/docs/start/express-mode/overview |
 | `OPENAI_API_KEY` | At least one (stdio) | -- | OpenAI API key. |
 | `XAI_API_KEY` | At least one (stdio) | -- | xAI (Grok) API key. |
 | `TRANSPORT_MODE` | No | `stdio` | Set to `http` for multi-user paste-token mode. |

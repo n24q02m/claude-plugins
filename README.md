@@ -53,14 +53,14 @@ Or browse all plugins: run `/plugin` and go to the **Discover** tab.
 
 | Plugin | Category | Description | Config (env / userConfig) |
 |--------|----------|-------------|----------|
-| **wet-mcp** | Research | Web search, content extraction, library docs, media download | All optional: `JINA_AI_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY`, `GITHUB_TOKEN` |
-| **mnemo-mcp** | Productivity | Persistent AI memory across sessions | All optional: `JINA_AI_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY` |
+| **wet-mcp** | Research | Web search, content extraction, library docs, media download | All optional: `JINA_AI_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_VERTEX_EXPRESS_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY`, `GITHUB_TOKEN` |
+| **mnemo-mcp** | Productivity | Persistent AI memory across sessions | All optional: `JINA_AI_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_VERTEX_EXPRESS_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY` |
 | **better-notion-mcp** | Productivity | Notion API — 11 composite tools, ~95% coverage | `NOTION_TOKEN` (required) |
 | **better-email-mcp** | Communication | Email IMAP/SMTP — multi-account | `EMAIL_CREDENTIALS` (required) |
 | **better-telegram-mcp** | Communication | Telegram dual-mode (Bot API + MTProto) — messages, chats, media | `TELEGRAM_BOT_TOKEN` (optional; required for bot mode) |
 | **better-godot-mcp** | Development | Godot Engine — 17 composite tools for game dev | `GODOT_PATH`, `GODOT_PROJECT_PATH` (both optional) |
-| **better-code-review-graph** | Development | Knowledge graph for token-efficient code reviews | All optional: `JINA_AI_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY` |
-| **imagine-mcp** | Multimodal | Image/video understanding + generation across Gemini, OpenAI, Grok | All optional: `XAI_API_KEY` (default provider), `GEMINI_API_KEY`, `OPENAI_API_KEY` |
+| **better-code-review-graph** | Development | Knowledge graph for token-efficient code reviews | All optional: `JINA_AI_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_VERTEX_EXPRESS_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY` |
+| **imagine-mcp** | Multimodal | Image/video understanding + generation across Gemini, OpenAI, Grok | All optional: `XAI_API_KEY` (default provider), `GEMINI_API_KEY`, `GOOGLE_VERTEX_EXPRESS_API_KEY`, `OPENAI_API_KEY` |
 
 ## Configuration
 
@@ -75,6 +75,7 @@ Each provider is a separate, optional env var. None is required:
 ```
 JINA_AI_API_KEY=jina_xxx
 GEMINI_API_KEY=AIza...
+GOOGLE_VERTEX_EXPRESS_API_KEY=AIza...
 OPENAI_API_KEY=sk-...
 COHERE_API_KEY=xxx
 ```
@@ -86,6 +87,7 @@ Provider priority (wet-mcp / CRG): embedding Jina AI > Gemini > OpenAI > Cohere 
 ```
 XAI_API_KEY=xai-...      # default provider
 GEMINI_API_KEY=AIza...   # optional alternative
+GOOGLE_VERTEX_EXPRESS_API_KEY=AIza...  # optional alternative
 OPENAI_API_KEY=sk-...    # optional alternative
 ```
 
