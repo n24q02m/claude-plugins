@@ -75,7 +75,7 @@ Each provider is a separate, optional env var. None is required:
 ```
 JINA_AI_API_KEY=jina_xxx
 GEMINI_API_KEY=AIza...
-GOOGLE_VERTEX_EXPRESS_API_KEY=AIza...
+GOOGLE_VERTEX_EXPRESS_API_KEY=AQ...
 OPENAI_API_KEY=sk-...
 COHERE_API_KEY=xxx
 ```
@@ -87,7 +87,7 @@ Provider priority (wet-mcp / CRG): embedding Jina AI > Gemini > OpenAI > Cohere 
 ```
 XAI_API_KEY=xai-...      # default provider
 GEMINI_API_KEY=AIza...   # optional alternative
-GOOGLE_VERTEX_EXPRESS_API_KEY=AIza...  # optional alternative
+GOOGLE_VERTEX_EXPRESS_API_KEY=AQ...  # optional alternative
 OPENAI_API_KEY=sk-...    # optional alternative
 ```
 
