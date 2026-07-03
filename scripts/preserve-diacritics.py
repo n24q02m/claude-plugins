@@ -122,10 +122,12 @@ def _is_skippable(path: str) -> bool:
     if path.lower().endswith(_SKIP_SUFFIXES):
         return True
     parts = path.split("/")
-    if not _SKIP_DIRS.isdisjoint(parts):
-        return True
+    # ⚡ Bolt: Check _SKIP_FILES against parts[-1] first since it's an O(1) hash lookup,
+    # rather than _SKIP_DIRS.isdisjoint(parts) which requires traversing the parts list.
     name = parts[-1]
     if name in _SKIP_FILES:
+        return True
+    if not _SKIP_DIRS.isdisjoint(parts):
         return True
     return False
 
