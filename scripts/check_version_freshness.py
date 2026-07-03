@@ -99,23 +99,30 @@ def _fetch_latest_tags_graphql(owner, repo_names):
     def to_alias(name):
         return "repo_" + name.replace("-", "_")
 
-    # Construct the GraphQL query
+    # Construct the GraphQL query using parameterized variables
     query_parts = []
-    for repo in repos_to_fetch:
+    variables = {"owner": owner}
+    variable_defs = ["$owner: String!"]
+
+    for i, repo in enumerate(repos_to_fetch):
         alias = to_alias(repo)
+        var_name = f"repo{i}"
+        variable_defs.append(f"${var_name}: String!")
+        variables[var_name] = repo
+
         query_parts.append(
-            f'{alias}: repository(owner: "{owner}", name: "{repo}") {{ '
+            f"{alias}: repository(owner: $owner, name: ${var_name}) {{ "
             "latestRelease { tagName } }"
         )
 
-    query = "query { " + " ".join(query_parts) + " }"
+    query = f"query({', '.join(variable_defs)}) {{ " + " ".join(query_parts) + " }"
     url = "https://api.github.com/graphql"
     headers = {
         "Authorization": f"token {token}",
         "Content-Type": "application/json",
         "User-Agent": "Marketplace-Version-Checker",
     }
-    data = json.dumps({"query": query}).encode()
+    data = json.dumps({"query": query, "variables": variables}).encode()
 
     req = urllib.request.Request(url, data=data, headers=headers)
     try:
