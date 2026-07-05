@@ -122,10 +122,12 @@ def _is_skippable(path: str) -> bool:
     if path.lower().endswith(_SKIP_SUFFIXES):
         return True
     parts = path.split("/")
-    if not _SKIP_DIRS.isdisjoint(parts):
-        return True
+    # Optimization: check exact file names (O(1) set lookup) before directory
+    # paths (O(N) disjoint check) to return early for skipped files faster.
     name = parts[-1]
     if name in _SKIP_FILES:
+        return True
+    if not _SKIP_DIRS.isdisjoint(parts):
         return True
     return False
 
