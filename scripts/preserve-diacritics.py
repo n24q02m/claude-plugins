@@ -53,6 +53,7 @@ UNICODE_REPLACEMENTS: dict[str, list[str]] = {
 # Vietnamese precomposed letters (NFC). Lowercase + uppercase.
 _VN_BASE = "àảãáạâấầẩẫậăắằẳẵặèẻẽéẹêếềểễệìỉĩíịòỏõóọôốồổỗộơớờởỡợùủũúụưứừửữựỳỷỹýỵđ"
 VIETNAMESE_DIACRITIC_CHARS: set[str] = set(_VN_BASE + _VN_BASE.upper())
+_VN_DIACRITICS_RE = re.compile(f"[{_VN_BASE}{_VN_BASE.upper()}]")
 
 # Emoji detection: any codepoint in common emoji blocks.
 _EMOJI_RE = re.compile(
@@ -304,17 +305,11 @@ def _check_pair(old: str, new: str) -> list[tuple[str, str, str]]:
             violations.append((f"unicode-punct {uni!r}->ascii", old, new))
 
     # Rule 2: Vietnamese diacritics stripped.
-    # Performance: Skip iterating over strings if no diacritics exist
-    if not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(old):
-        old_diacritics = [c for c in old if c in VIETNAMESE_DIACRITIC_CHARS]
-    else:
-        old_diacritics = []
+    # Performance: Use regex findall which is significantly faster than isdisjoint + list comprehension
+    old_diacritics = _VN_DIACRITICS_RE.findall(old)
 
     if old_diacritics:
-        if not VIETNAMESE_DIACRITIC_CHARS.isdisjoint(new):
-            new_diacritics = [c for c in new if c in VIETNAMESE_DIACRITIC_CHARS]
-        else:
-            new_diacritics = []
+        new_diacritics = _VN_DIACRITICS_RE.findall(new)
 
         if len(old_diacritics) > len(new_diacritics):
             # Confirm via NFD-strip round-trip: does stripping old give us new?
