@@ -1,5 +1,4 @@
 import os
-import functools
 import re
 
 
@@ -8,9 +7,8 @@ def sanitize_log(msg: str) -> str:
     return str(msg).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
 
 
-@functools.lru_cache(maxsize=128)
 def _resolve_base_dir(base_dir: str) -> tuple[str, str]:
-    """Cache base directory resolution for performance."""
+    """Resolve base directory for path validation."""
     abs_base = os.path.abspath(base_dir)
     return abs_base, os.path.realpath(abs_base)
 
