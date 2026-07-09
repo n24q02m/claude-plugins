@@ -1,5 +1,4 @@
 import os
-import functools
 import re
 
 
@@ -8,9 +7,8 @@ def sanitize_log(msg: str) -> str:
     return str(msg).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
 
 
-@functools.lru_cache(maxsize=128)
 def _resolve_base_dir(base_dir: str) -> tuple[str, str]:
-    """Cache base directory resolution for performance."""
+    """Resolve base directory."""
     abs_base = os.path.abspath(base_dir)
     return abs_base, os.path.realpath(abs_base)
 
@@ -29,8 +27,7 @@ def get_safe_path(base_dir: str, sub_path: str) -> str:
     if "\0" in base_dir or "\0" in sub_path:
         raise ValueError("Path contains null bytes")
 
-    # Optimization: Cache base_dir resolution since it's called repeatedly with the same base_dir
-    # in parallel validation loops.
+    # Resolve the base directory
     abs_base, real_base = _resolve_base_dir(base_dir)
 
     # Layer 1: Lexical check (defense-in-depth)
