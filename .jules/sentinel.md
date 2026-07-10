@@ -33,6 +33,11 @@
 **Learning:** Never trust inputs from GitHub events (like issue/PR titles/bodies) directly in sensitive actions. Use a sanitization step (e.g., via Python) to clean and escape these inputs before using them as environment variables.
 **Prevention:** Sanitize all untrusted inputs from GitHub events using a dedicated step that exports safe environment variables to `GITHUB_ENV`. Use secure delimiters for multi-line inputs.
 
+## 2026-07-03 - Fix Path Traversal Bypass via Cached realpath
+**Vulnerability:** The `get_safe_path` utility cached base directory resolution (`os.path.realpath`) using `@functools.lru_cache` keyed purely by the string `base_dir`. This is vulnerable to cache poisoning/logic bugs if the underlying symlinks change or the process's Current Working Directory (CWD) changes. An attacker could exploit this by modifying a symlink after it was cached, bypassing path traversal mitigations.
+**Learning:** Caching file system state operations like `os.path.abspath` or `os.path.realpath` using only string arguments is highly dangerous. Cached paths become invalid if CWD or underlying file system symlinks change, creating severe correctness and security bugs.
+**Prevention:** Never use `@functools.lru_cache` to memoize file path resolution based on string values. Ensure that security checks rely on the actual, current state of the file system.
+
 ## 2026-07-01 - Fix SSRF Token Leakage Bypass in NoAuthRedirectHandler
 **Vulnerability:** The SSRF mitigation in `NoAuthRedirectHandler` (`scripts/check_version_freshness.py`) used `m.has_header` and `m.remove_header` to strip `Authorization` and `Cookie` headers across cross-origin redirects. However, Python's `urllib.request.Request.remove_header()` only removes the first matching header. If a sensitive header was injected redundantly with non-standard casing (e.g., `AUTHORIZATION`), the loop would miss it, causing token leakage to the third-party redirect target.
 **Learning:** In Python's `urllib.request`, `remove_header` is insufficient for guaranteeing the total removal of sensitive headers because it stops at the first match and ignores redundancies.
