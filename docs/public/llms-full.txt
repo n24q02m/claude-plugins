@@ -1,0 +1,76 @@
+# MCP n24q02m — Full reference for LLMs
+
+> A curated suite of eight MCP (Model Context Protocol) servers on one foundation library — one transport, one setup command, and one multi-user auth model — so you run web search, memory, Notion, email, Telegram, code review, image generation, and Godot without wiring up eight inconsistent servers.
+
+Site: https://mcp.n24q02m.com
+Marketplace + source: https://github.com/n24q02m/claude-plugins
+
+## What this is
+
+A curated stack of MCP servers for Claude Code, Codex, Gemini CLI, Cursor, and Windsurf — sharing one foundation library (`mcp-core`) and one plugin marketplace. Each server is published as a Claude Code plugin, an npm or PyPI package (per language), and a Docker image on GHCR. Setup takes one command.
+
+## Why this suite and not just any MCP server
+
+- **One foundation, every server**: every server reuses `mcp-core`'s transport, OAuth authorization server, lifecycle, and multi-user primitives. There is no bespoke auth code per server, so once you know how one server authenticates and configures, you know them all.
+- **Multi-user by construction**: remote-relay and remote-oauth modes scope credentials per user (by JWT subject). Self-host once and share with a team; one user's keys never leak into another's request.
+- **Composite tools, not raw API mirrors**: each server exposes a small set of multiplexed tools (the "N+2" layout — a handful of tools that each take an `action` parameter, plus `config` and `help`). Tool lists are curated for AI-agent ergonomics: fewer round-trips, less prompt clutter.
+- **External content is marked**: servers that return content authored by third parties (web pages, Notion pages, emails, Telegram messages, Godot project files) wrap it with an untrusted-source marker so an agent treats it as data, not instructions — a defense against indirect prompt injection.
+- **Bring your own credentials**: bundled defaults get you started; supply your own API keys or OAuth clients to run fully under your own accounts.
+- **Production-grade releases**: signed Docker images, semantic-versioned packages, automated CI (static analysis, secret scanning, push protection, dependency updates).
+
+## Setup modes
+
+- **stdio**: the client launches the server as a subprocess. Simplest; single-user; credentials from the environment.
+- **local-relay**: the server runs locally but serves a browser configuration form so you set credentials without editing environment variables.
+- **remote-relay**: the server runs as a hosted HTTP endpoint; credentials are configured per user through a browser form and stored server-side, scoped by user.
+- **remote-oauth**: hosted HTTP with full OAuth 2.1 authorization.
+
+## Servers
+
+### mcp-core (foundation library)
+Shared transport (Streamable HTTP), OAuth 2.1 authorization server, lifecycle management, install automation, and per-user credential primitives. Every server depends on it. Not a runnable server itself — consumed as a library (npm `@n24q02m/mcp-core`, PyPI `n24q02m-mcp-core`).
+Docs: https://mcp.n24q02m.com/servers/mcp-core/architecture/
+
+### wet-mcp
+Web search, content extraction, documentation indexing, and X/Twitter search. Search returns result listings; extract reads full page content from a URL; a docs workflow indexes and answers questions over a library's documentation; X search returns a synthesized answer with citations. Web and X content is returned marked as untrusted external content.
+Docs: https://mcp.n24q02m.com/servers/wet-mcp/setup/
+
+### mnemo-mcp
+Persistent AI memory with hybrid (semantic + keyword) search. Save preferences, decisions, and facts; search before recommending; consolidate and export memories.
+Docs: https://mcp.n24q02m.com/servers/mnemo-mcp/setup/
+
+### better-code-review-graph
+Builds a knowledge graph of a codebase so code reviews are token-efficient — query relationships and impacted areas instead of re-reading whole files.
+Docs: https://mcp.n24q02m.com/servers/better-code-review-graph/setup/
+
+### imagine-mcp
+Image and video understanding and generation across providers.
+Docs: https://mcp.n24q02m.com/servers/imagine-mcp/setup/
+
+### better-telegram-mcp
+Telegram integration for AI agents over both the Bot API and MTProto (user client). Send and read messages, manage chats. Message content from other users is returned marked as untrusted external content.
+Docs: https://mcp.n24q02m.com/servers/better-telegram-mcp/setup/
+
+### better-notion-mcp
+Markdown-first Notion API server: read and write pages and databases as Markdown rather than raw Notion block JSON. Page content is returned marked as untrusted external content.
+Docs: https://mcp.n24q02m.com/servers/better-notion-mcp/setup/
+
+### better-email-mcp
+Email over IMAP and SMTP with composite tools for reading, searching, and sending. Message content is returned marked as untrusted external content.
+Docs: https://mcp.n24q02m.com/servers/better-email-mcp/setup/
+
+### better-godot-mcp
+Godot Engine integration for AI agents. Project file content is returned marked as untrusted external content.
+Docs: https://mcp.n24q02m.com/servers/better-godot-mcp/setup/
+
+## Get started
+
+- Install in Claude Code: https://mcp.n24q02m.com/get-started/install-claude-code/
+- Plugin marketplace: https://mcp.n24q02m.com/get-started/plugin-marketplace/
+- Modes overview: https://mcp.n24q02m.com/get-started/modes-overview/
+- Multi-user setup: https://mcp.n24q02m.com/get-started/multi-user/
+
+## Reference
+
+- Server comparison: https://mcp.n24q02m.com/reference/server-comparison/
+- Tool-layout standard (N+2): https://mcp.n24q02m.com/reference/tool-layout-standard/
