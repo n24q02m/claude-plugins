@@ -4,7 +4,7 @@ better-godot-mcp exposes Godot Engine integration through 14 composite tools dri
 
 | Tool | Purpose | Actions | Wrapped |
 |---|---|---|---|
-| `project` | Project-level operations | `info` (metadata), `version` (engine version), `run` (launch, needs `scene_path`), `stop`, `settings_get`/`settings_set` (`key` req), `export` (`preset`, `output_path` req) | Yes |
+| `project` | Project-level operations | `info` (metadata), `version` (engine version), `run` (launch, needs `scene_path`; captures stdout/stderr into a 400-line ring buffer per PID), `logs` (read captured output; optional `pid`, defaults to the most recently started PID, keeps logs for the last 10 exited processes), `stop`, `settings_get`/`settings_set` (`key` req), `export` (`preset`, `output_path` req) | Yes |
 | `scenes` | `.tscn` scene CRUD | `create` (`scene_path` req; `root_type` default `Node2D`), `list`, `info`, `delete`, `duplicate` (`new_path`), `set_main` | Yes |
 | `nodes` | Scene node operations | `add` (`name` req; `type` default `Node`, `parent` default `.`), `remove`, `rename` (`new_name`), `list`, `set_property`/`get_property` (`property` req) | Yes |
 | `scripts` | GDScript CRUD | `create` (`script_path` req; `extends` default `Node`), `read`, `write` (`content` req), `attach` (`scene_path`, `node_name` req), `list`, `delete` | Yes |

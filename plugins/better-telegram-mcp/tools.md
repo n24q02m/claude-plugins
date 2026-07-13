@@ -40,7 +40,9 @@ Send photos, files, voice, and video; download media from messages.
 | Action | Purpose | Key parameters |
 |---|---|---|
 | `send_photo` / `send_file` / `send_voice` / `send_video` | Send a media file to a chat | `chat_id`, `file_path_or_url` (required); `caption` |
-| `download` | Download media from a message | `chat_id`, `message_id` (required); `output_dir` |
+| `download` | Download media from a message | `chat_id`, `message_id` (required); `output_dir`, `file_id` |
+
+Note: `file_id` is required in bot mode -- the Bot API cannot look up a message's media by `(chat_id, message_id)`, so get `file_id` from a message the bot already received (`message` tool results include it) and pass it to `download`. In user mode `file_id` is optional (MTProto resolves media directly from `chat_id`/`message_id`).
 
 ## contact
 

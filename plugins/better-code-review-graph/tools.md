@@ -12,8 +12,11 @@ Build and manage the code knowledge graph.
 | `update` | Incremental update (alias for `build` with `full_rebuild=false`) | Same as `build` |
 | `stats` | Node/edge counts, languages, embedding status | -- |
 | `embed` | Compute vector embeddings for graph nodes | -- |
-| `export` | Export the graph | `format` (default `graphml`; also `json-ld`, `dot`, `cypher`), `output_path` |
+| `export` | Export the graph | `format` (default `graphml`; also `json-ld`, `dot`, `cypher`, `crg`), `output_path` |
+| `import` | Merge a `crg`-format export back into the current repo's graph | `import_path` (required), `repo_root` |
 | `summarize` | Generate LLM summaries for Function nodes | `max_nodes` (default 500) |
+
+`crg` is the only export format that round-trips via `import`: imported node/edge ids are namespaced by the exporting repo_id so they never collide with locally-parsed nodes, and re-importing the same file is idempotent. Built for artifact portability -- build+export on a CI runner, import on a laptop.
 
 ## query
 
