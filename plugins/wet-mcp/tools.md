@@ -10,7 +10,7 @@ Find information across the web, academic sources, X/Twitter, or indexed library
 |---|---|---|
 | `search` | Web search via SearXNG | `query` (required), `categories`, `max_results`, `time_range`, `include_domains`/`exclude_domains`, `expand` (LLM query expansion), `enrich` (fetch real snippets) |
 | `research` | Academic/scientific search (Google Scholar, arXiv, PubMed) | `query` (required), `max_results`, `time_range` |
-| `x` | X/Twitter search via xAI (grok). Returns a **synthesized answer with citations**, not a link list -- X blocks direct extraction. Bills per query; requires `XAI_API_KEY` | `query` (required), `handles`/`exclude_handles` (up to 20 handles, mutually exclusive), `time_range`, `from_date`/`to_date` (ISO8601, override `time_range`), `video` (enable video understanding of linked media) |
+| `x` | X/Twitter search via xAI. Returns a **synthesized answer with citations**, not a link list -- X blocks direct extraction. Bills per query; requires `XAI_API_KEY` | `query` (required), `handles`/`exclude_handles` (up to 20 handles, mutually exclusive), `time_range`, `from_date`/`to_date` (ISO8601, override `time_range`), `video` (enable video understanding of linked media) |
 | `docs` | Search library documentation, auto-indexing on first query | `library` (required), `query` (required), `language`, `version` |
 | `docs_resolve` | Free-form library name -> ranked `library_id` list | `query` (library name, required) |
 | `docs_query` | Version-aware docs query honoring a project's locked library set + token cap | `library` (required), `query` (required), `version`, `topic`, `project_path`, `limit` |
