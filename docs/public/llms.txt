@@ -1,0 +1,29 @@
+# MCP n24q02m
+
+> A curated suite of eight MCP servers on one foundation library — one transport, one setup command, and one multi-user auth model — so you run web search, memory, Notion, email, Telegram, code review, image generation, and Godot without wiring up eight inconsistent servers.
+
+Each server ships as a Claude Code plugin, an npm or PyPI package, and a Docker image. Works with Claude Code, Codex, Gemini CLI, Cursor, and Windsurf. Self-host once and share with a team, or use the hosted endpoints. Every server reuses `mcp-core` for its transport, OAuth authorization server, lifecycle, and per-user credential scoping — no bespoke auth code per server.
+
+## Servers
+
+- [mcp-core (foundation)](https://mcp.n24q02m.com/servers/mcp-core/architecture/): Shared transport, OAuth authorization server, lifecycle, and multi-user primitives used by every server.
+- [wet-mcp](https://mcp.n24q02m.com/servers/wet-mcp/setup/): Web search, content extraction, documentation indexing, and X/Twitter search.
+- [mnemo-mcp](https://mcp.n24q02m.com/servers/mnemo-mcp/setup/): Persistent AI memory with hybrid search.
+- [better-code-review-graph](https://mcp.n24q02m.com/servers/better-code-review-graph/setup/): Knowledge graph for token-efficient code reviews.
+- [imagine-mcp](https://mcp.n24q02m.com/servers/imagine-mcp/setup/): Image and video understanding and generation across providers.
+- [better-telegram-mcp](https://mcp.n24q02m.com/servers/better-telegram-mcp/setup/): Telegram (Bot API + MTProto) for AI agents.
+- [better-notion-mcp](https://mcp.n24q02m.com/servers/better-notion-mcp/setup/): Markdown-first Notion API server.
+- [better-email-mcp](https://mcp.n24q02m.com/servers/better-email-mcp/setup/): Email (IMAP + SMTP) composite tools.
+- [better-godot-mcp](https://mcp.n24q02m.com/servers/better-godot-mcp/setup/): Godot Engine integration for AI agents.
+
+## Get started
+
+- [Install in Claude Code](https://mcp.n24q02m.com/get-started/install-claude-code/): One command to install any server.
+- [Plugin marketplace](https://mcp.n24q02m.com/get-started/plugin-marketplace/): Browse and install any server as a Claude Code plugin.
+- [Modes overview](https://mcp.n24q02m.com/get-started/modes-overview/): stdio, local-relay, remote-relay, and remote-oauth — when to use each.
+- [Multi-user setup](https://mcp.n24q02m.com/get-started/multi-user/): Per-user credential storage scoped by JWT subject.
+
+## Reference
+
+- [Server comparison](https://mcp.n24q02m.com/reference/server-comparison/): Side-by-side comparison of every server.
+- [Tool-layout standard](https://mcp.n24q02m.com/reference/tool-layout-standard/): The N+2 multiplexed-tool convention every server follows.
