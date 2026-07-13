@@ -31,6 +31,9 @@ Consolidated dispatcher tool covering the same operations as the 11 tools above 
 | `entity_search` | Find memories by entity name | `name` (required, or `query`), `entity_type`, `limit` |
 | `entity_graph` | Knowledge-graph neighborhood subgraph around an entity | `entity_id` or `name` (one required), `depth` (default 2), `limit` |
 | `history` | Timeline of memories linked to an entity | `entity_id` (required, or `memory_id`) |
+| `as_of` | Point-in-time view of memories valid at a given timestamp | `as_of` (required, ISO timestamp), `limit` (default 5, max 100) |
+
+`as_of` returns `{memories, count, as_of}`. The `as_of` parameter is only valid with `action='as_of'` -- passing it alongside any other action returns an error instead of silently ignoring it, since point-in-time filtering isn't implemented for `search`/`list`.
 
 ## config
 

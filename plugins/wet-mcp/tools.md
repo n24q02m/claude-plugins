@@ -31,6 +31,9 @@ Read and return full page content from URLs or local files. Wrapped as external 
 | `extract_structured` | Extract structured data from a page using a JSON Schema + LLM | `urls` (required), `schema` (required JSON Schema dict), `prompt` |
 | `agent` | Multi-step research orchestration: search the web, extract top results, synthesize a cited Markdown answer | `query` (required), `max_urls` (default 5, hard cap 20), `synthesis_model`, `token_budget` (default 10000) |
 | `interact` | Drive a page with click/fill/submit via a browser automation session | `url` (required), `actions` (required list of `{type, selector?, description?, value?}`), `session` (persistent session id), `screenshot` |
+| `diff` | Track content changes across fetches of the same URL(s) | `urls` (required), `refetch` (default `true` -- fetch a fresh copy before comparing; set `false` to compare already-recorded snapshots without a new network fetch) |
+
+`diff` requires the web cache enabled (`WET_CACHE=true`). Returns per-URL `change_status` (`new`\|`same`\|`changed`) plus a unified `diff` (empty when unchanged) and `old_fetched_at`/`new_fetched_at` timestamps.
 
 ## media
 

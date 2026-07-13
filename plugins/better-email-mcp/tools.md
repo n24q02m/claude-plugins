@@ -39,9 +39,11 @@ Compose and send emails. Not wrapped as external content.
 
 | Action | Purpose | Key parameters |
 |---|---|---|
-| `new` | Compose a fresh email | `account`, `to`, `subject`, `body` (required); `cc`, `bcc` |
-| `reply` | Reply to an email (`to`/`subject` auto-derived, `Re:` prefixed) | `account`, `uid`, `body` (required); `cc`, `bcc` |
-| `forward` | Forward an email (includes original body, `Fwd:` prefixed) | `account`, `uid`, `to`, `body` (required); `subject`, `cc`, `bcc` |
+| `new` | Compose a fresh email | `account`, `to`, `subject`, `body` (required); `cc`, `bcc`, `attachments` |
+| `reply` | Reply to an email (`to`/`subject` auto-derived, `Re:` prefixed) | `account`, `uid`, `body` (required); `cc`, `bcc`, `attachments` |
+| `forward` | Forward an email (includes original body, `Fwd:` prefixed) | `account`, `uid`, `to`, `body` (required); `subject`, `cc`, `bcc`, `attachments` |
+
+`attachments` (optional, all actions): array of `{filename, content_base64, content_type?}`, same shape as `attachments`' `download` action returns. Max 10 files, total decoded size <= 25MB.
 
 ## config
 
