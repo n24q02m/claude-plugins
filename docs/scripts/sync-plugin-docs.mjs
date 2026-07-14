@@ -30,14 +30,16 @@ const DOCS_ROOT = dirname(__dirname); // docs/
 const PLUGINS_DIR = join(DOCS_ROOT, '..', 'plugins');
 const TARGET_DIR = join(DOCS_ROOT, 'src', 'content', 'docs', 'servers');
 
-// Files we expect per plugin (some optional)
+// Files we expect per plugin (some optional). Order here drives the order of
+// the "In this section" links on each generated section landing page, so keep
+// overview.md first.
 const PLUGIN_FILES = [
+  'overview.md',
   'setup.md',
   'setup-with-agent.md',
   'tools.md',
   'modes.md',
   'troubleshooting.md',
-  'overview.md',
   // mcp-core specific (Foundation library, no setup flow):
   'architecture.md',
   'trust-model.md',
@@ -94,7 +96,7 @@ function buildIndex(pluginName, meta, copiedFiles) {
   const editUrl = `${REPO_RAW_BASE}/${pluginName}/.claude-plugin/plugin.json`;
 
   const pageLinks = copiedFiles
-    .filter((f) => f !== 'index.md' && f !== 'overview.md')
+    .filter((f) => f !== 'index.md')
     .map((f) => `- [${titleFromFile(f)}](./${f.replace(/\.md$/, '')}/)`)
     .join('\n');
 
@@ -119,6 +121,42 @@ function buildIndex(pluginName, meta, copiedFiles) {
     lines.push('- Install via the [n24q02m plugin marketplace](/get-started/plugin-marketplace/)');
   }
   lines.push('');
+  return lines.join('\n');
+}
+
+// Synthesize the top-level /servers/ landing so the section root resolves
+// instead of 404ing, listing every server with a one-line description + link.
+// `entries` is [{ name, description, isFoundation }] for plugins with content.
+function buildServersIndex(entries) {
+  const servers = entries.filter((e) => !e.isFoundation).sort((a, b) => a.name.localeCompare(b.name));
+  const foundation = entries.filter((e) => e.isFoundation);
+
+  const toItem = (e) => `- [${e.name}](/servers/${e.name}/) -- ${e.description}`;
+
+  const lines = [
+    '---',
+    'title: Servers',
+    'description: All MCP servers in the n24q02m stack, plus the mcp-core foundation library.',
+    '---',
+    '',
+    'Every server in the stack shares one foundation library (`mcp-core`), one plugin marketplace, and one multi-user auth model. Browse the servers below, or see the [server comparison](/reference/server-comparison/) for a side-by-side table.',
+    '',
+    '## Servers',
+    '',
+    ...servers.map(toItem),
+  ];
+  if (foundation.length > 0) {
+    lines.push('', '## Foundation', '', ...foundation.map(toItem));
+  }
+  lines.push(
+    '',
+    '## See also',
+    '',
+    '- [Server comparison](/reference/server-comparison/)',
+    '- [Modes overview](/get-started/modes-overview/)',
+    '- [Plugin marketplace](/get-started/plugin-marketplace/)',
+    ''
+  );
   return lines.join('\n');
 }
 
@@ -186,9 +224,9 @@ async function main() {
       const copiedFiles = fileResults.filter(Boolean);
 
       if (copiedFiles.length > 0) {
+        const meta = await readPluginMeta(name);
         // Generate the section landing page unless the source already ships one.
         if (!copiedFiles.includes('index.md')) {
-          const meta = await readPluginMeta(name);
           await writeFile(
             join(TARGET_DIR, name, 'index.md'),
             buildIndex(name, meta, copiedFiles),
@@ -196,16 +234,26 @@ async function main() {
           );
         }
         console.log(`  ${name}: ${copiedFiles.length} file(s) + index`);
-        return copiedFiles.length;
+        const isFoundation = name === FOUNDATION;
+        const description =
+          meta.description ||
+          (isFoundation ? FOUNDATION_DESCRIPTION : `${name} — part of the n24q02m MCP server stack.`);
+        return { name, count: copiedFiles.length, description, isFoundation };
       }
-      return 0;
+      return { name, count: 0 };
     })
   );
 
-  const pluginsWithContent = pluginResults.filter((count) => count > 0).length;
-  const totalCopied = pluginResults.reduce((sum, count) => sum + count, 0);
+  const entries = pluginResults.filter((r) => r.count > 0);
 
-  console.log(`\n✓ Synced ${totalCopied} file(s) across ${pluginsWithContent} plugin(s).`);
+  // Synthesize the top-level /servers/ landing so the section root resolves.
+  await mkdir(TARGET_DIR, { recursive: true });
+  await writeFile(join(TARGET_DIR, 'index.md'), buildServersIndex(entries), 'utf-8');
+
+  const pluginsWithContent = entries.length;
+  const totalCopied = entries.reduce((sum, r) => sum + r.count, 0);
+
+  console.log(`\n✓ Synced ${totalCopied} file(s) across ${pluginsWithContent} plugin(s) + /servers/ index.`);
 }
 
 main().catch((err) => {

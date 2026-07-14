@@ -33,6 +33,12 @@ jobs:
           printf "%s\n" "Validating marketplace.json..."
           python3 scripts/validate_marketplace.py
 
+      - name: Verify docs currency
+        run: |
+          set -euo pipefail
+          printf "%s\n" "Verifying per-server docs are current with shipped plugin.json..."
+          python3 scripts/verify_docs_current.py
+
       - name: Check version freshness
         if: github.event_name == 'push'
         env:
