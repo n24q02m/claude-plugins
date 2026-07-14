@@ -42,3 +42,8 @@
 **Vulnerability:** The SSRF mitigation in `NoAuthRedirectHandler` (`scripts/check_version_freshness.py`) used `m.has_header` and `m.remove_header` to strip `Authorization` and `Cookie` headers across cross-origin redirects. However, Python's `urllib.request.Request.remove_header()` only removes the first matching header. If a sensitive header was injected redundantly with non-standard casing (e.g., `AUTHORIZATION`), the loop would miss it, causing token leakage to the third-party redirect target.
 **Learning:** In Python's `urllib.request`, `remove_header` is insufficient for guaranteeing the total removal of sensitive headers because it stops at the first match and ignores redundancies.
 **Prevention:** Always manually iterate over all keys in both `headers` and `unredirected_hdrs` and delete matches case-insensitively using `del` to guarantee complete header removal, effectively closing casing/redundancy bypasses.
+
+## 2026-07-06 - Input Length Limits to Prevent Resource Exhaustion
+**Vulnerability:** The `run.py` CLI wrapper for the `research-topic` skill lacked input validation bounds on its CLI arguments (e.g., query length, maximum URLs, and token budget), potentially leading to excessive resource consumption or DoS if invoked with maliciously large payloads.
+**Learning:** Command line argument parsers like `argparse` do not automatically enforce sensible capacity limits on input strings or unconstrained numeric ranges. When handling untrusted or automated input, these boundaries must be explicitly verified to prevent CPU and memory exhaustion.
+**Prevention:** Always validate and enforce strict input length limits and bounds on CLI arguments (e.g., max string lengths, minimum/maximum integers) immediately after parsing.

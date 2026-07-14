@@ -29,7 +29,9 @@ class TestVerifyDocsCurrent(unittest.TestCase):
             manifest["mcpServers"] = {name: {"command": "x"}}
         if user_config is not None:
             manifest["userConfig"] = user_config
-        with open(os.path.join(pdir, ".claude-plugin", "plugin.json"), "w", encoding="utf-8") as f:
+        with open(
+            os.path.join(pdir, ".claude-plugin", "plugin.json"), "w", encoding="utf-8"
+        ) as f:
             json.dump(manifest, f)
         for doc, body in (docs or {}).items():
             with open(os.path.join(pdir, doc), "w", encoding="utf-8") as f:
