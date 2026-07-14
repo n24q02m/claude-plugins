@@ -34,6 +34,7 @@ export default defineConfig({
         {
           label: 'Servers',
           items: [
+            { label: 'All servers', link: '/servers/' },
             { label: 'mcp-core (Foundation)', items: [{ autogenerate: { directory: 'servers/mcp-core' } }] },
             { label: 'wet-mcp', items: [{ autogenerate: { directory: 'servers/wet-mcp' } }] },
             { label: 'mnemo-mcp', items: [{ autogenerate: { directory: 'servers/mnemo-mcp' } }] },

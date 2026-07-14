@@ -39,3 +39,11 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
         files: ^(\.claude-plugin/marketplace\.json|plugins/.*/plugin\.json)$
+
+      - id: verify-docs-current
+        name: Verify per-server docs are current with shipped plugin.json (WS-E / E6)
+        entry: python3 scripts/verify_docs_current.py
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        files: ^plugins/.*/(\.claude-plugin/plugin\.json|.*\.md)$
