@@ -100,6 +100,10 @@ _SKIP_SUFFIXES = (
 )
 _SKIP_DIRS = {".git", "node_modules", "dist", "build", ".venv", "venv", "__pycache__"}
 
+# Pre-compile regex at module-level to prevent inner-loop compilation overhead
+# during diff parsing.
+_HUNK_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@")
+
 # Optimization: Move inline set to a module-level frozenset.
 # This prevents recreating the set on every call to _is_skippable in the loop,
 # reducing function overhead by ~10-15%.
@@ -226,7 +230,7 @@ def _yield_diff_pairs(files: list[str]) -> Iterator[tuple[str, int, str, str]]:
             if line.startswith("@@"):
                 if current_file:
                     yield from _flush(current_file, hunk_plus_start)
-                m = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@", line)
+                m = _HUNK_RE.match(line)
                 if m:
                     hunk_plus_start = int(m.group(1))
                     plus_line_no = hunk_plus_start
