@@ -42,3 +42,8 @@
 **Vulnerability:** The SSRF mitigation in `NoAuthRedirectHandler` (`scripts/check_version_freshness.py`) used `m.has_header` and `m.remove_header` to strip `Authorization` and `Cookie` headers across cross-origin redirects. However, Python's `urllib.request.Request.remove_header()` only removes the first matching header. If a sensitive header was injected redundantly with non-standard casing (e.g., `AUTHORIZATION`), the loop would miss it, causing token leakage to the third-party redirect target.
 **Learning:** In Python's `urllib.request`, `remove_header` is insufficient for guaranteeing the total removal of sensitive headers because it stops at the first match and ignores redundancies.
 **Prevention:** Always manually iterate over all keys in both `headers` and `unredirected_hdrs` and delete matches case-insensitively using `del` to guarantee complete header removal, effectively closing casing/redundancy bypasses.
+
+## 2026-07-16 - Prevent DoS via Unbounded CLI Arguments in run.py
+**Vulnerability:** The script parsed CLI arguments via `argparse` without explicitly enforcing input bounds (e.g. maximum query length or numeric ranges for limits), exposing the system to resource exhaustion via large payloads.
+**Learning:** Scripts parsing CLI arguments via `argparse` (e.g., plugin entry points like `run.py`) should explicitly enforce input bounds—such as maximum string lengths for queries and numeric ranges for limits—immediately after `parse_args()` to prevent DoS.
+**Prevention:** Always add explicit input validation (length limits and value ranges) immediately after parsing CLI arguments.
