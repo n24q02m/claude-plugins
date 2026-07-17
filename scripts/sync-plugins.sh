@@ -38,7 +38,7 @@ sync_dir() {
   fi
 }
 
-PLUGINS=(wet-mcp mnemo-mcp better-telegram-mcp better-code-review-graph better-notion-mcp better-email-mcp better-godot-mcp imagine-mcp)
+PLUGINS=(wet-mcp mnemo-mcp better-telegram-mcp better-code-review-graph better-notion-mcp better-email-mcp better-godot-mcp imagine-mcp agent-chat-plugin)
 
 sync_plugins() {
   for repo in "${PLUGINS[@]}"; do
@@ -54,9 +54,13 @@ sync_plugins() {
     sync_file ".claude-plugin/plugin.json"
     sync_file "gemini-extension.json"
 
-    # Sync skills and hooks
+    # Sync skills, hooks, and commands
     sync_dir "skills"
     sync_dir "hooks"
+    sync_dir "commands"
+
+    # Sync top-level runtime entrypoint (non-MCP plugins, e.g. agent-chat-plugin)
+    sync_file "chat.py"
 
     printf "%s\n" "OK $repo"
   done

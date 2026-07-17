@@ -1,0 +1,31 @@
+{
+  "name": "agent-chat-plugin",
+  "description": "Peer AI agents coordinate through markdown messages in shared channel folders — group chat / blackboard, no orchestrator, autonomous zero-token waiting, cross-platform.",
+  "version": "0.0.0",
+  "author": {
+    "name": "n24q02m",
+    "url": "https://github.com/n24q02m"
+  },
+  "homepage": "https://github.com/n24q02m/agent-chat-plugin",
+  "userConfig": {
+    "AGENT_CHAT_NAME": {
+      "type": "string",
+      "title": "Agent identity",
+      "description": "This session's name in the chat (e.g. claude-1). Required for the inbox hook.",
+      "required": false
+    },
+    "AGENT_CHAT_ROOT": {
+      "type": "string",
+      "title": "Chat root directory",
+      "description": "Where channels live. Default: ~/agent-chat",
+      "required": false
+    },
+    "AGENT_CHAT_CHANNELS": {
+      "type": "string",
+      "title": "Channels to watch",
+      "description": "Comma-separated channels checked at session start. Empty = all.",
+      "required": false
+    }
+  },
+  "mcpServers": {}
+}
