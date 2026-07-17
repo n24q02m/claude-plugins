@@ -18,6 +18,7 @@ hand-rolled prototype.
 Commands: init | channels | roster | post | read | wait | peek | claim
 Run `python chat.py <command> --help` for flags.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -31,9 +32,12 @@ from pathlib import Path
 
 # --- root + small helpers ----------------------------------------------------
 
+
 def root_dir(explicit: str | None) -> Path:
     # Precedence: --root flag > AGENT_CHAT_ROOT env > ~/agent-chat default.
-    base = explicit or os.environ.get("AGENT_CHAT_ROOT") or str(Path.home() / "agent-chat")
+    base = (
+        explicit or os.environ.get("AGENT_CHAT_ROOT") or str(Path.home() / "agent-chat")
+    )
     return Path(base)
 
 
@@ -42,8 +46,11 @@ def now_iso() -> str:
     return _dt.datetime.now().astimezone().isoformat(timespec="seconds")
 
 
+_NON_ALNUM_RE = re.compile(r"[^a-z0-9]+")
+
+
 def slugify(text: str, maxlen: int = 40) -> str:
-    s = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+    s = _NON_ALNUM_RE.sub("-", text.lower()).strip("-")
     return (s[:maxlen].rstrip("-")) or "msg"
 
 
@@ -53,6 +60,7 @@ def die(msg: str, code: int = 1):
 
 
 # --- channel + message primitives -------------------------------------------
+
 
 def channel_dir(root: Path, channel: str) -> Path:
     return root / channel
@@ -65,14 +73,22 @@ def require_channel(root: Path, channel: str) -> Path:
     return d
 
 
+_SEQ_RE = re.compile(r"^(\d+)-")
+
+
 def _seq_from_name(name: str) -> int | None:
-    m = re.match(r"(\d+)-", name)
+    m = _SEQ_RE.match(name)
     return int(m.group(1)) if m else None
 
 
 def message_files(chan: Path):
-    files = [p for p in chan.glob("*.md") if _seq_from_name(p.name) is not None]
-    return sorted(files, key=lambda p: _seq_from_name(p.name))
+    seq_files = []
+    for p in chan.glob("*.md"):
+        seq = _seq_from_name(p.name)
+        if seq is not None:
+            seq_files.append((seq, p))
+    seq_files.sort(key=lambda x: x[0])
+    return [p for _, p in seq_files]
 
 
 def parse_frontmatter(path: Path) -> dict:
@@ -120,6 +136,7 @@ def is_relevant(meta: dict, agent: str) -> bool:
 
 # --- atomic sequence lock ----------------------------------------------------
 
+
 def _acquire_lock(chan: Path, timeout: float = 10.0, stale: float = 30.0) -> Path:
     """Atomic cross-platform lock via mkdir (fails if the dir already exists).
 
@@ -165,6 +182,7 @@ def _next_seq(chan: Path) -> int:
 
 # --- cursors -----------------------------------------------------------------
 
+
 def cursor_path(chan: Path, agent: str) -> Path:
     return chan / ".cursors" / f"{slugify(agent)}.txt"
 
@@ -190,6 +208,7 @@ def max_seq(chan: Path) -> int:
 
 # --- commands ----------------------------------------------------------------
 
+
 def cmd_init(root: Path, a):
     d = channel_dir(root, a.channel)
     d.mkdir(parents=True, exist_ok=True)
@@ -198,12 +217,18 @@ def cmd_init(root: Path, a):
     if meta_path.exists():
         die(f"channel '{a.channel}' already exists")
     members = [m.strip() for m in (a.members or "").split(",") if m.strip()]
-    meta_path.write_text(json.dumps({
-        "channel": a.channel,
-        "members": members,
-        "topic": a.topic or "",
-        "created": now_iso(),
-    }, indent=2), encoding="utf-8")
+    meta_path.write_text(
+        json.dumps(
+            {
+                "channel": a.channel,
+                "members": members,
+                "topic": a.topic or "",
+                "created": now_iso(),
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
     print(f"created channel '{a.channel}' at {d}  members={members or '(open)'}")
 
 
@@ -223,7 +248,9 @@ def cmd_channels(root: Path, a):
         if files:
             lm = parse_frontmatter(files[-1])
             last = f"#{_seq_from_name(files[-1].name)} {lm.get('from','?')}: {lm.get('title','')[:40]}"
-        rows.append((chan.name, ",".join(meta.get("members", [])) or "(open)", len(files), last))
+        rows.append(
+            (chan.name, ",".join(meta.get("members", [])) or "(open)", len(files), last)
+        )
     if not rows:
         print(f"(no channels yet under {root})")
         return
@@ -330,15 +357,17 @@ def cmd_wait(root: Path, a):
             write_cursor(d, a.agent, max_seq(d))
             return
         if time.time() >= deadline:
-            print(f"(timeout after {a.timeout}s: no new messages for {a.agent} in '{a.channel}')",
-                  file=sys.stderr)
+            print(
+                f"(timeout after {a.timeout}s: no new messages for {a.agent} in '{a.channel}')",
+                file=sys.stderr,
+            )
             raise SystemExit(2)
         time.sleep(a.interval)
 
 
 def cmd_peek(root: Path, a):
     d = require_channel(root, a.channel)
-    files = message_files(d)[-a.n:]
+    files = message_files(d)[-a.n :]
     for p in files:
         _print_message(p)
     if not files:
@@ -364,9 +393,14 @@ def cmd_claim(root: Path, a):
 
 # --- argparse ----------------------------------------------------------------
 
+
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="chat.py", description="peer agent chat over markdown files")
-    p.add_argument("--root", help="chat root dir (default: $AGENT_CHAT_ROOT or ~/agent-chat)")
+    p = argparse.ArgumentParser(
+        prog="chat.py", description="peer agent chat over markdown files"
+    )
+    p.add_argument(
+        "--root", help="chat root dir (default: $AGENT_CHAT_ROOT or ~/agent-chat)"
+    )
     sub = p.add_subparsers(dest="cmd", required=True)
 
     s = sub.add_parser("init", help="create a channel")
@@ -382,7 +416,9 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("channel")
     s.set_defaults(func=cmd_roster)
 
-    s = sub.add_parser("post", help="post a message (body via --body/--body-file/stdin)")
+    s = sub.add_parser(
+        "post", help="post a message (body via --body/--body-file/stdin)"
+    )
     s.add_argument("channel")
     s.add_argument("--from", dest="sender", required=True)
     s.add_argument("--to", help="recipient agent, or 'all' (default all)")
@@ -396,11 +432,15 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("read", help="print new messages for an agent (advances cursor)")
     s.add_argument("channel")
     s.add_argument("--as", dest="agent", required=True)
-    s.add_argument("--all", action="store_true", help="show entire thread, ignore relevance")
+    s.add_argument(
+        "--all", action="store_true", help="show entire thread, ignore relevance"
+    )
     s.add_argument("--peek", action="store_true", help="do not advance the cursor")
     s.set_defaults(func=cmd_read)
 
-    s = sub.add_parser("wait", help="block (sleep-poll, 0 tokens) until a reply arrives")
+    s = sub.add_parser(
+        "wait", help="block (sleep-poll, 0 tokens) until a reply arrives"
+    )
     s.add_argument("channel")
     s.add_argument("--as", dest="agent", required=True)
     s.add_argument("--timeout", type=float, default=900.0)
