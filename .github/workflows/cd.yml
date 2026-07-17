@@ -18,6 +18,7 @@ on:
           - better-email-mcp
           - better-godot-mcp
           - imagine-mcp
+          - agent-chat-plugin
       tag:
         description: "Release tag (e.g., v2.18.1)"
         required: true
@@ -78,7 +79,7 @@ jobs:
           }
 
           case "$REPO" in
-            wet-mcp|mnemo-mcp|better-telegram-mcp|better-code-review-graph|better-notion-mcp|better-email-mcp|better-godot-mcp|imagine-mcp)
+            wet-mcp|mnemo-mcp|better-telegram-mcp|better-code-review-graph|better-notion-mcp|better-email-mcp|better-godot-mcp|imagine-mcp|agent-chat-plugin)
               ;;
             *)
               printf "::error::Invalid repo: %s\n" "$(sanitize "$REPO")"
@@ -140,6 +141,19 @@ jobs:
             rm -rf "$PLUGIN_DIR/hooks"
             cp -r "source/hooks" "$PLUGIN_DIR/hooks"
             printf "Synced hooks/\n"
+          fi
+
+          # Sync commands (non-MCP plugins, e.g. agent-chat-plugin; no-op otherwise)
+          if [ -d "source/commands" ] && (shopt -s nullglob; set -- source/commands/*; [ $# -gt 0 ]); then
+            rm -rf "$PLUGIN_DIR/commands"
+            cp -r "source/commands" "$PLUGIN_DIR/commands"
+            printf "Synced commands/\n"
+          fi
+
+          # Sync top-level runtime entrypoint (non-MCP plugins, e.g. agent-chat-plugin; no-op otherwise)
+          if [ -f "source/chat.py" ]; then
+            cp "source/chat.py" "$PLUGIN_DIR/chat.py"
+            printf "Synced chat.py\n"
           fi
 
       - name: Commit and push
