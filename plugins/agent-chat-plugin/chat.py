@@ -46,8 +46,11 @@ def now_iso() -> str:
     return _dt.datetime.now().astimezone().isoformat(timespec="seconds")
 
 
+_NON_ALNUM_RE = re.compile(r"[^a-z0-9]+")
+
+
 def slugify(text: str, maxlen: int = 40) -> str:
-    s = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+    s = _NON_ALNUM_RE.sub("-", text.lower()).strip("-")
     return (s[:maxlen].rstrip("-")) or "msg"
 
 
@@ -78,14 +81,22 @@ def require_channel(root: Path, channel: str) -> Path:
     return d
 
 
+_SEQ_RE = re.compile(r"^(\d+)-")
+
+
 def _seq_from_name(name: str) -> int | None:
-    m = re.match(r"(\d+)-", name)
+    m = _SEQ_RE.match(name)
     return int(m.group(1)) if m else None
 
 
 def message_files(chan: Path):
-    files = [p for p in chan.glob("*.md") if _seq_from_name(p.name) is not None]
-    return sorted(files, key=lambda p: _seq_from_name(p.name))
+    seq_files = []
+    for p in chan.glob("*.md"):
+        seq = _seq_from_name(p.name)
+        if seq is not None:
+            seq_files.append((seq, p))
+    seq_files.sort(key=lambda x: x[0])
+    return [p for _, p in seq_files]
 
 
 def parse_frontmatter(path: Path) -> dict:
