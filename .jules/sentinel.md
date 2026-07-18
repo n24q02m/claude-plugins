@@ -47,3 +47,8 @@
 **Vulnerability:** The `run.py` CLI wrapper for the `research-topic` skill lacked input validation bounds on its CLI arguments (e.g., query length, maximum URLs, and token budget), potentially leading to excessive resource consumption or DoS if invoked with maliciously large payloads.
 **Learning:** Command line argument parsers like `argparse` do not automatically enforce sensible capacity limits on input strings or unconstrained numeric ranges. When handling untrusted or automated input, these boundaries must be explicitly verified to prevent CPU and memory exhaustion.
 **Prevention:** Always validate and enforce strict input length limits and bounds on CLI arguments (e.g., max string lengths, minimum/maximum integers) immediately after parsing.
+
+## 2026-07-17 - Fix Path Traversal in agent-chat-plugin
+**Vulnerability:** The `agent-chat-plugin/chat.py` script lacked validation for the `channel` and `task` inputs, allowing attackers to perform path traversal using `..`, `/`, `\`, or null bytes, potentially reading or overwriting files outside the intended `AGENT_CHAT_ROOT` directory.
+**Learning:** Command-line inputs used to construct file paths must always be lexically validated to reject directory traversal characters (e.g., slashes, dots) before being joined with a base directory, even if the base directory is considered safe.
+**Prevention:** Implement strict allowlisting or blocklisting for path components (e.g., rejecting null bytes, slashes, and `.`/`..`) before constructing paths from untrusted user input.
