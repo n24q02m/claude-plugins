@@ -52,3 +52,8 @@
 **Vulnerability:** The `agent-chat-plugin/chat.py` script lacked validation for the `channel` and `task` inputs, allowing attackers to perform path traversal using `..`, `/`, `\`, or null bytes, potentially reading or overwriting files outside the intended `AGENT_CHAT_ROOT` directory.
 **Learning:** Command-line inputs used to construct file paths must always be lexically validated to reject directory traversal characters (e.g., slashes, dots) before being joined with a base directory, even if the base directory is considered safe.
 **Prevention:** Implement strict allowlisting or blocklisting for path components (e.g., rejecting null bytes, slashes, and `.`/`..`) before constructing paths from untrusted user input.
+
+## 2026-07-21 - Input validation bounds in run.py
+**Vulnerability:** The CLI wrapper run.py parsed untrusted inputs using argparse without validating input lengths or numerical bounds, making the skill vulnerable to DoS attacks via excessively long strings or large integers.
+**Learning:** Argparse does not inherently enforce sensible length or boundary limits on parsed values. Bounded validation is critical when passing user input downstream to processing intensive functions.
+**Prevention:** Apply input boundaries via standard argparse mechanics (parser.error()) right after parsing inputs, ensuring safe early rejection.
