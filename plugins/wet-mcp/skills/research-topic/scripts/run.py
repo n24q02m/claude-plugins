@@ -45,6 +45,13 @@ async def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
+    if len(args.query) > 1000:
+        parser.error("query exceeds maximum length of 1000 characters")
+    if not (1 <= args.max_urls <= 20):
+        parser.error("max_urls must be between 1 and 20")
+    if not (100 <= args.token_budget <= 100000):
+        parser.error("token_budget must be between 100 and 100000")
+
     _emit_progress("starting", f"query={args.query!r} max_urls={args.max_urls}")
 
     # Lazy import so the script imports cheaply when -h is used.
