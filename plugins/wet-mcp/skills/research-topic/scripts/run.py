@@ -45,6 +45,15 @@ async def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
+    if len(args.query) > 2000:
+        parser.error("query must be 2000 characters or fewer")
+    if args.max_urls < 1 or args.max_urls > 20:
+        parser.error("max_urls must be between 1 and 20")
+    if args.token_budget < 1 or args.token_budget > 100000:
+        parser.error("token_budget must be between 1 and 100000")
+    if args.synthesis_model and len(args.synthesis_model) > 200:
+        parser.error("synthesis_model must be 200 characters or fewer")
+
     _emit_progress("starting", f"query={args.query!r} max_urls={args.max_urls}")
 
     # Lazy import so the script imports cheaply when -h is used.
