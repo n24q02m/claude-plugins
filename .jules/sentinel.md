@@ -52,3 +52,8 @@
 **Vulnerability:** The `agent-chat-plugin/chat.py` script lacked validation for the `channel` and `task` inputs, allowing attackers to perform path traversal using `..`, `/`, `\`, or null bytes, potentially reading or overwriting files outside the intended `AGENT_CHAT_ROOT` directory.
 **Learning:** Command-line inputs used to construct file paths must always be lexically validated to reject directory traversal characters (e.g., slashes, dots) before being joined with a base directory, even if the base directory is considered safe.
 **Prevention:** Implement strict allowlisting or blocklisting for path components (e.g., rejecting null bytes, slashes, and `.`/`..`) before constructing paths from untrusted user input.
+
+## 2026-07-24 - Input Validation Bounds on max_urls
+**Vulnerability:** The `max_urls` parameter in `run.py` was documented to have a cap of 20, but the CLI lacked enforcement, allowing users to pass arbitrarily large values (e.g. 999), leading to potential API cost explosion or resource exhaustion.
+**Learning:** Command line arguments documented with a cap must have those bounds explicitly enforced using `parser.error()` after parsing.
+**Prevention:** Enforce explicitly documented limits on `argparse` arguments immediately after `parse_args()`.
