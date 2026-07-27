@@ -1,0 +1,37 @@
+{
+  "name": "better-workspace-mcp",
+  "description": "Google Workspace — 11 composite tools across Docs, Drive, Calendar, Gmail, Sheets, Slides, Tasks, Chat, People, Forms + multi-account",
+  "version": "0.1.0-beta.2",
+  "userConfig": {
+    "GOOGLE_OAUTH_CLIENT_ID": {
+      "type": "string",
+      "title": "Google OAuth client ID",
+      "description": "From a Desktop app OAuth client at https://console.cloud.google.com/apis/credentials (ends with .apps.googleusercontent.com)",
+      "sensitive": false,
+      "required": true
+    },
+    "GOOGLE_OAUTH_CLIENT_SECRET": {
+      "type": "string",
+      "title": "Google OAuth client secret",
+      "description": "Client secret of the same Desktop app OAuth client",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "author": {
+    "name": "n24q02m",
+    "url": "https://github.com/n24q02m"
+  },
+  "homepage": "https://github.com/n24q02m/better-workspace-mcp",
+  "mcpServers": {
+    "better-workspace-mcp": {
+      "command": "npx",
+      "args": ["--yes", "@n24q02m/better-workspace-mcp@latest"],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "GOOGLE_OAUTH_CLIENT_ID": "${user_config.GOOGLE_OAUTH_CLIENT_ID}",
+        "GOOGLE_OAUTH_CLIENT_SECRET": "${user_config.GOOGLE_OAUTH_CLIENT_SECRET}"
+      }
+    }
+  }
+}

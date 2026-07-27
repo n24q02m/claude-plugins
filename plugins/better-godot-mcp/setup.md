@@ -8,7 +8,7 @@
 
 This plugin **defaults to stdio via plugin install** (`uvx`/`npx`) -- the simplest path and the one this guide covers in full. It also ships Docker images (`:stdio` and `:http` targets) and supports HTTP transport (`MCP_TRANSPORT=http` / `--http`) for self-hosting. What it does **not** offer (unlike `better-notion-mcp`/`better-email-mcp`/`better-telegram-mcp`) is a hosted remote-relay/OAuth mode -- HTTP here is self-host only.
 
-For comparison, the other 6 plugins in this stack (`better-notion-mcp`, `better-email-mcp`, `better-telegram-mcp`, `wet-mcp`, `mnemo-mcp`, `imagine-mcp`) document 3 methods:
+For comparison, the other 7 plugins in this stack (`better-notion-mcp`, `better-email-mcp`, `better-telegram-mcp`, `wet-mcp`, `mnemo-mcp`, `imagine-mcp`, `better-workspace-mcp`) document 3 methods:
 1. **Default** -- Plugin install (`uvx`/`npx`) stdio
 2. **Fallback** -- Docker stdio (Windows/macOS PATH issues)
 3. **Recommended** -- Docker HTTP (multi-device, OAuth/relay form, claude.ai web)

@@ -1,6 +1,6 @@
 # MCP n24q02m
 
-> A curated suite of eight MCP servers on one foundation library — one transport, one setup command, and one multi-user auth model — so you run web search, memory, Notion, email, Telegram, code review, image generation, and Godot without wiring up eight inconsistent servers.
+> A curated suite of nine MCP servers on one foundation library — one transport, one setup command, and one multi-user auth model — so you run web search, memory, Notion, email, Telegram, code review, image generation, Google Workspace, and Godot without wiring up nine inconsistent servers.
 
 Each server ships as a Claude Code plugin, an npm or PyPI package, and a Docker image. Works with Claude Code, Codex, Gemini CLI, Cursor, and Windsurf. Self-host once and share with a team, or use the hosted endpoints. Every server reuses `mcp-core` for its transport, OAuth authorization server, lifecycle, and per-user credential scoping — no bespoke auth code per server.
 
@@ -15,6 +15,7 @@ Each server ships as a Claude Code plugin, an npm or PyPI package, and a Docker 
 - [better-notion-mcp](https://mcp.n24q02m.com/servers/better-notion-mcp/setup/): Markdown-first Notion API server.
 - [better-email-mcp](https://mcp.n24q02m.com/servers/better-email-mcp/setup/): Email (IMAP + SMTP) composite tools.
 - [better-godot-mcp](https://mcp.n24q02m.com/servers/better-godot-mcp/setup/): Godot Engine integration for AI agents.
+- [better-workspace-mcp](https://mcp.n24q02m.com/servers/better-workspace-mcp/setup/): Google Workspace — Docs, Drive, Calendar, Gmail, Sheets, Slides, Tasks, Chat, People, and Forms, across multiple accounts.
 
 ## Get started
 

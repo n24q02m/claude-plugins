@@ -18,6 +18,7 @@ Each server has a fixed set of supported modes. Pick based on your scenario; swi
 | `better-notion-mcp` | yes | yes | yes | yes | `remote-oauth` |
 | `better-email-mcp` | yes | yes | yes | yes | `remote-relay` |
 | `better-godot-mcp` | yes | — | — | — | `stdio` |
+| `better-workspace-mcp` | yes | — | — | yes | `stdio` |
 
 ## Mode definitions
 
@@ -40,6 +41,8 @@ Self-hosted server doubles as an OAuth 2.1 Authorization Server. Standard OAuth 
 ## Default mode rationale
 
 The default is what the plugin manifest sets in `mcp.json` when installed via marketplace. Override per-install if needed. Most servers default to `local-relay` (single-user with browser flow). `better-godot-mcp` defaults to `stdio` (no credentials needed). Notion/Email/Telegram default to remote because team-shared deploy is the common deployment pattern.
+
+`better-workspace-mcp` defaults to `stdio` and skips the relay modes entirely: it has no credential paste form, because Google credentials are never pasted — the user consents on Google's own screen. In stdio that consent returns to a loopback address; in `remote-oauth` it returns to `/accounts/callback` on the deployment, which is why the two modes need different Google OAuth client types (Desktop vs Web application).
 
 ## Anti-patterns
 
