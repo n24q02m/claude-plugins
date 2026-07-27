@@ -40,9 +40,9 @@
 
 
 
-8 MCP servers for Claude Code, Codex, and other AI coding agents.
+9 MCP servers for Claude Code, Codex, and other AI coding agents.
 
-**Full documentation: [mcp.n24q02m.com](https://mcp.n24q02m.com)** — unified docs for all 8 servers + the `mcp-core` foundation library. Covers setup methods, modes (stdio / local-relay / remote-relay / remote-oauth), multi-user deployment, and per-server tool reference.
+**Full documentation: [mcp.n24q02m.com](https://mcp.n24q02m.com)** — unified docs for all 9 servers + the `mcp-core` foundation library. Covers setup methods, modes (stdio / local-relay / remote-relay / remote-oauth), multi-user deployment, and per-server tool reference.
 
 ## Install
 
@@ -65,12 +65,13 @@ Or browse all plugins: run `/plugin` and go to the **Discover** tab.
 | **better-godot-mcp** | Development | Godot Engine — 17 composite tools for game dev | `GODOT_PATH`, `GODOT_PROJECT_PATH` (both optional) |
 | **better-code-review-graph** | Development | Knowledge graph for token-efficient code reviews | All optional: `JINA_AI_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_VERTEX_EXPRESS_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY` |
 | **imagine-mcp** | Multimodal | Image/video understanding + generation across Gemini, OpenAI, Grok | All optional: `XAI_API_KEY` (default provider), `GEMINI_API_KEY`, `GOOGLE_VERTEX_EXPRESS_API_KEY`, `OPENAI_API_KEY` |
+| **better-workspace-mcp** | Productivity | Google Workspace — 11 composite tools (Docs, Drive, Calendar, Gmail, Sheets, Slides, Tasks, Chat, People, Forms) + multi-account | `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` (both required) |
 
 ## Configuration
 
 When you run `/plugin install`, Claude Code prompts for that plugin's credentials (declared in each plugin's `userConfig`) and stores sensitive values in your system keychain. You can also set them via the `env` block in `~/.claude/settings.local.json`, or `export` them in your shell profile.
 
-`better-notion-mcp` and `better-email-mcp` require credentials to function. `better-telegram-mcp` needs a bot token only for bot mode. `wet-mcp`, `mnemo-mcp`, and `better-code-review-graph` run fully locally with no API keys (local ONNX embedding/reranking) — keys only enable optional cloud providers.
+`better-notion-mcp`, `better-email-mcp`, and `better-workspace-mcp` require credentials to function. `better-telegram-mcp` needs a bot token only for bot mode. `wet-mcp`, `mnemo-mcp`, and `better-code-review-graph` run fully locally with no API keys (local ONNX embedding/reranking) — keys only enable optional cloud providers.
 
 ### Cloud providers (wet-mcp, mnemo-mcp, better-code-review-graph)
 
@@ -126,9 +127,18 @@ GODOT_PATH=/path/to/godot           # optional; auto-detects from PATH if empty
 GODOT_PROJECT_PATH=/path/to/project # optional default project root
 ```
 
+### Google Workspace
+
+```
+GOOGLE_OAUTH_CLIENT_ID=<your-client-id>.apps.googleusercontent.com
+GOOGLE_OAUTH_CLIENT_SECRET=<your-client-secret>
+```
+
+Create the OAuth client yourself at [console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials) — type **Desktop app** for the default stdio mode, **Web application** for self-hosted HTTP. The first run opens Google's consent screen once, then reuses the stored refresh token.
+
 ## Skills
 
-Each plugin ships skills, invoked in Claude Code as `<plugin>:<skill>`:
+Most plugins ship skills, invoked in Claude Code as `<plugin>:<skill>`:
 
 | Plugin | Skills |
 |--------|--------|

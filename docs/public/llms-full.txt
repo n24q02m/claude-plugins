@@ -1,6 +1,6 @@
 # MCP n24q02m — Full reference for LLMs
 
-> A curated suite of eight MCP (Model Context Protocol) servers on one foundation library — one transport, one setup command, and one multi-user auth model — so you run web search, memory, Notion, email, Telegram, code review, image generation, and Godot without wiring up eight inconsistent servers.
+> A curated suite of nine MCP (Model Context Protocol) servers on one foundation library — one transport, one setup command, and one multi-user auth model — so you run web search, memory, Notion, email, Telegram, code review, image generation, Google Workspace, and Godot without wiring up nine inconsistent servers.
 
 Site: https://mcp.n24q02m.com
 Marketplace + source: https://github.com/n24q02m/claude-plugins
@@ -62,6 +62,10 @@ Docs: https://mcp.n24q02m.com/servers/better-email-mcp/setup/
 ### better-godot-mcp
 Godot Engine integration for AI agents. Project file content is returned marked as untrusted external content.
 Docs: https://mcp.n24q02m.com/servers/better-godot-mcp/setup/
+
+### better-workspace-mcp
+Google Workspace — Docs, Drive, Calendar, Gmail, Sheets, Slides, Tasks, Chat, People, and Forms, as one composite tool per domain. Every tool takes an `account` parameter, so one server acts across several Google accounts. You supply your own Google OAuth client, so the consent screen and API quota stay on your project. Currently beta, and Apache-2.0 rather than MIT because it vendors Apache-2.0 upstream code.
+Docs: https://mcp.n24q02m.com/servers/better-workspace-mcp/setup/
 
 ## Get started
 

@@ -18,6 +18,7 @@ Claude Code plugin marketplace and registry for n24q02m plugins.
 - better-godot-mcp
 - better-code-review-graph
 - imagine-mcp
+- better-workspace-mcp
 
 ## Conventions
 
