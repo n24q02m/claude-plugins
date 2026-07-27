@@ -12,6 +12,7 @@ Config (env vars, all optional except the first):
   AGENT_CHAT_CHANNELS comma-separated channels to check. Empty -> all channels
                       found under the root.
 """
+
 from __future__ import annotations
 
 import os
