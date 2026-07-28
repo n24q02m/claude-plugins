@@ -44,6 +44,8 @@ async def main(argv: list[str] | None = None) -> int:
         help="Max prompt tokens for the synthesis call (default 10000).",
     )
     args = parser.parse_args(argv)
+    if args.max_urls > 20:
+        parser.error("max_urls cannot exceed 20")
 
     _emit_progress("starting", f"query={args.query!r} max_urls={args.max_urls}")
 
