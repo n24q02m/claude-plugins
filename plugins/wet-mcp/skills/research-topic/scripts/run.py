@@ -45,6 +45,9 @@ async def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
+    if args.max_urls > 20:
+        parser.error("max-urls cannot exceed 20")
+
     _emit_progress("starting", f"query={args.query!r} max_urls={args.max_urls}")
 
     # Lazy import so the script imports cheaply when -h is used.

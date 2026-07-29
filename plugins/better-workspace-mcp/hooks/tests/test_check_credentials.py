@@ -16,9 +16,7 @@ spec.loader.exec_module(check_credentials)
 
 class TestCheckCredentials(unittest.TestCase):
 
-    @patch.dict(
-        os.environ, {"GOOGLE_OAUTH_CLIENT_ID": "some-client-id"}, clear=True
-    )
+    @patch.dict(os.environ, {"GOOGLE_OAUTH_CLIENT_ID": "some-client-id"}, clear=True)
     def test_is_configured_env(self):
         self.assertTrue(check_credentials._is_configured())
 
@@ -71,9 +69,7 @@ class TestCheckCredentials(unittest.TestCase):
             "better-workspace-mcp: credentials not yet configured", output["message"]
         )
 
-    @patch.dict(
-        os.environ, {"GOOGLE_OAUTH_CLIENT_ID": "some-client-id"}, clear=True
-    )
+    @patch.dict(os.environ, {"GOOGLE_OAUTH_CLIENT_ID": "some-client-id"}, clear=True)
     @patch("sys.stdin", io.StringIO(json.dumps({"tool_name": "any_tool__gmail"})))
     @patch("sys.exit", side_effect=SystemExit)
     def test_main_allowed(self, mock_exit):
