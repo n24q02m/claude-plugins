@@ -4,7 +4,7 @@
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 > If you relied on the relay form to enter your token, please:
 > 1. Set `NOTION_TOKEN` directly in plugin config (Method 1), OR
-> 2. Switch to HTTP mode (Method 3 (Docker HTTP — Hosted or Self-host)) for browser-based OAuth.
+> 2. Switch to HTTP mode (Method 3 (Docker HTTP — Self-host)) for browser-based OAuth.
 
 ## Method overview
 
@@ -88,7 +88,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 
 ## Why upgrade to HTTP mode?
 
-Stdio is the default and works fine for single-user local setups. You may want to switch to HTTP mode (Method 3 Docker HTTP (Hosted or Self-host)) when you need any of the following:
+Stdio is the default and works fine for single-user local setups. You may want to switch to HTTP mode (Method 3 Docker HTTP (Self-host)) when you need any of the following:
 
 - **claude.ai web compatibility** -- claude.ai (the web UI) supports HTTP MCP servers but cannot spawn local stdio processes.
 - **One server shared across N Claude Code sessions** -- a single HTTP instance serves multiple terminals/IDEs without re-spawning per session.
@@ -105,48 +105,9 @@ Stdio is the default and works fine for single-user local setups. You may want t
 
 > **Switching transport vs. setting credentials**: The `userConfig` prompt only configures credentials for stdio mode (Method 1 / Option 1). To switch transport to HTTP, override `mcpServers` in your client settings per the snippets below -- this is a separate path from `userConfig` and is not driven by the install prompt.
 
-### 3.1. Hosted (n24q02m.com)
-
-Connect via URL with OAuth 2.1 authentication. Your MCP client handles the OAuth flow automatically.
-
-1. Add to your MCP client configuration file:
-
-   **Claude Code** -- `.claude/settings.json` or `~/.claude/settings.json`:
-   ```json
-   {
-     "mcpServers": {
-       "better-notion-mcp": {
-         "type": "http",
-         "url": "https://better-notion-mcp.n24q02m.com/mcp"
-       }
-     }
-   }
-   ```
-
-   **Codex CLI** -- `~/.codex/config.toml`:
-   ```toml
-   [mcp_servers.better-notion-mcp]
-   type = "http"
-   url = "https://better-notion-mcp.n24q02m.com/mcp"
-   ```
-
-   **OpenCode** -- `opencode.json`:
-   ```json
-   {
-     "mcpServers": {
-       "better-notion-mcp": {
-         "type": "http",
-         "url": "https://better-notion-mcp.n24q02m.com/mcp"
-       }
-     }
-   }
-   ```
-
-2. On first use, a browser window opens for Notion authorization. Grant access to the pages and databases you want the agent to work with.
-
 ### 3.2. Self-host with docker-compose
 
-Host your own multi-user OAuth server. Always-OAuth, single multi-user mode (per-JWT-sub token isolation). Requires you to register your own Notion public integration -- the previous n24q02m-hosted SaaS instance is no longer offered as a self-host shortcut.
+Host your own multi-user OAuth server. Always-OAuth, single multi-user mode (per-JWT-sub token isolation). Requires you to register your own Notion public integration.
 
 ### Prerequisites
 
@@ -191,6 +152,8 @@ docker run -p 8080:8080 \
 ```
 
 Point clients to your server:
+
+**Claude Code** -- `.claude/settings.json` or `~/.claude/settings.json`:
 ```json
 {
   "mcpServers": {
@@ -201,6 +164,27 @@ Point clients to your server:
   }
 }
 ```
+
+**Codex CLI** -- `~/.codex/config.toml`:
+```toml
+[mcp_servers.better-notion-mcp]
+type = "http"
+url = "https://your-domain.com/mcp"
+```
+
+**OpenCode** -- `opencode.json`:
+```json
+{
+  "mcpServers": {
+    "better-notion-mcp": {
+      "type": "http",
+      "url": "https://your-domain.com/mcp"
+    }
+  }
+}
+```
+
+On first use, a browser window opens for Notion authorization. Grant access to the pages and databases you want the agent to work with.
 
 ## Credential Setup
 

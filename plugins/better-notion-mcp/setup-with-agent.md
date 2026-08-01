@@ -6,7 +6,7 @@
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 > If you relied on the relay form to enter your token, please:
 > 1. Set `NOTION_TOKEN` directly in plugin config (Option 1), OR
-> 2. Switch to HTTP mode (Option 3 (Docker HTTP — Hosted or Self-host)) for browser-based OAuth.
+> 2. Switch to HTTP mode (Option 3 (Docker HTTP — Self-host)) for browser-based OAuth.
 
 ## Method overview
 
@@ -94,47 +94,44 @@ Stdio is the default and works fine for single-user local setups. You may want t
 
 > **Switching transport vs. setting credentials**: The `userConfig` prompt only configures credentials for stdio mode (Method 1 / Option 1). To switch transport to HTTP, override `mcpServers` in your client settings per the snippets below -- this is a separate path from `userConfig` and is not driven by the install prompt.
 
-### 3.1. Hosted (n24q02m.com)
+### 3.2. Self-host with docker-compose
 
-For OAuth 2.1 mode (no local token needed -- Notion authorizes via browser):
+See [setup-manual.md](setup-manual.md) "Method 3 (Docker HTTP — Self-host)" for full instructions on self-hosting the multi-user OAuth server (your own Notion public integration, per-JWT-sub token isolation, relay password edge auth).
 
-### Claude Code (settings.json)
+Client config:
 
+**Claude Code** -- `.claude/settings.json` or `~/.claude/settings.json`:
 ```json
 {
   "mcpServers": {
     "better-notion-mcp": {
       "type": "http",
-      "url": "https://better-notion-mcp.n24q02m.com/mcp"
+      "url": "https://your-domain.com/mcp"
     }
   }
 }
 ```
 
-### Codex CLI (config.toml)
-
+**Codex CLI** -- `~/.codex/config.toml`:
 ```toml
 [mcp_servers.better-notion-mcp]
 type = "http"
-url = "https://better-notion-mcp.n24q02m.com/mcp"
+url = "https://your-domain.com/mcp"
 ```
 
-### OpenCode (opencode.json)
-
+**OpenCode** -- `opencode.json`:
 ```json
 {
   "mcpServers": {
     "better-notion-mcp": {
       "type": "http",
-      "url": "https://better-notion-mcp.n24q02m.com/mcp"
+      "url": "https://your-domain.com/mcp"
     }
   }
 }
 ```
 
 Your MCP client handles the OAuth flow automatically. A browser window opens for Notion authorization.
-
-For self-hosting HTTP mode (your own Notion public integration, multi-user OAuth), see [setup-manual.md](setup-manual.md) "Method 3 (Docker HTTP — Self-host)".
 
 ### Edge auth: relay password
 

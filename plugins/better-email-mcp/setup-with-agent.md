@@ -4,7 +4,7 @@
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 > If you relied on the relay form, please:
 > 1. Set env vars in plugin config (Option 1), OR
-> 2. Switch to HTTP mode (Option 3 (Docker HTTP — Hosted or Self-host)) for browser-based setup.
+> 2. Switch to HTTP mode (Option 3 (Docker HTTP — Self-host)) for browser-based setup.
 
 > Give this file to your AI agent to automatically set up better-email-mcp.
 
@@ -87,46 +87,6 @@ Stdio mode is the default and works for single-user local development. Switch to
 
 > **Switching transport vs. setting credentials**: The `userConfig` prompt only configures credentials for stdio mode (Method 1 / Option 1). To switch transport to HTTP, override `mcpServers` in your client settings per the snippets below -- this is a separate path from `userConfig` and is not driven by the install prompt.
 
-### 3.1. Hosted (n24q02m.com)
-
-Multi-user mode with OAuth 2.1 + bundled Outlook OAuth (no local credentials needed):
-
-### Claude Code (settings.json)
-
-```json
-{
-  "mcpServers": {
-    "better-email-mcp": {
-      "type": "http",
-      "url": "https://better-email-mcp.n24q02m.com/mcp"
-    }
-  }
-}
-```
-
-### Codex CLI (config.toml)
-
-```toml
-[mcp_servers.better-email-mcp]
-type = "http"
-url = "https://better-email-mcp.n24q02m.com/mcp"
-```
-
-### OpenCode (opencode.json)
-
-```json
-{
-  "mcpServers": {
-    "better-email-mcp": {
-      "type": "http",
-      "url": "https://better-email-mcp.n24q02m.com/mcp"
-    }
-  }
-}
-```
-
-The first request from each user triggers either a Microsoft device-code link (Outlook) or a paste form (Gmail/Yahoo/iCloud/custom IMAP). Outlook OAuth uses the bundled public Azure client (`d56f8c71-9f7c-43f4-9934-be29cb6e77b0`, Thunderbird-pattern) — no user-side Azure app registration needed.
-
 ### 3.2. Self-host with docker-compose
 
 Run your own multi-user instance:
@@ -145,7 +105,43 @@ Optional overrides:
 - `OUTLOOK_CLIENT_ID` — override the bundled public Azure client (rarely needed)
 - `OUTLOOK_EMAIL` — workaround for Microsoft device-code responses missing the email field
 
-The server runs in single multi-user mode (relay paste form for App-Password providers + bundled Outlook OAuth device-code). Per-JWT-sub credential isolation, OAuth 2.1 + Dynamic Client Registration.
+Point your MCP client at your server:
+
+### Claude Code (settings.json)
+
+```json
+{
+  "mcpServers": {
+    "better-email-mcp": {
+      "type": "http",
+      "url": "https://your-domain.com/mcp"
+    }
+  }
+}
+```
+
+### Codex CLI (config.toml)
+
+```toml
+[mcp_servers.better-email-mcp]
+type = "http"
+url = "https://your-domain.com/mcp"
+```
+
+### OpenCode (opencode.json)
+
+```json
+{
+  "mcpServers": {
+    "better-email-mcp": {
+      "type": "http",
+      "url": "https://your-domain.com/mcp"
+    }
+  }
+}
+```
+
+The first request from each user triggers either a Microsoft device-code link (Outlook) or a paste form (Gmail/Yahoo/iCloud/custom IMAP). Outlook OAuth uses the bundled public Azure client (`d56f8c71-9f7c-43f4-9934-be29cb6e77b0`, Thunderbird-pattern) — no user-side Azure app registration needed. The server runs in single multi-user mode (relay paste form for App-Password providers + bundled Outlook OAuth device-code). Per-JWT-sub credential isolation, OAuth 2.1 + Dynamic Client Registration.
 
 ### Edge auth: relay password
 

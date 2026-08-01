@@ -4,7 +4,7 @@
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 > If you relied on the relay form, please:
 > 1. Set env vars in plugin config (Method 1), OR
-> 2. Switch to HTTP mode (Method 3 (Docker HTTP — Hosted or Self-host)) for browser-based setup.
+> 2. Switch to HTTP mode (Method 3 (Docker HTTP — Self-host)) for browser-based setup.
 
 ## Method overview
 
@@ -142,23 +142,6 @@ Stdio mode is the default and works for single-user local development. Consider 
 
 > **Switching transport vs. setting credentials**: The `userConfig` prompt only configures credentials for stdio mode (Method 1 / Option 1). To switch transport to HTTP, override `mcpServers` in your client settings per the snippets below -- this is a separate path from `userConfig` and is not driven by the install prompt.
 
-### 3.1. Hosted (n24q02m.com)
-
-Use the n24q02m-hosted instance:
-
-```json
-{
-  "mcpServers": {
-    "better-email-mcp": {
-      "type": "http",
-      "url": "https://better-email-mcp.n24q02m.com/mcp"
-    }
-  }
-}
-```
-
-On first call the server initiates the **OAuth flow**. Outlook/Hotmail/Live accounts get a Microsoft device-code link (powered by the bundled public Outlook OAuth client `d56f8c71-9f7c-43f4-9934-be29cb6e77b0` — Thunderbird-pattern public client per Google/Microsoft installed-app convention; no user-side Azure app registration needed). Gmail / Yahoo / iCloud / custom IMAP accounts use the relay paste form.
-
 ### 3.2. Self-host with docker
 
 Single multi-user mode (relay form for App-Password providers + bundled Outlook OAuth):
@@ -205,7 +188,7 @@ Point clients to your server URL:
 }
 ```
 
-The server runs in single multi-user mode: per-JWT-sub credential isolation, OAuth 2.1 + Dynamic Client Registration. The first request from each user triggers either a Microsoft device-code link (Outlook) or a paste form (Gmail/Yahoo/iCloud/custom IMAP).
+On first call the server initiates the **OAuth flow**. Outlook/Hotmail/Live accounts get a Microsoft device-code link (powered by the bundled public Outlook OAuth client `d56f8c71-9f7c-43f4-9934-be29cb6e77b0` — Thunderbird-pattern public client per Google/Microsoft installed-app convention; no user-side Azure app registration needed). Gmail / Yahoo / iCloud / custom IMAP accounts use the relay paste form. The server runs in single multi-user mode: per-JWT-sub credential isolation, OAuth 2.1 + Dynamic Client Registration.
 
 ## Credential Setup (Stdio mode)
 
@@ -287,7 +270,7 @@ EMAIL_IMAP_HOST=imap.custom.com
 ### Outlook in stdio mode
 
 - Stdio mode requires an Outlook **App Password** (Account Settings → Security → Advanced security options → App passwords). The OAuth2 device-code flow is HTTP-mode-only.
-- For OAuth2 (no App Password), switch to HTTP mode (Method 3 Docker HTTP (Hosted or Self-host)).
+- For OAuth2 (no App Password), switch to HTTP mode (Method 3 Docker HTTP (Self-host)).
 
 ### Outlook OAuth not starting (HTTP mode)
 

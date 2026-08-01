@@ -112,30 +112,6 @@ Stdio (Methods 1-2) is the simplest path for **bot mode**, but stdio cannot host
 
 > **Switching transport vs. setting credentials**: The `userConfig` prompt only configures credentials for stdio mode (Method 1 / Option 1). To switch transport to HTTP, override `mcpServers` in your client settings per the snippets below -- this is a separate path from `userConfig` and is not driven by the install prompt.
 
-### 3.1. Hosted (n24q02m.com)
-
-Live production endpoint (Dynamic Client Registration + relay form auth):
-
-```json
-{
-  "mcpServers": {
-    "telegram": {
-      "url": "https://better-telegram-mcp.n24q02m.com/mcp"
-    }
-  }
-}
-```
-
-The client registers a public DCR client at `/register`, then opens
-`/authorize` to fill the Telegram relay form. The form supports both modes:
-
-- **Bot mode** -- paste your bot token from [@BotFather](https://t.me/BotFather)
-- **User mode** -- enter your phone number, then the OTP code Telegram sends to your Telegram app, then your 2FA password if enabled
-
-The server bundles public Telegram dev credentials (`api_id` and `api_hash`), so users do not need to register at [my.telegram.org](https://my.telegram.org). After the form completes, the server issues a Bearer JWT and tools become active immediately.
-
-> Python 3.14+ is **not supported** because Telethon and `cryptg` have not yet shipped 3.14 wheels. The Docker image bakes in Python 3.13.
-
 ### 3.2. Self-host with docker-compose
 
 For private deployments (single user or team):
@@ -167,7 +143,16 @@ For private deployments (single user or team):
    }
    ```
 
+   The client registers a public DCR client at `/register`, then opens `/authorize` to fill the Telegram relay form. The form supports both modes:
+
+   - **Bot mode** -- paste your bot token from [@BotFather](https://t.me/BotFather)
+   - **User mode** -- enter your phone number, then the OTP code Telegram sends to your Telegram app, then your 2FA password if enabled
+
+   After the form completes, the server issues a Bearer JWT and tools become active immediately.
+
 See `oci-vm-prod/services/better-telegram-mcp/docker-compose.yml` for a reference compose file.
+
+> Python 3.14+ is **not supported** because Telethon and `cryptg` have not yet shipped 3.14 wheels. The Docker image bakes in Python 3.13.
 
 ### Edge auth: relay password
 
