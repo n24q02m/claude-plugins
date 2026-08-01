@@ -35,7 +35,7 @@ Needs a Google OAuth client you create yourself, supplied as `GOOGLE_OAUTH_CLIEN
 
 Still pre-1.0 -- published as `0.1.0-beta.x` on npm and `:beta` on the registries, with no stable tag yet.
 
-Unlike the rest of the stack, this server is **Apache-2.0**, not MIT: it vendors Apache-2.0 code from [gemini-cli-extensions/workspace](https://github.com/gemini-cli-extensions/workspace) and carries that license across the repo.
+Like the rest of the stack, this server is **Apache-2.0** -- here from the start, because it vendors Apache-2.0 code from [gemini-cli-extensions/workspace](https://github.com/gemini-cli-extensions/workspace) and carries that license across the repo.
 
 ## Next steps
 

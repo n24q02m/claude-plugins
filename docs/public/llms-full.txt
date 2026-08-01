@@ -64,7 +64,7 @@ Godot Engine integration for AI agents. Project file content is returned marked 
 Docs: https://mcp.n24q02m.com/servers/better-godot-mcp/setup/
 
 ### better-workspace-mcp
-Google Workspace — Docs, Drive, Calendar, Gmail, Sheets, Slides, Tasks, Chat, People, and Forms, as one composite tool per domain. Every tool takes an `account` parameter, so one server acts across several Google accounts. You supply your own Google OAuth client, so the consent screen and API quota stay on your project. Currently beta, and Apache-2.0 rather than MIT because it vendors Apache-2.0 upstream code.
+Google Workspace — Docs, Drive, Calendar, Gmail, Sheets, Slides, Tasks, Chat, People, and Forms, as one composite tool per domain. Every tool takes an `account` parameter, so one server acts across several Google accounts. You supply your own Google OAuth client, so the consent screen and API quota stay on your project. Currently beta, and Apache-2.0 like the rest of the stack -- here because it vendors Apache-2.0 upstream code.
 Docs: https://mcp.n24q02m.com/servers/better-workspace-mcp/setup/
 
 ## Get started
