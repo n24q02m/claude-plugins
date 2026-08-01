@@ -87,7 +87,7 @@ Stdio mode is the default and works for single-user local development. Switch to
 
 > **Switching transport vs. setting credentials**: The `userConfig` prompt only configures credentials for stdio mode (Method 1 / Option 1). To switch transport to HTTP, override `mcpServers` in your client settings per the snippets below -- this is a separate path from `userConfig` and is not driven by the install prompt.
 
-### 3.2. Self-host with docker-compose
+### Self-host with docker-compose
 
 Run your own multi-user instance:
 
