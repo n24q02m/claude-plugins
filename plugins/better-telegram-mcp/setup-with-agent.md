@@ -92,7 +92,7 @@ Stdio (Options 1-2) is the simplest path for **bot mode**, but stdio cannot host
 
 > **Switching transport vs. setting credentials**: The `userConfig` prompt only configures credentials for stdio mode (Method 1 / Option 1). To switch transport to HTTP, override `mcpServers` in your client settings per the snippets below -- this is a separate path from `userConfig` and is not driven by the install prompt.
 
-### 3.2. Self-host with docker-compose
+### Self-host with docker-compose
 
 For private deployments (single user or team), clone the repo and run via Docker:
 
