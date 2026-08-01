@@ -106,27 +106,24 @@ def parse_frontmatter(path: Path) -> dict:
     """
     meta: dict = {}
     try:
-        with open(path, encoding="utf-8") as f:
-            first_line = f.readline()
-            if not first_line.startswith("---"):
-                return meta
-
-            closed = False
-            raw_meta = {}
-            for line in f:
-                if line.strip() == "---":
-                    closed = True
-                    break
-                if ":" in line:
-                    k, v = line.split(":", 1)
-                    raw_meta[k.strip()] = v.strip()
-
-            if not closed:
-                return meta
-
-            meta.update(raw_meta)
+        text = path.read_text(encoding="utf-8")
     except OSError:
         return meta
+    if not text.startswith("---"):
+        return meta
+    lines = text.splitlines()
+    body_start = None
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            body_start = i
+            break
+    if body_start is None:
+        return meta
+    for ln in lines[1:body_start]:
+        if ":" not in ln:
+            continue
+        k, v = ln.split(":", 1)
+        meta[k.strip()] = v.strip()
     # Normalize `to` -> list of recipients (empty == everyone).
     raw = meta.get("to", "").strip()
     if raw in ("", "all", "[]", "*"):
