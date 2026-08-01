@@ -193,7 +193,7 @@ All environment variables are **optional**. The server works in local mode (ONNX
 
 > **Switching transport vs. setting credentials**: The `userConfig` prompt only configures credentials for stdio mode (Method 1 / Option 1). To switch transport to HTTP, override `mcpServers` in your client settings per the snippets below -- this is a separate path from `userConfig` and is not driven by the install prompt.
 
-### 3.2. Self-host with docker-compose
+### Self-host with docker-compose
 
 See [setup-manual.md](setup-manual.md) "Method 3: Docker HTTP (recommended)" for full instructions on self-hosting the multi-user HTTP mode (per-JWT-sub credential isolation, browser GDrive OAuth, relay password edge auth).
 
