@@ -105,7 +105,7 @@ Stdio is the default and works fine for single-user local setups. You may want t
 
 > **Switching transport vs. setting credentials**: The `userConfig` prompt only configures credentials for stdio mode (Method 1 / Option 1). To switch transport to HTTP, override `mcpServers` in your client settings per the snippets below -- this is a separate path from `userConfig` and is not driven by the install prompt.
 
-### 3.2. Self-host with docker-compose
+### Self-host with docker-compose
 
 Host your own multi-user OAuth server. Always-OAuth, single multi-user mode (per-JWT-sub token isolation). Requires you to register your own Notion public integration.
 
