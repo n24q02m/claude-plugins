@@ -31,7 +31,7 @@
   },
   "homepage": "https://github.com/n24q02m/imagine-mcp",
   "repository": "https://github.com/n24q02m/imagine-mcp",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "keywords": [
     "image-generation",
     "video-generation",

@@ -4,7 +4,7 @@
 
 - Repo: `n24q02m/claude-plugins`
 - Description: 9 MCP servers for Claude Code, Codex, and other AI coding agents.
-- License: MIT
+- License: Apache-2.0
 
 ## Build & Test
 

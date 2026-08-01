@@ -56,4 +56,4 @@ See [shared services](/servers/mcp-core/shared-services/) for the docker-compose
 - Source: [github.com/n24q02m/mcp-core](https://github.com/n24q02m/mcp-core)
 - Releases (TS): [npmjs.com/package/@n24q02m/mcp-core](https://www.npmjs.com/package/@n24q02m/mcp-core)
 - Releases (Py): [pypi.org/project/mcp-core/](https://pypi.org/project/mcp-core/)
-- License: MIT
+- License: Apache-2.0

@@ -188,4 +188,4 @@ Add to any MCP client's `settings.json`:
 
 ## License
 
-MIT
+Apache-2.0
