@@ -33,13 +33,23 @@ Usage::
     python3 scripts/verify_tool_parity.py --all
     python3 scripts/verify_tool_parity.py wet-mcp mnemo-mcp
     python3 scripts/verify_tool_parity.py --declared-only --all   # no network
-    python3 scripts/verify_tool_parity.py --all --jobs 4          # plugins in parallel
+    python3 scripts/verify_tool_parity.py --all --jobs 2          # throttle
 
-Plugins are checked concurrently (``--jobs``, default 4 -- most of each check's
-wall time is ``uvx``/``npx`` downloading a package, not CPU, and a public CI
-runner only has 2 cores). Output is still printed in plugin order: each
-plugin's report lines are collected and only flushed once every plugin has
-finished, so the transcript reads exactly as it would running one at a time.
+Plugins are checked concurrently. The default is one worker per selected
+plugin -- every server is probed in a single wave, so the run costs the
+slowest server rather than the sum of them. Almost none of that wait is CPU
+(it is ``uvx``/``npx`` fetching a package, then blocking on the server's
+stdio), so a 2-core runner is not the constraint; ``--jobs`` is kept for
+throttling by hand.
+
+Two streams, on purpose:
+
+* stdout carries the report, printed in plugin order -- each plugin's lines
+  are collected and flushed once every plugin has finished, so the report
+  reads exactly as it would running one at a time.
+* stderr carries a ``[parity]`` progress line as each plugin starts and
+  finishes, flushed immediately. A run killed by the CI job timeout is
+  otherwise silent about which server it was waiting on.
 
 Exit code 0 = names match; 1 = drift (prints GitHub Actions error annotations).
 """
@@ -55,6 +65,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Iterable
 
@@ -82,6 +93,18 @@ USER_CONFIG_TEMPLATE_RE = re.compile(r"^\$\{user_config\.([^}]+)\}$")
 PROBE_PLACEHOLDER = "tool-parity-probe-not-a-real-credential"
 
 DEFAULT_TIMEOUT_S = 600
+
+
+class ProbeTimeout(RuntimeError):
+    """The server was still alive but never answered ``tools/list``.
+
+    Kept distinct from every other probe failure because it is the one case
+    the placeholder-credential retry cannot help. That retry exists for a
+    server that *refuses to start* without a credential -- it exits in
+    seconds, and the second attempt is cheap. A server that hangs has not
+    refused anything; it will hang identically on the retry and burn another
+    full ``timeout``, which is exactly how this check outgrew its CI budget.
+    """
 
 
 # --------------------------------------------------------------------------
@@ -315,9 +338,9 @@ def live_names(
             proc.stdin.write(json.dumps(payload) + "\n")
             proc.stdin.flush()
 
-        def fail(reason: str) -> RuntimeError:
+        def fail(reason: str, cls: type[RuntimeError] = RuntimeError) -> RuntimeError:
             tail = " | ".join(stderr_tail[-5:])
-            return RuntimeError(f"{reason} (stderr: {tail})" if tail else reason)
+            return cls(f"{reason} (stderr: {tail})" if tail else reason)
 
         try:
             send(
@@ -334,13 +357,26 @@ def live_names(
             )
             handshake_done = False
             deadline = threading.Event()
-            timer = threading.Timer(timeout, deadline.set)
+
+            def expire() -> None:
+                # Setting the flag is not enough to stop the wait below:
+                # readline() blocks with no timeout of its own, so a server
+                # that writes nothing at all never comes back to re-check the
+                # loop condition and `timeout` passes unnoticed. Killing the
+                # process closes stdout, which makes that readline() return ''
+                # and hands control back to the loop.
+                deadline.set()
+                _kill_tree(proc)
+
+            timer = threading.Timer(timeout, expire)
             timer.start()
             try:
                 assert proc.stdout is not None
                 while not deadline.is_set():
                     line = proc.stdout.readline()
                     if not line:
+                        if deadline.is_set():
+                            break
                         raise fail(f"server exited before tools/list (rc={proc.poll()})")
                     line = line.strip()
                     if not line:
@@ -362,7 +398,10 @@ def live_names(
                         return {
                             t["name"] for t in message["result"].get("tools", [])
                         }
-                raise fail(f"timed out after {timeout}s waiting for tools/list")
+                raise fail(
+                    f"timed out after {timeout}s waiting for tools/list",
+                    ProbeTimeout,
+                )
             finally:
                 timer.cancel()
         finally:
@@ -379,6 +418,12 @@ PROBE_FAILED_HINT = (
     "this server validates its credential at startup, so a public CI runner "
     "cannot read its tool list -- the drift check for it belongs in the server "
     "repo's own CI, which has credentials (see AGENTS.md)"
+)
+
+PROBE_TIMEOUT_HINT = (
+    "the server started and stayed up but never answered tools/list; the "
+    "placeholder-credential retry is skipped because a hang is not a "
+    "credential gate and would only cost a second full timeout"
 )
 
 
@@ -410,6 +455,12 @@ def verify_plugin(
     try:
         live = live_names(plugin_dir, timeout=timeout, version=version)
         note = ""
+    except ProbeTimeout as exc:
+        # Must precede the broad handler below: ProbeTimeout is a RuntimeError,
+        # and the whole point is that this one failure does not get retried.
+        return [], [
+            f"{name}: tool names NOT verified -- {exc}. ({PROBE_TIMEOUT_HINT})"
+        ], []
     except (OSError, ValueError, RuntimeError, json.JSONDecodeError) as first_exc:
         # Servers that gate stdio startup on credential presence exit before
         # tools/list. Retry once with obviously fake values (see
@@ -451,13 +502,30 @@ def discover_plugins() -> list[str]:
         return sorted(e.name for e in entries if e.is_dir())
 
 
+def _progress(message: str) -> None:
+    """Trace one step on stderr, in real time.
+
+    The report on stdout is deliberately withheld until every plugin has
+    finished, which means a run killed by the CI job timeout prints nothing at
+    all about where it was stuck. These lines are the trace that survives that
+    kill, so they go to the other stream and are flushed on the spot --
+    GitHub Actions does not flush a block-buffered pipe for us.
+    """
+    print(f"[parity] {message}", file=sys.stderr, flush=True)
+
+
 def _check_one(
     name: str, declared_only: bool, timeout: int, version: str | None
 ) -> tuple[list[str], list[str], list[str]]:
     """``verify_plugin`` for one plugin, run in a worker thread by ``main``."""
-    if not os.path.isdir(os.path.join(PLUGINS_DIR, name)):
-        return [f"{name}: no such plugin directory"], [], []
-    return verify_plugin(name, declared_only, timeout, version)
+    started = time.monotonic()
+    _progress(f"start {name}")
+    try:
+        if not os.path.isdir(os.path.join(PLUGINS_DIR, name)):
+            return [f"{name}: no such plugin directory"], [], []
+        return verify_plugin(name, declared_only, timeout, version)
+    finally:
+        _progress(f"done  {name} ({time.monotonic() - started:.1f}s)")
 
 
 def main(argv: Iterable[str] | None = None) -> int:
@@ -485,10 +553,11 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument(
         "--jobs",
         type=int,
-        default=4,
         help=(
-            "how many plugins to check concurrently (default 4 -- most of the "
-            "wait is uvx/npx download time, not CPU)"
+            "how many plugins to check concurrently (default: one per selected "
+            "plugin, i.e. a single wave -- the wait is uvx/npx download and "
+            "server startup, not CPU, so the run costs the slowest server "
+            "instead of the sum of them)"
         ),
     )
     args = parser.parse_args(list(argv) if argv is not None else None)
@@ -496,7 +565,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     if args.version and len(args.plugins) != 1:
         parser.error("--version applies to exactly one plugin")
 
-    if args.jobs < 1:
+    if args.jobs is not None and args.jobs < 1:
         parser.error("--jobs must be at least 1")
 
     if not os.path.isdir(PLUGINS_DIR):
@@ -511,7 +580,8 @@ def main(argv: Iterable[str] | None = None) -> int:
     # results below can be flushed in plugin order regardless of which
     # worker finished first -- the report must read the same as a serial run.
     results: list[tuple[list[str], list[str], list[str]] | None] = [None] * len(names)
-    with ThreadPoolExecutor(max_workers=min(args.jobs, len(names))) as pool:
+    workers = min(args.jobs, len(names)) if args.jobs else len(names)
+    with ThreadPoolExecutor(max_workers=workers) as pool:
         future_to_index = {
             pool.submit(
                 _check_one, name, args.declared_only, args.timeout, args.version

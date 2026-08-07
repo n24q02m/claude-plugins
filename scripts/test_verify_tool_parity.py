@@ -11,6 +11,7 @@ import io
 import json
 import os
 import shutil
+import sys
 import tempfile
 import time
 import unittest
@@ -172,6 +173,38 @@ class TestServerSpec(unittest.TestCase):
             parity.server_spec(pdir)
 
 
+class TestProbeTimeout(unittest.TestCase):
+    def test_a_silent_server_is_cut_off_at_the_timeout(self):
+        # The failure this guards: a server that accepts the handshake and
+        # then writes nothing leaves readline() blocked forever, so `timeout`
+        # elapses unnoticed and only the CI job timeout ends the run.
+        test_dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, test_dir, ignore_errors=True)
+        pdir = os.path.join(test_dir, "srv")
+        os.makedirs(os.path.join(pdir, ".claude-plugin"))
+        with open(
+            os.path.join(pdir, ".claude-plugin", "plugin.json"), "w", encoding="utf-8"
+        ) as f:
+            json.dump(
+                {
+                    "name": "srv",
+                    "mcpServers": {
+                        "srv": {
+                            "command": sys.executable,
+                            "args": ["-c", "import time; time.sleep(300)"],
+                        }
+                    },
+                },
+                f,
+            )
+
+        started = time.monotonic()
+        with self.assertRaises(parity.ProbeTimeout):
+            parity.live_names(pdir, timeout=2)
+        # Generous, because it only has to prove the wait is bounded at all.
+        self.assertLess(time.monotonic() - started, 60)
+
+
 class TestVerifyPlugin(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
@@ -227,6 +260,37 @@ class TestVerifyPlugin(unittest.TestCase):
         self.assertEqual(len(warnings), 1)
         self.assertIn("NOT verified", warnings[0])
 
+    def test_credential_gate_is_still_retried_with_placeholders(self):
+        # The retry this class of failure exists for: the server refuses to
+        # start without a credential, and placeholders get past that gate.
+        self._write_tools_md("## search\n\n## config\n\n## help\n")
+
+        def gated(plugin_dir, timeout, version=None, placeholders=False):
+            if not placeholders:
+                raise RuntimeError("server exited before tools/list (rc=1)")
+            return {"search", "config", "help"}
+
+        with mock.patch.object(parity, "live_names", side_effect=gated) as live:
+            errors, warnings, output = parity.verify_plugin("srv", False, 10)
+        self.assertEqual((errors, warnings), ([], []))
+        self.assertIn("placeholder credentials", output[0])
+        self.assertEqual(live.call_count, 2)
+
+    def test_timeout_is_not_retried_with_placeholders(self):
+        # A hang is not a credential gate. Retrying would hang identically and
+        # cost a second full timeout, which is what overran the CI budget.
+        self._write_tools_md("## search\n\n## config\n\n## help\n")
+        with mock.patch.object(
+            parity,
+            "live_names",
+            side_effect=parity.ProbeTimeout("timed out after 10s"),
+        ) as live:
+            errors, warnings, output = parity.verify_plugin("srv", False, 10)
+        self.assertEqual((errors, output), ([], []))
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("timed out after 10s", warnings[0])
+        self.assertEqual(live.call_count, 1)
+
     def test_unparseable_page_is_an_error(self):
         self._write_tools_md("# Tools\n\nProse only, no tool names.\n")
         errors, warnings, output = parity.verify_plugin("srv", True, 10)
@@ -273,6 +337,22 @@ class TestMain(unittest.TestCase):
     def test_jobs_must_be_positive(self):
         with self.assertRaises(SystemExit):
             parity.main(["srv", "--jobs", "0"])
+
+    def _max_workers_for(self, argv):
+        with mock.patch.object(parity, "verify_plugin", return_value=([], [], [])):
+            with mock.patch.object(
+                parity, "ThreadPoolExecutor", wraps=parity.ThreadPoolExecutor
+            ) as pool:
+                self.assertEqual(parity.main(argv), 0)
+        return pool.call_args.kwargs["max_workers"]
+
+    def test_every_plugin_is_probed_in_one_wave_by_default(self):
+        # Worst-case wall time is then the slowest server, not ceil(n/jobs)
+        # waves of it -- that arithmetic has to fit the CI job timeout.
+        self.assertEqual(self._max_workers_for(["srv", "srv", "srv"]), 3)
+
+    def test_explicit_jobs_still_throttles(self):
+        self.assertEqual(self._max_workers_for(["srv", "srv", "srv", "--jobs", "2"]), 2)
 
     def test_warning_only_run_succeeds(self):
         with mock.patch.object(
