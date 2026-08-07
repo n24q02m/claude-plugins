@@ -1,0 +1,131 @@
+name: Tool Parity
+
+# Asks each shipped server for its own tool list (MCP `tools/list`) and compares
+# it against the names documented in plugins/<name>/tools.md.
+#
+# Needed because nothing else closes this loop: the plugin-sync job copies
+# plugin.json / skills / hooks from the source repos but never the .md pages,
+# and plugin.json carries no tool list at all. A server can rename a tool and
+# the marketplace + docs site keep showing the old name.
+#
+# Triggers:
+#   pull_request  -- gate the tools.md change before it merges (the intended
+#                    catch point for a rename).
+#   push to main  -- catches the plugin-sync commit that lands a new release,
+#                    in case the tools.md PR never happened.
+#   schedule      -- weekly safety net for a rename that slipped past both.
+#   dispatch      -- run on demand, e.g. against a beta before the stable tag.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'plugins/*/tools.md'
+      - 'plugins/*/.claude-plugin/plugin.json'
+      - 'scripts/verify_tool_parity.py'
+      - '.github/workflows/tool-parity.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/*/tools.md'
+      - 'plugins/*/.claude-plugin/plugin.json'
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      plugins:
+        description: "Space-separated plugin names, or 'all'"
+        required: false
+        default: 'all'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tool-parity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  parity:
+    name: Verify tool names
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          enable-cache: true
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Select plugins to check
+        id: select
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+          DISPATCH_PLUGINS: ${{ inputs.plugins }}
+        run: |
+          set -euo pipefail
+
+          case "$EVENT" in
+            pull_request)
+              # fetch-depth: 0 above already provides every origin/* branch.
+              CHANGED=$(git diff --name-only "origin/$BASE_REF...HEAD")
+              ;;
+            push)
+              if [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ] \
+                 && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+                CHANGED=$(git diff --name-only "$BEFORE" "${{ github.sha }}")
+              else
+                CHANGED=$(git diff --name-only HEAD~1 HEAD)
+              fi
+              ;;
+            *)
+              CHANGED=""
+              ;;
+          esac
+
+          if [ "$EVENT" = "schedule" ]; then
+            SELECTED="--all"
+          elif [ "$EVENT" = "workflow_dispatch" ]; then
+            if [ "$DISPATCH_PLUGINS" = "all" ] || [ -z "$DISPATCH_PLUGINS" ]; then
+              SELECTED="--all"
+            else
+              SELECTED="$DISPATCH_PLUGINS"
+            fi
+          else
+            # Map changed paths back to plugin directory names.
+            SELECTED=$(printf '%s\n' "$CHANGED" \
+              | sed -n 's#^plugins/\([^/]*\)/.*#\1#p' \
+              | sort -u | tr '\n' ' ')
+            # A change to the checker or the workflow itself re-checks everything.
+            if printf '%s\n' "$CHANGED" | grep -qE '^(scripts/verify_tool_parity\.py|\.github/workflows/tool-parity\.yml)$'; then
+              SELECTED="--all"
+            fi
+          fi
+
+          SELECTED=$(printf '%s' "$SELECTED" | xargs || true)
+          printf "selected=%s\n" "$SELECTED" >> "$GITHUB_OUTPUT"
+          printf "Checking: %s\n" "${SELECTED:-<nothing>}"
+
+      - name: Verify tool names against live tools/list
+        if: steps.select.outputs.selected != ''
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC2086
+          python3 scripts/verify_tool_parity.py ${{ steps.select.outputs.selected }}
