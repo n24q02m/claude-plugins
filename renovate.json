@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", ":semanticCommits"],
+  "extends": ["config:recommended", ":semanticCommits", ":semanticCommitTypeAll(fix)"],
   "schedule": ["before 5am"],
   "timezone": "Asia/Ho_Chi_Minh",
   "prConcurrentLimit": 5,
@@ -68,7 +68,6 @@
     }
   ],
   "semanticCommits": "enabled",
-  "commitMessagePrefix": "fix(deps):",
   "commitMessageAction": "update",
   "commitMessageTopic": "{{depName}}",
   "semanticCommitType": "fix",
