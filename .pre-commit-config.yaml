@@ -47,3 +47,14 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
         files: ^plugins/.*/(\.claude-plugin/plugin\.json|.*\.md)$
+
+      # Static half of the tool-name parity gate: no network, so it only checks
+      # that each tools.md still parses into tool names. The live tools/list
+      # comparison runs in the Tool Parity workflow.
+      - id: verify-tool-names-parseable
+        name: Verify tools.md still declares parseable tool names
+        entry: python3 scripts/verify_tool_parity.py --declared-only --all
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        files: ^plugins/.*/tools\.md$
