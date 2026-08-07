@@ -33,6 +33,13 @@ Usage::
     python3 scripts/verify_tool_parity.py --all
     python3 scripts/verify_tool_parity.py wet-mcp mnemo-mcp
     python3 scripts/verify_tool_parity.py --declared-only --all   # no network
+    python3 scripts/verify_tool_parity.py --all --jobs 4          # plugins in parallel
+
+Plugins are checked concurrently (``--jobs``, default 4 -- most of each check's
+wall time is ``uvx``/``npx`` downloading a package, not CPU, and a public CI
+runner only has 2 cores). Output is still printed in plugin order: each
+plugin's report lines are collected and only flushed once every plugin has
+finished, so the transcript reads exactly as it would running one at a time.
 
 Exit code 0 = names match; 1 = drift (prints GitHub Actions error annotations).
 """
@@ -48,6 +55,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Iterable
 
 from utils import sanitize_log
@@ -376,22 +384,28 @@ PROBE_FAILED_HINT = (
 
 def verify_plugin(
     name: str, declared_only: bool, timeout: int, version: str | None = None
-) -> tuple[list[str], list[str]]:
-    """Check one plugin. Returns (errors, warnings); errors fail the run."""
+) -> tuple[list[str], list[str], list[str]]:
+    """Check one plugin. Returns (errors, warnings, output); errors fail the run.
+
+    ``output`` holds the informational lines this check would print on
+    success (declared names, or a live-match confirmation) -- returned rather
+    than printed directly so a concurrent caller can flush them in plugin
+    order instead of whichever thread happens to finish first.
+    """
     plugin_dir = os.path.join(PLUGINS_DIR, name)
 
     if not os.path.isfile(os.path.join(plugin_dir, "tools.md")):
         # Plugins without a tool surface (agent-chat-plugin, mcp-core) have no
         # tools.md; verify_docs_current.py owns the "should it have one" call.
-        return [], []
+        return [], [], []
 
     declared = read_declared(plugin_dir)
     if not declared:
-        return [f"{name}: tools.md declares no tool names (check the page format)"], []
+        return [f"{name}: tools.md declares no tool names (check the page format)"], [], []
 
     if declared_only:
-        print(f"{name}: declares {len(declared)} tool(s): {', '.join(sorted(declared))}")
-        return [], []
+        line = f"{name}: declares {len(declared)} tool(s): {', '.join(sorted(declared))}"
+        return [], [], [line]
 
     try:
         live = live_names(plugin_dir, timeout=timeout, version=version)
@@ -412,10 +426,10 @@ def verify_plugin(
                 f"{name}: tool names NOT verified -- the server would not start. "
                 f"Without credentials: {first_exc}. With placeholders: {exc}. "
                 f"({PROBE_FAILED_HINT})"
-            ]
+            ], []
 
     if not live:
-        return [], []
+        return [], [], []
 
     errors = []
     for missing in sorted(live - declared):
@@ -428,14 +442,22 @@ def verify_plugin(
             f"{name}: plugins/{name}/tools.md documents tool '{stale}' but the "
             f"server does not expose it (stale name left behind after a rename)"
         )
-    if not errors:
-        print(f"{name}: {len(live)} tool name(s) match tools.md{note}")
-    return errors, []
+    output = [] if errors else [f"{name}: {len(live)} tool name(s) match tools.md{note}"]
+    return errors, [], output
 
 
 def discover_plugins() -> list[str]:
     with os.scandir(PLUGINS_DIR) as entries:
         return sorted(e.name for e in entries if e.is_dir())
+
+
+def _check_one(
+    name: str, declared_only: bool, timeout: int, version: str | None
+) -> tuple[list[str], list[str], list[str]]:
+    """``verify_plugin`` for one plugin, run in a worker thread by ``main``."""
+    if not os.path.isdir(os.path.join(PLUGINS_DIR, name)):
+        return [f"{name}: no such plugin directory"], [], []
+    return verify_plugin(name, declared_only, timeout, version)
 
 
 def main(argv: Iterable[str] | None = None) -> int:
@@ -460,10 +482,22 @@ def main(argv: Iterable[str] | None = None) -> int:
             "(use the beta to check a rename before its stable release)"
         ),
     )
+    parser.add_argument(
+        "--jobs",
+        type=int,
+        default=4,
+        help=(
+            "how many plugins to check concurrently (default 4 -- most of the "
+            "wait is uvx/npx download time, not CPU)"
+        ),
+    )
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     if args.version and len(args.plugins) != 1:
         parser.error("--version applies to exactly one plugin")
+
+    if args.jobs < 1:
+        parser.error("--jobs must be at least 1")
 
     if not os.path.isdir(PLUGINS_DIR):
         print(f"::error ::{sanitize_log(f'plugins dir not found: {PLUGINS_DIR}')}")
@@ -473,15 +507,27 @@ def main(argv: Iterable[str] | None = None) -> int:
     if not names:
         parser.error("pass plugin names or --all")
 
+    # Each plugin's (errors, warnings, output) lands at its own index so the
+    # results below can be flushed in plugin order regardless of which
+    # worker finished first -- the report must read the same as a serial run.
+    results: list[tuple[list[str], list[str], list[str]] | None] = [None] * len(names)
+    with ThreadPoolExecutor(max_workers=min(args.jobs, len(names))) as pool:
+        future_to_index = {
+            pool.submit(
+                _check_one, name, args.declared_only, args.timeout, args.version
+            ): i
+            for i, name in enumerate(names)
+        }
+        for future in as_completed(future_to_index):
+            results[future_to_index[future]] = future.result()
+
     errors: list[str] = []
     warnings: list[str] = []
-    for name in names:
-        if not os.path.isdir(os.path.join(PLUGINS_DIR, name)):
-            errors.append(f"{name}: no such plugin directory")
-            continue
-        plugin_errors, plugin_warnings = verify_plugin(
-            name, args.declared_only, args.timeout, args.version
-        )
+    for result in results:
+        assert result is not None
+        plugin_errors, plugin_warnings, plugin_output = result
+        for line in plugin_output:
+            print(line)
         errors.extend(plugin_errors)
         warnings.extend(plugin_warnings)
 

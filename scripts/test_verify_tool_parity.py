@@ -6,10 +6,13 @@ names a ``tools.md`` page declares, how a package spec is pinned to a version,
 and which environment a probe hands the server.
 """
 
+import contextlib
+import io
 import json
 import os
 import shutil
 import tempfile
+import time
 import unittest
 from unittest import mock
 
@@ -195,16 +198,19 @@ class TestVerifyPlugin(unittest.TestCase):
         with mock.patch.object(
             parity, "live_names", return_value={"search", "config", "help"}
         ):
-            errors, warnings = parity.verify_plugin("srv", False, 10)
+            errors, warnings, output = parity.verify_plugin("srv", False, 10)
         self.assertEqual((errors, warnings), ([], []))
+        self.assertEqual(len(output), 1)
+        self.assertIn("3 tool name(s) match tools.md", output[0])
 
     def test_renamed_tool_is_an_error(self):
         self._write_tools_md("## search\n\n## config\n\n## help\n")
         with mock.patch.object(
             parity, "live_names", return_value={"search_web", "config", "help"}
         ):
-            errors, warnings = parity.verify_plugin("srv", False, 10)
+            errors, warnings, output = parity.verify_plugin("srv", False, 10)
         self.assertEqual(warnings, [])
+        self.assertEqual(output, [])
         joined = "\n".join(errors)
         self.assertIn("search_web", joined)
         self.assertIn("search", joined)
@@ -215,29 +221,33 @@ class TestVerifyPlugin(unittest.TestCase):
         with mock.patch.object(
             parity, "live_names", side_effect=RuntimeError("server exited")
         ):
-            errors, warnings = parity.verify_plugin("srv", False, 10)
+            errors, warnings, output = parity.verify_plugin("srv", False, 10)
         self.assertEqual(errors, [])
+        self.assertEqual(output, [])
         self.assertEqual(len(warnings), 1)
         self.assertIn("NOT verified", warnings[0])
 
     def test_unparseable_page_is_an_error(self):
         self._write_tools_md("# Tools\n\nProse only, no tool names.\n")
-        errors, warnings = parity.verify_plugin("srv", True, 10)
+        errors, warnings, output = parity.verify_plugin("srv", True, 10)
         self.assertEqual(warnings, [])
+        self.assertEqual(output, [])
         self.assertEqual(len(errors), 1)
         self.assertIn("declares no tool names", errors[0])
 
     def test_plugin_without_tools_md_is_skipped(self):
-        errors, warnings = parity.verify_plugin("srv", False, 10)
-        self.assertEqual((errors, warnings), ([], []))
+        errors, warnings, output = parity.verify_plugin("srv", False, 10)
+        self.assertEqual((errors, warnings, output), ([], [], []))
 
     def test_declared_only_never_launches_a_server(self):
         self._write_tools_md("## search\n\n## config\n\n## help\n")
         with mock.patch.object(
             parity, "live_names", side_effect=AssertionError("must not be called")
         ):
-            errors, warnings = parity.verify_plugin("srv", True, 10)
+            errors, warnings, output = parity.verify_plugin("srv", True, 10)
         self.assertEqual((errors, warnings), ([], []))
+        self.assertEqual(len(output), 1)
+        self.assertIn("declares 3 tool(s)", output[0])
 
 
 class TestMain(unittest.TestCase):
@@ -260,11 +270,35 @@ class TestMain(unittest.TestCase):
         with self.assertRaises(SystemExit):
             parity.main([])
 
+    def test_jobs_must_be_positive(self):
+        with self.assertRaises(SystemExit):
+            parity.main(["srv", "--jobs", "0"])
+
     def test_warning_only_run_succeeds(self):
         with mock.patch.object(
-            parity, "verify_plugin", return_value=([], ["srv: unreadable"])
+            parity, "verify_plugin", return_value=([], ["srv: unreadable"], [])
         ):
             self.assertEqual(parity.main(["srv"]), 0)
+
+    def test_output_prints_in_plugin_order_not_completion_order(self):
+        # Plugins run concurrently, so the slowest one must not be allowed to
+        # print last-in-completion-order -- the transcript has to read in the
+        # order main() was given the plugins, exactly like a serial run.
+        for pname in ("aaa", "bbb", "ccc"):
+            os.makedirs(os.path.join("plugins", pname), exist_ok=True)
+        delays = {"aaa": 0.06, "bbb": 0.0, "ccc": 0.03}
+
+        def fake_verify(name, declared_only, timeout, version=None):
+            time.sleep(delays[name])
+            return [], [], [f"{name}: ok"]
+
+        buf = io.StringIO()
+        with mock.patch.object(parity, "verify_plugin", side_effect=fake_verify):
+            with contextlib.redirect_stdout(buf):
+                rc = parity.main(["aaa", "bbb", "ccc", "--jobs", "3"])
+        self.assertEqual(rc, 0)
+        lines = [line for line in buf.getvalue().splitlines() if line.endswith(": ok")]
+        self.assertEqual(lines, ["aaa: ok", "bbb: ok", "ccc: ok"])
 
 
 if __name__ == "__main__":
