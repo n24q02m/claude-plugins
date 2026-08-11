@@ -12,6 +12,7 @@ Config (env vars, all optional except the first):
   AGENT_CHAT_CHANNELS comma-separated channels to check. Empty -> all channels
                       found under the root.
 """
+
 from __future__ import annotations
 
 import os
@@ -27,10 +28,6 @@ def _channels_to_check(root: Path, requested: str) -> list[str]:
 
 
 def main() -> None:
-    name = os.environ.get("AGENT_CHAT_NAME", "").strip()
-    if not name:
-        return
-
     # Import chat.py from the plugin root (parent of this file's hooks/ dir).
     plugin_root = str(Path(__file__).resolve().parent.parent)
     sys.path.insert(0, plugin_root)
@@ -42,6 +39,15 @@ def main() -> None:
     try:
         root = chat.root_dir(os.environ.get("AGENT_CHAT_ROOT"))
         if not root.exists():
+            return
+
+        name = os.environ.get("AGENT_CHAT_NAME", "").strip()
+        if not name:
+            if any(root.glob("*/_meta.json")):
+                print(
+                    "[agent-chat] Inbox hook disabled: identity is unset; "
+                    "set AGENT_CHAT_NAME."
+                )
             return
 
         unread_by_channel: list[tuple[str, int]] = []
@@ -66,13 +72,16 @@ def main() -> None:
                 f"[agent-chat] {name} has unread peer messages: {summary}. "
                 "Run /agent-chat to read/reply."
             )
-    except Exception:
+    # SystemExit too: chat.channel_dir() calls die() on a malformed channel name
+    # (e.g. a stray entry in AGENT_CHAT_CHANNELS), and SystemExit is a
+    # BaseException -- an `except Exception` alone would let it fail the session.
+    except (Exception, SystemExit):
         return
 
 
 if __name__ == "__main__":
     try:
         main()
-    except Exception:
+    except (Exception, SystemExit):
         pass
     sys.exit(0)

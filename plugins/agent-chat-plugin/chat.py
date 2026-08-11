@@ -46,12 +46,14 @@ def now_iso() -> str:
     return _dt.datetime.now().astimezone().isoformat(timespec="seconds")
 
 
-_NON_ALNUM_RE = re.compile(r"[^a-z0-9]+")
-
-
 def slugify(text: str, maxlen: int = 40) -> str:
-    s = _NON_ALNUM_RE.sub("-", text.lower()).strip("-")
+    s = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
     return (s[:maxlen].rstrip("-")) or "msg"
+
+
+def _frontmatter_value(value) -> str:
+    """Keep a dynamic frontmatter value on exactly one physical line."""
+    return re.sub(r"[\r\n]+", " ", str(value))
 
 
 def die(msg: str, code: int = 1):
@@ -62,15 +64,14 @@ def die(msg: str, code: int = 1):
 # --- channel + message primitives -------------------------------------------
 
 
+def _check_safe_name(name: str, kind: str):
+    """Prevent path traversal vulnerabilities."""
+    if not name or "/" in name or "\\" in name or name in (".", ".."):
+        die(f"invalid {kind} name (path traversal blocked): '{name}'")
+
+
 def channel_dir(root: Path, channel: str) -> Path:
-    if (
-        not channel
-        or "\0" in channel
-        or "/" in channel
-        or "\\" in channel
-        or channel in (".", "..")
-    ):
-        die(f"invalid channel name '{channel}'")
+    _check_safe_name(channel, "channel")
     return root / channel
 
 
@@ -81,22 +82,14 @@ def require_channel(root: Path, channel: str) -> Path:
     return d
 
 
-_SEQ_RE = re.compile(r"^(\d+)-")
-
-
 def _seq_from_name(name: str) -> int | None:
-    m = _SEQ_RE.match(name)
+    m = re.match(r"(\d+)-", name)
     return int(m.group(1)) if m else None
 
 
 def message_files(chan: Path):
-    seq_files = []
-    for p in chan.glob("*.md"):
-        seq = _seq_from_name(p.name)
-        if seq is not None:
-            seq_files.append((seq, p))
-    seq_files.sort(key=lambda x: x[0])
-    return [p for _, p in seq_files]
+    files = [p for p in chan.glob("*.md") if _seq_from_name(p.name) is not None]
+    return sorted(files, key=lambda p: _seq_from_name(p.name))
 
 
 def parse_frontmatter(path: Path) -> dict:
@@ -106,24 +99,26 @@ def parse_frontmatter(path: Path) -> dict:
     """
     meta: dict = {}
     try:
-        text = path.read_text(encoding="utf-8")
+        with path.open(encoding="utf-8") as f:
+            first_line = f.readline()
+            if not first_line.startswith("---"):
+                return meta
+            temp_meta = {}
+            found_end = False
+            for line in f:
+                stripped = line.strip()
+                if stripped == "---":
+                    found_end = True
+                    break
+                if ":" not in line:
+                    continue
+                k, v = line.split(":", 1)
+                temp_meta[k.strip()] = v.strip()
+            if not found_end:
+                return meta
+            meta = temp_meta
     except OSError:
         return meta
-    if not text.startswith("---"):
-        return meta
-    lines = text.splitlines()
-    body_start = None
-    for i in range(1, len(lines)):
-        if lines[i].strip() == "---":
-            body_start = i
-            break
-    if body_start is None:
-        return meta
-    for ln in lines[1:body_start]:
-        if ":" not in ln:
-            continue
-        k, v = ln.split(":", 1)
-        meta[k.strip()] = v.strip()
     # Normalize `to` -> list of recipients (empty == everyone).
     raw = meta.get("to", "").strip()
     if raw in ("", "all", "[]", "*"):
@@ -210,8 +205,12 @@ def write_cursor(chan: Path, agent: str, seq: int):
 
 
 def max_seq(chan: Path) -> int:
-    files = message_files(chan)
-    return _seq_from_name(files[-1].name) if files else 0
+    maximum = 0
+    for path in chan.glob("*.md"):
+        seq = _seq_from_name(path.name)
+        if seq is not None and seq > maximum:
+            maximum = seq
+    return maximum
 
 
 # --- commands ----------------------------------------------------------------
@@ -251,18 +250,28 @@ def cmd_channels(root: Path, a):
             meta = json.loads(meta_path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             meta = {}
-        files = message_files(chan)
+        count = 0
+        last_path = None
+        last_seq = 0
+        for path in chan.glob("*.md"):
+            seq = _seq_from_name(path.name)
+            if seq is None:
+                continue
+            count += 1
+            if last_path is None or seq > last_seq:
+                last_path = path
+                last_seq = seq
         last = "-"
-        if files:
-            lm = parse_frontmatter(files[-1])
-            last = f"#{_seq_from_name(files[-1].name)} {lm.get('from','?')}: {lm.get('title','')[:40]}"
+        if last_path is not None:
+            lm = parse_frontmatter(last_path)
+            last = f"#{last_seq} {lm.get('from', '?')}: {lm.get('title', '')[:40]}"
         rows.append(
-            (chan.name, ",".join(meta.get("members", [])) or "(open)", len(files), last)
+            (chan.name, ",".join(meta.get("members", [])) or "(open)", count, last)
         )
     if not rows:
         print(f"(no channels yet under {root})")
         return
-    w = max(len(r[0]) for r in rows)
+    w = max(len("CHANNEL"), max(len(r[0]) for r in rows))
     print(f"{'CHANNEL'.ljust(w)}  MSGS  MEMBERS / LAST")
     for name, members, n, last in rows:
         print(f"{name.ljust(w)}  {str(n).rjust(4)}  {members}")
@@ -284,6 +293,10 @@ def _read_body(a) -> str:
     if a.body_file:
         return Path(a.body_file).read_text(encoding="utf-8")
     # Default: read from stdin so agents can pipe long markdown bodies.
+    if sys.stdin.isatty():
+        print(
+            "agent-chat: Enter message body; send EOF when finished.", file=sys.stderr
+        )
     data = sys.stdin.read()
     if not data.strip():
         die("empty body (pass --body, --body-file, or pipe via stdin)")
@@ -293,7 +306,13 @@ def _read_body(a) -> str:
 def cmd_post(root: Path, a):
     d = require_channel(root, a.channel)
     body = _read_body(a)
-    to = a.to or "all"
+    sender = _frontmatter_value(a.sender)
+    to = _frontmatter_value(a.to or "all")
+    reply = _frontmatter_value(a.reply) if a.reply else None
+    channel = _frontmatter_value(a.channel)
+    timestamp = _frontmatter_value(now_iso())
+    status = _frontmatter_value(a.status)
+    title = _frontmatter_value(a.title)
     lock = _acquire_lock(d)
     try:
         seq = _next_seq(d)
@@ -301,16 +320,16 @@ def cmd_post(root: Path, a):
         fm = [
             "---",
             f"seq: {seq}",
-            f"from: {a.sender}",
+            f"from: {sender}",
             f"to: {to}",
         ]
-        if a.reply:
-            fm.append(f"reply_to: {a.reply}")
+        if reply is not None:
+            fm.append(f"reply_to: {reply}")
         fm += [
-            f"channel: {a.channel}",
-            f"ts: {now_iso()}",
-            f"status: {a.status}",
-            f"title: {a.title}",
+            f"channel: {channel}",
+            f"ts: {timestamp}",
+            f"status: {status}",
+            f"title: {title}",
             "---",
             "",
         ]
@@ -389,14 +408,7 @@ def cmd_claim(root: Path, a):
     `task-<id>.CLAIMED-<agent>.md`. If the source is already gone, another agent
     won the race -- exit non-zero so the caller moves on.
     """
-    if (
-        not a.task
-        or "\0" in a.task
-        or "/" in a.task
-        or "\\" in a.task
-        or a.task in (".", "..")
-    ):
-        die(f"invalid task name '{a.task}'")
+    _check_safe_name(a.task, "task")
     d = require_channel(root, a.channel)
     src = d / a.task
     dst = d / (Path(a.task).stem + f".CLAIMED-{slugify(a.agent)}.md")
