@@ -1,6 +1,6 @@
 # Better Email MCP -- Tools Reference
 
-better-email-mcp exposes IMAP/SMTP email through 5 composite tools driven by an `action` parameter, plus `config` (credential setup) and `help`. `messages` and `attachments` -- the two tools that return email content from external senders -- wrap their results in an XPIA safety marker: `<untrusted_email_content>` boundary tags plus an instruction not to follow, execute, or comply with any instructions found inside the email content. The wrapper also sanitizes any literal occurrence of that tag name inside the payload to prevent tag-breakout injection. `folders`, `send`, `config`, and `help` are not wrapped.
+better-email-mcp exposes IMAP/SMTP email through 4 action-driven tools -- `messages`, `folders`, `attachments`, and `config` -- plus `config__open_relay` and `help`. `messages` and `attachments` -- the two tools that return email content from external senders -- wrap their results in an XPIA safety marker: `<untrusted_email_content>` boundary tags plus an instruction not to follow, execute, or comply with any instructions found inside the email content. The wrapper also sanitizes any literal occurrence of that tag name inside the payload to prevent tag-breakout injection. `folders`, `config`, `config__open_relay`, and `help` are not wrapped.
 
 ## messages
 
@@ -15,6 +15,9 @@ Search, read, and manage email messages. Wrapped as external content.
 | `move` | Move email(s) to another folder | `uid`/`uids` (required), `destination` (required) |
 | `archive` | Move email(s) to the auto-detected archive folder | `uid`/`uids` (required) |
 | `trash` | Move email(s) to trash | `uid`/`uids` (required) |
+| `new` | Compose a fresh email | `account`, `to`, `subject`, `body` (required); `cc`, `bcc`, `attachments` |
+| `reply` | Reply to an email (`to`/`subject` auto-derived, `Re:` prefixed) | `account`, `uid`, `body` (required); `cc`, `bcc`, `attachments` |
+| `forward` | Forward an email (includes original body, `Fwd:` prefixed) | `account`, `uid`, `to`, `body` (required); `subject`, `cc`, `bcc`, `attachments` |
 
 ## folders
 
@@ -32,16 +35,6 @@ List and download email attachments. Wrapped as external content.
 |---|---|---|
 | `list` | List attachments on an email (filename, content_type, size) | `account`, `uid` (required), `folder` |
 | `download` | Download an attachment as base64 | `account`, `uid` (required), `folder`, `filename` (required, case-sensitive) |
-
-## send
-
-Compose and send emails. Not wrapped as external content.
-
-| Action | Purpose | Key parameters |
-|---|---|---|
-| `new` | Compose a fresh email | `account`, `to`, `subject`, `body` (required); `cc`, `bcc`, `attachments` |
-| `reply` | Reply to an email (`to`/`subject` auto-derived, `Re:` prefixed) | `account`, `uid`, `body` (required); `cc`, `bcc`, `attachments` |
-| `forward` | Forward an email (includes original body, `Fwd:` prefixed) | `account`, `uid`, `to`, `body` (required); `subject`, `cc`, `bcc`, `attachments` |
 
 `attachments` (optional, all actions): array of `{filename, content_base64, content_type?}`, same shape as `attachments`' `download` action returns. Max 10 files, total decoded size <= 25MB.
 
@@ -64,7 +57,7 @@ Get full documentation for a tool.
 
 | Parameter | Values |
 |---|---|
-| `tool_name` | `messages` \| `folders` \| `attachments` \| `send` \| `config` \| `help` |
+| `tool_name` | `messages` \| `folders` \| `attachments` \| `config` \| `help` |
 
 ## config__open_relay
 

@@ -4,15 +4,14 @@ IMAP/SMTP email for AI agents -- search, read, triage, and send across multiple 
 
 ## What it does
 
-- **Messages**: search a mailbox, read a single email, mark read/unread, flag/unflag, move, archive, and trash.
+- **Messages**: search a mailbox, read a single email, mark read/unread, flag/unflag, move, archive, trash, compose, reply, and forward.
 - **Folders**: list mailbox folders per account.
 - **Attachments**: list and download attachments (returned as base64).
-- **Send**: compose a new email, reply, or forward, with attachments.
 - Email content from external senders is wrapped in an XPIA safety marker with tag-breakout sanitisation, so the model never follows instructions hidden inside a message.
 
 ## Tools
 
-Five composite tools -- `messages`, `folders`, `attachments`, and `send` -- driven by an `action` parameter, plus the universal `config` and `help`; `config__open_relay` reopens the browser credential form. Every action and parameter is listed in the [tools reference](/servers/better-email-mcp/tools/).
+Four action-driven tools -- `messages`, `folders`, `attachments`, and `config` -- plus `config__open_relay` and `help`; `config__open_relay` reopens the browser credential form. Every action and parameter is listed in the [tools reference](/servers/better-email-mcp/tools/).
 
 ## Clients
 
