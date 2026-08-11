@@ -24,9 +24,9 @@ Folder names differ per provider (`[Gmail]/All Mail`, `Archive`, `Archives`, ...
 folders(action="list")
 ```
 
-## Attachment send rejected
+## Attachment rejected when sending
 
-`send` accepts at most 10 attachments with a total decoded size of 25 MB. Larger payloads are rejected before sending -- split them across messages or share a link instead.
+The `messages` actions `new`, `reply`, and `forward` accept at most 10 attachments with a total decoded size of 25 MB. Larger payloads are rejected before sending -- split them across messages or share a link instead.
 
 ## Credentials or settings not saving
 
