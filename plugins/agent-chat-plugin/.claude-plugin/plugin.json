@@ -26,5 +26,6 @@
       "description": "Comma-separated channels checked at session start. Empty = all.",
       "required": false
     }
-  }
+  },
+  "mcpServers": {}
 }
