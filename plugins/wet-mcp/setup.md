@@ -219,6 +219,7 @@ All environment variables are **optional**. See [docs/setup-with-agent.md](setup
 | `EXA_API_KEY` | -- | Exa search API key |
 | `GITHUB_TOKEN` | auto-detect | GitHub token for docs discovery |
 | `SEARCH_BACKENDS` | `searxng` | Ordered CSV search chain: `searxng`, `tavily`, `brave`, `exa` |
+| `WET_AUTO_SEARXNG` | `true` | Allow wet to auto-start its embedded SearXNG; set `false` when using only external/cloud search |
 | `DISABLE_LOCAL_SEARCH` | `false` | Skip the embedded local SearXNG fallback while retaining external or cloud search backends |
 | `BROWSER_BACKENDS` | empty -> `native` | Ordered CSV render chain: `native`, `browserless`, `cf-browser-rendering` |
 | `SYNC_ENABLED` | `true` | Enable Google Drive sync |

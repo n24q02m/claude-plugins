@@ -195,6 +195,7 @@ All environment variables are **optional**. The server works in local mode (ONNX
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
 | `SEARCH_BACKENDS` | No | `searxng` | Ordered CSV search chain: `searxng`, `tavily`, `brave`, `exa` |
+| `WET_AUTO_SEARXNG` | No | `true` | Allow wet to auto-start its embedded SearXNG; set `false` when using only external/cloud search |
 | `DISABLE_LOCAL_SEARCH` | No | `false` | Skip the embedded local SearXNG fallback while retaining external or cloud search backends |
 | `WET_SEARXNG_PORT` | No | `41592` | SearXNG port |
 | `SEARXNG_URL` | No | `http://localhost:41592` | URL for an external SearXNG deployment |
