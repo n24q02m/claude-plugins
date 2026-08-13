@@ -1,6 +1,6 @@
 # WET (Web Extended Toolkit) -- Manual Setup Guide
 
-> **2026-05-02 Update (v&lt;auto&gt;+)**: Plugin install (Method 1) uses stdio mode. Basic SearXNG search works without env; advanced features (GDrive sync, Brave, Serper, Gemini) need optional env vars OR HTTP mode for OAuth flows.
+> **2026-05-02 Update (v&lt;auto&gt;+)**: Plugin install (Method 1) uses stdio mode. Basic SearXNG search works without env; advanced features (GDrive sync, Tavily/Brave/Exa search, and cloud models) need optional env vars OR HTTP mode for OAuth flows.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 
 ## Method overview
@@ -33,6 +33,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 
 | Field | Required | Where to obtain |
 |---|---|---|
+| `RERANK_MODELS` | Optional | CSV rerank model chain such as `jina_ai/jina-reranker-v3`; leave empty for the bundled local ONNX reranker |
 | `JINA_AI_API_KEY` | Optional | https://jina.ai/api-key (highest priority embedding+reranking) |
 | `GEMINI_API_KEY` | Optional | https://aistudio.google.com/apikey |
 | `OPENAI_API_KEY` | Optional | https://platform.openai.com/api-keys |
@@ -174,7 +175,7 @@ On first start, the server downloads:
 - Playwright chromium browser
 - ONNX embedding and reranker models (~1.1GB total)
 
-Use the warmup command to pre-download: `setup(action="warmup")`
+Use the warmup command to pre-download: `config(action="warmup")`
 
 ### SearXNG port conflict
 
@@ -212,16 +213,19 @@ All environment variables are **optional**. See [docs/setup-with-agent.md](setup
 | `XAI_API_KEY` | -- | xAI/Grok: LLM dispatch for content-selector inference |
 | `COHERE_API_KEY` | -- | Cohere: embedding + reranking |
 | `WEB_CORE_LLM_MODEL` | auto-detect | Override the LLM model used for content-selector inference |
+| `RERANK_MODELS` | empty | Ordered CSV rerank model chain (`provider/model,...`); empty uses the bundled local ONNX cross-encoder |
 | `BRAVE_API_KEY` | -- | Brave Search API key (premium search) |
-| `SERPER_API_KEY` | -- | Serper search API key (premium search) |
+| `TAVILY_API_KEY` | -- | Tavily search API key |
+| `EXA_API_KEY` | -- | Exa search API key |
 | `GITHUB_TOKEN` | auto-detect | GitHub token for docs discovery |
-| `WET_AUTO_SEARXNG` | `true` | Auto-start embedded SearXNG |
+| `SEARCH_BACKENDS` | `searxng` | Ordered CSV search chain: `searxng`, `tavily`, `brave`, `exa` |
+| `DISABLE_LOCAL_SEARCH` | `false` | Skip the embedded local SearXNG fallback while retaining external or cloud search backends |
+| `BROWSER_BACKENDS` | empty -> `native` | Ordered CSV render chain: `native`, `browserless`, `cf-browser-rendering` |
 | `SYNC_ENABLED` | `true` | Enable Google Drive sync |
 | `LOG_LEVEL` | `INFO` | Logging level |
 
-### Provider Priority
+### Backend Selection
 
-- **Embedding**: Jina AI > Gemini > OpenAI > Cohere > local ONNX model
-- **Reranking**: Jina AI > Cohere > local ONNX model
-- **LLM**: Gemini > OpenAI > Disabled
-- **Search**: Brave > Serper > Jina AI > SearXNG (always available locally)
+- **Embedding, reranking, and LLM**: use ordered `*_MODELS` chains; provider keys are inferred from each `provider/model` prefix.
+- **Browser rendering**: `BROWSER_BACKENDS` escalates in listed order; an empty chain uses the local `native` browser.
+- **Search**: `SEARCH_BACKENDS` falls back in listed order; local SearXNG is the zero-config default.

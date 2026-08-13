@@ -1,6 +1,6 @@
 # WET (Web Extended Toolkit) -- Agent Setup Guide
 
-> **2026-05-02 Update (v&lt;auto&gt;+)**: Plugin install (Option 1) uses stdio mode. Basic SearXNG search works without env; advanced features (GDrive sync, Brave, Serper, Gemini) need optional env vars OR HTTP mode for OAuth flows.
+> **2026-05-02 Update (v&lt;auto&gt;+)**: Plugin install (Option 1) uses stdio mode. Basic SearXNG search works without env; advanced features (GDrive sync, Tavily/Brave/Exa search, and cloud models) need optional env vars OR HTTP mode for OAuth flows.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 
 > Give this file to your AI agent to automatically set up wet-mcp.
@@ -29,6 +29,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 
 | Field | Required | Where to obtain |
 |---|---|---|
+| `RERANK_MODELS` | Optional | CSV rerank model chain such as `jina_ai/jina-reranker-v3`; leave empty for the bundled local ONNX reranker |
 | `JINA_AI_API_KEY` | Optional | https://jina.ai/api-key (highest priority embedding+reranking) |
 | `GEMINI_API_KEY` | Optional | https://aistudio.google.com/apikey |
 | `OPENAI_API_KEY` | Optional | https://platform.openai.com/api-keys |
@@ -43,7 +44,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 /plugin install wet-mcp@n24q02m-plugins
 ```
 
-> Other optional env vars (`BRAVE_API_KEY`, `SERPER_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY`, `GITHUB_TOKEN`, `SYNC_ENABLED`, etc.) are not part of the `userConfig` prompt; add them manually to `mcpServers.wet.env` in your settings if needed.
+> Other optional env vars (`SEARCH_BACKENDS`, `TAVILY_API_KEY`, `BRAVE_API_KEY`, `EXA_API_KEY`, `BROWSER_BACKENDS`, `SYNC_ENABLED`, etc.) are not part of the `userConfig` prompt; add them manually to `mcpServers.wet.env` in your settings if needed.
 
 Without env vars: SearXNG metasearch + content extraction + library docs + ONNX embedding work out of the box. With env vars: cloud embedding/reranking, Gemini LLM analysis, premium search providers.
 
@@ -63,8 +64,11 @@ docker run -i --rm \
   -e GEMINI_API_KEY \
   -e OPENAI_API_KEY \
   -e COHERE_API_KEY \
+  -e RERANK_MODELS \
   -e BRAVE_API_KEY \
-  -e SERPER_API_KEY \
+  -e TAVILY_API_KEY \
+  -e EXA_API_KEY \
+  -e BROWSER_BACKENDS \
   -e GITHUB_TOKEN \
   n24q02m/wet-mcp:latest
 ```
@@ -165,7 +169,8 @@ All environment variables are **optional**. The server works in local mode (ONNX
 | `OPENAI_API_KEY` | No | -- | OpenAI key: LLM + embedding (lower priority than Gemini) |
 | `COHERE_API_KEY` | No | -- | Cohere key: embedding + reranking |
 | `BRAVE_API_KEY` | No | -- | Brave Search API key (premium search provider) |
-| `SERPER_API_KEY` | No | -- | Serper search API key (premium search provider) |
+| `TAVILY_API_KEY` | No | -- | Tavily Search API key |
+| `EXA_API_KEY` | No | -- | Exa Search API key |
 | `GITHUB_TOKEN` | No | auto-detect | GitHub token for docs discovery (60 -> 5000 req/hr). Auto-detected from `gh auth token` |
 
 ### Embedding and Reranking
@@ -176,8 +181,7 @@ All environment variables are **optional**. The server works in local mode (ONNX
 | `EMBEDDING_MODEL` | No | auto-detect | Cloud embedding model name |
 | `EMBEDDING_DIMS` | No | `0` (auto) | Embedding dimensions |
 | `RERANK_ENABLED` | No | `true` | Enable reranking after search |
-| `RERANK_BACKEND` | No | auto-detect | `cloud` or `local`. Auto: Cohere/Jina key -> cloud, else local |
-| `RERANK_MODEL` | No | auto-detect | Cloud rerank model name |
+| `RERANK_MODELS` | No | empty | Ordered CSV rerank model chain (`provider/model,...`); empty uses the bundled local ONNX cross-encoder |
 | `RERANK_TOP_N` | No | `10` | Return top N results after reranking |
 
 ### LLM
@@ -190,10 +194,22 @@ All environment variables are **optional**. The server works in local mode (ONNX
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `WET_AUTO_SEARXNG` | No | `true` | Auto-start embedded SearXNG subprocess |
+| `SEARCH_BACKENDS` | No | `searxng` | Ordered CSV search chain: `searxng`, `tavily`, `brave`, `exa` |
+| `DISABLE_LOCAL_SEARCH` | No | `false` | Skip the embedded local SearXNG fallback while retaining external or cloud search backends |
 | `WET_SEARXNG_PORT` | No | `41592` | SearXNG port |
-| `SEARXNG_URL` | No | `http://localhost:41592` | External SearXNG URL (when auto disabled) |
+| `SEARXNG_URL` | No | `http://localhost:41592` | URL for an external SearXNG deployment |
 | `SEARXNG_TIMEOUT` | No | `30` | SearXNG request timeout in seconds |
+
+### Browser Rendering
+
+| Variable | Required | Default | Description |
+|:---------|:---------|:--------|:------------|
+| `BROWSER_BACKENDS` | No | empty -> `native` | Ordered CSV render chain: `native`, `browserless`, `cf-browser-rendering` |
+| `DISABLE_LOCAL_BROWSER` | No | `false` | Remove `native` from the render chain |
+| `BROWSERLESS_URL` | No | -- | Browserless service URL when the chain includes `browserless` |
+| `BROWSERLESS_TOKEN` | No | -- | Optional Browserless service token |
+| `CF_ACCOUNT_ID` | No | -- | Cloudflare account ID for `cf-browser-rendering` |
+| `CF_BROWSER_RENDERING_TOKEN` | No | -- | Cloudflare Browser Rendering API token |
 
 ### File Conversion
 
