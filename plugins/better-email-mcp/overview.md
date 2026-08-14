@@ -5,7 +5,7 @@ IMAP/SMTP email for AI agents -- search, read, triage, and send across multiple 
 ## What it does
 
 - **Messages**: search a mailbox, read a single email, mark read/unread, flag/unflag, move, archive, trash, compose, reply, and forward.
-- **Folders**: list mailbox folders per account.
+- **Folders**: list mailbox folders, or read targeted status metadata (`messages`, `unseen`, `uid_next`) for one exact account and folder.
 - **Attachments**: list and download attachments (returned as base64).
 - Email content from external senders is wrapped in an XPIA safety marker with tag-breakout sanitisation, so the model never follows instructions hidden inside a message.
 

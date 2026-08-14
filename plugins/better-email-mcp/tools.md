@@ -21,11 +21,14 @@ Search, read, and manage email messages. Wrapped as external content.
 
 ## folders
 
-List mailbox folders. Not wrapped as external content.
+List mailbox folders or read targeted IMAP STATUS metadata. Not wrapped as external content.
 
 | Action | Purpose | Key parameters |
 |---|---|---|
-| `list` | List folders for an account (or all accounts) | `account` |
+| `list` | List folders for an account (or all accounts) | `account` (optional; omit for all accounts) |
+| `status` | Read `MESSAGES`, `UNSEEN`, and `UIDNEXT` for one exact mailbox | `account` (required), `folder` (required; exact mailbox path) |
+
+`status` is read-only and returns `messages`, `unseen`, and `uid_next`. It does not select or enumerate the mailbox and never falls back to all accounts.
 
 ## attachments
 
