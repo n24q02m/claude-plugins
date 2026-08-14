@@ -83,6 +83,10 @@ TOOL_NAME_RE = re.compile(r"^[a-z][a-z0-9]*(?:_{1,2}[a-z0-9]+)*$")
 # starts on its defaults -- tools/list does not depend on credentials.
 USER_CONFIG_TEMPLATE_RE = re.compile(r"^\$\{user_config\.([^}]+)\}$")
 
+BACKTICK_RE = re.compile(r"^`([^`]+)`")
+HEADING_RE = re.compile(r"^##\s+(.+?)\s*$")
+SEPARATOR_RE = re.compile(r":?-{2,}:?")
+
 # Five of the nine servers refuse to start in stdio mode with no credentials at
 # all (notion, email, telegram, imagine, workspace) -- they print a setup notice
 # and exit before any client can call tools/list. Their gate checks that a value
@@ -121,7 +125,7 @@ def _table_row_cells(line: str) -> list[str]:
 
 
 def _unbacktick(cell: str) -> str:
-    match = re.match(r"^`([^`]+)`", cell)
+    match = BACKTICK_RE.match(cell)
     return match.group(1) if match else cell
 
 
@@ -131,7 +135,7 @@ def declared_names(markdown: str) -> set[str]:
     in_tool_table = False
 
     for line in markdown.splitlines():
-        heading = re.match(r"^##\s+(.+?)\s*$", line)
+        heading = HEADING_RE.match(line)
         if heading:
             in_tool_table = False
             candidate = _unbacktick(heading.group(1))
@@ -150,7 +154,7 @@ def declared_names(markdown: str) -> set[str]:
             continue
 
         # Separator row (|---|---|) keeps the table open.
-        if all(re.fullmatch(r":?-{2,}:?", c) for c in cells if c):
+        if all(SEPARATOR_RE.fullmatch(c) for c in cells if c):
             continue
 
         if in_tool_table:
@@ -377,7 +381,9 @@ def live_names(
                     if not line:
                         if deadline.is_set():
                             break
-                        raise fail(f"server exited before tools/list (rc={proc.poll()})")
+                        raise fail(
+                            f"server exited before tools/list (rc={proc.poll()})"
+                        )
                     line = line.strip()
                     if not line:
                         continue
@@ -395,9 +401,7 @@ def live_names(
                     elif message.get("id") == 2:
                         if "error" in message:
                             raise fail(f"tools/list failed: {message['error']}")
-                        return {
-                            t["name"] for t in message["result"].get("tools", [])
-                        }
+                        return {t["name"] for t in message["result"].get("tools", [])}
                 raise fail(
                     f"timed out after {timeout}s waiting for tools/list",
                     ProbeTimeout,
@@ -446,10 +450,16 @@ def verify_plugin(
 
     declared = read_declared(plugin_dir)
     if not declared:
-        return [f"{name}: tools.md declares no tool names (check the page format)"], [], []
+        return (
+            [f"{name}: tools.md declares no tool names (check the page format)"],
+            [],
+            [],
+        )
 
     if declared_only:
-        line = f"{name}: declares {len(declared)} tool(s): {', '.join(sorted(declared))}"
+        line = (
+            f"{name}: declares {len(declared)} tool(s): {', '.join(sorted(declared))}"
+        )
         return [], [], [line]
 
     try:
@@ -458,9 +468,11 @@ def verify_plugin(
     except ProbeTimeout as exc:
         # Must precede the broad handler below: ProbeTimeout is a RuntimeError,
         # and the whole point is that this one failure does not get retried.
-        return [], [
-            f"{name}: tool names NOT verified -- {exc}. ({PROBE_TIMEOUT_HINT})"
-        ], []
+        return (
+            [],
+            [f"{name}: tool names NOT verified -- {exc}. ({PROBE_TIMEOUT_HINT})"],
+            [],
+        )
     except (OSError, ValueError, RuntimeError, json.JSONDecodeError) as first_exc:
         # Servers that gate stdio startup on credential presence exit before
         # tools/list. Retry once with obviously fake values (see
@@ -473,11 +485,15 @@ def verify_plugin(
         except (OSError, ValueError, RuntimeError, json.JSONDecodeError) as exc:
             # Not a docs defect, so it does not fail the run -- but it is never
             # silent either: an unreadable server is an uncovered server.
-            return [], [
-                f"{name}: tool names NOT verified -- the server would not start. "
-                f"Without credentials: {first_exc}. With placeholders: {exc}. "
-                f"({PROBE_FAILED_HINT})"
-            ], []
+            return (
+                [],
+                [
+                    f"{name}: tool names NOT verified -- the server would not start. "
+                    f"Without credentials: {first_exc}. With placeholders: {exc}. "
+                    f"({PROBE_FAILED_HINT})"
+                ],
+                [],
+            )
 
     if not live:
         return [], [], []
@@ -493,7 +509,9 @@ def verify_plugin(
             f"{name}: plugins/{name}/tools.md documents tool '{stale}' but the "
             f"server does not expose it (stale name left behind after a rename)"
         )
-    output = [] if errors else [f"{name}: {len(live)} tool name(s) match tools.md{note}"]
+    output = (
+        [] if errors else [f"{name}: {len(live)} tool name(s) match tools.md{note}"]
+    )
     return errors, [], output
 
 
