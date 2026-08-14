@@ -43,7 +43,7 @@ def main() -> None:
 
             cursor = chat.read_cursor(channel_path, name)
             unread = 0
-            for message in chat.message_files(channel_path):
+            for message in channel_path.glob("*.md"):
                 sequence = chat._seq_from_name(message.name)
                 if sequence is None or sequence <= cursor:
                     continue

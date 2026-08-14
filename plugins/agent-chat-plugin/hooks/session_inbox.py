@@ -57,12 +57,20 @@ def main() -> None:
                 continue
             cursor = chat.read_cursor(chan_dir, name)
             unread = 0
-            for p in chat.message_files(chan_dir):
-                seq = chat._seq_from_name(p.name)
-                if seq is None or seq <= cursor:
-                    continue
-                if chat.is_relevant(chat.parse_frontmatter(p), name):
-                    unread += 1
+            # Optimization: use os.scandir to avoid Path instantiation overhead for
+            # thousands of old messages per tick.
+            try:
+                with os.scandir(chan_dir) as it:
+                    for entry in it:
+                        if not entry.name.endswith(".md"):
+                            continue
+                        seq = chat._seq_from_name(entry.name)
+                        if seq is None or seq <= cursor:
+                            continue
+                        if chat.is_relevant(chat.parse_frontmatter(Path(entry.path)), name):
+                            unread += 1
+            except OSError:
+                pass
             if unread:
                 unread_by_channel.append((ch, unread))
 

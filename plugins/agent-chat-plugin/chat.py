@@ -30,6 +30,8 @@ import sys
 import time
 from pathlib import Path
 
+import heapq
+
 # --- root + small helpers ----------------------------------------------------
 
 
@@ -56,6 +58,10 @@ def _frontmatter_value(value) -> str:
     return re.sub(r"[\r\n]+", " ", str(value))
 
 
+class AgentChatError(Exception):
+    pass
+
+
 def die(msg: str, code: int = 1):
     print(f"agent-chat: {msg}", file=sys.stderr)
     raise SystemExit(code)
@@ -66,8 +72,13 @@ def die(msg: str, code: int = 1):
 
 def _check_safe_name(name: str, kind: str):
     """Prevent path traversal vulnerabilities."""
-    if not name or "/" in name or "\\" in name or name in (".", ".."):
-        die(f"invalid {kind} name (path traversal blocked): '{name}'")
+    if not name or "/" in name or "\\" in name or ":" in name or name in (".", ".."):
+        raise AgentChatError(f"invalid {kind} name (path traversal blocked): '{name}'")
+    if name.startswith(".") or name.startswith("_"):
+        raise AgentChatError(f"invalid {kind} name (reserved prefix blocked): '{name}'")
+
+
+_TASK_MARKER_RE = re.compile(r"task-[A-Za-z0-9][A-Za-z0-9_-]*\.md")
 
 
 def channel_dir(root: Path, channel: str) -> Path:
@@ -78,7 +89,9 @@ def channel_dir(root: Path, channel: str) -> Path:
 def require_channel(root: Path, channel: str) -> Path:
     d = channel_dir(root, channel)
     if not (d / "_meta.json").exists():
-        die(f"channel '{channel}' not found under {root} (run: init {channel})")
+        raise AgentChatError(
+            f"channel '{channel}' not found under {root} (run: init {channel})"
+        )
     return d
 
 
@@ -117,7 +130,7 @@ def parse_frontmatter(path: Path) -> dict:
             if not found_end:
                 return meta
             meta = temp_meta
-    except OSError:
+    except (OSError, UnicodeDecodeError):
         return meta
     # Normalize `to` -> list of recipients (empty == everyone).
     raw = meta.get("to", "").strip()
@@ -163,7 +176,9 @@ def _acquire_lock(chan: Path, timeout: float = 10.0, stale: float = 30.0) -> Pat
             except FileNotFoundError:
                 continue
             if time.time() - start > timeout:
-                die("could not acquire channel seq lock (another poster is stuck?)")
+                raise AgentChatError(
+                    "could not acquire channel seq lock (another poster is stuck?)"
+                )
             time.sleep(0.05)
 
 
@@ -222,7 +237,7 @@ def cmd_init(root: Path, a):
     (d / ".cursors").mkdir(exist_ok=True)
     meta_path = d / "_meta.json"
     if meta_path.exists():
-        die(f"channel '{a.channel}' already exists")
+        raise AgentChatError(f"channel '{a.channel}' already exists")
     members = [m.strip() for m in (a.members or "").split(",") if m.strip()]
     meta_path.write_text(
         json.dumps(
@@ -236,7 +251,8 @@ def cmd_init(root: Path, a):
         ),
         encoding="utf-8",
     )
-    print(f"created channel '{a.channel}' at {d}  members={members or '(open)'}")
+    m_str = ", ".join(members) if members else "(open)"
+    print(f"created channel '{a.channel}' at {d}  members={m_str}")
 
 
 def cmd_channels(root: Path, a):
@@ -264,9 +280,15 @@ def cmd_channels(root: Path, a):
         last = "-"
         if last_path is not None:
             lm = parse_frontmatter(last_path)
-            last = f"#{last_seq} {lm.get('from', '?')}: {lm.get('title', '')[:40]}"
+            title = lm.get("title", "")
+            if len(title) > 40:
+                title = title[:37] + "..."
+            last = f"#{last_seq} {lm.get('from', '?')}: {title}"
+        members_str = ", ".join(meta.get("members", [])) or "(open)"
+        if len(members_str) > 40:
+            members_str = members_str[:37] + "..."
         rows.append(
-            (chan.name, ",".join(meta.get("members", [])) or "(open)", count, last)
+            (chan.name, members_str, count, last)
         )
     if not rows:
         print(f"(no channels yet under {root})")
@@ -280,26 +302,34 @@ def cmd_channels(root: Path, a):
 
 def cmd_roster(root: Path, a):
     d = require_channel(root, a.channel)
-    meta = json.loads((d / "_meta.json").read_text(encoding="utf-8"))
+    try:
+        meta = json.loads((d / "_meta.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        raise AgentChatError(f"could not read or parse _meta.json for channel '{a.channel}'")
     print(f"channel : {meta.get('channel')}")
     print(f"topic   : {meta.get('topic') or '(none)'}")
     print(f"members : {', '.join(meta.get('members', [])) or '(open)'}")
-    print(f"messages: {len(message_files(d))}")
+    count = sum(1 for p in d.glob("*.md") if _seq_from_name(p.name) is not None)
+    print(f"messages: {count}")
 
 
 def _read_body(a) -> str:
     if a.body is not None:
         return a.body
     if a.body_file:
-        return Path(a.body_file).read_text(encoding="utf-8")
+        try:
+            return Path(a.body_file).read_text(encoding="utf-8")
+        except OSError as e:
+            raise AgentChatError(f"could not read body file: {e}")
     # Default: read from stdin so agents can pipe long markdown bodies.
     if sys.stdin.isatty():
         print(
-            "agent-chat: Enter message body; send EOF when finished.", file=sys.stderr
+            "agent-chat: Enter message body; press Ctrl-D (or Ctrl-Z and Enter on Windows) to finish.",
+            file=sys.stderr,
         )
     data = sys.stdin.read()
     if not data.strip():
-        die("empty body (pass --body, --body-file, or pipe via stdin)")
+        raise AgentChatError("empty body (pass --body, --body-file, or pipe via stdin)")
     return data
 
 
@@ -349,16 +379,29 @@ def cmd_read(root: Path, a):
     d = require_channel(root, a.channel)
     cur = 0 if a.all else read_cursor(d, a.agent)
     shown = 0
-    for p in message_files(d):
+
+    # Optimization: One O(N) glob scan to find both top seq and unread messages,
+    # avoiding O(N log N) message_files sort and redundant max_seq glob.
+    found = []
+    top = 0
+    for p in d.glob("*.md"):
         seq = _seq_from_name(p.name)
-        if seq <= cur:
+        if seq is None:
             continue
+        if seq > top:
+            top = seq
+        if seq > cur:
+            found.append((seq, p))
+
+    found.sort(key=lambda x: x[0])
+
+    for seq, p in found:
         meta = parse_frontmatter(p)
         if not a.all and not is_relevant(meta, a.agent):
             continue
         _print_message(p)
         shown += 1
-    top = max_seq(d)
+
     if not a.peek:
         write_cursor(d, a.agent, top)
     if shown == 0:
@@ -371,14 +414,25 @@ def cmd_wait(root: Path, a):
     deadline = time.time() + a.timeout
     while True:
         found = []
-        for p in message_files(d):
-            seq = _seq_from_name(p.name)
-            if seq <= cur:
-                continue
-            meta = parse_frontmatter(p)
-            if is_relevant(meta, a.agent):
-                found.append(p)
+        # Optimization: use os.scandir to avoid Path instantiation overhead for
+        # thousands of old messages per tick.
+        try:
+            with os.scandir(d) as it:
+                for entry in it:
+                    if not entry.name.endswith(".md"):
+                        continue
+                    seq = _seq_from_name(entry.name)
+                    if seq is None or seq <= cur:
+                        continue
+                    p = Path(entry.path)
+                    meta = parse_frontmatter(p)
+                    if is_relevant(meta, a.agent):
+                        found.append(p)
+        except OSError:
+            pass
         if found:
+            # Sort only the newly found messages
+            found.sort(key=lambda p: _seq_from_name(p.name))
             for p in found:
                 _print_message(p)
             write_cursor(d, a.agent, max_seq(d))
@@ -394,7 +448,24 @@ def cmd_wait(root: Path, a):
 
 def cmd_peek(root: Path, a):
     d = require_channel(root, a.channel)
-    files = message_files(d)[-a.n :]
+
+    if a.n <= 0:
+        return
+
+    # Optimization: Use a min-heap to find top N messages in O(N log K) time
+    # rather than sorting all messages O(N log N) via message_files()
+    top_n = []
+    for p in d.glob("*.md"):
+        seq = _seq_from_name(p.name)
+        if seq is not None:
+            if len(top_n) < a.n:
+                heapq.heappush(top_n, (seq, p))
+            elif seq > top_n[0][0]:
+                heapq.heapreplace(top_n, (seq, p))
+
+    # Extract in ascending order (heappop gets the smallest first)
+    files = [heapq.heappop(top_n)[1] for _ in range(len(top_n))]
+
     for p in files:
         _print_message(p)
     if not files:
@@ -409,13 +480,25 @@ def cmd_claim(root: Path, a):
     won the race -- exit non-zero so the caller moves on.
     """
     _check_safe_name(a.task, "task")
+    if not _TASK_MARKER_RE.fullmatch(a.task):
+        raise AgentChatError(
+            f"invalid task name (expected task-<id>.md marker): '{a.task}'"
+        )
     d = require_channel(root, a.channel)
     src = d / a.task
     dst = d / (Path(a.task).stem + f".CLAIMED-{slugify(a.agent)}.md")
+    lock = _acquire_lock(d)
     try:
-        os.replace(src, dst)  # atomic on Windows + POSIX when same directory
-    except FileNotFoundError:
-        die(f"task '{a.task}' already claimed or missing (lost the race)", code=3)
+        if dst.exists():
+            die(f"task '{a.task}' already claimed or missing (lost the race)", code=3)
+        if not src.is_file():
+            die(f"task '{a.task}' already claimed or missing (lost the race)", code=3)
+        try:
+            os.replace(src, dst)  # atomic on Windows + POSIX within the claim lock
+        except FileNotFoundError:
+            die(f"task '{a.task}' already claimed or missing (lost the race)", code=3)
+    finally:
+        _release_lock(lock)
     print(f"claimed {a.task} -> {dst.name}")
 
 
@@ -491,7 +574,13 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv=None):
     args = build_parser().parse_args(argv)
     root = root_dir(args.root)
-    args.func(root, args)
+    try:
+        args.func(root, args)
+    except AgentChatError as e:
+        die(str(e))
+    except KeyboardInterrupt:
+        print(file=sys.stderr)  # print a newline to cleanly break from input prompts
+        die("cancelled by user", code=130)
 
 
 if __name__ == "__main__":
