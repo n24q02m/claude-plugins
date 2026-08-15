@@ -218,12 +218,12 @@ class TestVerifyPlugin(unittest.TestCase):
             "w",
             encoding="utf-8",
         ) as f:
-            json.dump(
-                {"name": "srv", "mcpServers": {"srv": {"command": "srv-mcp"}}}, f
-            )
+            json.dump({"name": "srv", "mcpServers": {"srv": {"command": "srv-mcp"}}}, f)
 
     def _write_tools_md(self, body):
-        with open(os.path.join("plugins", "srv", "tools.md"), "w", encoding="utf-8") as f:
+        with open(
+            os.path.join("plugins", "srv", "tools.md"), "w", encoding="utf-8"
+        ) as f:
             f.write(body)
 
     def test_matching_names_pass(self):

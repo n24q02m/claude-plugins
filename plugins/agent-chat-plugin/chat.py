@@ -287,9 +287,7 @@ def cmd_channels(root: Path, a):
         members_str = ", ".join(meta.get("members", [])) or "(open)"
         if len(members_str) > 40:
             members_str = members_str[:37] + "..."
-        rows.append(
-            (chan.name, members_str, count, last)
-        )
+        rows.append((chan.name, members_str, count, last))
     if not rows:
         print(f"(no channels yet under {root})")
         return
@@ -305,7 +303,9 @@ def cmd_roster(root: Path, a):
     try:
         meta = json.loads((d / "_meta.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        raise AgentChatError(f"could not read or parse _meta.json for channel '{a.channel}'")
+        raise AgentChatError(
+            f"could not read or parse _meta.json for channel '{a.channel}'"
+        )
     print(f"channel : {meta.get('channel')}")
     print(f"topic   : {meta.get('topic') or '(none)'}")
     print(f"members : {', '.join(meta.get('members', [])) or '(open)'}")
