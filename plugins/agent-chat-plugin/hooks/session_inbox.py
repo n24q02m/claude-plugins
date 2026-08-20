@@ -67,7 +67,9 @@ def main() -> None:
                         seq = chat._seq_from_name(entry.name)
                         if seq is None or seq <= cursor:
                             continue
-                        if chat.is_relevant(chat.parse_frontmatter(Path(entry.path)), name):
+                        if chat.is_relevant(
+                            chat.parse_frontmatter(Path(entry.path)), name
+                        ):
                             unread += 1
             except OSError:
                 pass
