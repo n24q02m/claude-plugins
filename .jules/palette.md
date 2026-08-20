@@ -27,3 +27,6 @@ closed pull request.
 **Proposed:** report, as a pull request changing no files, that no UX enhancements were identified in the Starlight docs.
 **Why rejected:** same shape as #544 and as mnemo #1003, #1007 and #1032. The finding belongs in this file, where the next pass will see it; in a closed pull request it is invisible to everything that reads the repository.
 **Action:** Record the skip as the entry above does, naming the surfaces examined and the date, so the next pass can begin where this one stopped.
+## 2026-08-16 - No suitable UX enhancement found
+**Learning:** This repository is primarily documentation (`docs/`) and backend scripts (`scripts/`, `plugins/`). The `docs/` use Astro Starlight and all `.md` and `.mdx` files already have appropriate markup. The `svg` files in `docs/` already have `aria-hidden="true"` and `focusable="false"`. Scripts in `scripts/` already print to `stderr` with appropriate prefixes/GitHub Action annotations. No UX enhancement was identified during this pass.
+**Action:** Conclude as a no-op.
