@@ -37,3 +37,6 @@ closed pull request.
 **Proposed:** in the same diff as the frontmatter change, a blank line added after the module docstring of `plugins/agent-chat-plugin/hooks/session_inbox.py`, and in #587 a re-wrap of two decorators in `plugins/better-workspace-mcp/hooks/tests/test_check_credentials.py`.
 **Why rejected:** neither file has anything to do with frontmatter parsing, and the second belongs to a different plugin entirely. Formatting churn in a mirrored tree is churn twice over: it cannot outlive the next sync, and it widens the diff a reviewer has to read to find the change the title describes.
 **Action:** Keep the diff to the files the title names. Formatting of mirrored files is settled by the source repository's own formatter.
+## 2024-08-09 - Pre-compile Regex in Loops
+**Learning:** In Python, calling `re.match()` or `re.search()` with static pattern strings inside loops (like parsing markdown lines or diffs) introduces measurable overhead due to the regex internal cache lookup.
+**Action:** Always extract static regex patterns into module-level `re.compile()` objects to eliminate this overhead when the regex is executed frequently.
