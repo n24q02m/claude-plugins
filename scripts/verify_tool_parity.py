@@ -111,6 +111,12 @@ class ProbeTimeout(RuntimeError):
 # Declared names (static, no network)
 # --------------------------------------------------------------------------
 
+# Pre-compile regexes used in frequent Python loops for performance.
+# This eliminates internal caching overhead when iterating over markdown lines.
+BACKTICK_RE = re.compile(r"^`([^`]+)`")
+HEADING_RE = re.compile(r"^##\s+(.+?)\s*$")
+SEPARATOR_RE = re.compile(r":?-{2,}:?")
+
 
 def _table_row_cells(line: str) -> list[str]:
     """Split a markdown table row into trimmed cells (outer pipes dropped)."""
@@ -121,7 +127,7 @@ def _table_row_cells(line: str) -> list[str]:
 
 
 def _unbacktick(cell: str) -> str:
-    match = re.match(r"^`([^`]+)`", cell)
+    match = BACKTICK_RE.match(cell)
     return match.group(1) if match else cell
 
 
@@ -131,7 +137,7 @@ def declared_names(markdown: str) -> set[str]:
     in_tool_table = False
 
     for line in markdown.splitlines():
-        heading = re.match(r"^##\s+(.+?)\s*$", line)
+        heading = HEADING_RE.match(line)
         if heading:
             in_tool_table = False
             candidate = _unbacktick(heading.group(1))
@@ -150,7 +156,7 @@ def declared_names(markdown: str) -> set[str]:
             continue
 
         # Separator row (|---|---|) keeps the table open.
-        if all(re.fullmatch(r":?-{2,}:?", c) for c in cells if c):
+        if all(SEPARATOR_RE.fullmatch(c) for c in cells if c):
             continue
 
         if in_tool_table:
