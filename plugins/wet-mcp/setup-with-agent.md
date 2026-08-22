@@ -1,6 +1,6 @@
 # WET (Web Extended Toolkit) -- Agent Setup Guide
 
-> **2026-05-02 Update (v&lt;auto&gt;+)**: Plugin install (Option 1) uses stdio mode. Basic SearXNG search works without env; advanced features (GDrive sync, Brave, Serper, Gemini) need optional env vars OR HTTP mode for OAuth flows.
+> **2026-08-22 Update (v3.7.4+)**: Plugin install (Option 1) uses stdio mode. In a `uvx` tool environment, web search needs a configured cloud backend (`TAVILY_API_KEY`, `BRAVE_API_KEY`, or `EXA_API_KEY`) or an external `SEARXNG_URL`; local SearXNG auto-start is unavailable there. Use Option 2 (Docker stdio) for bundled local SearXNG.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 
 > Give this file to your AI agent to automatically set up wet-mcp.
@@ -21,7 +21,7 @@ All MCP servers across this stack share this priority hierarchy. Note: 2 plugins
 
 ## Option 1: Claude Code Plugin (stdio default)
 
-Plugin install uses **stdio mode**. Basic SearXNG web search works **without any env vars** -- ONNX local embedding and reranking are bundled. Advanced features require optional API keys.
+Plugin install uses **stdio mode**. In a `uvx` tool environment, web search requires a cloud/external backend or Docker; content extraction and other non-SearXNG paths remain available without search credentials. Advanced features require optional API keys.
 
 ### Credential prompts at install
 
@@ -43,9 +43,9 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 /plugin install wet-mcp@n24q02m-plugins
 ```
 
-> Other optional env vars (`BRAVE_API_KEY`, `SERPER_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY`, `GITHUB_TOKEN`, `SYNC_ENABLED`, etc.) are not part of the `userConfig` prompt; add them manually to `mcpServers.wet.env` in your settings if needed.
+> Other optional env vars (`BRAVE_API_KEY`, `TAVILY_API_KEY`, `EXA_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY`, `GITHUB_TOKEN`, `SYNC_ENABLED`, etc.) are not part of the `userConfig` prompt; add them manually to `mcpServers.wet.env` in your settings if needed.
 
-Without env vars: SearXNG metasearch + content extraction + library docs + ONNX embedding work out of the box. With env vars: cloud embedding/reranking, Gemini LLM analysis, premium search providers.
+Without env vars: content extraction and local library-docs paths can run, but `uvx` stdio web search cannot auto-start local SearXNG. Set a cloud backend key or `SEARXNG_URL`, or use Option 2 for bundled SearXNG. With env vars: cloud embedding/reranking, Gemini LLM analysis, and premium search providers.
 
 > **Note**: This installs the full plugin (skills + agents + hooks + commands + stdio MCP server). If you'd rather use Option 2 (Docker stdio) or Option 3 (HTTP) below, DO NOT `/plugin install` this plugin — pick Option 2 or Option 3 instead. All three methods are mutually exclusive (see Method overview).
 
@@ -64,7 +64,8 @@ docker run -i --rm \
   -e OPENAI_API_KEY \
   -e COHERE_API_KEY \
   -e BRAVE_API_KEY \
-  -e SERPER_API_KEY \
+  -e TAVILY_API_KEY \
+  -e EXA_API_KEY \
   -e GITHUB_TOKEN \
   n24q02m/wet-mcp:latest
 ```
@@ -153,7 +154,7 @@ Share this password out-of-band (Signal/email/SMS) with anyone you invite to use
 
 ## Environment Variables
 
-All environment variables are **optional**. The server works in local mode (ONNX embedding + SearXNG) with zero configuration.
+All environment variables are **optional** for the process, but `uvx` stdio web search needs a cloud/external backend or Docker because it cannot auto-start local SearXNG.
 
 ### API Keys (Cloud Providers)
 
@@ -164,8 +165,9 @@ All environment variables are **optional**. The server works in local mode (ONNX
 | `GOOGLE_VERTEX_EXPRESS_API_KEY` | No | -- | Vertex AI Express: Gemini via API key, no Service Account. Get it at https://cloud.google.com/vertex-ai/generative-ai/docs/start/express-mode/overview |
 | `OPENAI_API_KEY` | No | -- | OpenAI key: LLM + embedding (lower priority than Gemini) |
 | `COHERE_API_KEY` | No | -- | Cohere key: embedding + reranking |
-| `BRAVE_API_KEY` | No | -- | Brave Search API key (premium search provider) |
-| `SERPER_API_KEY` | No | -- | Serper search API key (premium search provider) |
+| `BRAVE_API_KEY` | No | -- | Brave Search API key (cloud search provider) |
+| `TAVILY_API_KEY` | No | -- | Tavily Search API key (cloud search provider) |
+| `EXA_API_KEY` | No | -- | Exa Search API key (cloud search provider) |
 | `GITHUB_TOKEN` | No | auto-detect | GitHub token for docs discovery (60 -> 5000 req/hr). Auto-detected from `gh auth token` |
 
 ### Embedding and Reranking
@@ -190,9 +192,9 @@ All environment variables are **optional**. The server works in local mode (ONNX
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `WET_AUTO_SEARXNG` | No | `true` | Auto-start embedded SearXNG subprocess |
-| `WET_SEARXNG_PORT` | No | `41592` | SearXNG port |
-| `SEARXNG_URL` | No | `http://localhost:41592` | External SearXNG URL (when auto disabled) |
+| `WET_AUTO_SEARXNG` | No | `true` | Auto-start embedded SearXNG when the runtime can launch it; `uvx` stdio uses Docker or an external backend instead |
+| `WET_SEARXNG_PORT` | No | `41592` | SearXNG port for source/Docker runs |
+| `SEARXNG_URL` | No | -- | External SearXNG URL |
 | `SEARXNG_TIMEOUT` | No | `30` | SearXNG request timeout in seconds |
 
 ### File Conversion
@@ -235,7 +237,7 @@ All environment variables are **optional**. The server works in local mode (ONNX
 
 ### Stdio Mode (default)
 
-Set API keys directly as environment variables. Basic SearXNG search works without any env. Advanced features (cloud embedding, Gemini LLM, premium search) activate when corresponding keys are set. Credentials live only in the local process environment.
+Set API keys or `SEARXNG_URL` according to the selected transport. In `uvx` stdio, basic web search is not zero-config because local SearXNG cannot auto-start; content extraction and other non-SearXNG paths remain available without search credentials. HTTP/Docker modes can use the configured backend chain and relay auth.
 
 ### HTTP Mode (optional, multi-user)
 

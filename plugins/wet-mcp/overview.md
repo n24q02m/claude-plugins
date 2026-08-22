@@ -19,10 +19,18 @@ Runs over stdio with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, a
 
 ## Configuration
 
-Basic web search works with no credentials. Optional capabilities are unlocked with your own keys and model chains, all supplied as environment variables -- leave any unset to fall back to bundled local defaults:
+`uvx` stdio web search needs a cloud/external search backend or Docker because
+local SearXNG cannot auto-start in the uvx tool environment. Content
+extraction and other non-SearXNG paths can run without search credentials.
+Optional capabilities are unlocked with your own keys and model chains:
 
-- `EMBEDDING_MODELS`, `RERANK_MODELS`, `LLM_MODELS` -- optional CSV model chains for embedding, reranking, and LLM features; empty falls back to the bundled local model or disables the feature.
-- Provider API keys (`JINA_AI_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY`) and `GITHUB_TOKEN` for a higher docs-discovery rate limit.
+- `SEARCH_BACKENDS` / `SEARCH_BACKEND` -- ordered search providers:
+  `searxng`, `tavily`, `brave`, or `exa`.
+- `EMBEDDING_MODELS`, `RERANK_MODELS`, `LLM_MODELS` -- optional CSV model
+  chains for embedding, reranking, and LLM features; empty uses local defaults
+  where the selected runtime supports them.
+- Provider API keys (`JINA_AI_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`,
+  `COHERE_API_KEY`) and `GITHUB_TOKEN` for a higher docs-discovery rate limit.
 
 Use placeholders in shared config and never commit real keys. Full walkthrough in [setup](/servers/wet-mcp/setup/).
 

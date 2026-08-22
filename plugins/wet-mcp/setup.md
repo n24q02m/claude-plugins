@@ -1,6 +1,6 @@
 # WET (Web Extended Toolkit) -- Manual Setup Guide
 
-> **2026-05-02 Update (v&lt;auto&gt;+)**: Plugin install (Method 1) uses stdio mode. Basic SearXNG search works without env; advanced features (GDrive sync, Brave, Serper, Gemini) need optional env vars OR HTTP mode for OAuth flows.
+> **2026-08-22 Update (v3.7.4+)**: Plugin install (Method 1) uses stdio mode. In a `uvx` tool environment, web search needs a configured cloud backend (`TAVILY_API_KEY`, `BRAVE_API_KEY`, or `EXA_API_KEY`) or an external `SEARXNG_URL`; local SearXNG auto-start is unavailable there. Use Method 2 (Docker stdio) for bundled local SearXNG.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 
 ## Method overview
@@ -25,7 +25,7 @@ All MCP servers across this stack share this priority hierarchy. Note: 2 plugins
 
 ## Method 1: Plugin Install (stdio default)
 
-For Claude Code users, the plugin approach is the simplest. Plugin install uses **stdio mode** -- basic SearXNG web search works **without any env vars**. Advanced features require optional API keys.
+For Claude Code users, the plugin approach is the simplest. Plugin install uses **stdio mode**. In a `uvx` tool environment, web search requires a cloud/external backend or Docker; content extraction and other non-SearXNG paths remain available without search credentials. Advanced features require optional API keys.
 
 ### Credential prompts at install
 
@@ -49,7 +49,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
    ```
 3. Restart Claude Code -- the server starts automatically when CC launches with the values injected.
 
-Without env vars: basic SearXNG metasearch, content extraction, library docs, ONNX local embedding/reranking all work. With env vars: cloud embedding/reranking (faster), Gemini LLM analysis, premium search providers.
+Without env vars: content extraction and local library-docs paths can run, but `uvx` stdio web search cannot auto-start local SearXNG. Set a cloud backend key or `SEARXNG_URL`, or use Method 2 for bundled SearXNG. With env vars: cloud embedding/reranking (faster), Gemini LLM analysis, and premium search providers.
 
 > **Note**: This installs the full plugin (skills + agents + hooks + commands + stdio MCP server). If you'd rather use Method 2 (Docker stdio) or Method 3 (HTTP) below, DO NOT `/plugin install` this plugin — pick Method 2 or Method 3 instead. All three methods are mutually exclusive (see Method overview).
 
@@ -213,9 +213,10 @@ All environment variables are **optional**. See [docs/setup-with-agent.md](setup
 | `COHERE_API_KEY` | -- | Cohere: embedding + reranking |
 | `WEB_CORE_LLM_MODEL` | auto-detect | Override the LLM model used for content-selector inference |
 | `BRAVE_API_KEY` | -- | Brave Search API key (premium search) |
-| `SERPER_API_KEY` | -- | Serper search API key (premium search) |
+| `TAVILY_API_KEY` | -- | Tavily Search API key (cloud search) |
+| `EXA_API_KEY` | -- | Exa Search API key (cloud search) |
 | `GITHUB_TOKEN` | auto-detect | GitHub token for docs discovery |
-| `WET_AUTO_SEARXNG` | `true` | Auto-start embedded SearXNG |
+| `WET_AUTO_SEARXNG` | `true` | Auto-start embedded SearXNG when the runtime can launch it; `uvx` stdio uses Docker or an external backend instead |
 | `SYNC_ENABLED` | `true` | Enable Google Drive sync |
 | `LOG_LEVEL` | `INFO` | Logging level |
 
@@ -224,4 +225,4 @@ All environment variables are **optional**. See [docs/setup-with-agent.md](setup
 - **Embedding**: Jina AI > Gemini > OpenAI > Cohere > local ONNX model
 - **Reranking**: Jina AI > Cohere > local ONNX model
 - **LLM**: Gemini > OpenAI > Disabled
-- **Search**: Brave > Serper > Jina AI > SearXNG (always available locally)
+- **Search**: configured `SEARCH_BACKENDS` chain (`searxng`, `tavily`, `brave`, `exa`); local SearXNG is available in source/Docker runs, while `uvx` stdio requires a cloud key or external `SEARXNG_URL`
