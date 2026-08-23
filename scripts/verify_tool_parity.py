@@ -77,6 +77,10 @@ PLUGINS_DIR = "plugins"
 # with the ``__`` namespace separator (e.g. ``config__open_relay``).
 TOOL_NAME_RE = re.compile(r"^[a-z][a-z0-9]*(?:_{1,2}[a-z0-9]+)*$")
 
+UNBACKTICK_RE = re.compile(r"^`([^`]+)`")
+HEADING_RE = re.compile(r"^##\s+(.+?)\s*$")
+SEP_ROW_RE = re.compile(r":?-{2,}:?")
+
 # plugin.json env values are templates the client fills in
 # (e.g. "${user_config.GEMINI_API_KEY}"). Passing them through literally would
 # hand the server a nonsense credential, so they are dropped and the server
@@ -121,7 +125,7 @@ def _table_row_cells(line: str) -> list[str]:
 
 
 def _unbacktick(cell: str) -> str:
-    match = re.match(r"^`([^`]+)`", cell)
+    match = UNBACKTICK_RE.match(cell)
     return match.group(1) if match else cell
 
 
@@ -131,7 +135,7 @@ def declared_names(markdown: str) -> set[str]:
     in_tool_table = False
 
     for line in markdown.splitlines():
-        heading = re.match(r"^##\s+(.+?)\s*$", line)
+        heading = HEADING_RE.match(line)
         if heading:
             in_tool_table = False
             candidate = _unbacktick(heading.group(1))
@@ -150,7 +154,7 @@ def declared_names(markdown: str) -> set[str]:
             continue
 
         # Separator row (|---|---|) keeps the table open.
-        if all(re.fullmatch(r":?-{2,}:?", c) for c in cells if c):
+        if all(SEP_ROW_RE.fullmatch(c) for c in cells if c):
             continue
 
         if in_tool_table:
