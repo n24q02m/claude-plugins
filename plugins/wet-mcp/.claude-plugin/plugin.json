@@ -6,19 +6,19 @@
     "EMBEDDING_MODELS": {
       "type": "string",
       "title": "Embedding model chain (optional)",
-      "description": "CSV 'provider/model,provider/model' (order = litellm fallback); provider inferred from prefix. Empty = local ONNX (qwen3-embed). Example: jina_ai/jina-embeddings-v5-text-small,gemini/gemini-embedding-001",
+      "description": "CSV 'provider/model,provider/model' (order = litellm fallback); provider inferred from prefix. Empty = local ONNX. Example: provider/model-a,provider/model-b",
       "required": false
     },
     "RERANK_MODELS": {
       "type": "string",
       "title": "Rerank model chain (optional)",
-      "description": "CSV 'provider/model,...'; provider inferred from prefix. Empty = local ONNX cross-encoder. Example: jina_ai/jina-reranker-v3",
+      "description": "CSV 'provider/model,...'; provider inferred from prefix. Empty = local ONNX cross-encoder. Example: provider/rerank-model-a",
       "required": false
     },
     "LLM_MODELS": {
       "type": "string",
       "title": "LLM model chain (optional)",
-      "description": "CSV 'provider/model,...'; provider inferred from prefix. Empty = LLM features off. Example: gemini/gemini-3-flash-preview,openai/gpt-5.4-mini",
+      "description": "CSV 'provider/model,...'; provider inferred from prefix. Empty = LLM features off. Example: provider/chat-model-a,provider/chat-model-b",
       "required": false
     },
     "JINA_AI_API_KEY": {

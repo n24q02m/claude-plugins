@@ -6,13 +6,13 @@
     "EMBEDDING_MODELS": {
       "type": "string",
       "title": "Embedding model chain (optional)",
-      "description": "CSV 'provider/model,provider/model' (order = litellm fallback); provider inferred from prefix. Empty = local ONNX (qwen3-embed). Example: jina_ai/jina-embeddings-v5-text-small,gemini/gemini-embedding-001",
+      "description": "CSV 'provider/model,provider/model' (order = litellm fallback); provider inferred from prefix. Empty = local ONNX. Example: provider/model-a,provider/model-b",
       "required": false
     },
     "SUMMARY_MODELS": {
       "type": "string",
       "title": "Summarizer model chain (optional)",
-      "description": "CSV 'provider/model,...' for the graph summarize action; provider inferred from prefix. Empty = summaries disabled. Chat-completion providers only (gemini/openai). Example: gemini/gemini-2.5-flash,openai/gpt-4o-mini",
+      "description": "CSV 'provider/model,...' for the graph summarize action; provider inferred from prefix. Empty = summaries disabled. Chat-completion providers only. Example: provider/chat-model-a,provider/chat-model-b",
       "required": false
     },
     "JINA_AI_API_KEY": {

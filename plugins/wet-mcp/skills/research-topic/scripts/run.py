@@ -35,7 +35,7 @@ async def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--synthesis-model",
         default=None,
-        help="Override LLM model for synthesis (e.g. gemini-3-flash-preview).",
+        help="Override LLM model for synthesis (e.g. provider/model-id).",
     )
     parser.add_argument(
         "--token-budget",
