@@ -14,7 +14,7 @@ Two single-purpose tools -- `understand` and `generate` -- plus the universal `c
 
 ## Clients
 
-Defaults to `local-relay` for a single-user browser credential flow and also runs over stdio; self-host the HTTP build for claude.ai web compatibility and multi-user isolation. Works with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, and Windsurf. See the [modes overview](/get-started/modes-overview/).
+Defaults to local `stdio` through the marketplace plugin. `local-relay` and self-hosted HTTP remain available for browser credential flow, web clients, and multi-user isolation. Works with Claude Code, Codex, Gemini CLI, Cursor, and Windsurf. See the [modes overview](/get-started/modes-overview/).
 
 ## Configuration
 

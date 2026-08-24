@@ -3,16 +3,16 @@ title: Server comparison
 description: Side-by-side comparison of all 9 servers in the stack, plus the mcp-core foundation library.
 ---
 
-| Server | Tools | Default mode | Multi-user | Docker | Language | License |
-|---|---:|---|:-:|:-:|---|---|
+| Server | Tools | Default mode | Multi-user | Container distribution | Language | License |
+|---|---:|---|:-:|---|---|---|
 | `mcp-core` | — | (foundation lib) | — | — | TypeScript + Python | Apache-2.0 |
-| `wet-mcp` | 4 + 2 | `local-relay` | yes (relay) | GHCR | Python | Apache-2.0 |
-| `mnemo-mcp` | 5 + 2 | `local-relay` | yes (relay) | GHCR | Python | Apache-2.0 |
-| `better-code-review-graph` | 5 + 2 | `local-relay` | yes (relay) | GHCR | Python | Apache-2.0 |
-| `imagine-mcp` | 4 + 2 | `local-relay` | yes (relay) | GHCR | Python | Apache-2.0 |
-| `better-telegram-mcp` | 6 + 2 | `remote-relay` | yes (relay+OAuth) | GHCR | Python | Apache-2.0 |
-| `better-notion-mcp` | 7 + 2 | `remote-oauth` | yes (relay+OAuth) | GHCR | TypeScript | Apache-2.0 |
-| `better-email-mcp` | 6 + 2 | `remote-relay` | yes (relay+OAuth) | GHCR | TypeScript | Apache-2.0 |
+| `wet-mcp` | 4 + 2 | `stdio` | yes (relay) | Source build | Python | Apache-2.0 |
+| `mnemo-mcp` | 5 + 2 | `stdio` | yes (relay) | Source build | Python | Apache-2.0 |
+| `better-code-review-graph` | 5 + 2 | `stdio` | yes (relay) | Source build | Python | Apache-2.0 |
+| `imagine-mcp` | 4 + 2 | `stdio` | yes (relay) | GHCR | Python | Apache-2.0 |
+| `better-telegram-mcp` | 6 + 2 | `stdio` | yes (relay+OAuth) | GHCR | Python | Apache-2.0 |
+| `better-notion-mcp` | 7 + 2 | `stdio` | yes (relay+OAuth) | GHCR | TypeScript | Apache-2.0 |
+| `better-email-mcp` | 6 + 2 | `stdio` | yes (relay+OAuth) | GHCR | TypeScript | Apache-2.0 |
 | `better-godot-mcp` | 19 + 2 | `stdio` | no | GHCR | TypeScript | Apache-2.0 |
 | `better-workspace-mcp` | 11 + 2 | `stdio` | yes (OAuth) | GHCR | TypeScript | Apache-2.0 |
 
@@ -20,10 +20,14 @@ description: Side-by-side comparison of all 9 servers in the stack, plus the mcp
 
 ## At a glance
 
-- **Most servers default to `local-relay`** — single-user browser flow, simplest first-run UX.
-- **Notion / Email / Telegram default to remote** — team-shared deploy is the common scenario for these.
-- **Godot defaults to `stdio`** — no credentials needed, just a Godot-engine spawn.
-- **Workspace defaults to `stdio`** — you bring your own Google OAuth client, and the first run consents through a loopback redirect. Its HTTP mode is self-host only; there is no hosted instance.
+- **Every marketplace plugin defaults to `stdio`** — local install is the safe,
+  portable baseline.
+- **Relay/OAuth modes are explicit self-hosted overrides** — use them for
+  multi-user or browser-auth scenarios.
+- **Telegram's managed hosted runtime is retired** — local stdio and self-hosted
+  HTTP remain supported.
+- **Workspace OAuth differs by transport** — stdio uses a Desktop OAuth client;
+  self-hosted HTTP uses a Web application client.
 - **mcp-core is not a server** — it's the shared library every other server consumes (transport, OAuth AS, lifecycle, multi-user primitives).
 
 ## Which to install first?

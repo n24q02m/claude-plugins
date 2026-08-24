@@ -46,7 +46,9 @@ Plus metadata (cleartext): created-at, last-rotated-at, expires-at, version. Use
 # docker-compose.yml
 services:
   wet-mcp:
-    image: ghcr.io/n24q02m/wet-mcp:latest
+    build:
+      context: /path/to/wet-mcp
+      target: http
     environment:
       MCP_TRANSPORT: http
       PUBLIC_URL: https://wet-mcp.team.example

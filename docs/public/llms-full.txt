@@ -7,7 +7,7 @@ Marketplace + source: https://github.com/n24q02m/claude-plugins
 
 ## What this is
 
-A curated stack of MCP servers for Claude Code, Codex, Gemini CLI, Cursor, and Windsurf — sharing one foundation library (`mcp-core`) and one plugin marketplace. Each server is published as a Claude Code plugin, an npm or PyPI package (per language), and a Docker image on GHCR. Setup takes one command.
+A curated stack of MCP servers for Claude Code, Codex, Gemini CLI, Cursor, and Windsurf — sharing one foundation library (`mcp-core`) and one plugin marketplace. Marketplace plugins and npm/PyPI packages are the portable baseline. WET, Mnemo, and CRG document source-built containers; maintained OCI packages vary by server.
 
 ## Why this suite and not just any MCP server
 
@@ -16,14 +16,14 @@ A curated stack of MCP servers for Claude Code, Codex, Gemini CLI, Cursor, and W
 - **Composite tools, not raw API mirrors**: each server exposes a small set of multiplexed tools (the "N+2" layout — a handful of tools that each take an `action` parameter, plus `config` and `help`). Tool lists are curated for AI-agent ergonomics: fewer round-trips, less prompt clutter.
 - **External content is marked**: servers that return content authored by third parties (web pages, Notion pages, emails, Telegram messages, Godot project files) wrap it with an untrusted-source marker so an agent treats it as data, not instructions — a defense against indirect prompt injection.
 - **Bring your own credentials**: bundled defaults get you started; supply your own API keys or OAuth clients to run fully under your own accounts.
-- **Production-grade releases**: signed Docker images, semantic-versioned packages, automated CI (static analysis, secret scanning, push protection, dependency updates).
+- **Production-grade releases**: semantic-versioned packages, source/self-host container paths where applicable, and automated CI (static analysis, secret scanning, push protection, dependency updates).
 
 ## Setup modes
 
 - **stdio**: the client launches the server as a subprocess. Simplest; single-user; credentials from the environment.
 - **local-relay**: the server runs locally but serves a browser configuration form so you set credentials without editing environment variables.
-- **remote-relay**: the server runs as a hosted HTTP endpoint; credentials are configured per user through a browser form and stored server-side, scoped by user.
-- **remote-oauth**: hosted HTTP with full OAuth 2.1 authorization.
+- **remote-relay**: the server runs as a self-hosted HTTP endpoint; credentials are configured per user through a browser form and stored server-side, scoped by user.
+- **remote-oauth**: self-hosted HTTP with full OAuth 2.1 authorization. Telegram's former managed hosted runtime is retired.
 
 ## Servers
 

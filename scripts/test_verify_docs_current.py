@@ -6,6 +6,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from pathlib import Path
 
 import verify_docs_current
 
@@ -73,6 +74,86 @@ class TestVerifyDocsCurrent(unittest.TestCase):
         self._make_plugin("mcp-core", mcp=False, docs={"architecture.md": "# arch"})
         # Success path returns normally (no sys.exit).
         verify_docs_current.verify_docs_current()
+
+
+class TestDistributionLifecycleDocs(unittest.TestCase):
+    """Repository contracts for retired hosted/OCI distribution surfaces."""
+
+    root = Path(__file__).resolve().parents[1]
+
+    def _read(self, relative: str) -> str:
+        return (self.root / relative).read_text(encoding="utf-8")
+
+    def test_sunset_oci_plugins_document_source_builds_without_current_aliases(self):
+        retired_aliases = {
+            "wet-mcp": (
+                "n24q02m/wet-mcp:latest",
+                "ghcr.io/n24q02m/wet-mcp",
+                "docker.io/n24q02m/wet-mcp",
+            ),
+            "mnemo-mcp": (
+                "n24q02m/mnemo-mcp:latest",
+                "ghcr.io/n24q02m/mnemo-mcp",
+                "docker.io/n24q02m/mnemo-mcp",
+            ),
+            "better-code-review-graph": (
+                "n24q02m/better-code-review-graph:latest",
+                "ghcr.io/n24q02m/better-code-review-graph",
+                "docker.io/n24q02m/better-code-review-graph",
+            ),
+        }
+
+        for plugin, aliases in retired_aliases.items():
+            plugin_dir = self.root / "plugins" / plugin
+            docs = "\n".join(
+                path.read_text(encoding="utf-8") for path in plugin_dir.glob("*.md")
+            )
+            for alias in aliases:
+                self.assertNotIn(alias, docs, f"{plugin} still recommends {alias}")
+            self.assertIn("build", docs.lower())
+
+        comparison = self._read(
+            "docs/src/content/docs/reference/server-comparison.md"
+        )
+        for plugin in retired_aliases:
+            row = next(
+                line for line in comparison.splitlines() if f"`{plugin}`" in line
+            )
+            self.assertIn("Source build", row)
+            self.assertNotIn("GHCR", row)
+
+    def test_telegram_defaults_to_stdio_and_marks_hosted_runtime_retired(self):
+        manifest = json.loads(
+            self._read(
+                "plugins/better-telegram-mcp/.claude-plugin/plugin.json"
+            )
+        )
+        server = manifest["mcpServers"]["better-telegram-mcp"]
+        self.assertEqual(server["command"], "uvx")
+        self.assertEqual(server["env"]["MCP_TRANSPORT"], "stdio")
+
+        overview = self._read("plugins/better-telegram-mcp/overview.md")
+        self.assertIn("Defaults to local stdio", overview)
+        self.assertIn("hosted runtime is retired", overview)
+        self.assertNotIn("Defaults to a team-shared remote deployment", overview)
+
+        mode_matrix = self._read(
+            "docs/src/content/docs/reference/mode-matrix.md"
+        )
+        telegram_row = next(
+            line
+            for line in mode_matrix.splitlines()
+            if "`better-telegram-mcp`" in line
+        )
+        self.assertTrue(telegram_row.rstrip().endswith("| `stdio` |"))
+
+    def test_public_docs_do_not_claim_every_server_publishes_oci(self):
+        index = self._read("docs/src/content/docs/index.mdx")
+        llms = self._read("docs/public/llms.txt")
+
+        self.assertNotIn("signed Docker images", index)
+        self.assertNotIn("Each server ships", llms)
+        self.assertIn("Source-built containers", llms)
 
 
 if __name__ == "__main__":

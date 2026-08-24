@@ -24,7 +24,7 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 A curated stack of MCP (Model Context Protocol) servers for Claude Code, Codex, Gemini CLI, Cursor, and Windsurf — sharing one foundation library (`mcp-core`) and one plugin marketplace (`n24q02m/claude-plugins`).
 
-Each server is published as a Claude Code plugin, an npm or PyPI package (per language), and a Docker image on GHCR. Setup takes one command.
+Each server is available through the Claude Code marketplace and its npm or PyPI package. Container distribution is server-specific: WET, Mnemo, and CRG now document source builds, while maintained OCI packages remain listed per server.
 
 ## The servers
 
@@ -46,7 +46,7 @@ Each server is published as a Claude Code plugin, an npm or PyPI package (per la
 - **One foundation, nine consumers**: every server reuses `mcp-core`'s transport, OAuth AS, lifecycle, and multi-user primitives. No bespoke auth code per server.
 - **Multi-user by construction**: `remote-relay` and `remote-oauth` modes scope credentials per-JWT-sub. Self-host once, share with a team.
 - **Composite tools, not raw API mirrors**: each server's tool list is curated for AI-agent ergonomics — fewer round-trips, less prompt clutter.
-- **Production-grade releases**: signed Docker images, semantic-versioned packages, automated CI (CodeQL, secret scanning, push protection, Dependabot).
+- **Production-grade releases**: semantic-versioned packages, source/self-host container paths where applicable, and automated CI (CodeQL, secret scanning, push protection, Dependabot).
 
 ## Common workflows
 

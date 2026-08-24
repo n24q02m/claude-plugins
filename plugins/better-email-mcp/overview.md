@@ -15,7 +15,7 @@ Four action-driven tools -- `messages`, `folders`, `attachments`, and `config` -
 
 ## Clients
 
-Defaults to a team-shared remote deployment (`remote-relay`) and also runs over stdio for single-user local use. Works with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web. See the [modes overview](/get-started/modes-overview/).
+Defaults to local `stdio` through the marketplace plugin. `remote-relay` remains available for explicit HTTP deployments. Works with Claude Code, Codex, Gemini CLI, Cursor, Windsurf, and HTTP-capable web clients. See the [modes overview](/get-started/modes-overview/).
 
 ## Configuration
 

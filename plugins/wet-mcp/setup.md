@@ -5,17 +5,18 @@
 
 ## Method overview
 
-This plugin supports 3 install methods. Pick the one that matches your use case:
+This plugin supports three install methods. Pick the one that matches your use case:
 
 | Priority | Method | Transport | Best for |
 |---|---|---|---|
-| **1. Default** | Plugin install (`uvx`/`npx`) | stdio | Quick local start, single workstation, no OAuth/HTTP needed. |
-| **2. Fallback** | Docker stdio (`docker run -i --rm`) | stdio | Windows/macOS where native uvx/npx hits PATH or Python version issues. |
-| **3. Recommended** | Docker HTTP (`docker run -p 8080:8080`) | HTTP | Multi-device, OAuth/relay-form auth, team self-host, claude.ai web compatibility. |
+| **1. Default** | Plugin install (`uvx`) | stdio | Quick local start, single workstation, no OAuth/HTTP needed. |
+| **2. Fallback** | Source-built Docker stdio | stdio | Windows/macOS where native `uvx` hits PATH or Python-version issues. |
+| **3. Advanced** | Source-built Docker HTTP | HTTP | Multi-device, OAuth/relay-form auth, team self-host, claude.ai web compatibility. |
 
-All MCP servers across this stack share this priority hierarchy. Note: 2 plugins (`better-godot-mcp` and `better-code-review-graph`) default to **stdio via plugin install** and do not offer a hosted remote-relay/OAuth mode. They do ship Docker images (`:stdio` and `:http` targets) and support HTTP transport for self-hosting (`MCP_TRANSPORT=http` / `--http`), so Methods 2 and 3 are available as advanced self-host paths -- they are just not the default.
+Public OCI image publication for WET is discontinued. Historical registry tags
+remain untouched; Methods 2 and 3 build from the current source checkout.
 
-> **⚠️ Mutually exclusive — pick ONE per plugin**: If you choose Method 2 (Docker stdio override) OR Method 3 (HTTP), do NOT also `/plugin install` this plugin via marketplace. Both load simultaneously and create duplicate entries in `/mcp` dialog (plugin's stdio + your override). Plugin matching is by **endpoint** (URL or command string) per CC docs, not by name — and `npx`/`uvx` ≠ `docker` ≠ HTTP URL, so all three are distinct endpoints. Trade-off: choosing Method 2 or Method 3 means you lose this plugin's skills/agents/hooks/commands. For full plugin features, use Method 1 (default plugin install) with `userConfig` credentials prompted at install time.
+> **⚠️ Mutually exclusive — pick ONE per plugin**: If you choose Method 2 (Docker stdio override) OR Method 3 (HTTP), do NOT also `/plugin install` this plugin via marketplace. Both load simultaneously and create duplicate entries in `/mcp` dialog (plugin's stdio + your override). Plugin matching is by **endpoint** (URL or command string) per CC docs, not by name — and `uvx` ≠ `docker` ≠ HTTP URL, so all three are distinct endpoints. Trade-off: choosing Method 2 or Method 3 means you lose this plugin's skills/agents/hooks/commands. For full plugin features, use Method 1 (default plugin install) with `userConfig` credentials prompted at install time.
 
 ## Prerequisites
 
@@ -54,15 +55,17 @@ Without env vars: basic SearXNG metasearch, content extraction, library docs, ON
 
 > **Note**: This installs the full plugin (skills + agents + hooks + commands + stdio MCP server). If you'd rather use Method 2 (Docker stdio) or Method 3 (HTTP) below, DO NOT `/plugin install` this plugin — pick Method 2 or Method 3 instead. All three methods are mutually exclusive (see Method overview).
 
-## Method 2: Docker stdio (fallback)
+## Method 2: Source-built Docker stdio (fallback)
 
 > **⚠️ Before adding the Docker stdio override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall wet-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's `npx`/`uvx` stdio + your `docker run` stdio) will load simultaneously since plugin matches by endpoint (command string), not by name.
 >
 > **Trade-off accepted**: Choosing this method means you lose this plugin's skills/agents/hooks/commands. Use Method 1 instead if you want full plugin features.
 
-1. Pull the image:
+1. Clone the repository and build the stdio target:
    ```bash
-   docker pull n24q02m/wet-mcp:latest
+   git clone https://github.com/n24q02m/wet-mcp
+   cd wet-mcp
+   docker build --target stdio -t wet-mcp:local .
    ```
 
 2. Run with environment variables:
@@ -72,7 +75,7 @@ Without env vars: basic SearXNG metasearch, content extraction, library docs, ON
      -v wet-data:/data \
      -e JINA_AI_API_KEY=your_key_here \
      -e GEMINI_API_KEY=your_key_here \
-     n24q02m/wet-mcp:latest
+     wet-mcp:local
    ```
 
 3. Or add to your MCP client config:
@@ -88,7 +91,7 @@ Without env vars: basic SearXNG metasearch, content extraction, library docs, ON
            "-e", "JINA_AI_API_KEY",
            "-e", "GEMINI_API_KEY",
            "-e", "GITHUB_TOKEN",
-           "n24q02m/wet-mcp:latest"
+           "wet-mcp:local"
          ]
        }
      }
@@ -106,7 +109,7 @@ Stdio mode is the default and works for most personal/single-user scenarios. Con
 - **Multi-user team sharing** -- single self-hosted instance supports N users with per-JWT-sub credential isolation
 - **Always-on persistent process** -- ideal for webhooks, scheduled agents, or background automation
 
-## Method 3: Docker HTTP (recommended)
+## Method 3: Source-built Docker HTTP
 
 > **⚠️ Before adding the HTTP override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall wet-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's stdio + your HTTP override) will load simultaneously since plugin matches by endpoint, not name.
 >
@@ -118,15 +121,16 @@ Stdio mode is the default and works for most personal/single-user scenarios. Con
 
 HTTP mode runs as a persistent multi-user server with browser-based credential setup. GDrive OAuth uses a **bundled public Google Desktop client** (`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`) per Google's official Desktop OAuth pattern -- no user-side OAuth registration is required. Users authenticate via the device-code flow in their browser.
 
-1. Run the server in HTTP mode:
+1. From the same source checkout, build and run the HTTP target:
    ```bash
+   docker build --target http -t wet-mcp:local .
    docker run -d --name wet-mcp-http \
      -p 8080:8080 \
      -v wet-data:/data \
      -e MCP_TRANSPORT=http \
      -e PUBLIC_URL=https://wet.example.com \
      -e MCP_DCR_SERVER_SECRET=your-random-secret \
-     n24q02m/wet-mcp:latest
+     wet-mcp:local
    ```
 
 2. Configure your MCP client to connect to the HTTP endpoint:
@@ -190,7 +194,7 @@ export WET_SEARXNG_PORT=41593
 If you encounter permission errors with the Docker volume:
 
 ```bash
-docker run -i --rm -v wet-data:/data --user $(id -u):$(id -g) n24q02m/wet-mcp:latest
+docker run -i --rm -v wet-data:/data --user $(id -u):$(id -g) wet-mcp:local
 ```
 
 ### Embedding model download fails

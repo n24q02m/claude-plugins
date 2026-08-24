@@ -16,7 +16,11 @@ Four composite tools -- `message`, `chat`, `media`, and `contact` -- driven by a
 
 ## Clients
 
-Defaults to a team-shared remote deployment (`remote-relay`) and also runs over stdio for single-user local use. Works with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web. See the [modes overview](/get-started/modes-overview/).
+Defaults to local stdio bot mode through the marketplace plugin. The managed
+hosted runtime is retired; HTTP, `remote-relay`, and `remote-oauth` remain
+available for deployments you self-host. Works with Claude Code, Codex, Gemini
+CLI, Cursor, Windsurf, and HTTP-capable web clients. See the
+[modes overview](/get-started/modes-overview/).
 
 ## Configuration
 

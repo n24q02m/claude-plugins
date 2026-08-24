@@ -24,7 +24,7 @@ The Bot API cannot look up a message's media by `(chat_id, message_id)`. In bot 
 ## Credentials or settings not saving
 
 - Under stdio there is no browser relay form -- `config__open_relay` returns `stdio_unsupported`. Set the bot token as an environment variable or `userConfig` field.
-- In remote-relay/HTTP mode, check `config(action="setup_status")` and reset with `config(action="setup_reset")` if it seems stuck to an old session. User-mode MTProto sessions are re-authenticated through the relay form.
+- In self-hosted HTTP mode, check `config(action="setup_status")` and reset with `config(action="setup_reset")` if it seems stuck to an old session. User-mode MTProto sessions are re-authenticated through the relay form.
 
 ## Transport mismatch / duplicate entries in `/mcp`
 

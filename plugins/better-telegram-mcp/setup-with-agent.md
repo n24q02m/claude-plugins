@@ -8,17 +8,18 @@
 
 ## Method overview
 
-This plugin supports 3 install methods. Pick the one that matches your use case:
+This plugin supports three install methods. Pick the one that matches your use case:
 
 | Priority | Method | Transport | Best for |
 |---|---|---|---|
-| **1. Default** | Plugin install (`uvx`/`npx`) | stdio | Quick local start, single workstation, no OAuth/HTTP needed. |
-| **2. Fallback** | Docker stdio (`docker run -i --rm`) | stdio | Windows/macOS where native uvx/npx hits PATH or Python version issues. |
-| **3. Recommended** | Docker HTTP (`docker run -p 8080:8080`) | HTTP | Multi-device, OAuth/relay-form auth, team self-host, claude.ai web compatibility. |
+| **1. Default** | Plugin install (`uvx`) | stdio | Local bot mode on one workstation. |
+| **2. Fallback** | Docker stdio | stdio | Containerized local bot mode. |
+| **3. Advanced** | Self-hosted Docker HTTP | HTTP | MTProto user mode, multi-device, OAuth/relay-form auth, or team use. |
 
-All MCP servers across this stack share this priority hierarchy. Note: 2 plugins (`better-godot-mcp` and `better-code-review-graph`) only support Method 1 (stdio) -- they need direct host access to project files / repo paths and don't ship Docker / HTTP variants.
+The managed Telegram hosted runtime is retired. The portable package, public
+container image, and self-hosted HTTP modes remain supported.
 
-> **⚠️ Mutually exclusive — pick ONE per plugin**: If you choose Method 2 (Docker stdio override) OR Method 3 (HTTP), do NOT also `/plugin install` this plugin via marketplace. Both load simultaneously and create duplicate entries in `/mcp` dialog (plugin's stdio + your override). Plugin matching is by **endpoint** (URL or command string) per CC docs, not by name — and `npx`/`uvx` ≠ `docker` ≠ HTTP URL, so all three are distinct endpoints. Trade-off: choosing Method 2 or Method 3 means you lose this plugin's skills/agents/hooks/commands. For full plugin features, use Method 1 (default plugin install) with `userConfig` credentials prompted at install time.
+> **⚠️ Mutually exclusive — pick ONE per plugin**: If you choose Option 2 (Docker stdio override) OR Option 3 (HTTP), do NOT also `/plugin install` this plugin via marketplace. Both load simultaneously and create duplicate entries in `/mcp` dialog (plugin's stdio + your override). Plugin matching is by **endpoint** (URL or command string) per CC docs, not by name — and `uvx` ≠ `docker` ≠ HTTP URL, so all three are distinct endpoints. Trade-off: choosing Option 2 or Option 3 means you lose this plugin's skills/agents/hooks/commands. For full plugin features, use Option 1 (default plugin install) with `userConfig` credentials prompted at install time.
 
 ## Option 1: Claude Code Plugin (Recommended, stdio Bot Mode Only)
 
@@ -84,7 +85,7 @@ Stdio (Options 1-2) is the simplest path for **bot mode**, but stdio cannot host
 - **Multi-user team sharing** -- HTTP supports per-JWT-sub credential isolation, so a team can share one self-hosted instance.
 - **Always-on persistent process** -- enables webhook listeners, long-running agents, and scheduled tasks.
 
-## Option 3: Docker HTTP (recommended)
+## Option 3: Self-hosted Docker HTTP
 
 > **⚠️ Before adding the HTTP override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall better-telegram-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's stdio + your HTTP override) will load simultaneously since plugin matches by endpoint, not name.
 >

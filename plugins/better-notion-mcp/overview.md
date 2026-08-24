@@ -16,7 +16,7 @@ Eight composite tools -- `pages`, `databases`, `blocks`, `users`, `workspace`, `
 
 ## Clients
 
-Defaults to a team-shared remote deployment (`remote-oauth`) and also runs over stdio for single-user local use. Works with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web. See the [modes overview](/get-started/modes-overview/).
+Defaults to local `stdio` through the marketplace plugin. `remote-oauth` remains available for explicit HTTP deployments. Works with Claude Code, Codex, Gemini CLI, Cursor, Windsurf, and HTTP-capable web clients. See the [modes overview](/get-started/modes-overview/).
 
 ## Configuration
 

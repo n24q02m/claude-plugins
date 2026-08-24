@@ -2,7 +2,7 @@
 
 > A curated suite of nine MCP servers on one foundation library — one transport, one setup command, and one multi-user auth model — so you run web search, memory, Notion, email, Telegram, code review, image generation, Google Workspace, and Godot without wiring up nine inconsistent servers.
 
-Each server ships as a Claude Code plugin, an npm or PyPI package, and a Docker image. Works with Claude Code, Codex, Gemini CLI, Cursor, and Windsurf. Self-host once and share with a team, or use the hosted endpoints. Every server reuses `mcp-core` for its transport, OAuth authorization server, lifecycle, and per-user credential scoping — no bespoke auth code per server.
+Marketplace plugins and npm/PyPI packages are the portable baseline. Source-built containers remain available for WET, Mnemo, and CRG; maintained OCI packages vary by server. Hosted runtimes are optional, and Telegram's managed hosted runtime is retired. The stack works with Claude Code, Codex, Gemini CLI, Cursor, and Windsurf. Every server reuses `mcp-core` for transport, OAuth authorization, lifecycle, and per-user credential scoping.
 
 ## Servers
 

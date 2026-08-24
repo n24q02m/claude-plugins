@@ -10,13 +10,13 @@ Each server has a fixed set of supported modes. Pick based on your scenario; swi
 | Server | stdio | local-relay | remote-relay | remote-oauth | Default |
 |---|:-:|:-:|:-:|:-:|---|
 | `mcp-core` | — | — | — | — | (foundation library, not a server) |
-| `wet-mcp` | yes | yes | yes | — | `local-relay` |
-| `mnemo-mcp` | yes | yes | yes | — | `local-relay` |
-| `better-code-review-graph` | yes | yes | yes | — | `local-relay` |
-| `imagine-mcp` | yes | yes | yes | — | `local-relay` |
-| `better-telegram-mcp` | yes | yes | yes | yes | `remote-relay` |
-| `better-notion-mcp` | yes | yes | yes | yes | `remote-oauth` |
-| `better-email-mcp` | yes | yes | yes | yes | `remote-relay` |
+| `wet-mcp` | yes | yes | yes | — | `stdio` |
+| `mnemo-mcp` | yes | yes | yes | — | `stdio` |
+| `better-code-review-graph` | yes | yes | yes | — | `stdio` |
+| `imagine-mcp` | yes | yes | yes | — | `stdio` |
+| `better-telegram-mcp` | yes | yes | yes | yes | `stdio` |
+| `better-notion-mcp` | yes | yes | yes | yes | `stdio` |
+| `better-email-mcp` | yes | yes | yes | yes | `stdio` |
 | `better-godot-mcp` | yes | — | — | — | `stdio` |
 | `better-workspace-mcp` | yes | — | — | yes | `stdio` |
 
@@ -40,9 +40,16 @@ Self-hosted server doubles as an OAuth 2.1 Authorization Server. Standard OAuth 
 
 ## Default mode rationale
 
-The default is what the plugin manifest sets in `mcp.json` when installed via marketplace. Override per-install if needed. Most servers default to `local-relay` (single-user with browser flow). `better-godot-mcp` defaults to `stdio` (no credentials needed). Notion/Email/Telegram default to remote because team-shared deploy is the common deployment pattern.
+The default is what the marketplace `plugin.json` installs. Every current server
+plugin defaults to local `stdio`; relay/OAuth modes are explicit self-hosted
+overrides. Telegram's former managed hosted runtime is retired, while its
+self-hosted `remote-relay` and `remote-oauth` modes remain supported.
 
-`better-workspace-mcp` defaults to `stdio` and skips the relay modes entirely: it has no credential paste form, because Google credentials are never pasted — the user consents on Google's own screen. In stdio that consent returns to a loopback address; in `remote-oauth` it returns to `/accounts/callback` on the deployment, which is why the two modes need different Google OAuth client types (Desktop vs Web application).
+`better-workspace-mcp` has no credential-paste relay mode: Google credentials
+are never pasted, because the user consents on Google's own screen. In stdio
+that consent returns to a loopback address; in `remote-oauth` it returns to
+`/accounts/callback` on the deployment, so the two modes need different Google
+OAuth client types (Desktop vs Web application).
 
 ## Anti-patterns
 

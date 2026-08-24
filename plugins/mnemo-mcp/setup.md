@@ -6,17 +6,18 @@
 
 ## Method overview
 
-This plugin supports 3 install methods. Pick the one that matches your use case:
+This plugin supports three install methods. Pick the one that matches your use case:
 
 | Priority | Method | Transport | Best for |
 |---|---|---|---|
-| **1. Default** | Plugin install (`uvx`/`npx`) | stdio | Quick local start, single workstation, no OAuth/HTTP needed. |
-| **2. Fallback** | Docker stdio (`docker run -i --rm`) | stdio | Windows/macOS where native uvx/npx hits PATH or Python version issues. |
-| **3. Recommended** | Docker HTTP (`docker run -p 8080:8080`) | HTTP | Multi-device, OAuth/relay-form auth, team self-host, claude.ai web compatibility. |
+| **1. Default** | Plugin install (`uvx`) | stdio | Quick local start, single workstation, no OAuth/HTTP needed. |
+| **2. Fallback** | Source-built Docker stdio | stdio | Windows/macOS where native `uvx` hits PATH or Python-version issues. |
+| **3. Advanced** | Source-built Docker HTTP | HTTP | Multi-device, OAuth/relay-form auth, team self-host, claude.ai web compatibility. |
 
-All MCP servers across this stack share this priority hierarchy. Note: 2 plugins (`better-godot-mcp` and `better-code-review-graph`) default to **stdio via plugin install** and do not offer a hosted remote-relay/OAuth mode. They do ship Docker images (`:stdio` and `:http` targets) and support HTTP transport for self-hosting (`MCP_TRANSPORT=http` / `--http`), so Methods 2 and 3 are available as advanced self-host paths -- they are just not the default.
+Public OCI image publication for Mnemo is discontinued. Historical registry tags
+remain untouched; Methods 2 and 3 build from the current source checkout.
 
-> **⚠️ Mutually exclusive — pick ONE per plugin**: If you choose Method 2 (Docker stdio override) OR Method 3 (HTTP), do NOT also `/plugin install` this plugin via marketplace. Both load simultaneously and create duplicate entries in `/mcp` dialog (plugin's stdio + your override). Plugin matching is by **endpoint** (URL or command string) per CC docs, not by name — and `npx`/`uvx` ≠ `docker` ≠ HTTP URL, so all three are distinct endpoints. Trade-off: choosing Method 2 or Method 3 means you lose this plugin's skills/agents/hooks/commands. For full plugin features, use Method 1 (default plugin install) with `userConfig` credentials prompted at install time.
+> **⚠️ Mutually exclusive — pick ONE per plugin**: If you choose Method 2 (Docker stdio override) OR Method 3 (HTTP), do NOT also `/plugin install` this plugin via marketplace. Both load simultaneously and create duplicate entries in `/mcp` dialog (plugin's stdio + your override). Plugin matching is by **endpoint** (URL or command string) per CC docs, not by name — and `uvx` ≠ `docker` ≠ HTTP URL, so all three are distinct endpoints. Trade-off: choosing Method 2 or Method 3 means you lose this plugin's skills/agents/hooks/commands. For full plugin features, use Method 1 (default plugin install) with `userConfig` credentials prompted at install time.
 
 ## Prerequisites
 
@@ -51,15 +52,17 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 
 > **Note**: This installs the full plugin (skills + agents + hooks + commands + stdio MCP server). If you'd rather use Method 2 (Docker stdio) or Method 3 (HTTP) below, DO NOT `/plugin install` this plugin — pick Method 2 or Method 3 instead. All three methods are mutually exclusive (see Method overview).
 
-## Method 2: Docker stdio (fallback)
+## Method 2: Source-built Docker stdio (fallback)
 
 > **⚠️ Before adding the Docker stdio override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall mnemo-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's `npx`/`uvx` stdio + your `docker run` stdio) will load simultaneously since plugin matches by endpoint (command string), not by name.
 >
 > **Trade-off accepted**: Choosing this method means you lose this plugin's skills/agents/hooks/commands. Use Method 1 instead if you want full plugin features.
 
-1. Pull the image:
+1. Clone the repository and build the stdio target:
    ```bash
-   docker pull n24q02m/mnemo-mcp:latest
+   git clone https://github.com/n24q02m/mnemo-mcp
+   cd mnemo-mcp
+   docker build --target stdio -t mnemo-mcp:local .
    ```
 
 2. Run with optional environment variables:
@@ -69,7 +72,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
      -v mnemo-data:/data \
      -e JINA_AI_API_KEY=your_key_here \
      -e GEMINI_API_KEY=your_key_here \
-     n24q02m/mnemo-mcp:latest
+     mnemo-mcp:local
    ```
 
 3. Or add to your MCP client config:
@@ -84,7 +87,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
            "-v", "mnemo-data:/data",
            "-e", "JINA_AI_API_KEY",
            "-e", "GEMINI_API_KEY",
-           "n24q02m/mnemo-mcp:latest"
+           "mnemo-mcp:local"
          ]
        }
      }
@@ -102,7 +105,7 @@ Stdio is the default and works fine for single-user local setups. You may want t
 - **Multi-user team sharing** -- a self-hosted server can serve multiple memory databases, each isolated per JWT-sub.
 - **Always-on persistent process for webhooks/agents** -- HTTP servers stay alive between sessions, enabling background sync, scheduled archive runs, or background memory consolidation.
 
-## Method 3: Docker HTTP (recommended)
+## Method 3: Source-built Docker HTTP
 
 > **⚠️ Before adding the HTTP override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall mnemo-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's stdio + your HTTP override) will load simultaneously since plugin matches by endpoint, not name.
 >
@@ -146,13 +149,21 @@ Share this password out-of-band (Signal/email/SMS) with anyone you invite to use
 
 ### Run the Server
 
+From a source checkout, build the HTTP target:
+
+```bash
+git clone https://github.com/n24q02m/mnemo-mcp
+cd mnemo-mcp
+docker build --target http -t mnemo-mcp:local .
+```
+
 ```bash
 docker run -p 8080:8080 \
   -e TRANSPORT_MODE=http \
   -e PUBLIC_URL=https://your-domain.com \
   -e MCP_DCR_SERVER_SECRET=$(openssl rand -hex 32) \
   -v mnemo-data:/data \
-  n24q02m/mnemo-mcp:latest
+  mnemo-mcp:local
 ```
 
 Point clients to your server:

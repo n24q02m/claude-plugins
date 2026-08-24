@@ -8,10 +8,9 @@
 
 This plugin **defaults to stdio via plugin install** (`uvx`/`npx`) -- the simplest path and the one this guide covers in full. It also ships Docker images (`:stdio` and `:http` targets) and supports HTTP transport (`MCP_TRANSPORT=http` / `--http`) for self-hosting. What it does **not** offer (unlike `better-notion-mcp`/`better-email-mcp`/`better-telegram-mcp`) is a hosted remote-relay/OAuth mode -- HTTP here is self-host only.
 
-For comparison, the other 7 plugins in this stack (`better-notion-mcp`, `better-email-mcp`, `better-telegram-mcp`, `wet-mcp`, `mnemo-mcp`, `imagine-mcp`, `better-workspace-mcp`) document 3 methods:
-1. **Default** -- Plugin install (`uvx`/`npx`) stdio
-2. **Fallback** -- Docker stdio (Windows/macOS PATH issues)
-3. **Recommended** -- Docker HTTP (multi-device, OAuth/relay form, claude.ai web)
+Other marketplace plugins also default to stdio. Their self-host options and
+container lifecycle vary by server; consult each plugin's guide instead of
+assuming one shared distribution path.
 
 > **⚠️ Mutually exclusive — pick ONE per plugin**: Do NOT stack `/plugin install` AND a user `mcpServers` override (Docker stdio or HTTP) — both would load simultaneously and create duplicate entries (plugin's `npx`/`uvx` stdio + your override). Plugin matching is by **endpoint** (URL or command string) per CC docs, not by name — and `npx`/`uvx` ≠ `docker` ≠ HTTP URL, so all three are distinct endpoints. Choosing the Docker stdio or HTTP self-host path means losing the plugin's skills/agents/hooks/commands. For full plugin features, use the default plugin install (Method 1) documented below.
 

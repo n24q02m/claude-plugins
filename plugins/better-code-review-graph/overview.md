@@ -15,7 +15,7 @@ Domain tools `graph`, `query`, `review`, and `security`, each driven by an `acti
 
 ## Clients
 
-Defaults to `stdio` and runs against a local checkout; it ships Docker `:http` builds for advanced self-host but has no hosted remote-relay mode by default. Works with any stdio MCP client -- Claude Code, Codex, Gemini CLI, Cursor, and Windsurf. See the [modes overview](/get-started/modes-overview/).
+Defaults to `stdio` and runs against a local checkout. The repository provides a source-built HTTP target for advanced self-hosting; new public OCI images are no longer published, and there is no hosted CRG runtime. Works with any stdio MCP client -- Claude Code, Codex, Gemini CLI, Cursor, and Windsurf. See the [modes overview](/get-started/modes-overview/).
 
 ## Configuration
 

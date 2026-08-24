@@ -179,8 +179,9 @@ Confirm:
 1. `mcp-clean-state --kill-daemons` was run (kills leftover bridge daemons).
 2. Restart your MCP client (Claude Code, Cursor, etc.) so it re-spawns the
    plugin process and re-discovers tools.
-3. The plugin's manifest does **not** point at an old `n24q02m/<plugin>:latest`
-   Docker image — pull `:stdio` or `:http` explicitly.
+3. The plugin manifest points to its current npm/PyPI package. For a container
+   override, follow that server's current README: WET, Mnemo, and CRG now build
+   from source, while other servers may still publish maintained OCI packages.
 
 ### "DeprecationWarning: run_smart_stdio_proxy"
 

@@ -8,14 +8,13 @@
 
 ## Method overview
 
-This plugin **defaults to stdio via plugin install** (`uvx`/`npx`) -- the simplest path and the one this guide covers in full. It also ships Docker images (`:stdio` and `:http` targets) and supports HTTP transport (`MCP_TRANSPORT=http` / `TRANSPORT_MODE=http` / `--http`) for multi-user self-hosting. What it does **not** offer (unlike `better-notion-mcp`/`better-email-mcp`/`better-telegram-mcp`) is a hosted remote-relay/OAuth mode -- HTTP here is self-host only.
+This plugin **defaults to stdio via plugin install** (`uvx`) -- the simplest path
+and the one this guide covers in full. The repository keeps `stdio` and `http`
+Dockerfile targets for source-built self-hosting, but new public OCI images are
+no longer published. Historical registry tags remain untouched. HTTP remains a
+self-host-only transport; there is no hosted CRG relay/OAuth runtime.
 
-For comparison, the other 7 plugins in this stack (`better-notion-mcp`, `better-email-mcp`, `better-telegram-mcp`, `wet-mcp`, `mnemo-mcp`, `imagine-mcp`, `better-workspace-mcp`) document 3 methods:
-1. **Default** -- Plugin install (`uvx`/`npx`) stdio
-2. **Fallback** -- Docker stdio (Windows/macOS PATH issues)
-3. **Recommended** -- Docker HTTP (multi-device, OAuth/relay form, claude.ai web)
-
-> **⚠️ Mutually exclusive — pick ONE per plugin**: Do NOT stack `/plugin install` AND a user `mcpServers` override (Docker stdio or HTTP) — both would load simultaneously and create duplicate entries (plugin's `npx`/`uvx` stdio + your override). Plugin matching is by **endpoint** (URL or command string) per CC docs, not by name — and `npx`/`uvx` ≠ `docker` ≠ HTTP URL, so all three are distinct endpoints. Choosing the Docker stdio or HTTP self-host path means losing the plugin's skills/agents/hooks/commands. For full plugin features, use the default plugin install (Method 1) documented below.
+> **⚠️ Mutually exclusive — pick ONE per plugin**: Do NOT stack `/plugin install` AND a user `mcpServers` override (source-built Docker stdio or HTTP) — both would load simultaneously and create duplicate entries (plugin's `uvx` stdio + your override). Plugin matching is by **endpoint** (URL or command string) per CC docs, not by name — and `uvx` ≠ `docker` ≠ HTTP URL, so all three are distinct endpoints. Choosing the Docker stdio or HTTP self-host path means losing the plugin's skills/agents/hooks/commands. For full plugin features, use the default plugin install (Method 1) documented below.
 
 ## Prerequisites
 
@@ -119,10 +118,14 @@ Build the graph first:
 graph(action="build", repo_path="/path/to/your/repo")
 ```
 
-### Docker cannot access repo files
+### Source-built Docker cannot access repo files
 
-Ensure the volume mount is correct. The repo path inside the container is `/repo`:
+Build the stdio target from the repository checkout, then mount the analyzed
+repository at `/repo`:
 
 ```bash
-docker run -i --rm -v "/absolute/path/to/repo:/repo:ro" n24q02m/better-code-review-graph:latest
+git clone https://github.com/n24q02m/better-code-review-graph
+cd better-code-review-graph
+docker build --target stdio -t better-code-review-graph:local .
+docker run -i --rm -v "/absolute/path/to/repo:/repo:ro" better-code-review-graph:local
 ```
