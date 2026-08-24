@@ -62,13 +62,16 @@ class TestDeclaredNames(unittest.TestCase):
         self.assertEqual(parity.declared_names(md), {"graph", "query"})
 
     def test_real_pages_declare_names(self):
-        """Every shipped tools.md must parse into at least one name."""
+        """Every shipped MCP tools.md must parse into at least one name."""
         here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         plugins = os.path.join(here, "plugins")
         pages = 0
         for entry in sorted(os.listdir(plugins)):
             page = os.path.join(plugins, entry, "tools.md")
             if not os.path.isfile(page):
+                continue
+            plugin_dir = os.path.join(plugins, entry)
+            if parity.server_spec(plugin_dir) is None:
                 continue
             pages += 1
             with open(page, encoding="utf-8") as f:
@@ -290,6 +293,23 @@ class TestVerifyPlugin(unittest.TestCase):
         self.assertEqual(len(warnings), 1)
         self.assertIn("timed out after 10s", warnings[0])
         self.assertEqual(live.call_count, 1)
+
+    def test_portable_non_mcp_tools_page_is_skipped(self):
+        manifest = os.path.join(
+            "plugins", "srv", ".claude-plugin", "plugin.json"
+        )
+        with open(manifest, "w", encoding="utf-8") as stream:
+            json.dump({"name": "srv", "mcpServers": {}}, stream)
+        self._write_tools_md(
+            "# Commands\n\n| Surface | Commands |\n|---|---|\n| Tasks | `task create` |\n"
+        )
+
+        with mock.patch.object(
+            parity, "live_names", side_effect=AssertionError("must not be called")
+        ):
+            result = parity.verify_plugin("srv", False, 10)
+
+        self.assertEqual(result, ([], [], []))
 
     def test_unparseable_page_is_an_error(self):
         self._write_tools_md("# Tools\n\nProse only, no tool names.\n")

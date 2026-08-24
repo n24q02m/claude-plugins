@@ -8,7 +8,6 @@ read cursors.
 
 from __future__ import annotations
 
-import datetime as _dt
 import json
 import os
 import re
@@ -16,7 +15,7 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Mapping
+from typing import Any
 
 import chat
 from .path_locks import PathLockRecord, PathLockStore
@@ -186,7 +185,7 @@ class StateSummary:
             "open_tasks": [t.to_dict() for t in self.open_tasks],
             "blockers": [b.to_dict() for b in self.blockers],
             "owners": {k: v.to_dict() for k, v in self.owners.items()},
-            "path_locks": [l.to_dict() for l in self.path_locks],
+            "path_locks": [lock.to_dict() for lock in self.path_locks],
             "verification": [v.to_dict() for v in self.verification],
         }
 
@@ -218,7 +217,7 @@ class StateSummary:
                     for line in clean_details.splitlines():
                         lines.append(f"  {line}")
                 else:
-                    lines.append(f"  *(no additional details)*")
+                    lines.append("  *(no additional details)*")
         else:
             lines.append("*(none)*")
         lines.append("")
@@ -261,9 +260,13 @@ class StateSummary:
                         lease_part = f", lease expires: `{t['lease_expires_at']}`" if t.get("lease_expires_at") else ""
                         lines.append(f"  - Task `{t['id']}` (**{t['title']}**, status: `{t['status']}`{lease_part})")
                 if assignment.path_locks:
-                    for l in sorted(assignment.path_locks, key=lambda x: x["lock_id"]):
-                        paths_str = ", ".join(sorted(l["paths"]))
-                        lines.append(f"  - Path Lock `{l['lock_id']}` (`{paths_str}`, expires: `{l['expires_at']}`)")
+                    for lock in sorted(
+                        assignment.path_locks, key=lambda item: item["lock_id"]
+                    ):
+                        paths_str = ", ".join(sorted(lock["paths"]))
+                        lines.append(
+                            f"  - Path Lock `{lock['lock_id']}` (`{paths_str}`, expires: `{lock['expires_at']}`)"
+                        )
         else:
             lines.append("*(none)*")
         lines.append("")
@@ -271,9 +274,16 @@ class StateSummary:
         # Section 6: Path Locks
         lines.append("## Path Locks")
         if self.path_locks:
-            for l in sorted(self.path_locks, key=lambda x: x.lock_id):
-                paths_str = ", ".join(sorted(p.normalized_path.replace("\\", "/") for p in l.paths))
-                lines.append(f"- `[{l.lock_id}]` `{paths_str}` (owner: `{l.owner}`, expires: `{l.expires_at}`)")
+            for lock in sorted(self.path_locks, key=lambda item: item.lock_id):
+                paths_str = ", ".join(
+                    sorted(
+                        path.normalized_path.replace("\\", "/")
+                        for path in lock.paths
+                    )
+                )
+                lines.append(
+                    f"- `[{lock.lock_id}]` `{paths_str}` (owner: `{lock.owner}`, expires: `{lock.expires_at}`)"
+                )
         else:
             lines.append("*(none)*")
         lines.append("")
@@ -531,7 +541,7 @@ class StateStore:
                         kind="task_status",
                         source_id=t.id,
                         title=f"Task {t.id} blocked ({t.title})",
-                        details=f"Task is marked with status 'blocked'",
+                        details="Task is marked with status 'blocked'",
                         author=t.owner or t.created_by,
                         time=t.updated_at,
                     )
@@ -595,14 +605,17 @@ class StateStore:
                     }
                 )
 
-        for l in active_locks:
-            if l.owner:
-                owners_map.setdefault(l.owner, {"tasks": [], "path_locks": []})
-                owners_map[l.owner]["path_locks"].append(
+        for lock in active_locks:
+            if lock.owner:
+                owners_map.setdefault(lock.owner, {"tasks": [], "path_locks": []})
+                owners_map[lock.owner]["path_locks"].append(
                     {
-                        "lock_id": l.lock_id,
-                        "paths": [p.normalized_path.replace("\\", "/") for p in l.paths],
-                        "expires_at": l.expires_at,
+                        "lock_id": lock.lock_id,
+                        "paths": [
+                            path.normalized_path.replace("\\", "/")
+                            for path in lock.paths
+                        ],
+                        "expires_at": lock.expires_at,
                     }
                 )
 

@@ -90,7 +90,6 @@ class LeaseRecord:
         if not isinstance(data, dict):
             raise LeaseError("LEASE_INVALID_RECORD", "lease record must be a JSON object")
         actual = set(data)
-        required = set(LEASE_FIELDS[:6])
         missing = [field for field in LEASE_FIELDS[:6] if field not in actual]
         if missing:
             raise LeaseError(

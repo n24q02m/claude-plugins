@@ -1099,11 +1099,6 @@ class PathLockStore:
                 transaction_id=transaction_id,
             ) from error
 
-    @property
-    def transaction_path(self) -> Path:
-        path = self.locks_dir / TRANSACTION_FILENAME
-        self._assert_inside_channel(path)
-        return path
 
     @staticmethod
     def _encode_bytes(value: bytes | None) -> str | None:

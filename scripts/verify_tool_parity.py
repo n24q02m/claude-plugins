@@ -440,8 +440,15 @@ def verify_plugin(
     plugin_dir = os.path.join(PLUGINS_DIR, name)
 
     if not os.path.isfile(os.path.join(plugin_dir, "tools.md")):
-        # Plugins without a tool surface (agent-chat-plugin, mcp-core) have no
-        # tools.md; verify_docs_current.py owns the "should it have one" call.
+        return [], [], []
+
+    try:
+        spec = server_spec(plugin_dir, version=version)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        return [f"{name}: invalid MCP server manifest: {exc}"], [], []
+    if spec is None:
+        # Portable CLI/Skill plugins can document commands in tools.md without
+        # exposing an MCP tools/list surface.
         return [], [], []
 
     declared = read_declared(plugin_dir)
