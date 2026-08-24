@@ -57,6 +57,10 @@ const FOUNDATION_DESCRIPTION =
   'Foundation library for the n24q02m MCP stack — shared Streamable HTTP transport, ' +
   'OAuth 2.1 Authorization Server, lifecycle management, and credential-relay primitives ' +
   'consumed by every server. Not a runnable MCP server.';
+const COORDINATION = 'agent-chat-plugin';
+const COORDINATION_DESCRIPTION =
+  'Portable CLI/Skill coordination for peer agent sessions using shared Markdown and JSON files. ' +
+  'Not an MCP server and not an agent executor.';
 
 async function pathExists(p) {
   try { await stat(p); return true; } catch { return false; }
@@ -90,8 +94,14 @@ function yamlQuote(value) {
 // Synthesize the section landing page so /servers/<name>/ resolves.
 function buildIndex(pluginName, meta, copiedFiles) {
   const isFoundation = pluginName === FOUNDATION;
+  const isCoordination = pluginName === COORDINATION;
   const description =
-    meta.description || (isFoundation ? FOUNDATION_DESCRIPTION : `${pluginName} — part of the n24q02m MCP server stack.`);
+    meta.description ||
+    (isFoundation
+      ? FOUNDATION_DESCRIPTION
+      : isCoordination
+        ? COORDINATION_DESCRIPTION
+        : `${pluginName} — part of the n24q02m MCP server stack.`);
   const repoUrl = `https://github.com/n24q02m/${pluginName}`;
   const editUrl = `${REPO_RAW_BASE}/${pluginName}/.claude-plugin/plugin.json`;
 
@@ -108,6 +118,9 @@ function buildIndex(pluginName, meta, copiedFiles) {
     '---',
     '',
     description,
+    ...(isCoordination
+      ? ['This is a portable CLI/Skill coordination plugin, not an MCP server.']
+      : []),
     '',
     '## In this section',
     '',
@@ -125,26 +138,33 @@ function buildIndex(pluginName, meta, copiedFiles) {
 }
 
 // Synthesize the top-level /servers/ landing so the section root resolves
-// instead of 404ing, listing every server with a one-line description + link.
-// `entries` is [{ name, description, isFoundation }] for plugins with content.
+// instead of 404ing. The route retains its historical name, while coordination
+// plugins are classified separately from runnable MCP servers.
+// `entries` is [{ name, description, isFoundation, isCoordination }].
 function buildServersIndex(entries) {
-  const servers = entries.filter((e) => !e.isFoundation).sort((a, b) => a.name.localeCompare(b.name));
-  const foundation = entries.filter((e) => e.isFoundation);
+  const servers = entries
+    .filter((entry) => !entry.isFoundation && !entry.isCoordination)
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const coordination = entries.filter((entry) => entry.isCoordination);
+  const foundation = entries.filter((entry) => entry.isFoundation);
 
   const toItem = (e) => `- [${e.name}](/servers/${e.name}/) -- ${e.description}`;
 
   const lines = [
     '---',
-    'title: Servers',
-    'description: All MCP servers in the n24q02m stack, plus the mcp-core foundation library.',
+    'title: Servers and coordination',
+    'description: MCP servers, portable coordination plugins, and the mcp-core foundation library.',
     '---',
     '',
-    'Every server in the stack shares one foundation library (`mcp-core`), one plugin marketplace, and one multi-user auth model. Browse the servers below, or see the [server comparison](/reference/server-comparison/) for a side-by-side table.',
+    'The stack shares one foundation library (`mcp-core`) and one plugin marketplace. Runnable MCP servers and portable coordination plugins remain distinct capabilities.',
     '',
     '## Servers',
     '',
     ...servers.map(toItem),
   ];
+  if (coordination.length > 0) {
+    lines.push('', '## Coordination', '', ...coordination.map(toItem));
+  }
   if (foundation.length > 0) {
     lines.push('', '## Foundation', '', ...foundation.map(toItem));
   }
@@ -235,10 +255,21 @@ async function main() {
         }
         console.log(`  ${name}: ${copiedFiles.length} file(s) + index`);
         const isFoundation = name === FOUNDATION;
+        const isCoordination = name === COORDINATION;
         const description =
           meta.description ||
-          (isFoundation ? FOUNDATION_DESCRIPTION : `${name} — part of the n24q02m MCP server stack.`);
-        return { name, count: copiedFiles.length, description, isFoundation };
+          (isFoundation
+            ? FOUNDATION_DESCRIPTION
+            : isCoordination
+              ? COORDINATION_DESCRIPTION
+              : `${name} — part of the n24q02m MCP server stack.`);
+        return {
+          name,
+          count: copiedFiles.length,
+          description,
+          isFoundation,
+          isCoordination,
+        };
       }
       return { name, count: 0 };
     })
