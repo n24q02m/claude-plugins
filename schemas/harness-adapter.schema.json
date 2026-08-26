@@ -1,0 +1,353 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.example.invalid/harness-adapter.schema.json",
+  "title": "Portable harness adapter manifest row",
+  "description": "A source and configuration contract. Validation is structural only and does not prove that a harness is installed, loaded, or domain-verified.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "product",
+    "harness",
+    "layer",
+    "transport",
+    "verification"
+  ],
+  "properties": {
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "version",
+        "source_ref"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._+:-]{0,127}$"
+        },
+        "source_ref": {
+          "$ref": "#/$defs/publicRef"
+        }
+      }
+    },
+    "harness": {
+      "type": "string",
+      "enum": [
+        "claude-code",
+        "codex-cli",
+        "opencode",
+        "cursor",
+        "grok-build",
+        "pi",
+        "github-copilot-vscode",
+        "gemini-cli",
+        "generic-shell"
+      ]
+    },
+    "layer": {
+      "type": "string",
+      "enum": [
+        "functional-package",
+        "portable-cli",
+        "portable-skill",
+        "mcp-transport",
+        "harness-adapter",
+        "lifecycle-hooks",
+        "commands-installer",
+        "documentation"
+      ]
+    },
+    "transport": {
+      "type": "string",
+      "enum": [
+        "none",
+        "stdio",
+        "streamable-http",
+        "sse",
+        "acp-stdio",
+        "filesystem",
+        "unknown"
+      ]
+    },
+    "endpoint_ref": {
+      "$ref": "#/$defs/publicRef"
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "program",
+        "args"
+      ],
+      "properties": {
+        "program": {
+          "$ref": "#/$defs/program"
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/safeArgument"
+          }
+        }
+      }
+    },
+    "env_interpolation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "source"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "#/$defs/envName"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "environment",
+              "user-config",
+              "secret-store",
+              "runtime-placeholder"
+            ]
+          }
+        }
+      }
+    },
+    "hooks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "event",
+          "ref",
+          "mode"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9._:-]{0,127}$"
+          },
+          "ref": {
+            "$ref": "#/$defs/relativeRef"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "command",
+              "http",
+              "prompt",
+              "extension"
+            ]
+          }
+        }
+      }
+    },
+    "docs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/publicRef"
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_state",
+        "installed_state",
+        "loaded_state",
+        "domain_verified_state",
+        "domain_call_evidence"
+      ],
+      "properties": {
+        "capability_state": {
+          "type": "string",
+          "enum": [
+            "SUPPORTED",
+            "CONFIGURABLE",
+            "UNSUPPORTED",
+            "UNVERIFIED"
+          ]
+        },
+        "installed_state": {
+          "type": "string",
+          "enum": [
+            "INSTALLED",
+            "NOT-INSTALLED",
+            "UNVERIFIED"
+          ]
+        },
+        "loaded_state": {
+          "type": "string",
+          "enum": [
+            "LOADED",
+            "NOT-LOADED",
+            "UNVERIFIED"
+          ]
+        },
+        "domain_verified_state": {
+          "type": "string",
+          "enum": [
+            "DOMAIN-VERIFIED",
+            "NOT-DOMAIN-VERIFIED",
+            "UNVERIFIED"
+          ]
+        },
+        "domain_call_evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "calls",
+            "reason"
+          ],
+          "properties": {
+            "calls": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/publicRef"
+              }
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "domain_verified_state": {
+                "const": "DOMAIN-VERIFIED"
+              }
+            },
+            "required": [
+              "domain_verified_state"
+            ]
+          },
+          "then": {
+            "properties": {
+              "domain_call_evidence": {
+                "properties": {
+                  "calls": {
+                    "minItems": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "relativeRef": {
+      "allOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!\\\\\\\\)(?!~[\\\\/])(?!.*(?:^|[/\\\\])\\.\\.(?:[/\\\\]|$))(?:\\./)?[A-Za-z0-9][A-Za-z0-9._/#-]*$"
+        },
+        {
+          "not": {
+            "pattern": "^[Ff][Ii][Ll][Ee]://"
+          }
+        },
+        {
+          "not": {
+            "pattern": "(?:sk-[A-Za-z0-9][A-Za-z0-9_-]{19,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{12,}|AIza[0-9A-Za-z_-]{20,}|AKIA[0-9A-Z]{16})"
+          }
+        },
+        {
+          "not": {
+            "pattern": "(?:password|secret|api[-_]?key|access[-_]?token|bearer)[=:][^\\s]+"
+          }
+        }
+      ]
+    },
+    "publicRef": {
+      "type": "string",
+      "minLength": 1,
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/relativeRef"
+            },
+            {
+              "pattern": "^https://[A-Za-z0-9][A-Za-z0-9.-]*(?::[0-9]{1,5})?(?:[/?#][A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=%-]*)?$"
+            }
+          ]
+        },
+        {
+          "not": {
+            "pattern": "^[Ff][Ii][Ll][Ee]://"
+          }
+        },
+        {
+          "not": {
+            "pattern": "(?:sk-[A-Za-z0-9][A-Za-z0-9_-]{19,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{12,}|AIza[0-9A-Za-z_-]{20,}|AKIA[0-9A-Z]{16})"
+          }
+        },
+        {
+          "not": {
+            "pattern": "(?:password|secret|api[-_]?key|access[-_]?token|bearer)[=:][^\\s]+"
+          }
+        },
+        {
+          "not": {
+            "pattern": "https://(?:[A-Za-z0-9-]+\\.)*[A-Za-z0-9-]*(?:[Ll][Oo][Cc][Aa][Ll][Hh][Oo][Ss][Tt]|[Ii][Pp]6-[Ll][Oo][Cc][Aa][Ll][Hh][Oo][Ss][Tt])[A-Za-z0-9-]*(?:\\.|/|:|\\?|#|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": "https://(?:[A-Za-z0-9-]+\\.)*(?:0\\.|10\\.|100\\.(?:6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\\.|127\\.|169\\.254\\.|172\\.(?:1[6-9]|2[0-9]|3[01])\\.|192\\.(?:0\\.(?:0|2)\\.|168\\.)|198\\.(?:18|19)\\.|198\\.51\\.100\\.|203\\.0\\.113\\.|(?:22[4-9]|23[0-9]|24[0-9]|25[0-5])\\.)(?:[0-9.]*)(?:/|:|\\?|#|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": "https://(?:[A-Za-z0-9-]+\\.)*[A-Za-z0-9-]*(?:[Ii][Nn][Tt][Ee][Rr][Nn][Aa][Ll]|[Pp][Rr][Ii][Vv][Aa][Tt][Ee]|[Cc][Oo][Rr][Pp]|[Ss][Tt][Aa][Gg][Ii][Nn][Gg]|[Ww][Oo][Rr][Kk][Ss][Pp][Aa][Cc][Ee])[A-Za-z0-9-]*(?:\\.|/|:|\\?|#|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": "https://(?:[A-Za-z0-9-]+\\.)*[A-Za-z-]*[0-9]+[A-Za-z-]*[0-9]+[A-Za-z-]*(?:\\.|/|:|\\?|#|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": "(?:^|[/\\\\])\\.\\.(?:[/\\\\]|$)"
+          }
+        }
+      ]
+    },
+    "program": {
+      "type": "string",
+      "pattern": "^(?![Ff][Ii][Ll][Ee]://)(?![A-Za-z]:[\\\\/])(?![/\\\\])(?!\\\\\\\\)(?!.*(?:^|[/\\\\])\\.\\.(?:[/\\\\]|$))(?:[A-Za-z0-9._+@-]+|(?:\\./)?[A-Za-z0-9._+@-]+(?:/[A-Za-z0-9._+@-]+)*)$"
+    },
+    "safeArgument": {
+      "type": "string",
+      "pattern": "^(?![Ff][Ii][Ll][Ee]://)(?!.*(?:^|[= \\t])[Ff][Ii][Ll][Ee]://)(?![A-Za-z]:[\\\\/])(?![/\\\\])(?!\\\\\\\\)(?!~[\\\\/])(?!.*(?:^|[= \\t])~[\\\\/])(?!.*(?:^|[/\\\\=])\\.\\.(?:[/\\\\]|$))(?!.*(?:=|^)[A-Za-z]:[\\\\/])(?!.*(?:=|^)[/\\\\])(?!.*(?:sk-[A-Za-z0-9][A-Za-z0-9_-]{19,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{12,}|AIza[0-9A-Za-z_-]{20,}|AKIA[0-9A-Z]{16}))(?!.*(?:password|secret|api[-_]?key|access[-_]?token|bearer)[ \\t]*[:=][ \\t]*[^ \\t]+)[\\x20-\\x7E]+$"
+    },
+    "envName": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{0,127}$"
+    }
+  }
+}

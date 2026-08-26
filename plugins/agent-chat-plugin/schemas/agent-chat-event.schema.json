@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/n24q02m/agent-chat-plugin/schemas/agent-chat-event.schema.json",
+  "title": "Agent Chat adapter-neutral event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "event", "agent", "harness", "ts"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "event": { "enum": ["capability", "status"] },
+    "agent": { "type": "string", "minLength": 1 },
+    "harness": { "type": "string", "minLength": 1 },
+    "ts": { "type": "string", "format": "date-time" },
+    "primitives": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "messages",
+          "cursors",
+          "wait",
+          "tasks",
+          "dependencies",
+          "leases",
+          "path_locks",
+          "state_summary"
+        ]
+      }
+    },
+    "status": {
+      "enum": ["ready", "busy", "idle", "blocked", "stopped"]
+    },
+    "detail": { "type": "string" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "event": { "const": "capability" } } },
+      "then": { "required": ["primitives"] }
+    },
+    {
+      "if": { "properties": { "event": { "const": "status" } } },
+      "then": { "required": ["status"] }
+    }
+  ]
+}
