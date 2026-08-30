@@ -1,19 +1,19 @@
 {
   "name": "better-workspace-mcp",
-  "description": "Google Workspace — 11 composite tools across Docs, Drive, Calendar, Gmail, Sheets, Slides, Tasks, Chat, People, Forms + multi-account",
-  "version": "0.1.0-beta.2",
+  "version": "0.3.0",
+  "description": "Google Workspace MCP server — Docs/Drive/Calendar/Gmail/Sheets/Slides/Tasks/Chat/People/Forms + multi-account",
   "userConfig": {
     "GOOGLE_OAUTH_CLIENT_ID": {
       "type": "string",
-      "title": "Google OAuth client ID",
-      "description": "From a Desktop app OAuth client at https://console.cloud.google.com/apis/credentials (ends with .apps.googleusercontent.com)",
+      "title": "Google OAuth Client ID",
+      "description": "OAuth 2.0 Desktop client ID from Google Cloud Console (APIs & Services > Credentials)",
       "sensitive": false,
       "required": true
     },
     "GOOGLE_OAUTH_CLIENT_SECRET": {
       "type": "string",
-      "title": "Google OAuth client secret",
-      "description": "Client secret of the same Desktop app OAuth client",
+      "title": "Google OAuth Client Secret",
+      "description": "OAuth 2.0 Desktop client secret (paired with the client ID above)",
       "sensitive": true,
       "required": true
     }
