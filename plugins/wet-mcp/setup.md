@@ -60,9 +60,12 @@ Without env vars: basic SearXNG metasearch, content extraction, library docs, ON
 >
 > **Trade-off accepted**: Choosing this method means you lose this plugin's skills/agents/hooks/commands. Use Method 1 instead if you want full plugin features.
 
-1. Pull the image:
+1. Public OCI publication is discontinued. Clone a release tag and build the
+   stdio target locally:
    ```bash
-   docker pull n24q02m/wet-mcp:latest
+   git clone --branch <release-tag> --depth 1 https://github.com/n24q02m/wet-mcp.git
+   cd wet-mcp
+   docker build --target stdio -t wet-mcp:local .
    ```
 
 2. Run with environment variables:
@@ -72,7 +75,7 @@ Without env vars: basic SearXNG metasearch, content extraction, library docs, ON
      -v wet-data:/data \
      -e JINA_AI_API_KEY=your_key_here \
      -e GEMINI_API_KEY=your_key_here \
-     n24q02m/wet-mcp:latest
+     wet-mcp:local
    ```
 
 3. Or add to your MCP client config:
@@ -88,7 +91,7 @@ Without env vars: basic SearXNG metasearch, content extraction, library docs, ON
            "-e", "JINA_AI_API_KEY",
            "-e", "GEMINI_API_KEY",
            "-e", "GITHUB_TOKEN",
-           "n24q02m/wet-mcp:latest"
+           "wet-mcp:local"
          ]
        }
      }
@@ -118,15 +121,16 @@ Stdio mode is the default and works for most personal/single-user scenarios. Con
 
 HTTP mode runs as a persistent multi-user server with browser-based credential setup. GDrive OAuth uses a **bundled public Google Desktop client** (`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`) per Google's official Desktop OAuth pattern -- no user-side OAuth registration is required. Users authenticate via the device-code flow in their browser.
 
-1. Run the server in HTTP mode:
+1. From the `wet-mcp` checkout, build the HTTP target and run it:
    ```bash
+   docker build --target http -t wet-mcp-http:local .
    docker run -d --name wet-mcp-http \
      -p 8080:8080 \
      -v wet-data:/data \
      -e MCP_TRANSPORT=http \
      -e PUBLIC_URL=https://wet.example.com \
      -e MCP_DCR_SERVER_SECRET=your-random-secret \
-     n24q02m/wet-mcp:latest
+     wet-mcp-http:local
    ```
 
 2. Configure your MCP client to connect to the HTTP endpoint:
@@ -190,7 +194,7 @@ export WET_SEARXNG_PORT=41593
 If you encounter permission errors with the Docker volume:
 
 ```bash
-docker run -i --rm -v wet-data:/data --user $(id -u):$(id -g) n24q02m/wet-mcp:latest
+docker run -i --rm -v wet-data:/data --user $(id -u):$(id -g) wet-mcp:local
 ```
 
 ### Embedding model download fails

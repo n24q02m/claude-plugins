@@ -14,15 +14,19 @@ In `remote-relay` and `remote-oauth` modes, an MCP server stores credentials **p
 
 ## Deployment
 
-Self-hosted via Docker:
+Public OCI publication for Wet is discontinued. Build the HTTP target from a
+reviewed release tag, then self-host it:
 
 ```sh
+git clone --branch <release-tag> --depth 1 https://github.com/n24q02m/wet-mcp.git
+cd wet-mcp
+docker build --target http -t wet-mcp-http:local .
 docker run -d \
   -p 8080:8080 \
   -e MCP_TRANSPORT=http \
   -e PUBLIC_URL=https://wet-mcp.your-domain.com \
   -e JWT_PUBLIC_KEY="<your-jwt-public-key>" \
-  ghcr.io/n24q02m/wet-mcp:latest
+  wet-mcp-http:local
 ```
 
 Behind any reverse proxy that adds `Authorization: Bearer <token>`. Caddy + Cloudflare Tunnel is the canonical pattern.

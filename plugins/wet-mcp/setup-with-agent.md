@@ -15,7 +15,7 @@ This plugin supports 3 install methods. Pick the one that matches your use case:
 | **2. Fallback** | Docker stdio (`docker run -i --rm`) | stdio | Windows/macOS where native uvx/npx hits PATH or Python version issues. |
 | **3. Recommended** | Docker HTTP (`docker run -p 8080:8080`) | HTTP | Multi-device, OAuth/relay-form auth, team self-host, claude.ai web compatibility. |
 
-All MCP servers across this stack share this priority hierarchy. Note: 2 plugins (`better-godot-mcp` and `better-code-review-graph`) only support Method 1 (stdio) -- they need direct host access to project files / repo paths and don't ship Docker / HTTP variants.
+All MCP servers across this stack share this priority hierarchy. `better-godot-mcp` and `better-code-review-graph` default to stdio plugin install and do not provide an owner-hosted relay/OAuth endpoint; Docker stdio and operator self-hosted HTTP remain available as advanced paths.
 
 > **⚠️ Mutually exclusive — pick ONE per plugin**: If you choose Method 2 (Docker stdio override) OR Method 3 (HTTP), do NOT also `/plugin install` this plugin via marketplace. Both load simultaneously and create duplicate entries in `/mcp` dialog (plugin's stdio + your override). Plugin matching is by **endpoint** (URL or command string) per CC docs, not by name — and `npx`/`uvx` ≠ `docker` ≠ HTTP URL, so all three are distinct endpoints. Trade-off: choosing Method 2 or Method 3 means you lose this plugin's skills/agents/hooks/commands. For full plugin features, use Method 1 (default plugin install) with `userConfig` credentials prompted at install time.
 
@@ -56,7 +56,13 @@ Without env vars: SearXNG metasearch + content extraction + library docs + ONNX 
 >
 > **Trade-off accepted**: Choosing this method means you lose this plugin's skills/agents/hooks/commands. Use Option 1 instead if you want full plugin features.
 
+Public OCI publication is discontinued. Clone a release tag, build the stdio
+target locally, then run it:
+
 ```bash
+git clone --branch <release-tag> --depth 1 https://github.com/n24q02m/wet-mcp.git
+cd wet-mcp
+docker build --target stdio -t wet-mcp:local .
 docker run -i --rm \
   --name mcp-wet \
   -v wet-data:/data \
@@ -70,7 +76,7 @@ docker run -i --rm \
   -e EXA_API_KEY \
   -e BROWSER_BACKENDS \
   -e GITHUB_TOKEN \
-  n24q02m/wet-mcp:latest
+  wet-mcp:local
 ```
 
 Or as an MCP server config:
@@ -87,7 +93,7 @@ Or as an MCP server config:
         "-e", "JINA_AI_API_KEY",
         "-e", "GEMINI_API_KEY",
         "-e", "GITHUB_TOKEN",
-        "n24q02m/wet-mcp:latest"
+        "wet-mcp:local"
       ]
     }
   }
@@ -117,14 +123,17 @@ Stdio mode is the default and works for most personal/single-user scenarios. Con
 
 HTTP mode runs as a persistent multi-user server with browser-based credential setup. GDrive OAuth uses a **bundled public Google Desktop client** (`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`) per Google's official Desktop OAuth pattern -- no user-side OAuth registration is required. Users authenticate via the device-code flow in their browser.
 
+From the `wet-mcp` checkout, build the HTTP target and run it:
+
 ```bash
+docker build --target http -t wet-mcp-http:local .
 docker run -d --name wet-mcp-http \
   -p 8080:8080 \
   -v wet-data:/data \
   -e MCP_TRANSPORT=http \
   -e PUBLIC_URL=https://wet.example.com \
   -e MCP_DCR_SERVER_SECRET=your-random-secret \
-  n24q02m/wet-mcp:latest
+  wet-mcp-http:local
 ```
 
 Configure MCP client to connect:

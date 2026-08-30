@@ -42,11 +42,18 @@ Plus metadata (cleartext): created-at, last-rotated-at, expires-at, version. Use
 
 ## Deployment example
 
+Clone a reviewed Wet release tag into `./wet-mcp` next to this Compose file.
+Public OCI publication is discontinued, so Compose builds the HTTP target
+locally.
+
 ```yaml
 # docker-compose.yml
 services:
   wet-mcp:
-    image: ghcr.io/n24q02m/wet-mcp:latest
+    build:
+      context: ./wet-mcp
+      target: http
+    image: wet-mcp-http:local
     environment:
       MCP_TRANSPORT: http
       PUBLIC_URL: https://wet-mcp.team.example
