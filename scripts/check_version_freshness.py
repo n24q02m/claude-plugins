@@ -216,14 +216,14 @@ def check_plugin(plugin, owner):
     return result
 
 
-def check_version_freshness():
-    """Compare marketplace versions with latest stable releases concurrently."""
+def check_version_freshness() -> bool:
+    """Return whether every marketplace version matches a stable release."""
     try:
         with open(".claude-plugin/marketplace.json") as f:
             marketplace = json.load(f)
     except (OSError, json.JSONDecodeError) as e:
         print(f"::error ::{sanitize_log(f'Failed to load marketplace.json: {e}')}")
-        return
+        return False
 
     owner = marketplace.get("owner", {}).get("name", "n24q02m")
     plugin_names = [
@@ -233,7 +233,8 @@ def check_version_freshness():
     # Pre-populate cache using GraphQL batch fetch if possible
     _fetch_latest_tags_graphql(owner, plugin_names)
 
-    stale = []
+    stale_count = 0
+    unverified_count = 0
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         futures = {
@@ -247,32 +248,43 @@ def check_version_freshness():
 
             if status == "stale":
                 latest_tag = res["latest_tag"]
-                stale.append(
-                    f"{name}: marketplace={marketplace_ver}, latest={latest_tag}"
-                )
+                stale_count += 1
                 print(
                     f"::warning ::{sanitize_log(f'{name} is stale: marketplace={marketplace_ver}, latest={latest_tag}')}"
                 )
             elif status == "up-to-date":
                 print(sanitize_log(f"{name}: up-to-date ({marketplace_ver})"))
             elif status == "no-release":
+                unverified_count += 1
                 print(
-                    sanitize_log(
-                        f"{name}: no release found (marketplace={marketplace_ver})"
-                    )
+                    f"::error ::{sanitize_log(f'{name} has no stable release (marketplace={marketplace_ver})')}"
                 )
             elif status == "timeout":
+                unverified_count += 1
                 print(
                     f"::error ::{sanitize_log(f'{name} timed out checking release (marketplace={marketplace_ver})')}"
                 )
             elif status == "error":
+                unverified_count += 1
                 print("::error ::" + sanitize_log(f"{name} error: {res['error']}"))
+            else:
+                unverified_count += 1
+                print("::error ::" + sanitize_log(f"{name} returned unknown status: {status}"))
 
-    if stale:
-        print(f"\n{len(stale)} plugin(s) need sync")
-    else:
-        print("\nAll plugins up-to-date")
+    if stale_count or unverified_count:
+        print(
+            f"\nFreshness check failed: {stale_count} stale, "
+            f"{unverified_count} unverified"
+        )
+        return False
+
+    print("\nAll plugins up-to-date")
+    return True
+
+
+def main() -> int:
+    return 0 if check_version_freshness() else 1
 
 
 if __name__ == "__main__":
-    check_version_freshness()
+    raise SystemExit(main())

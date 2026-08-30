@@ -359,7 +359,7 @@ class TestCheckVersionFreshness(unittest.TestCase):
     @patch("check_version_freshness.open", side_effect=OSError("Disk error"))
     @patch("builtins.print")
     def test_check_version_freshness_load_oserror(self, mock_print, mock_open):
-        check_version_freshness.check_version_freshness()
+        self.assertFalse(check_version_freshness.check_version_freshness())
         mock_print.assert_called_once()
         args, _ = mock_print.call_args
         self.assertIn("Failed to load marketplace.json: Disk error", args[0])
@@ -371,11 +371,103 @@ class TestCheckVersionFreshness(unittest.TestCase):
     def test_check_version_freshness_load_json_error(
         self, mock_print, mock_json_load, mock_open
     ):
-        check_version_freshness.check_version_freshness()
+        self.assertFalse(check_version_freshness.check_version_freshness())
         mock_print.assert_called_once()
         args, _ = mock_print.call_args
         self.assertIn("Failed to load marketplace.json: Expecting value", args[0])
         self.assertIn("::error ::", args[0])
+
+    @patch("check_version_freshness._fetch_latest_tags_graphql")
+    @patch("check_version_freshness.check_plugin")
+    @patch("builtins.open")
+    @patch("json.load")
+    def test_check_version_freshness_fails_closed_on_api_error(
+        self, mock_json_load, mock_open, mock_check_plugin, mock_graphql
+    ):
+        marketplace_data = {
+            "owner": {"name": "test-owner"},
+            "plugins": [{"name": "plugin-a", "source": "./plugins/plugin-a"}],
+        }
+        mock_json_load.return_value = marketplace_data
+        mock_check_plugin.return_value = {
+            "name": "plugin-a",
+            "marketplace_ver": "1.0.0",
+            "status": "error",
+            "error": "HTTP Error 403: rate limit exceeded",
+        }
+
+        self.assertFalse(check_version_freshness.check_version_freshness())
+
+    @patch("check_version_freshness._fetch_latest_tags_graphql")
+    @patch("check_version_freshness.check_plugin")
+    @patch("builtins.open")
+    @patch("json.load")
+    def test_check_version_freshness_succeeds_only_when_all_checks_succeed(
+        self, mock_json_load, mock_open, mock_check_plugin, mock_graphql
+    ):
+        marketplace_data = {
+            "owner": {"name": "test-owner"},
+            "plugins": [{"name": "plugin-a", "source": "./plugins/plugin-a"}],
+        }
+        mock_json_load.return_value = marketplace_data
+        mock_check_plugin.return_value = {
+            "name": "plugin-a",
+            "marketplace_ver": "1.0.0",
+            "status": "up-to-date",
+        }
+
+        self.assertTrue(check_version_freshness.check_version_freshness())
+
+    @patch("check_version_freshness._fetch_latest_tags_graphql")
+    @patch("builtins.open")
+    @patch("json.load")
+    def test_check_version_freshness_rejects_every_unverified_status(
+        self, mock_json_load, mock_open, mock_graphql
+    ):
+        mock_json_load.return_value = {
+            "owner": {"name": "test-owner"},
+            "plugins": [{"name": "plugin-a", "source": "./plugins/plugin-a"}],
+        }
+        results = [
+            {
+                "name": "plugin-a",
+                "marketplace_ver": "1.0.0",
+                "status": "stale",
+                "latest_tag": "2.0.0",
+            },
+            {
+                "name": "plugin-a",
+                "marketplace_ver": "1.0.0",
+                "status": "no-release",
+            },
+            {
+                "name": "plugin-a",
+                "marketplace_ver": "1.0.0",
+                "status": "timeout",
+            },
+            {
+                "name": "plugin-a",
+                "marketplace_ver": "1.0.0",
+                "status": "unexpected",
+            },
+        ]
+
+        for result in results:
+            with self.subTest(status=result["status"]):
+                with patch(
+                    "check_version_freshness.check_plugin", return_value=result
+                ):
+                    self.assertFalse(
+                        check_version_freshness.check_version_freshness()
+                    )
+
+    @patch("check_version_freshness.check_version_freshness", return_value=False)
+    def test_main_returns_nonzero_when_freshness_is_unverified(self, mock_check):
+        self.assertEqual(check_version_freshness.main(), 1)
+
+    @patch("check_version_freshness.check_version_freshness", return_value=True)
+    def test_main_returns_zero_when_every_plugin_is_current(self, mock_check):
+        self.assertEqual(check_version_freshness.main(), 0)
 
     # GraphQL Batch Fetching
     # ------------------------------------------------------------------
