@@ -26,7 +26,7 @@ For comparison, the other 7 plugins in this stack (`better-notion-mcp`, `better-
 
 ## Method 1: Claude Code Plugin (Recommended)
 
-Plugin marketplace install runs the server in **pure stdio mode** with optional API key env vars. No daemon-bridge, no auto-spawn, no relay form. The graph is stored locally in SQLite -- no external graph database required.
+Plugin marketplace install runs the server in **pure stdio mode** with optional API key env vars. No daemon-bridge, no auto-spawn, no relay form. The graph is stored locally in SQLite, and local embeddings are resolved through Fastretrieval's ONNX model registry -- no external graph database required.
 
 ### Credential prompts at install
 
@@ -52,7 +52,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 
 ## Credential Setup
 
-All API keys are **optional**. The server works with local ONNX embeddings out of the box.
+All API keys are **optional**. The server works with Fastretrieval's local ONNX embedding registry out of the box.
 
 ### Stdio Mode (Env Vars)
 
@@ -72,19 +72,30 @@ export GEMINI_API_KEY="AIza..."
 | `GOOGLE_VERTEX_EXPRESS_API_KEY` | No | -- | Vertex AI Express: Gemini via API key, no Service Account. Get it at https://cloud.google.com/vertex-ai/generative-ai/docs/start/express-mode/overview |
 | `OPENAI_API_KEY` | No | -- | OpenAI: embedding |
 | `COHERE_API_KEY` | No | -- | Cohere: embedding + reranking. Also accepts `CO_API_KEY` |
-| `EMBEDDING_BACKEND` | No | auto-detect | `cloud` or `local` (ONNX) |
-| `EMBEDDING_MODEL` | No | auto-detect | Cloud embedding model name |
+| `EMBEDDING_MODELS` | No | empty | Ordered CSV embedding model chain (`provider/model,...`); empty resolves Fastretrieval's local ONNX model manifest |
+| `EMBEDDING_DIMS` | No | `0` (auto) | Embedding dimensions; custom local models may require `LOCAL_EMBEDDING_DIM` |
+| `LOCAL_EMBEDDING_MODEL` | No | -- | Optional BYO local embedding model ID; empty uses Fastretrieval's bundled model manifest |
+| `LOCAL_EMBEDDING_MODEL_FILE` | No | `onnx/model.onnx` | ONNX file path for a BYO local embedding |
+| `LOCAL_EMBEDDING_DIM` | No | `0` | Required for a BYO local embedding when its model manifest does not provide dimensions |
+| `LOCAL_EMBEDDING_POOLING` | No | `MEAN` | Pooling for a BYO local embedding (`MEAN`, `CLS`, `LAST_TOKEN`, or `DISABLED`) |
+| `LOCAL_EMBEDDING_NORMALIZE` | No | `true` | Normalize BYO local embedding outputs |
+| `SUMMARY_MODELS` | No | empty | Ordered CSV summary model chain (`provider/model,...`); empty leaves summaries disabled |
+
 | `TRANSPORT_MODE` | No | `stdio` | Set to `http` to enable HTTP transport (multi-user). |
 | `PUBLIC_URL` | Yes (http) | -- | Server's public URL for relay form. |
 | `MCP_DCR_SERVER_SECRET` | Yes (http) | -- | HMAC secret for stateless Dynamic Client Registration. |
 | `MCP_PORT` | No | `8080` | Server port (http mode only). |
 | `LOG_LEVEL` | No | `INFO` | Logging level |
+Legacy aliases: `EMBEDDING_BACKEND`, `EMBEDDING_MODEL`, and `SUMMARY_MODEL` are deprecated and honored for one release. Use `EMBEDDING_MODELS` and `SUMMARY_MODELS` instead.
 
-### Embedding Provider Priority
+### Embedding provider selection
 
-Cloud auto-detection order: Jina AI > Gemini > OpenAI > Cohere > local ONNX model
+- **Cloud**: a non-empty `EMBEDDING_MODELS` chain selects the first configured `provider/model`, with later entries as fallback.
+- **Local**: an empty chain resolves Fastretrieval's local ONNX model registry/manifest; set `LOCAL_EMBEDDING_MODEL` only for a BYO local model.
+- **Custom local metadata**: a BYO model can use `LOCAL_EMBEDDING_MODEL_FILE`, `LOCAL_EMBEDDING_DIM`, `LOCAL_EMBEDDING_POOLING`, and `LOCAL_EMBEDDING_NORMALIZE`; manifest-backed models supply their own metadata.
+- **Legacy aliases**: `EMBEDDING_BACKEND` and `EMBEDDING_MODEL` are deprecated and honored for one release; migrate to `EMBEDDING_MODELS`.
 
-All embeddings are stored at a fixed embedding dimension. Switching providers does NOT invalidate existing vectors.
+All embeddings are stored at a fixed dimension and tagged with the active provider/model identity. Changing the provider/model or dimensions changes the vector space: affected nodes are re-embedded, and semantic search uses the active provider/model vectors.
 
 ### Supported Languages
 
@@ -109,7 +120,7 @@ Ensure the `repo_path` parameter points to the root of a code repository. Check 
 
 ### First embedding is slow
 
-On first use, the local ONNX embedding model (~570MB) is downloaded. Subsequent runs are instant. Use cloud embedding (any API key) to avoid this download.
+On first use, Fastretrieval's local ONNX embedding model (~570MB) is downloaded. Subsequent runs are instant. Use a configured cloud embedding chain to avoid this download.
 
 ### "No graph found" error
 

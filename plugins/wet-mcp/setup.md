@@ -1,6 +1,6 @@
 # WET (Web Extended Toolkit) -- Manual Setup Guide
 
-> **2026-05-02 Update (v&lt;auto&gt;+)**: Plugin install (Method 1) uses stdio mode. Basic SearXNG search works without env; advanced features (GDrive sync, Tavily/Brave/Exa search, and cloud models) need optional env vars OR HTTP mode for OAuth flows.
+> **2026-08-30 Update**: Plugin install (Method 1) uses stdio mode. It provides local Fastretrieval embedding/reranking, extraction, and library docs without API keys. Web search needs a configured cloud/SearXNG endpoint or the locally built Docker image that bundles SearXNG.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 
 ## Method overview
@@ -25,7 +25,7 @@ All MCP servers across this stack share this priority hierarchy. Note: 2 plugins
 
 ## Method 1: Plugin Install (stdio default)
 
-For Claude Code users, the plugin approach is the simplest. Plugin install uses **stdio mode** -- basic SearXNG web search works **without any env vars**. Advanced features require optional API keys.
+For Claude Code users, the plugin approach is the simplest. Plugin marketplace install runs the server in **pure stdio mode**. Fastretrieval's local ONNX registry/runtime provides embedding and reranking without API keys; content extraction and library docs also work without a search provider. Web search requires a configured cloud/SearXNG endpoint or the locally built Docker image that bundles SearXNG.
 
 ### Credential prompts at install
 
@@ -33,7 +33,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 
 | Field | Required | Where to obtain |
 |---|---|---|
-| `RERANK_MODELS` | Optional | CSV rerank model chain such as `jina_ai/jina-reranker-v3`; leave empty for the bundled local ONNX reranker |
+| `RERANK_MODELS` | Optional | CSV rerank model chain such as `jina_ai/jina-reranker-v3`; leave empty for Fastretrieval's local ONNX reranker manifest |
 | `JINA_AI_API_KEY` | Optional | https://jina.ai/api-key (highest priority embedding+reranking) |
 | `GEMINI_API_KEY` | Optional | https://aistudio.google.com/apikey |
 | `OPENAI_API_KEY` | Optional | https://platform.openai.com/api-keys |
@@ -50,7 +50,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
    ```
 3. Restart Claude Code -- the server starts automatically when CC launches with the values injected.
 
-Without env vars: basic SearXNG metasearch, content extraction, library docs, ONNX local embedding/reranking all work. With env vars: cloud embedding/reranking (faster), Gemini LLM analysis, premium search providers.
+Without env vars: content extraction, library docs, and Fastretrieval-managed local embedding/reranking work. For web search, configure a cloud/SearXNG backend or use the locally built Docker image; other env vars enable cloud embedding/reranking, LLM analysis, and premium providers.
 
 > **Note**: This installs the full plugin (skills + agents + hooks + commands + stdio MCP server). If you'd rather use Method 2 (Docker stdio) or Method 3 (HTTP) below, DO NOT `/plugin install` this plugin — pick Method 2 or Method 3 instead. All three methods are mutually exclusive (see Method overview).
 
@@ -217,13 +217,22 @@ All environment variables are **optional**. See [docs/setup-with-agent.md](setup
 | `XAI_API_KEY` | -- | xAI/Grok: LLM dispatch for content-selector inference |
 | `COHERE_API_KEY` | -- | Cohere: embedding + reranking |
 | `WEB_CORE_LLM_MODEL` | auto-detect | Override the LLM model used for content-selector inference |
-| `RERANK_MODELS` | empty | Ordered CSV rerank model chain (`provider/model,...`); empty uses the bundled local ONNX cross-encoder |
+| `EMBEDDING_MODELS` | empty | Ordered CSV embedding model chain (`provider/model,...`); empty resolves Fastretrieval's local ONNX model manifest |
+| `RERANK_MODELS` | empty | Ordered CSV rerank model chain (`provider/model,...`); empty resolves Fastretrieval's local ONNX cross-encoder manifest |
+| `LLM_MODELS` | empty | Ordered CSV LLM model chain (`provider/model,...`); empty leaves optional LLM features disabled |
+| `EMBEDDING_DIMS` | `0` (auto) | Embedding dimensions; custom local models may require `LOCAL_EMBEDDING_DIM` |
+| `LOCAL_EMBEDDING_MODEL` | -- | Optional BYO local embedding model ID; empty uses Fastretrieval's bundled model manifest |
+| `LOCAL_EMBEDDING_DIM` | `0` | Required for a BYO local embedding when its model manifest does not provide dimensions |
+| `LOCAL_EMBEDDING_POOLING` | `MEAN` | Pooling for a BYO local embedding (`MEAN`, `CLS`, `LAST_TOKEN`, or `DISABLED`) |
+| `LOCAL_EMBEDDING_NORMALIZE` | `true` | Normalize BYO local embedding outputs |
+| `LOCAL_RERANK_MODEL` | -- | Optional BYO local reranker model ID; empty uses Fastretrieval's bundled model manifest |
+| `LOCAL_RERANK_MODEL_FILE` | `onnx/model.onnx` | ONNX file path for a BYO local reranker |
 | `BRAVE_API_KEY` | -- | Brave Search API key (premium search) |
 | `TAVILY_API_KEY` | -- | Tavily search API key |
 | `EXA_API_KEY` | -- | Exa search API key |
 | `GITHUB_TOKEN` | auto-detect | GitHub token for docs discovery |
 | `SEARCH_BACKENDS` | `searxng` | Ordered CSV search chain: `searxng`, `tavily`, `brave`, `exa` |
-| `WET_AUTO_SEARXNG` | `true` | Allow wet to auto-start its embedded SearXNG; set `false` when using only external/cloud search |
+| `WET_AUTO_SEARXNG` | `true` | Auto-start bundled SearXNG when the runtime includes its prerequisites; `uvx` plugin environments do not bundle them |
 | `DISABLE_LOCAL_SEARCH` | `false` | Skip the embedded local SearXNG fallback while retaining external or cloud search backends |
 | `BROWSER_BACKENDS` | empty -> `native` | Ordered CSV render chain: `native`, `browserless`, `cf-browser-rendering` |
 | `SYNC_ENABLED` | `true` | Enable Google Drive sync |
@@ -231,6 +240,8 @@ All environment variables are **optional**. See [docs/setup-with-agent.md](setup
 
 ### Backend Selection
 
-- **Embedding, reranking, and LLM**: use ordered `*_MODELS` chains; provider keys are inferred from each `provider/model` prefix.
+- **Embedding, reranking, and LLM**: use the ordered `EMBEDDING_MODELS`, `RERANK_MODELS`, and `LLM_MODELS` chains; provider keys are inferred from each `provider/model` prefix.
+- **Local model overrides**: use `LOCAL_EMBEDDING_MODEL` / `LOCAL_RERANK_MODEL`; built-in IDs resolve through Fastretrieval's model manifest, while custom embedding IDs require the matching local metadata variables above.
+- **Legacy aliases**: `EMBEDDING_BACKEND`, `EMBEDDING_MODEL`, `RERANK_BACKEND`, and `RERANK_MODEL` are deprecated and honored for one release; migrate to the plural model chains.
 - **Browser rendering**: `BROWSER_BACKENDS` escalates in listed order; an empty chain uses the local `native` browser.
-- **Search**: `SEARCH_BACKENDS` falls back in listed order; local SearXNG is the zero-config default.
+- **Search**: `SEARCH_BACKENDS` falls back in listed order. The source-built Docker image can bundle the local SearXNG leg; `uvx` plugin installs require a configured SearXNG endpoint or cloud provider.

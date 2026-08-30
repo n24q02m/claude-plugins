@@ -1,6 +1,6 @@
 # WET (Web Extended Toolkit) -- Agent Setup Guide
 
-> **2026-05-02 Update (v&lt;auto&gt;+)**: Plugin install (Option 1) uses stdio mode. Basic SearXNG search works without env; advanced features (GDrive sync, Tavily/Brave/Exa search, and cloud models) need optional env vars OR HTTP mode for OAuth flows.
+> **2026-08-30 Update**: Plugin install (Option 1) uses stdio mode. It provides local Fastretrieval embedding/reranking, extraction, and library docs without API keys. Web search needs a configured cloud/SearXNG endpoint or the locally built Docker image that bundles SearXNG.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 
 > Give this file to your AI agent to automatically set up wet-mcp.
@@ -21,7 +21,7 @@ All MCP servers across this stack share this priority hierarchy. `better-godot-m
 
 ## Option 1: Claude Code Plugin (stdio default)
 
-Plugin install uses **stdio mode**. Basic SearXNG web search works **without any env vars** -- ONNX local embedding and reranking are bundled. Advanced features require optional API keys.
+Plugin install uses **stdio mode**. Fastretrieval's local model registry provides ONNX embedding and reranking without API keys; content extraction and library docs also work without a search provider. Web search requires a configured cloud/SearXNG endpoint or the locally built Docker image that bundles SearXNG.
 
 ### Credential prompts at install
 
@@ -29,7 +29,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 
 | Field | Required | Where to obtain |
 |---|---|---|
-| `RERANK_MODELS` | Optional | CSV rerank model chain such as `jina_ai/jina-reranker-v3`; leave empty for the bundled local ONNX reranker |
+| `RERANK_MODELS` | Optional | CSV rerank model chain such as `jina_ai/jina-reranker-v3`; leave empty for Fastretrieval's local ONNX reranker manifest |
 | `JINA_AI_API_KEY` | Optional | https://jina.ai/api-key (highest priority embedding+reranking) |
 | `GEMINI_API_KEY` | Optional | https://aistudio.google.com/apikey |
 | `OPENAI_API_KEY` | Optional | https://platform.openai.com/api-keys |
@@ -44,9 +44,9 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 /plugin install wet-mcp@n24q02m-plugins
 ```
 
-> Other optional env vars (`SEARCH_BACKENDS`, `TAVILY_API_KEY`, `BRAVE_API_KEY`, `EXA_API_KEY`, `BROWSER_BACKENDS`, `SYNC_ENABLED`, etc.) are not part of the `userConfig` prompt; add them manually to `mcpServers.wet.env` in your settings if needed.
+> Other optional env vars (`EMBEDDING_MODELS`, `LLM_MODELS`, `SEARCH_BACKENDS`, `TAVILY_API_KEY`, `BRAVE_API_KEY`, `EXA_API_KEY`, `BROWSER_BACKENDS`, `SYNC_ENABLED`, etc.) are not part of the `userConfig` prompt; add them manually to `mcpServers.wet.env` in your settings if needed.
 
-Without env vars: SearXNG metasearch + content extraction + library docs + ONNX embedding work out of the box. With env vars: cloud embedding/reranking, Gemini LLM analysis, premium search providers.
+Without env vars: content extraction, library docs, and Fastretrieval-managed local embedding/reranking work. For web search, configure a cloud/SearXNG backend or use the locally built Docker image; other env vars enable cloud embedding/reranking, LLM analysis, and premium providers.
 
 > **Note**: This installs the full plugin (skills + agents + hooks + commands + stdio MCP server). If you'd rather use Option 2 (Docker stdio) or Option 3 (HTTP) below, DO NOT `/plugin install` this plugin — pick Option 2 or Option 3 instead. All three methods are mutually exclusive (see Method overview).
 
@@ -166,7 +166,7 @@ Share this password out-of-band (Signal/email/SMS) with anyone you invite to use
 
 ## Environment Variables
 
-All environment variables are **optional**. The server works in local mode (ONNX embedding + SearXNG) with zero configuration.
+All environment variables are **optional**. The server works in local mode (Fastretrieval-managed ONNX embedding + SearXNG) with zero configuration.
 
 ### API Keys (Cloud Providers)
 
@@ -186,25 +186,34 @@ All environment variables are **optional**. The server works in local mode (ONNX
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `EMBEDDING_BACKEND` | No | auto-detect | `cloud` or `local`. Auto: API keys present -> cloud, else local |
-| `EMBEDDING_MODEL` | No | auto-detect | Cloud embedding model name |
-| `EMBEDDING_DIMS` | No | `0` (auto) | Embedding dimensions |
+| `EMBEDDING_MODELS` | No | empty | Ordered CSV embedding model chain (`provider/model,...`); empty resolves Fastretrieval's local ONNX model manifest |
+| `RERANK_MODELS` | No | empty | Ordered CSV rerank model chain (`provider/model,...`); empty resolves Fastretrieval's local ONNX cross-encoder manifest |
+| `EMBEDDING_DIMS` | No | `0` (auto) | Embedding dimensions; custom local models may require `LOCAL_EMBEDDING_DIM` |
+| `LOCAL_EMBEDDING_MODEL` | No | -- | Optional BYO local embedding model ID; empty uses Fastretrieval's bundled model manifest |
+| `LOCAL_EMBEDDING_DIM` | No | `0` | Required for a BYO local embedding when its model manifest does not provide dimensions |
+| `LOCAL_EMBEDDING_POOLING` | No | `MEAN` | Pooling for a BYO local embedding (`MEAN`, `CLS`, `LAST_TOKEN`, or `DISABLED`) |
+| `LOCAL_EMBEDDING_NORMALIZE` | No | `true` | Normalize BYO local embedding outputs |
+| `LOCAL_RERANK_MODEL` | No | -- | Optional BYO local reranker model ID; empty uses Fastretrieval's bundled model manifest |
+| `LOCAL_RERANK_MODEL_FILE` | No | `onnx/model.onnx` | ONNX file path for a BYO local reranker |
 | `RERANK_ENABLED` | No | `true` | Enable reranking after search |
-| `RERANK_MODELS` | No | empty | Ordered CSV rerank model chain (`provider/model,...`); empty uses the bundled local ONNX cross-encoder |
 | `RERANK_TOP_N` | No | `10` | Return top N results after reranking |
 
 ### LLM
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `LLM_MODELS` | No | auto-detect | LLM model for media analysis (LiteLLM format) |
+| `LLM_MODELS` | No | empty | Ordered CSV LLM model chain (`provider/model,...`); empty leaves optional LLM features disabled |
+
+### Legacy model aliases
+
+`EMBEDDING_BACKEND`, `EMBEDDING_MODEL`, `RERANK_BACKEND`, and `RERANK_MODEL` are deprecated and honored for one release. Use the plural `EMBEDDING_MODELS` and `RERANK_MODELS` chains instead.
 
 ### SearXNG
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
 | `SEARCH_BACKENDS` | No | `searxng` | Ordered CSV search chain: `searxng`, `tavily`, `brave`, `exa` |
-| `WET_AUTO_SEARXNG` | No | `true` | Allow wet to auto-start its embedded SearXNG; set `false` when using only external/cloud search |
+| `WET_AUTO_SEARXNG` | No | `true` | Auto-start bundled SearXNG when the runtime includes its prerequisites; `uvx` plugin environments do not bundle them |
 | `DISABLE_LOCAL_SEARCH` | No | `false` | Skip the embedded local SearXNG fallback while retaining external or cloud search backends |
 | `WET_SEARXNG_PORT` | No | `41592` | SearXNG port |
 | `SEARXNG_URL` | No | `http://localhost:41592` | URL for an external SearXNG deployment |
@@ -261,7 +270,7 @@ All environment variables are **optional**. The server works in local mode (ONNX
 
 ### Stdio Mode (default)
 
-Set API keys directly as environment variables. Basic SearXNG search works without any env. Advanced features (cloud embedding, Gemini LLM, premium search) activate when corresponding keys are set. Credentials live only in the local process environment.
+Set provider keys and endpoints directly as environment variables. A stdio `uvx` install still needs a configured SearXNG endpoint or cloud search provider for web search; cloud embedding, LLM, and premium search features activate from their corresponding variables. Credentials live only in the local process environment.
 
 ### HTTP Mode (optional, multi-user)
 

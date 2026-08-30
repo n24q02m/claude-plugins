@@ -22,7 +22,7 @@ All MCP servers across this stack share this priority hierarchy. `better-godot-m
 
 ## Option 1: Claude Code Plugin (Recommended)
 
-Plugin marketplace install runs the server in **pure stdio mode**. mnemo works with **zero required env vars** -- it falls back to local SQLite + a local ONNX model embedding. Cloud providers and GDrive sync are optional.
+Plugin marketplace install runs the server in **pure stdio mode**. mnemo works with **zero required env vars** -- it falls back to local SQLite + Fastretrieval's local model registry/runtime (ONNX embedding and reranking). Cloud providers and GDrive sync are optional.
 
 ### Credential prompts at install
 
@@ -43,7 +43,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 /plugin install mnemo-mcp@n24q02m-plugins
 ```
 
-> Other optional env vars (`GEMINI_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY`, `SYNC_ENABLED`, `GOOGLE_DRIVE_CLIENT_ID`, etc.) are not part of the `userConfig` prompt; add them manually to `mcpServers.mnemo.env` in your settings if needed.
+> Other optional env vars (`EMBEDDING_MODELS`, `RERANK_MODELS`, `LLM_MODELS`, `GEMINI_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY`, `SYNC_ENABLED`, `GOOGLE_DRIVE_CLIENT_ID`, etc.) are not part of the `userConfig` prompt; add them manually to `mcpServers.mnemo.env` in your settings if needed.
 
 > **Note**: This installs the full plugin (skills + agents + hooks + commands + stdio MCP server). If you'd rather use Option 2 (Docker stdio) or Option 3 (HTTP) below, DO NOT `/plugin install` this plugin — pick Option 2 or Option 3 instead. All three methods are mutually exclusive (see Method overview).
 
@@ -113,7 +113,7 @@ Share this password out-of-band (Signal/email/SMS) with anyone you invite to use
 
 ## Environment Variables
 
-All environment variables are **optional**. The server works in local mode (ONNX embedding) with zero configuration.
+All environment variables are **optional**. The server works in local mode (Fastretrieval-managed ONNX embedding and reranking) with zero configuration.
 
 ### API Keys (Cloud Providers)
 
@@ -135,19 +135,27 @@ All environment variables are **optional**. The server works in local mode (ONNX
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `EMBEDDING_BACKEND` | No | auto-detect | `cloud` or `local`. Auto: API keys present -> cloud, else local |
-| `EMBEDDING_MODEL` | No | auto-detect | Cloud embedding model name |
-| `EMBEDDING_DIMS` | No | `0` (auto) | Embedding dimensions |
+| `EMBEDDING_MODELS` | No | empty | Ordered CSV embedding model chain (`provider/model,...`); empty resolves Fastretrieval's local ONNX model manifest |
+| `RERANK_MODELS` | No | empty | Ordered CSV rerank model chain (`provider/model,...`); empty resolves Fastretrieval's local ONNX cross-encoder manifest |
+| `EMBEDDING_DIMS` | No | `0` (auto) | Embedding dimensions; custom local models may require `LOCAL_EMBEDDING_DIM` |
+| `LOCAL_EMBEDDING_MODEL` | No | -- | Optional BYO local embedding model ID; empty uses Fastretrieval's bundled model manifest |
+| `LOCAL_EMBEDDING_DIM` | No | `0` | Required for a BYO local embedding when its model manifest does not provide dimensions |
+| `LOCAL_EMBEDDING_POOLING` | No | `MEAN` | Pooling for a BYO local embedding (`MEAN`, `CLS`, `LAST_TOKEN`, or `DISABLED`) |
+| `LOCAL_EMBEDDING_NORMALIZE` | No | `true` | Normalize BYO local embedding outputs |
+| `LOCAL_RERANK_MODEL` | No | -- | Optional BYO local reranker model ID; empty uses Fastretrieval's bundled model manifest |
+| `LOCAL_RERANK_MODEL_FILE` | No | `onnx/model.onnx` | ONNX file path for a BYO local reranker |
 | `RERANK_ENABLED` | No | `true` | Enable reranking (improves search precision) |
-| `RERANK_BACKEND` | No | auto-detect | `cloud` or `local`. Auto: Jina/Cohere key -> cloud, else local |
-| `RERANK_MODEL` | No | auto-detect | Cloud reranker model name |
 | `RERANK_TOP_N` | No | `10` | Number of top results after reranking |
 
 ### LLM
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `LLM_MODELS` | No | auto-detect | LLM model for importance scoring, graph extraction, consolidation (LiteLLM format) |
+| `LLM_MODELS` | No | empty | Ordered CSV LLM model chain (`provider/model,...`); empty leaves optional LLM features disabled |
+
+### Legacy model aliases
+
+`EMBEDDING_BACKEND`, `EMBEDDING_MODEL`, `RERANK_BACKEND`, and `RERANK_MODEL` are deprecated and honored for one release. Use the plural `EMBEDDING_MODELS` and `RERANK_MODELS` chains instead.
 
 ### Memory Management
 
@@ -225,7 +233,7 @@ Client config:
 
 ### Stdio Mode (Local SQLite + Optional Env Cloud Keys)
 
-mnemo works without any credentials -- it falls back to local SQLite + a local ONNX model embedding. Optionally set cloud API keys (Jina/Gemini/OpenAI/Cohere) as env vars for higher-quality results.
+mnemo works without any credentials -- it falls back to local SQLite + Fastretrieval's local model registry/runtime for Qwen3 ONNX embedding and reranking. Optionally set cloud API keys (Jina/Gemini/OpenAI/Cohere) as env vars for higher-quality results.
 
 For Google Drive sync in stdio mode, manually create the OAuth token at `~/.mnemo-mcp/tokens/google_drive.json` (chmod 600). For browser-based OAuth, use HTTP mode.
 
