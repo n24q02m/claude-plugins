@@ -18,6 +18,7 @@ on:
           - better-email-mcp
           - better-godot-mcp
           - imagine-mcp
+          - better-workspace-mcp
           - agent-chat-plugin
       tag:
         description: "Release tag (e.g., v2.18.1)"
@@ -79,7 +80,7 @@ jobs:
           }
 
           case "$REPO" in
-            wet-mcp|mnemo-mcp|better-telegram-mcp|better-code-review-graph|better-notion-mcp|better-email-mcp|better-godot-mcp|imagine-mcp|agent-chat-plugin)
+            wet-mcp|mnemo-mcp|better-telegram-mcp|better-code-review-graph|better-notion-mcp|better-email-mcp|better-godot-mcp|imagine-mcp|better-workspace-mcp|agent-chat-plugin)
               ;;
             *)
               printf "::error::Invalid repo: %s\n" "$(sanitize "$REPO")"

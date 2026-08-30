@@ -38,7 +38,7 @@ sync_dir() {
   fi
 }
 
-PLUGINS=(wet-mcp mnemo-mcp better-telegram-mcp better-code-review-graph better-notion-mcp better-email-mcp better-godot-mcp imagine-mcp agent-chat-plugin)
+PLUGINS=(wet-mcp mnemo-mcp better-telegram-mcp better-code-review-graph better-notion-mcp better-email-mcp better-godot-mcp imagine-mcp better-workspace-mcp agent-chat-plugin)
 
 sync_plugins() {
   for repo in "${PLUGINS[@]}"; do

@@ -12,6 +12,12 @@ def _resolve_base_dir(base_dir: str) -> tuple[str, str]:
     abs_base = os.path.abspath(base_dir)
     return abs_base, os.path.realpath(abs_base)
 
+def _is_within(base_dir: str, target: str) -> bool:
+    try:
+        return os.path.commonpath([base_dir, target]) == base_dir
+    except ValueError:
+        return False
+
 
 def get_safe_path(base_dir: str, sub_path: str) -> str:
     """
@@ -32,17 +38,22 @@ def get_safe_path(base_dir: str, sub_path: str) -> str:
     # Layer 1: Lexical check (defense-in-depth)
     # This prevents simple traversal using '..' even if the files don't exist yet.
     abs_target = os.path.abspath(os.path.join(abs_base, sub_path))
-    if os.path.commonpath([abs_base, abs_target]) != abs_base:
+    if not _is_within(abs_base, abs_target):
         raise ValueError("Path traversal detected (lexical)")
 
-    # Layer 2: Physical check
-    # Resolve the real path of the base and the target.
-    # We resolve the target by joining it with the real base to ensure symlinks
-    # are followed correctly and '..' components are resolved physically.
-    real_target = os.path.realpath(os.path.join(real_base, sub_path))
-
-    if os.path.commonpath([real_base, real_target]) != real_base:
-        raise ValueError("Path traversal detected (physical)")
+    # Resolve one component at a time. On Windows, os.path.realpath() can simplify
+    # ``symlink/..`` lexically before following the symlink, hiding an intermediate
+    # escape. Containment after every resolved component closes that bypass.
+    real_target = real_base
+    for component in re.split(r"[\\/]+", sub_path):
+        if component in ("", "."):
+            continue
+        if component == "..":
+            real_target = os.path.dirname(real_target)
+        else:
+            real_target = os.path.realpath(os.path.join(real_target, component))
+        if not _is_within(real_base, real_target):
+            raise ValueError("Path traversal detected (physical)")
 
     return os.path.relpath(real_target, real_base)
 

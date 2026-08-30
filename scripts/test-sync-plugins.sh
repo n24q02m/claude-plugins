@@ -31,6 +31,17 @@ assert_not() {
   fi
 }
 
+contains_plugin() {
+  local expected="$1"
+  local plugin
+  for plugin in "${PLUGINS[@]}"; do
+    if [ "$plugin" = "$expected" ]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 # --- has_files tests ---
 
 test_has_files() {
@@ -106,6 +117,8 @@ test_sync_plugins() {
   REPOS_DIR="$old_repos_dir"
   ROOT="$old_root"
 }
+
+assert "workspace plugin configured for sync" contains_plugin "better-workspace-mcp"
 
 printf "%s\n" "=== has_files tests ==="
 test_has_files
