@@ -29,7 +29,7 @@ Docker-stdio, and self-hosted HTTP choices in more detail.
 
 ## Option 1: Claude Code Plugin (Recommended)
 
-Plugin marketplace install runs the server in **pure stdio mode** with optional API key env vars. No daemon-bridge, no auto-spawn, no relay form. Graph storage is local SQLite -- no external graph database required.
+Plugin marketplace install runs the server in **pure stdio mode** with optional API key env vars. No daemon-bridge, no auto-spawn, no relay form. Graph storage is local SQLite, and local embeddings are resolved through Fastretrieval's ONNX model registry -- no external graph database required.
 
 ### Credential prompts at install
 
@@ -52,11 +52,11 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 
 The plugin includes SessionStart and PostToolUse hooks that auto-build and auto-update the code graph.
 
-> Other optional env vars (`GEMINI_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY`, `EMBEDDING_BACKEND`, etc.) are not part of the `userConfig` prompt; add them manually to `mcpServers.better-code-review-graph.env` in your settings if needed.
+> Other optional env vars (`GEMINI_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY`, `EMBEDDING_MODELS`, `SUMMARY_MODELS`, `LOCAL_EMBEDDING_MODEL`, etc.) are not part of the `userConfig` prompt; add them manually to `mcpServers.better-code-review-graph.env` in your settings if needed.
 
 ## Environment Variables
 
-All environment variables are **optional**. The server works with local ONNX embeddings with zero configuration.
+All environment variables are **optional**. The server works with Fastretrieval's local ONNX embedding registry with zero configuration.
 
 ### API Keys (Cloud Embedding Providers)
 
@@ -72,8 +72,16 @@ All environment variables are **optional**. The server works with local ONNX emb
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `EMBEDDING_BACKEND` | No | auto-detect | `cloud` or `local`. Auto: API keys present -> cloud, else local |
-| `EMBEDDING_MODEL` | No | auto-detect | Cloud embedding model name. Provider auto-detected from model prefix |
+| `EMBEDDING_MODELS` | No | empty | Ordered CSV embedding model chain (`provider/model,...`); empty resolves Fastretrieval's local ONNX model manifest |
+| `EMBEDDING_DIMS` | No | `0` (auto) | Embedding dimensions; custom local models may require `LOCAL_EMBEDDING_DIM` |
+| `LOCAL_EMBEDDING_MODEL` | No | -- | Optional BYO local embedding model ID; empty uses Fastretrieval's bundled model manifest |
+| `LOCAL_EMBEDDING_MODEL_FILE` | No | `onnx/model.onnx` | ONNX file path for a BYO local embedding |
+| `LOCAL_EMBEDDING_DIM` | No | `0` | Required for a BYO local embedding when its model manifest does not provide dimensions |
+| `LOCAL_EMBEDDING_POOLING` | No | `MEAN` | Pooling for a BYO local embedding (`MEAN`, `CLS`, `LAST_TOKEN`, or `DISABLED`) |
+| `LOCAL_EMBEDDING_NORMALIZE` | No | `true` | Normalize BYO local embedding outputs |
+| `SUMMARY_MODELS` | No | empty | Ordered CSV summary model chain (`provider/model,...`); empty leaves summaries disabled |
+
+Legacy aliases: `EMBEDDING_BACKEND`, `EMBEDDING_MODEL`, and `SUMMARY_MODEL` are deprecated and honored for one release. Use `EMBEDDING_MODELS` and `SUMMARY_MODELS` instead.
 
 ### HTTP Mode (Self-Host)
 
@@ -94,7 +102,7 @@ All environment variables are **optional**. The server works with local ONNX emb
 
 ### Stdio Mode (Env Vars)
 
-Set API keys directly via env vars (or leave unset for local ONNX). No relay form, no browser flow.
+Set API keys directly via env vars (or leave unset for Fastretrieval's local ONNX registry). No relay form, no browser flow.
 
 ## Verification
 

@@ -26,7 +26,7 @@ All MCP servers across this stack share this priority hierarchy. Note: 2 plugins
 
 ## Method 1: Claude Code Plugin (Recommended)
 
-Plugin marketplace install runs the server in **pure stdio mode**. mnemo works with **zero required env vars** -- it falls back to local SQLite + a local ONNX model embedding. Cloud providers and GDrive sync are optional.
+Plugin marketplace install runs the server in **pure stdio mode**. mnemo works with **zero required env vars** -- it falls back to local SQLite + Fastretrieval's local model registry/runtime (ONNX embedding and reranking). Cloud providers and GDrive sync are optional.
 
 ### Credential prompts at install
 
@@ -203,7 +203,7 @@ For S3-compatible storage (R2 / B2 / MinIO) instead of Google Drive, set `SYNC_S
 
 ## Environment Variable Reference
 
-All environment variables are **optional** -- mnemo works with zero env vars in stdio mode (local SQLite + a local ONNX model). See [docs/setup-with-agent.md](setup-with-agent.md#environment-variables) for the complete table.
+All environment variables are **optional** -- mnemo works with zero env vars in stdio mode (local SQLite + Fastretrieval-managed local ONNX model). See [docs/setup-with-agent.md](setup-with-agent.md#environment-variables) for the complete table.
 
 ### Key Variables
 
@@ -216,7 +216,16 @@ All environment variables are **optional** -- mnemo works with zero env vars in 
 | `ANTHROPIC_API_KEY` | -- | Anthropic: LLM dispatch (Phase 1 multi-provider auto-detect) |
 | `XAI_API_KEY` | -- | xAI/Grok: LLM dispatch (Phase 1 multi-provider auto-detect) |
 | `COHERE_API_KEY` | -- | Cohere: embedding + reranking |
-| `LLM_MODELS` | -- | LLM model overrides, format `provider=model,...` (Phase 1) |
+| `EMBEDDING_MODELS` | -- | Ordered CSV embedding model chain (`provider/model,...`); empty resolves Fastretrieval's local ONNX model manifest |
+| `RERANK_MODELS` | -- | Ordered CSV rerank model chain (`provider/model,...`); empty resolves Fastretrieval's local ONNX cross-encoder manifest |
+| `EMBEDDING_DIMS` | `0` (auto) | Embedding dimensions; custom local models may require `LOCAL_EMBEDDING_DIM` |
+| `LOCAL_EMBEDDING_MODEL` | -- | Optional BYO local embedding model ID; empty uses Fastretrieval's bundled model manifest |
+| `LOCAL_EMBEDDING_DIM` | `0` | Required for a BYO local embedding when its model manifest does not provide dimensions |
+| `LOCAL_EMBEDDING_POOLING` | `MEAN` | Pooling for a BYO local embedding (`MEAN`, `CLS`, `LAST_TOKEN`, or `DISABLED`) |
+| `LOCAL_EMBEDDING_NORMALIZE` | `true` | Normalize BYO local embedding outputs |
+| `LOCAL_RERANK_MODEL` | -- | Optional BYO local reranker model ID; empty uses Fastretrieval's bundled model manifest |
+| `LOCAL_RERANK_MODEL_FILE` | `onnx/model.onnx` | ONNX file path for a BYO local reranker |
+| `LLM_MODELS` | -- | Ordered CSV LLM model chain (`provider/model,...`); empty leaves optional LLM features disabled |
 | `DB_PATH` | `~/.mnemo-mcp/memories.db` | Database location |
 | `DEDUP_THRESHOLD` | `0.9` | Embedding similarity threshold for capture dedup short-circuit (Phase 1) |
 | `RECENCY_HALF_LIFE_DAYS` | `7` | Temporal decay half-life for retrieval scoring (Phase 1 RRF + rerank) |
@@ -229,9 +238,10 @@ All environment variables are **optional** -- mnemo works with zero env vars in 
 
 ### Provider Priority
 
-- **Embedding**: Jina AI > Gemini > OpenAI > Cohere > local ONNX model
-- **Reranking**: Jina AI > Cohere > local ONNX model
-- **LLM**: Gemini > OpenAI > Disabled (heuristic fallback)
+- **Embedding**: use the ordered `EMBEDDING_MODELS` chain; an empty chain resolves Fastretrieval's local ONNX model manifest, while a non-empty chain selects cloud providers in the listed order.
+- **Reranking**: use the ordered `RERANK_MODELS` chain; an empty chain resolves Fastretrieval's local ONNX cross-encoder manifest, while a non-empty chain selects cloud providers in the listed order.
+- **LLM**: use the ordered `LLM_MODELS` chain; an empty chain leaves optional LLM features disabled.
+- **Legacy aliases**: `EMBEDDING_BACKEND`, `EMBEDDING_MODEL`, `RERANK_BACKEND`, and `RERANK_MODEL` are deprecated and honored for one release. Use the plural model chains instead.
 
 ## Troubleshooting
 
