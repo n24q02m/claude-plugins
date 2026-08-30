@@ -13,7 +13,8 @@ For every plugin that declares an ``mcpServers`` manifest, it checks:
    (Catches the "new server shipped with no docs" recurrence.)
 2. Config-param coverage -- every ``userConfig`` key in ``plugin.json`` is
    mentioned in at least one of the plugin's ``.md`` files.
-   (Catches "shipped a new param without a docs entry".)
+3. Distribution-policy coverage -- docs must not advertise discontinued public
+   image coordinates.
 
 The foundation library (mcp-core) has no ``mcpServers`` manifest and is skipped
 by design -- it documents architecture, not an install/tool surface.
@@ -35,7 +36,16 @@ PLUGINS_DIR = "plugins"
 
 # Prose pages every runnable server must ship for the docs site.
 REQUIRED_DOCS = ("overview.md", "setup.md", "tools.md", "troubleshooting.md")
-
+DOCS_SITE_DIR = os.path.join("docs", "src", "content", "docs")
+GLOBAL_FORBIDDEN_DISTRIBUTION_CLAIMS = (
+    "doesn't ship Docker or HTTP variants",
+    "don't ship Docker / HTTP variants",
+    "only offers Method 1",
+)
+PLUGIN_FORBIDDEN_DISTRIBUTION_CLAIMS = {
+    "better-code-review-graph": ("n24q02m/better-code-review-graph:latest",),
+    "wet-mcp": ("n24q02m/wet-mcp:latest",),
+}
 
 def _markdown_blob(plugin_dir: str) -> str:
     """Concatenate every top-level ``.md`` file in the plugin dir."""
@@ -55,6 +65,56 @@ def _markdown_blob(plugin_dir: str) -> str:
     except (FileNotFoundError, NotADirectoryError):
         pass
     return "\n".join(parts)
+
+
+def _scan_distribution_claims(root: str, claims: tuple[str, ...]) -> list[str]:
+    """Return forbidden distribution claims found under one docs root."""
+    errors: list[str] = []
+    if not os.path.isdir(root):
+        return errors
+
+    for directory, _, filenames in os.walk(root):
+        for filename in filenames:
+            if not filename.endswith(".md"):
+                continue
+            path = os.path.join(directory, filename)
+            try:
+                with open(path, encoding="utf-8") as stream:
+                    body = stream.read()
+            except OSError as error:
+                errors.append(f"{path}: could not verify distribution policy: {error}")
+                continue
+            for claim in claims:
+                if claim in body:
+                    errors.append(
+                        f"{path}: discontinued distribution claim {claim!r}; "
+                        "document the current source-built/self-hosted contract instead"
+                    )
+    return errors
+
+
+def _verify_distribution_claims() -> list[str]:
+    """Return docs that still advertise discontinued distribution claims."""
+    errors = _scan_distribution_claims(
+        PLUGINS_DIR, GLOBAL_FORBIDDEN_DISTRIBUTION_CLAIMS
+    )
+    for plugin, claims in PLUGIN_FORBIDDEN_DISTRIBUTION_CLAIMS.items():
+        errors.extend(_scan_distribution_claims(os.path.join(PLUGINS_DIR, plugin), claims))
+
+    site_claims = tuple(
+        dict.fromkeys(
+            (
+                *GLOBAL_FORBIDDEN_DISTRIBUTION_CLAIMS,
+                *(
+                    claim
+                    for claims in PLUGIN_FORBIDDEN_DISTRIBUTION_CLAIMS.values()
+                    for claim in claims
+                ),
+            )
+        )
+    )
+    errors.extend(_scan_distribution_claims(DOCS_SITE_DIR, site_claims))
+    return errors
 
 
 def _verify_plugin(name: str, plugin_dir: str) -> list[str]:
@@ -118,6 +178,7 @@ def verify_docs_current() -> None:
                 except (OSError, json.JSONDecodeError):
                     pass
             errors.extend(plugin_errors)
+    errors.extend(_verify_distribution_claims())
 
     if errors:
         print("Docs currency errors (docs drifted from shipped plugin.json):")

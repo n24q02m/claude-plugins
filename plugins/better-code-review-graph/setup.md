@@ -8,7 +8,7 @@
 
 ## Method overview
 
-This plugin **defaults to stdio via plugin install** (`uvx`/`npx`) -- the simplest path and the one this guide covers in full. It also ships Docker images (`:stdio` and `:http` targets) and supports HTTP transport (`MCP_TRANSPORT=http` / `TRANSPORT_MODE=http` / `--http`) for multi-user self-hosting. What it does **not** offer (unlike `better-notion-mcp`/`better-email-mcp`/`better-telegram-mcp`) is a hosted remote-relay/OAuth mode -- HTTP here is self-host only.
+This plugin **defaults to stdio via plugin install** (`uvx`) -- the simplest path and the one this guide covers in full. Its source tree provides Docker `stdio` and `http` build targets, and it supports HTTP transport (`MCP_TRANSPORT=http` / `TRANSPORT_MODE=http` / `--http`) for operator-hosted deployments. It does **not** offer an owner-hosted remote-relay/OAuth endpoint -- HTTP here is self-host only and must retain access to the repository being indexed.
 
 For comparison, the other 7 plugins in this stack (`better-notion-mcp`, `better-email-mcp`, `better-telegram-mcp`, `wet-mcp`, `mnemo-mcp`, `imagine-mcp`, `better-workspace-mcp`) document 3 methods:
 1. **Default** -- Plugin install (`uvx`/`npx`) stdio
@@ -121,8 +121,12 @@ graph(action="build", repo_path="/path/to/your/repo")
 
 ### Docker cannot access repo files
 
-Ensure the volume mount is correct. The repo path inside the container is `/repo`:
+Build the `stdio` target from a reviewed release tag, then verify the volume
+mount. The repo path inside the container is `/repo`:
 
 ```bash
-docker run -i --rm -v "/absolute/path/to/repo:/repo:ro" n24q02m/better-code-review-graph:latest
+git clone --branch <release-tag> --depth 1 https://github.com/n24q02m/better-code-review-graph.git
+cd better-code-review-graph
+docker build --target stdio -t better-code-review-graph:local .
+docker run -i --rm -v "/absolute/path/to/repo:/repo:ro" better-code-review-graph:local
 ```
