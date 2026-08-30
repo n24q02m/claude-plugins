@@ -33,6 +33,9 @@ jobs:
           printf "%s\n" "Validating marketplace.json..."
           python3 scripts/validate_marketplace.py
 
+      - name: Verify plugin source sync inventory
+        run: bash scripts/test-sync-plugins.sh
+
       - name: Verify docs currency
         run: |
           set -euo pipefail

@@ -14,7 +14,6 @@ Pure additions of diacritics / Unicode punctuation (progress) always PASS.
 
 from __future__ import annotations
 
-import io
 import re
 import subprocess
 import sys
@@ -24,10 +23,8 @@ from typing import Iterator
 
 # Force UTF-8 on stderr so Vietnamese / Unicode chars display correctly on
 # Windows (default cp1252 otherwise replaces non-ASCII chars with '?').
-if hasattr(sys.stderr, "buffer"):
-    sys.stderr = io.TextIOWrapper(
-        sys.stderr.buffer, encoding="utf-8", errors="replace", line_buffering=True
-    )
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
 
 # Unicode char -> candidate ASCII replacements frequently produced by AI rewrites.
 UNICODE_REPLACEMENTS: dict[str, list[str]] = {
