@@ -1,6 +1,6 @@
 {
   "name": "better-workspace-mcp",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Google Workspace MCP server — Docs/Drive/Calendar/Gmail/Sheets/Slides/Tasks/Chat/People/Forms + multi-account",
   "userConfig": {
     "GOOGLE_OAUTH_CLIENT_ID": {
