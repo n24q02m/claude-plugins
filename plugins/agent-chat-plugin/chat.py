@@ -420,8 +420,24 @@ def cmd_channels(root: Path, a):
         print(f"(no channels yet under {root})")
         return
     rows = []
-    for meta_path in sorted(root.glob("*/_meta.json")):
-        chan = meta_path.parent
+    found_channels = []
+    # Optimization: Use os.scandir instead of Path.glob("*/_meta.json") to discover channels.
+    # This avoids instantiating thousands of Path objects for discarded subdirectories.
+    # Filters out hidden directories (starting with '.') to maintain parity with glob("*").
+    try:
+        with os.scandir(root) as it:
+            for entry in it:
+                if (
+                    not entry.name.startswith(".")
+                    and entry.is_dir()
+                    and os.path.exists(os.path.join(entry.path, "_meta.json"))
+                ):
+                    found_channels.append(entry.name)
+    except OSError:
+        pass
+    for chan_name in sorted(found_channels):
+        chan = root / chan_name
+        meta_path = chan / "_meta.json"
         try:
             meta = json.loads(meta_path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
@@ -594,24 +610,32 @@ def cmd_wait(root: Path, a):
     d = require_channel(root, a.channel)
     cur = read_cursor(d, a.agent)
     deadline = time.time() + a.timeout
+    last_mtime = 0
     while True:
-        found = []
-        # Optimization: use os.scandir to avoid Path instantiation overhead for
-        # thousands of old messages per tick.
         try:
-            with os.scandir(d) as it:
-                for entry in it:
-                    if not entry.name.endswith(".md"):
-                        continue
-                    seq = _seq_from_name(entry.name)
-                    if seq is None or seq <= cur:
-                        continue
-                    p = Path(entry.path)
-                    meta = parse_frontmatter(p)
-                    if is_relevant(meta, a.agent):
-                        found.append(p)
+            mtime = d.stat().st_mtime
         except OSError:
-            pass
+            mtime = 0
+
+        found = []
+        if mtime == 0 or mtime != last_mtime:
+            last_mtime = mtime
+            # Optimization: use os.scandir to avoid Path instantiation overhead for
+            # thousands of old messages per tick.
+            try:
+                with os.scandir(d) as it:
+                    for entry in it:
+                        if not entry.name.endswith(".md"):
+                            continue
+                        seq = _seq_from_name(entry.name)
+                        if seq is None or seq <= cur:
+                            continue
+                        p = Path(entry.path)
+                        meta = parse_frontmatter(p)
+                        if is_relevant(meta, a.agent):
+                            found.append(p)
+            except OSError:
+                pass
         if found:
             # Sort only the newly found messages
             found.sort(key=lambda p: _seq_from_name(p.name))
@@ -777,12 +801,12 @@ def cmd_compact(root: Path, a):
         print(f"compacted state for {a.channel} -> {a.channel}/state.md (open_tasks={len(summary.open_tasks)}, locks={len(summary.path_locks)}, decisions={len(summary.decisions)})")
 
 def _event_body(path: Path) -> dict:
-    raw = path.read_text(encoding="utf-8")
-    parts = raw.split("---", 2)
-    body = parts[2].strip() if len(parts) >= 3 else ""
     try:
+        raw = path.read_text(encoding="utf-8")
+        parts = raw.split("---", 2)
+        body = parts[2].strip() if len(parts) >= 3 else ""
         return validate_adapter_event(json.loads(body))
-    except (json.JSONDecodeError, UnicodeError) as error:
+    except (json.JSONDecodeError, UnicodeError, OSError) as error:
         raise AdapterEventError("EVENT_MALFORMED_BODY", path.name) from error
 
 
@@ -1118,50 +1142,50 @@ def build_parser() -> argparse.ArgumentParser:
 
 
     s = sub.add_parser("init", help="create a channel")
-    s.add_argument("channel")
+    s.add_argument("channel", help="name of the channel to create")
     s.add_argument("--members", help="comma-separated agent names")
-    s.add_argument("--topic")
+    s.add_argument("--topic", help="initial topic of the channel")
     s.set_defaults(func=cmd_init)
 
     s = sub.add_parser("channels", help="list channels")
     s.set_defaults(func=cmd_channels)
 
     s = sub.add_parser("roster", help="show a channel's members")
-    s.add_argument("channel")
+    s.add_argument("channel", help="channel to inspect")
     s.set_defaults(func=cmd_roster)
 
     s = sub.add_parser(
         "post", help="post a message (body via --body/--body-file/stdin)"
     )
-    s.add_argument("channel")
-    s.add_argument("--from", dest="sender", required=True)
+    s.add_argument("channel", help="channel to post in")
+    s.add_argument("--from", dest="sender", required=True, help="sender agent name")
     s.add_argument("--to", help="recipient agent, or 'all' (default all)")
-    s.add_argument("--title", required=True)
+    s.add_argument("--title", required=True, help="message title")
     s.add_argument("--reply", type=int, help="seq this replies to")
-    s.add_argument("--status", default="discussion")
-    s.add_argument("--body")
-    s.add_argument("--body-file")
+    s.add_argument("--status", default="discussion", help="message status (default: discussion)")
+    s.add_argument("--body", help="literal message body content")
+    s.add_argument("--body-file", help="read message body from file")
     s.set_defaults(func=cmd_post)
 
     event = sub.add_parser("event", help="post/read adapter-neutral events")
     event_sub = event.add_subparsers(dest="event_cmd", required=True)
     s = event_sub.add_parser("post", help="post a capability or status event")
-    s.add_argument("channel")
-    s.add_argument("--from", dest="sender", required=True)
-    s.add_argument("--type", dest="event_type", choices=EVENT_TYPES, required=True)
-    s.add_argument("--harness", required=True)
-    s.add_argument("--status", choices=STATUS_VALUES)
-    s.add_argument("--detail")
-    s.add_argument("--primitives", action="append")
+    s.add_argument("channel", help="channel to post the event in")
+    s.add_argument("--from", dest="sender", required=True, help="sender agent name")
+    s.add_argument("--type", dest="event_type", choices=EVENT_TYPES, required=True, help="type of the event")
+    s.add_argument("--harness", required=True, help="harness name")
+    s.add_argument("--status", choices=STATUS_VALUES, help="status of the agent")
+    s.add_argument("--detail", help="optional details about the status")
+    s.add_argument("--primitives", action="append", help="primitives supported by the agent")
     s.set_defaults(func=cmd_event_post)
     s = event_sub.add_parser("read", help="read validated adapter-neutral events")
-    s.add_argument("channel")
-    s.add_argument("--type", dest="event_type", choices=EVENT_TYPES)
+    s.add_argument("channel", help="channel to read events from")
+    s.add_argument("--type", dest="event_type", choices=EVENT_TYPES, help="filter by event type")
     s.set_defaults(func=cmd_event_read)
 
     s = sub.add_parser("read", help="print new messages for an agent (advances cursor)")
-    s.add_argument("channel")
-    s.add_argument("--as", dest="agent", required=True)
+    s.add_argument("channel", help="channel to read from")
+    s.add_argument("--as", dest="agent", required=True, help="agent reading the messages")
     s.add_argument(
         "--all", action="store_true", help="show entire thread, ignore relevance"
     )
@@ -1171,15 +1195,15 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser(
         "wait", help="block (sleep-poll, 0 tokens) until a reply arrives"
     )
-    s.add_argument("channel")
-    s.add_argument("--as", dest="agent", required=True)
-    s.add_argument("--timeout", type=float, default=900.0)
-    s.add_argument("--interval", type=float, default=5.0)
+    s.add_argument("channel", help="channel to wait on")
+    s.add_argument("--as", dest="agent", required=True, help="agent waiting for messages")
+    s.add_argument("--timeout", type=float, default=900.0, help="maximum wait time in seconds")
+    s.add_argument("--interval", type=float, default=5.0, help="polling interval in seconds")
     s.set_defaults(func=cmd_wait)
 
     s = sub.add_parser("peek", help="show last N messages without touching the cursor")
-    s.add_argument("channel")
-    s.add_argument("-n", type=int, default=3)
+    s.add_argument("channel", help="channel to peek into")
+    s.add_argument("-n", type=int, default=3, help="number of messages to show")
     s.set_defaults(func=cmd_peek)
 
     s = sub.add_parser("claim", help="atomically claim a task-<id>.md marker")

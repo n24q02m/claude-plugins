@@ -24,7 +24,22 @@ def _channels_to_check(root: Path, requested: str) -> list[str]:
     wanted = [c.strip() for c in requested.split(",") if c.strip()]
     if wanted:
         return wanted
-    return sorted(p.parent.name for p in root.glob("*/_meta.json"))
+    found = []
+    # Optimization: Use os.scandir instead of Path.glob("*/_meta.json") to discover channels.
+    # This avoids instantiating thousands of Path objects for discarded subdirectories.
+    # Filters out hidden directories (starting with '.') to maintain parity with glob("*").
+    try:
+        with os.scandir(root) as it:
+            for entry in it:
+                if (
+                    not entry.name.startswith(".")
+                    and entry.is_dir()
+                    and os.path.exists(os.path.join(entry.path, "_meta.json"))
+                ):
+                    found.append(entry.name)
+    except OSError:
+        pass
+    return sorted(found)
 
 
 def main() -> None:
@@ -43,7 +58,23 @@ def main() -> None:
 
         name = os.environ.get("AGENT_CHAT_NAME", "").strip()
         if not name:
-            if any(root.glob("*/_meta.json")):
+            has_channels = False
+            # Optimization: Use os.scandir instead of any(Path.glob("*/_meta.json")) for early exit.
+            # This avoids instantiating thousands of Path objects for discarded subdirectories.
+            # Filters out hidden directories (starting with '.') to maintain parity with glob("*").
+            try:
+                with os.scandir(root) as it:
+                    for entry in it:
+                        if (
+                            not entry.name.startswith(".")
+                            and entry.is_dir()
+                            and os.path.exists(os.path.join(entry.path, "_meta.json"))
+                        ):
+                            has_channels = True
+                            break
+            except OSError:
+                pass
+            if has_channels:
                 print(
                     "[agent-chat] Inbox hook disabled: identity is unset; "
                     "set AGENT_CHAT_NAME."
