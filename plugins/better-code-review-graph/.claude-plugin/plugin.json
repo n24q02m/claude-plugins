@@ -1,7 +1,7 @@
 {
   "name": "better-code-review-graph",
   "description": "Knowledge graph for token-efficient code reviews -- semantic search and call-graph resolution across your codebase.",
-  "version": "3.23.0",
+  "version": "3.24.0",
   "userConfig": {
     "EMBEDDING_MODELS": {
       "type": "string",
@@ -13,6 +13,12 @@
       "type": "string",
       "title": "Local embedding model (optional)",
       "description": "Built-in fastretrieval model ID, or a local directory containing fastretrieval-manifest.json. External IDs require LOCAL_EMBEDDING_DIM.",
+      "required": false
+    },
+    "LOCAL_RERANK_MODEL": {
+      "type": "string",
+      "title": "Local reranker model (optional)",
+      "description": "Fastretrieval TextCrossEncoder model ID; empty = reranking disabled.",
       "required": false
     },
     "LOCAL_EMBEDDING_DIM": {
@@ -92,6 +98,7 @@
         "EMBEDDING_MODELS": "${user_config.EMBEDDING_MODELS}",
         "LOCAL_EMBEDDING_MODEL": "${user_config.LOCAL_EMBEDDING_MODEL}",
         "LOCAL_EMBEDDING_DIM": "${user_config.LOCAL_EMBEDDING_DIM}",
+        "LOCAL_RERANK_MODEL": "${user_config.LOCAL_RERANK_MODEL}",
         "LOCAL_EMBEDDING_MODEL_FILE": "${user_config.LOCAL_EMBEDDING_MODEL_FILE}",
         "LOCAL_EMBEDDING_POOLING": "${user_config.LOCAL_EMBEDDING_POOLING}",
         "LOCAL_EMBEDDING_NORMALIZE": "${user_config.LOCAL_EMBEDDING_NORMALIZE}",
