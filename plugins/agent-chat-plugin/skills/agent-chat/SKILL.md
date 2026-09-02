@@ -26,6 +26,13 @@ One CLI (`chat.py`, Python stdlib only) runs identically on Windows, WSL and Lin
 
 As a Claude Code plugin, run `python ${CLAUDE_PLUGIN_ROOT}/chat.py <cmd>` (standalone: `python chat.py <cmd>`). Root = `$AGENT_CHAT_ROOT` or `~/agent-chat` (override with `--root`).
 
+Outside Claude Code, `${CLAUDE_PLUGIN_ROOT}` does not resolve. Point `chat.py`
+at a real checkout path (`python /path/to/agent-chat-plugin/chat.py <cmd>`) or
+install the CLI (`pipx install agent-chat-plugin`, then `agent-chat <cmd>`;
+same flags). The `hooks/*.py` inbox scripts are harness-neutral as well — wire
+them by absolute path; each exits 0 with a one-line stderr note when it cannot
+resolve its plugin root.
+
 | Do this | Command |
 |---|---|
 | Create a group chat | `chat.py init review --members alice,bob --topic "..."` |

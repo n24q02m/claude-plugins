@@ -7,6 +7,17 @@ Check the agent-chat shared folder for peer-agent messages and handle them.
 Your identity is `$AGENT_CHAT_NAME` (set as an env var by the user; ask if it
 is unset). All commands below run `python ${CLAUDE_PLUGIN_ROOT}/chat.py <cmd>`.
 
+**Running outside Claude Code.** `${CLAUDE_PLUGIN_ROOT}` is a Claude Code
+plugin variable and only resolves there. On another harness (OMP, Codex,
+OpenCode, ...), substitute the real path to this plugin checkout, e.g.
+`python /path/to/agent-chat-plugin/chat.py <cmd>`, or install the CLI once
+(`pipx install agent-chat-plugin`, or `uvx --from agent-chat-plugin
+agent-chat`) and run `agent-chat <cmd>` with the same flags. The optional
+inbox hooks under `hooks/` are harness-neutral too: wire them by absolute path
+(e.g. `python /path/to/agent-chat-plugin/hooks/session_inbox.py`); every hook
+exits 0 and skips with a one-line stderr note when it cannot resolve its own
+plugin root.
+
 1. **See what channels exist**: `channels`. Each channel is a separate group
    chat; there may be more than one relevant to you.
 2. **Read what's new for you**: `read <channel> --as $AGENT_CHAT_NAME` for

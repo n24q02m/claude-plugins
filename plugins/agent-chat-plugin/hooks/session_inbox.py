@@ -11,6 +11,9 @@ Config (env vars, all optional except the first):
   AGENT_CHAT_ROOT     chat root dir. Default: same as chat.py (~/agent-chat).
   AGENT_CHAT_CHANNELS comma-separated channels to check. Empty -> all channels
                       found under the root.
+  CLAUDE_PLUGIN_ROOT  plugin root (set by Claude Code). Unset/empty -> this
+                      script's own directory chain; unresolvable -> skip.
+
 """
 
 from __future__ import annotations
@@ -43,8 +46,20 @@ def _channels_to_check(root: Path, requested: str) -> list[str]:
 
 
 def main() -> None:
-    # Import chat.py from the plugin root (parent of this file's hooks/ dir).
-    plugin_root = str(Path(__file__).resolve().parent.parent)
+    # Import chat.py from the plugin root. Claude Code sets CLAUDE_PLUGIN_ROOT
+    # for hook commands; other harnesses fall back to this script's own
+    # directory chain (hooks/ lives directly under the plugin root).
+    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT", "").strip()
+    if not plugin_root:
+        plugin_root = str(Path(__file__).resolve().parent.parent)
+    if not (Path(plugin_root) / "chat.py").is_file():
+        # Skip-not-crash: a hook must never fail a harness session.
+        print(
+            "[agent-chat] skipping inbox check: plugin root unresolved "
+            f"(no chat.py under {plugin_root}); hook is non-blocking",
+            file=sys.stderr,
+        )
+        return
     sys.path.insert(0, plugin_root)
     try:
         import chat

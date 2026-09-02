@@ -516,7 +516,13 @@ def _read_body(a) -> str:
             "agent-chat: Enter message body; press Ctrl-D (or Ctrl-Z and Enter on Windows) to finish.",
             file=sys.stderr,
         )
-    data = sys.stdin.read()
+    try:
+        data = sys.stdin.read()
+        # Force encoding to catch surrogates immediately
+        data.encode("utf-8")
+    except (OSError, UnicodeError) as e:
+        raise AgentChatError(f"could not read body from stdin: {e}")
+
     if not data.strip():
         raise AgentChatError("empty body (pass --body, --body-file, or pipe via stdin)")
     return data
@@ -1207,52 +1213,53 @@ def build_parser() -> argparse.ArgumentParser:
     s.set_defaults(func=cmd_peek)
 
     s = sub.add_parser("claim", help="atomically claim a task-<id>.md marker")
-    s.add_argument("channel")
+    s.add_argument("channel", help="channel containing the task")
     s.add_argument("task", help="task marker filename, e.g. task-12.md")
-    s.add_argument("--as", dest="agent", required=True)
+    s.add_argument("--as", dest="agent", required=True, help="agent claiming the task")
     s.set_defaults(func=cmd_claim)
 
     s = sub.add_parser("lock", help="lock workspace-relative paths")
-    s.add_argument("channel")
-    s.add_argument("paths", nargs="+")
-    s.add_argument("--as", "--from", "--owner", dest="owner", required=True)
-    s.add_argument("--lease-seconds", "--lease", "--ttl", type=float, default=300.0)
+    s.add_argument("channel", help="channel to lock paths in")
+    s.add_argument("paths", nargs="+", help="paths to lock")
+    s.add_argument("--as", "--from", "--owner", dest="owner", required=True, help="agent acquiring the lock")
+    s.add_argument("--lease-seconds", "--lease", "--ttl", type=float, default=300.0, help="duration of the lease in seconds")
     s.set_defaults(func=cmd_lock)
 
     s = sub.add_parser("check", help="check workspace-relative paths for conflicts")
-    s.add_argument("channel")
-    s.add_argument("paths", nargs="+")
-    s.add_argument("--as", "--from", "--owner", dest="owner")
+    s.add_argument("channel", help="channel to check paths in")
+    s.add_argument("paths", nargs="+", help="paths to check")
+    s.add_argument("--as", "--from", "--owner", dest="owner", help="agent checking the paths")
     s.set_defaults(func=cmd_check)
 
     s = sub.add_parser("unlock", help="release an owned path lock")
-    s.add_argument("channel")
+    s.add_argument("channel", help="channel containing the lock")
     s.add_argument("target", help="lock id or exact normalized path")
-    s.add_argument("--as", "--from", "--owner", dest="owner", required=True)
+    s.add_argument("--as", "--from", "--owner", dest="owner", required=True, help="agent releasing the lock")
     s.set_defaults(func=cmd_unlock)
 
     s = sub.add_parser("recover", help="recover an expired path lock explicitly")
-    s.add_argument("channel")
+    s.add_argument("channel", help="channel containing the lock")
     s.add_argument("target", help="lock id or exact normalized path")
-    s.add_argument("--as", "--from", "--owner", dest="owner", required=True)
-    s.add_argument("--reason", required=True)
-    s.add_argument("--lease-seconds", "--lease", "--ttl", type=float, default=300.0)
+    s.add_argument("--as", "--from", "--owner", dest="owner", required=True, help="agent recovering the lock")
+    s.add_argument("--reason", required=True, help="reason for recovery")
+    s.add_argument("--lease-seconds", "--lease", "--ttl", type=float, default=300.0, help="duration of the new lease in seconds")
     s.set_defaults(func=cmd_path_recover)
     s = sub.add_parser(
         "recover-pending",
         help="recover a pending crashed path-lock transaction",
     )
-    s.add_argument("channel")
-    s.add_argument("--as", "--from", "--owner", dest="actor", required=True)
+    s.add_argument("channel", help="channel containing the transaction")
+    s.add_argument("--as", "--from", "--owner", dest="actor", required=True, help="agent recovering the transaction")
     s.add_argument(
         "--resolve-publication",
         dest="publication_resolution",
         choices=("rollback", "published"),
+        help="how to resolve the pending publication",
     )
     s.set_defaults(func=cmd_path_recover_pending)
 
     s = sub.add_parser("state", help="render or show channel state summary")
-    s.add_argument("channel")
+    s.add_argument("channel", help="channel to get state for")
     s.add_argument("--as", "--from", "--actor", dest="actor", help="agent identity")
     s.add_argument("--write", "--save", action="store_true", help="write state.md to channel")
     s.add_argument("--no-audit", action="store_true", help="skip posting audit message on write")
@@ -1261,7 +1268,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.set_defaults(func=cmd_state)
 
     s = sub.add_parser("compact", help="compact channel state into state.md")
-    s.add_argument("channel")
+    s.add_argument("channel", help="channel to compact")
     s.add_argument("--as", "--from", "--actor", dest="actor", help="agent identity")
     s.add_argument("--no-audit", action="store_true", help="do not post audit event to channel")
     s.add_argument("--json", action="store_true", help="output structured JSON summary")
@@ -1280,74 +1287,75 @@ def build_parser() -> argparse.ArgumentParser:
     task.error = _TaskArgumentParser.error.__get__(task, _TaskArgumentParser)
 
     s = task_sub.add_parser("create", help="create a task record")
-    s.add_argument("channel")
-    s.add_argument("task_id")
-    s.add_argument("--from", "--created-by", dest="creator", required=True)
-    s.add_argument("--title", required=True)
-    s.add_argument("--owner")
-    s.add_argument("--depends-on", action="append", default=[])
-    s.add_argument("--files-hint", action="append", default=[])
-    s.add_argument("--acceptance", action="append", default=[])
-    s.add_argument("--branch")
+    s.add_argument("channel", help="channel to create the task in")
+    s.add_argument("task_id", help="unique identifier for the task")
+    s.add_argument("--from", "--created-by", dest="creator", required=True, help="agent creating the task")
+    s.add_argument("--title", required=True, help="title of the task")
+    s.add_argument("--owner", help="agent owning the task")
+    s.add_argument("--depends-on", action="append", default=[], help="task dependencies")
+    s.add_argument("--files-hint", action="append", default=[], help="files related to this task")
+    s.add_argument("--acceptance", action="append", default=[], help="acceptance criteria")
+    s.add_argument("--branch", help="git branch for the task")
     s.set_defaults(func=cmd_task_create)
 
     s = task_sub.add_parser("list", help="list task records")
-    s.add_argument("channel")
+    s.add_argument("channel", help="channel to list tasks from")
     s.set_defaults(func=cmd_task_list)
 
     s = task_sub.add_parser("show", help="show one task record")
-    s.add_argument("channel")
-    s.add_argument("task_id")
+    s.add_argument("channel", help="channel containing the task")
+    s.add_argument("task_id", help="task to show")
     s.set_defaults(func=cmd_task_show)
 
     s = task_sub.add_parser("update", help="update task fields")
-    s.add_argument("channel")
-    s.add_argument("task_id")
-    s.add_argument("--as", "--from", dest="actor", required=True)
-    s.add_argument("--title", default=argparse.SUPPRESS)
-    s.add_argument("--owner", default=argparse.SUPPRESS)
-    s.add_argument("--clear-owner", action="store_true")
-    s.add_argument("--depends-on", action="append", default=argparse.SUPPRESS)
-    s.add_argument("--files-hint", action="append", default=argparse.SUPPRESS)
-    s.add_argument("--acceptance", action="append", default=argparse.SUPPRESS)
-    s.add_argument("--branch", default=argparse.SUPPRESS)
-    s.add_argument("--clear-branch", action="store_true")
-    s.add_argument("--status", default=argparse.SUPPRESS)
+    s.add_argument("channel", help="channel containing the task")
+    s.add_argument("task_id", help="task to update")
+    s.add_argument("--as", "--from", dest="actor", required=True, help="agent updating the task")
+    s.add_argument("--title", default=argparse.SUPPRESS, help="new title")
+    s.add_argument("--owner", default=argparse.SUPPRESS, help="new owner")
+    s.add_argument("--clear-owner", action="store_true", help="remove the current owner")
+    s.add_argument("--depends-on", action="append", default=argparse.SUPPRESS, help="new dependencies")
+    s.add_argument("--files-hint", action="append", default=argparse.SUPPRESS, help="new files hint")
+    s.add_argument("--acceptance", action="append", default=argparse.SUPPRESS, help="new acceptance criteria")
+    s.add_argument("--branch", default=argparse.SUPPRESS, help="new git branch")
+    s.add_argument("--clear-branch", action="store_true", help="remove the current branch")
+    s.add_argument("--status", default=argparse.SUPPRESS, help="new status")
 
     s.set_defaults(func=cmd_task_update)
 
     s = task_sub.add_parser("claim", help="claim a ready task with a lease")
-    s.add_argument("channel")
-    s.add_argument("task_id")
-    s.add_argument("--as", "--from", dest="actor", required=True)
-    s.add_argument("--lease-seconds", "--lease", "--ttl", type=float, default=300.0)
+    s.add_argument("channel", help="channel containing the task")
+    s.add_argument("task_id", help="task to claim")
+    s.add_argument("--as", "--from", dest="actor", required=True, help="agent claiming the task")
+    s.add_argument("--lease-seconds", "--lease", "--ttl", type=float, default=300.0, help="duration of the lease in seconds")
     s.set_defaults(func=cmd_task_claim)
 
     s = task_sub.add_parser("renew", help="renew an owned task lease")
-    s.add_argument("channel")
-    s.add_argument("task_id")
-    s.add_argument("--as", "--from", dest="actor", required=True)
-    s.add_argument("--lease-seconds", "--lease", "--ttl", type=float, default=300.0)
+    s.add_argument("channel", help="channel containing the task")
+    s.add_argument("task_id", help="task to renew")
+    s.add_argument("--as", "--from", dest="actor", required=True, help="agent renewing the task")
+    s.add_argument("--lease-seconds", "--lease", "--ttl", type=float, default=300.0, help="duration of the new lease in seconds")
     s.set_defaults(func=cmd_task_renew)
 
     s = task_sub.add_parser("recover", help="recover an expired task lease")
-    s.add_argument("channel")
-    s.add_argument("task_id")
-    s.add_argument("--as", "--from", dest="actor", required=True)
-    s.add_argument("--reason", required=True)
-    s.add_argument("--lease-seconds", "--lease", "--ttl", type=float, default=300.0)
+    s.add_argument("channel", help="channel containing the task")
+    s.add_argument("task_id", help="task to recover")
+    s.add_argument("--as", "--from", dest="actor", required=True, help="agent recovering the task")
+    s.add_argument("--reason", required=True, help="reason for recovery")
+    s.add_argument("--lease-seconds", "--lease", "--ttl", type=float, default=300.0, help="duration of the new lease in seconds")
     s.set_defaults(func=cmd_task_recover)
 
     s = task_sub.add_parser(
         "recover-pending",
         help="recover a pending crashed lease transaction",
     )
-    s.add_argument("channel")
-    s.add_argument("--as", "--from", dest="actor", required=True)
+    s.add_argument("channel", help="channel containing the transaction")
+    s.add_argument("--as", "--from", dest="actor", required=True, help="agent recovering the transaction")
     s.add_argument(
         "--resolve-publication",
         dest="publication_resolution",
         choices=("rollback", "published"),
+        help="how to resolve the pending publication",
     )
     s.set_defaults(func=cmd_task_recover_pending)
 
@@ -1357,9 +1365,9 @@ def build_parser() -> argparse.ArgumentParser:
         ("release", cmd_task_release, "release a task back to open", "released"),
     ):
         s = task_sub.add_parser(command, help=help_text)
-        s.add_argument("channel")
-        s.add_argument("task_id")
-        s.add_argument("--as", "--from", dest="actor", required=True)
+        s.add_argument("channel", help="channel containing the task")
+        s.add_argument("task_id", help="task to operate on")
+        s.add_argument("--as", "--from", dest="actor", required=True, help="agent performing the action")
         s.set_defaults(func=handler)
 
     return p
