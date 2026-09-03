@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import functools
 import ipaddress
 import json
 import re
@@ -11,7 +12,18 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 
-SCHEMA_PATH = Path(__file__).resolve().parents[1] / "schemas" / "harness-adapter.schema.json"
+# Caching compiled regexes saves a massive amount of overhead during JSON schema validation.
+# Because the same JSON schemas are evaluated repeatedly and the schemas use static regex
+# patterns, calling re.search directly recompiles (or looks up in internal cache which
+# is still slow compared to a bound method call on a compiled object).
+@functools.lru_cache(maxsize=128)
+def _compile_pattern(pattern: str) -> re.Pattern:
+    return re.compile(pattern)
+
+
+SCHEMA_PATH = (
+    Path(__file__).resolve().parents[1] / "schemas" / "harness-adapter.schema.json"
+)
 
 
 _TYPE_NAMES = {
@@ -34,7 +46,9 @@ def _resolve_ref(root: dict, ref: str) -> dict:
     return current
 
 
-def _validate_json(instance, schema: dict, root: dict, path: str = "$", *, resolve=True) -> list[str]:
+def _validate_json(
+    instance, schema: dict, root: dict, path: str = "$", *, resolve=True
+) -> list[str]:
     """Validate the JSON Schema subset used by the contract, without extra deps."""
     if resolve and "$ref" in schema:
         return _validate_json(instance, _resolve_ref(root, schema["$ref"]), root, path)
@@ -46,12 +60,18 @@ def _validate_json(instance, schema: dict, root: dict, path: str = "$", *, resol
             errors.extend(_validate_json(instance, subschema, root, path))
 
     if "anyOf" in schema:
-        branches = [_validate_json(instance, subschema, root, path) for subschema in schema["anyOf"]]
+        branches = [
+            _validate_json(instance, subschema, root, path)
+            for subschema in schema["anyOf"]
+        ]
         if not any(not branch_errors for branch_errors in branches):
             errors.append(f"{path}: does not match any allowed schema")
 
     if "oneOf" in schema:
-        branches = [_validate_json(instance, subschema, root, path) for subschema in schema["oneOf"]]
+        branches = [
+            _validate_json(instance, subschema, root, path)
+            for subschema in schema["oneOf"]
+        ]
         if sum(not branch_errors for branch_errors in branches) != 1:
             errors.append(f"{path}: must match exactly one schema")
 
@@ -77,7 +97,9 @@ def _validate_json(instance, schema: dict, root: dict, path: str = "$", *, resol
         if expected_type == "integer":
             valid_type = isinstance(instance, int) and not isinstance(instance, bool)
         elif expected_type == "number":
-            valid_type = isinstance(instance, (int, float)) and not isinstance(instance, bool)
+            valid_type = isinstance(instance, (int, float)) and not isinstance(
+                instance, bool
+            )
         else:
             valid_type = isinstance(instance, expected)
         if not valid_type:
@@ -91,12 +113,16 @@ def _validate_json(instance, schema: dict, root: dict, path: str = "$", *, resol
         properties = schema.get("properties", {})
         for name, subschema in properties.items():
             if name in instance:
-                errors.extend(_validate_json(instance[name], subschema, root, f"{path}.{name}"))
+                errors.extend(
+                    _validate_json(instance[name], subschema, root, f"{path}.{name}")
+                )
 
         if schema.get("additionalProperties") is False:
             for name in instance:
                 if name not in properties:
-                    errors.append(f"{path}: additional property {name!r} is not allowed")
+                    errors.append(
+                        f"{path}: additional property {name!r} is not allowed"
+                    )
 
     if isinstance(instance, list):
         if "minItems" in schema and len(instance) < schema["minItems"]:
@@ -106,14 +132,19 @@ def _validate_json(instance, schema: dict, root: dict, path: str = "$", *, resol
         item_schema = schema.get("items")
         if item_schema:
             for index, item in enumerate(instance):
-                errors.extend(_validate_json(item, item_schema, root, f"{path}[{index}]"))
+                errors.extend(
+                    _validate_json(item, item_schema, root, f"{path}[{index}]")
+                )
 
     if isinstance(instance, str):
         if "minLength" in schema and len(instance) < schema["minLength"]:
             errors.append(f"{path}: expected at least {schema['minLength']} characters")
         if "maxLength" in schema and len(instance) > schema["maxLength"]:
             errors.append(f"{path}: expected at most {schema['maxLength']} characters")
-        if "pattern" in schema and re.search(schema["pattern"], instance) is None:
+        if (
+            "pattern" in schema
+            and _compile_pattern(schema["pattern"]).search(instance) is None
+        ):
             errors.append(f"{path}: does not match required pattern")
 
     return errors
@@ -172,7 +203,10 @@ def _security_errors(row: dict) -> list[str]:
                 try:
                     address = ipaddress.ip_address(host_lower)
                     private_host = private_host or (
-                        address.is_private or address.is_loopback or address.is_link_local or address.is_reserved
+                        address.is_private
+                        or address.is_loopback
+                        or address.is_link_local
+                        or address.is_reserved
                     )
                 except ValueError:
                     private_host = private_host or any(
@@ -184,7 +218,9 @@ def _security_errors(row: dict) -> list[str]:
     return errors
 
 
-def _base_row(*, harness="generic-shell", layer="portable-cli", transport="none") -> dict:
+def _base_row(
+    *, harness="generic-shell", layer="portable-cli", transport="none"
+) -> dict:
     return {
         "product": {
             "id": "agent-chat",
@@ -219,10 +255,10 @@ class TestHarnessAdapterSchema(unittest.TestCase):
     def _errors(self, row: dict) -> list[str]:
         schema = self._schema()
         return _validate_json(row, schema, schema) + _security_errors(row)
+
     def _schema_errors(self, row: dict) -> list[str]:
         schema = self._schema()
         return _validate_json(row, schema, schema)
-
 
     def _assert_valid(self, row: dict) -> None:
         errors = self._errors(row)
@@ -263,7 +299,15 @@ class TestHarnessAdapterSchema(unittest.TestCase):
         )
         self.assertEqual(
             schema["properties"]["transport"]["enum"],
-            ["none", "stdio", "streamable-http", "sse", "acp-stdio", "filesystem", "unknown"],
+            [
+                "none",
+                "stdio",
+                "streamable-http",
+                "sse",
+                "acp-stdio",
+                "filesystem",
+                "unknown",
+            ],
         )
 
     def test_valid_agent_chat_portable_cli_row(self):
@@ -271,9 +315,17 @@ class TestHarnessAdapterSchema(unittest.TestCase):
         row.update(
             {
                 "endpoint_ref": "channels",
-                "command": {"program": "python", "args": ["./chat.py", "--channel", "general"]},
-                "env_interpolation": [{"name": "AGENT_CHAT_NAME", "source": "environment"}],
-                "docs": ["README.md", "https://github.com/example/agent-chat-plugin/blob/main/README.md"],
+                "command": {
+                    "program": "python",
+                    "args": ["./chat.py", "--channel", "general"],
+                },
+                "env_interpolation": [
+                    {"name": "AGENT_CHAT_NAME", "source": "environment"}
+                ],
+                "docs": [
+                    "README.md",
+                    "https://github.com/example/agent-chat-plugin/blob/main/README.md",
+                ],
             }
         )
         self._assert_valid(row)
@@ -282,9 +334,20 @@ class TestHarnessAdapterSchema(unittest.TestCase):
         row = _base_row(layer="portable-skill", transport="none")
         row.update(
             {
-                "docs": ["skills/agent-chat/SKILL.md", "https://github.com/example/agent-chat-plugin"],
-                "env_interpolation": [{"name": "AGENT_CHAT_ROOT", "source": "user-config"}],
-                "hooks": [{"event": "SessionStart", "ref": "hooks/session-start.py", "mode": "command"}],
+                "docs": [
+                    "skills/agent-chat/SKILL.md",
+                    "https://github.com/example/agent-chat-plugin",
+                ],
+                "env_interpolation": [
+                    {"name": "AGENT_CHAT_ROOT", "source": "user-config"}
+                ],
+                "hooks": [
+                    {
+                        "event": "SessionStart",
+                        "ref": "hooks/session-start.py",
+                        "mode": "command",
+                    }
+                ],
             }
         )
         self._assert_valid(row)
@@ -303,7 +366,9 @@ class TestHarnessAdapterSchema(unittest.TestCase):
                     "program": "npx",
                     "args": ["-y", "@example/better-notion-mcp@2.37.0-beta.3"],
                 },
-                "env_interpolation": [{"name": "NOTION_TOKEN", "source": "secret-store"}],
+                "env_interpolation": [
+                    {"name": "NOTION_TOKEN", "source": "secret-store"}
+                ],
                 "docs": ["https://github.com/example/better-notion-mcp"],
             }
         )
@@ -311,13 +376,20 @@ class TestHarnessAdapterSchema(unittest.TestCase):
 
     def test_rejects_real_secret_looking_literal(self):
         row = _base_row()
-        row["command"] = {"program": "python", "args": ["--api-key=sk-live-abcdefghijklmnopqrstuvwxyz123456"]}
+        row["command"] = {
+            "program": "python",
+            "args": ["--api-key=sk-live-abcdefghijklmnopqrstuvwxyz123456"],
+        }
         self._assert_invalid(row, "A secret-looking literal must be rejected")
 
     def test_rejects_private_absolute_path(self):
         row = _base_row()
-        row["command"] = {"program": "python", "args": [r"C:\synthetic-user\private\config.json"]}
+        row["command"] = {
+            "program": "python",
+            "args": [r"C:\synthetic-user\private\config.json"],
+        }
         self._assert_invalid(row, "A private absolute path must be rejected")
+
     def test_rejects_file_uri_absolute_paths_in_schema(self):
         for file_ref in (
             "file:///C:/synthetic-user/private/config.json",
@@ -337,6 +409,7 @@ class TestHarnessAdapterSchema(unittest.TestCase):
                         self._schema_errors(row),
                         f"Schema must reject absolute file URI in {location}: {file_ref}",
                     )
+
     def test_rejects_file_uri_assignments_in_schema(self):
         for argument in (
             "--config=file:///C:/synthetic-user/private/config.json",
@@ -350,15 +423,16 @@ class TestHarnessAdapterSchema(unittest.TestCase):
             )
 
     def test_rejects_assigned_tilde_absolute_path_in_schema(self):
-        for argument in ("--config=~/private/config.json", "--config ~/private/config.json"):
+        for argument in (
+            "--config=~/private/config.json",
+            "--config ~/private/config.json",
+        ):
             row = _base_row()
             row["command"] = {"program": "python", "args": [argument]}
             self.assertTrue(
                 self._schema_errors(row),
                 f"Schema must reject assigned tilde absolute path: {argument}",
             )
-
-
 
     def test_rejects_uppercase_sensitive_and_reserved_hosts_in_schema(self):
         for public_ref in (
@@ -400,11 +474,11 @@ class TestHarnessAdapterSchema(unittest.TestCase):
                     self._schema_errors(row),
                     f"Schema must reject private or reserved public host: {public_ref}",
                 )
+
     def test_allows_public_github_path_with_digit_runs(self):
         row = _base_row()
         row["docs"] = ["https://github.com/example/v12owner34.md"]
         self._assert_valid(row)
-
 
     def test_rejects_parent_traversal(self):
         row = _base_row()
@@ -419,7 +493,9 @@ class TestHarnessAdapterSchema(unittest.TestCase):
             "calls": [],
             "reason": "No domain call evidence was recorded.",
         }
-        self._assert_invalid(row, "CONFIGURABLE DOMAIN-VERIFIED without evidence must be rejected")
+        self._assert_invalid(
+            row, "CONFIGURABLE DOMAIN-VERIFIED without evidence must be rejected"
+        )
 
     def test_domain_verified_accepts_evidence_ref(self):
         row = _base_row()
@@ -442,12 +518,18 @@ class TestHarnessAdapterSchema(unittest.TestCase):
             with self.subTest(field=field):
                 row = _base_row()
                 del row["verification"][field]
-                self._assert_invalid(row, f"Missing verification field {field} must be rejected")
+                self._assert_invalid(
+                    row, f"Missing verification field {field} must be rejected"
+                )
 
     def test_raw_environment_value_is_rejected(self):
         row = _base_row()
         row["env_interpolation"] = [
-            {"name": "NOTION_TOKEN", "source": "secret-store", "value": "should-never-be-present"}
+            {
+                "name": "NOTION_TOKEN",
+                "source": "secret-store",
+                "value": "should-never-be-present",
+            }
         ]
         self._assert_invalid(row, "Environment interpolation must not carry raw values")
 
