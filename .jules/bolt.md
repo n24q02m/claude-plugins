@@ -37,3 +37,7 @@ closed pull request.
 **Proposed:** in the same diff as the frontmatter change, a blank line added after the module docstring of `plugins/agent-chat-plugin/hooks/session_inbox.py`, and in #587 a re-wrap of two decorators in `plugins/better-workspace-mcp/hooks/tests/test_check_credentials.py`.
 **Why rejected:** neither file has anything to do with frontmatter parsing, and the second belongs to a different plugin entirely. Formatting churn in a mirrored tree is churn twice over: it cannot outlive the next sync, and it widens the diff a reviewer has to read to find the change the title describes.
 **Action:** Keep the diff to the files the title names. Formatting of mirrored files is settled by the source repository's own formatter.
+
+## 2026-08-01 - Avoid internal caching overhead when evaluating dynamic repeating regular expression patterns
+**Learning:** When frequently evaluating dynamic but repeating regular expression patterns (such as those provided by JSON schemas in validation loops like `scripts/test_harness_adapter_schema.py`), `re.search(pattern, instance)` incurs lookup overhead.
+**Action:** Wrap `re.compile(pattern)` in a `@functools.lru_cache` helper function to eliminate internal caching overhead for repeated patterns, and invoke the bound `.search()` method on the cached compiled object.

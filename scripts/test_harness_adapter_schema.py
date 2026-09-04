@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import functools
 import ipaddress
 import json
 import re
@@ -23,6 +24,12 @@ _TYPE_NAMES = {
     "boolean": bool,
     "null": type(None),
 }
+
+
+@functools.lru_cache(maxsize=128)
+def _cached_regex(pattern: str) -> re.Pattern:
+    """Pre-compile regex to avoid cache lookup overhead for dynamic schema patterns."""
+    return re.compile(pattern)
 
 
 def _resolve_ref(root: dict, ref: str) -> dict:
@@ -113,7 +120,7 @@ def _validate_json(instance, schema: dict, root: dict, path: str = "$", *, resol
             errors.append(f"{path}: expected at least {schema['minLength']} characters")
         if "maxLength" in schema and len(instance) > schema["maxLength"]:
             errors.append(f"{path}: expected at most {schema['maxLength']} characters")
-        if "pattern" in schema and re.search(schema["pattern"], instance) is None:
+        if "pattern" in schema and _cached_regex(schema["pattern"]).search(instance) is None:
             errors.append(f"{path}: does not match required pattern")
 
     return errors
