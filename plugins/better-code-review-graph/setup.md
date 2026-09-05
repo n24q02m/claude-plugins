@@ -79,6 +79,7 @@ export GEMINI_API_KEY="AIza..."
 | `LOCAL_EMBEDDING_DIM` | No | `0` | Required for a BYO local embedding when its model manifest does not provide dimensions |
 | `LOCAL_EMBEDDING_POOLING` | No | `MEAN` | Pooling for a BYO local embedding (`MEAN`, `CLS`, `LAST_TOKEN`, or `DISABLED`) |
 | `LOCAL_EMBEDDING_NORMALIZE` | No | `true` | Normalize BYO local embedding outputs |
+| `LOCAL_RERANK_MODEL` | No | -- | Optional BYO local reranking model ID |
 | `SUMMARY_MODELS` | No | empty | Ordered CSV summary model chain (`provider/model,...`); empty leaves summaries disabled |
 
 | `TRANSPORT_MODE` | No | `stdio` | Set to `http` to enable HTTP transport (multi-user). |
