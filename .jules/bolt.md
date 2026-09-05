@@ -37,3 +37,6 @@ closed pull request.
 **Proposed:** in the same diff as the frontmatter change, a blank line added after the module docstring of `plugins/agent-chat-plugin/hooks/session_inbox.py`, and in #587 a re-wrap of two decorators in `plugins/better-workspace-mcp/hooks/tests/test_check_credentials.py`.
 **Why rejected:** neither file has anything to do with frontmatter parsing, and the second belongs to a different plugin entirely. Formatting churn in a mirrored tree is churn twice over: it cannot outlive the next sync, and it widens the diff a reviewer has to read to find the change the title describes.
 **Action:** Keep the diff to the files the title names. Formatting of mirrored files is settled by the source repository's own formatter.
+## 2026-09-05 - Cache regex compilation in JSON schema validator
+**Learning:** Frequent evaluation of dynamic but repeating regular expression patterns (like those in JSON schema validation loops) incurs a significant performance penalty if re-compiled on every check (via `re.search()`).
+**Action:** Wrap `re.compile(pattern)` in a `@functools.lru_cache` helper function to eliminate internal caching overhead and improve validator performance.
