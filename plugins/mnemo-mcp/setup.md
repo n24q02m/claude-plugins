@@ -2,7 +2,7 @@
 
 > **2026-05-02 Update**: Plugin install (Method 1) now uses pure stdio mode with local SQLite storage. No required env vars -- mnemo works out-of-box.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
-> Optional cloud providers (Jina/Gemini/OpenAI/Cohere) and Google Drive sync are still supported -- set them via env vars (Method 1) or configure them through the relay form in HTTP mode (Method 3 self-host).
+> Public local retrieval remains available without provider keys. Cloud models are configured explicitly; Google Drive sync is optional on non-CF hosts and disabled when `MEMORY_DB_BACKEND=cf-d1`.
 
 ## Method overview
 
@@ -97,7 +97,7 @@ Stdio is the default and works fine for single-user local setups. You may want t
 
 - **claude.ai web compatibility** -- claude.ai (the web UI) supports HTTP MCP servers but cannot spawn local stdio processes.
 - **One server shared across N Claude Code sessions** -- a single HTTP instance serves multiple terminals/IDEs without re-spawning per session, sharing the same memory database.
-- **Browser-based GDrive OAuth** -- enable Google Drive sync without manually exchanging an OAuth token in the env (the relay form completes the OAuth flow in your browser).
+- **Optional non-CF GDrive OAuth** -- eligible self-hosted servers can complete Google consent in the browser; CF-backed memory storage disables this redundant sync path.
 - **Multi-device credential sync** -- configure cloud API keys / GDrive once, the server uses them for any device/session that connects.
 - **Multi-user team sharing** -- a self-hosted server can serve multiple memory databases, each isolated per JWT-sub.
 - **Always-on persistent process for webhooks/agents** -- HTTP servers stay alive between sessions, enabling background sync, scheduled archive runs, or background memory consolidation.
@@ -114,6 +114,11 @@ Stdio is the default and works fine for single-user local setups. You may want t
 
 Host your own multi-user mnemo server. Always-multi-user (per-JWT-sub credential isolation) -- a single multi-user mode, no `MCP_MODE` selector. Google Drive OAuth uses a **bundled Desktop OAuth public client** (same pattern as `wet-mcp`); no separate Google Cloud Console registration is required.
 
+When `MEMORY_DB_BACKEND=cf-d1`, redundant synchronization is disabled regardless
+of stale `SYNC_ENABLED` or S3 bucket values. Do not start the Drive wizard,
+device-code flow, direct OAuth, startup auto-sync, or manual sync on that host.
+This leaves explicitly enabled non-CF Google Drive synchronization available.
+
 ### Required Env
 
 | Variable | Description |
@@ -128,7 +133,7 @@ Host your own multi-user mnemo server. Always-multi-user (per-JWT-sub credential
 | Variable | Description |
 |:---------|:------------|
 | `JINA_AI_API_KEY` / `GEMINI_API_KEY` / `OPENAI_API_KEY` / `COHERE_API_KEY` | Default cloud API keys for the deployment (per-user values can override via the relay form). |
-| `SYNC_ENABLED=true` | Enable Google Drive sync UI in the relay form. |
+| `SYNC_ENABLED=true` | Enable sync on eligible non-CF hosts; ignored by the disabled sync backend when `MEMORY_DB_BACKEND=cf-d1`. |
 
 ### Edge auth: relay password
 
@@ -172,8 +177,8 @@ Point clients to your server:
 1. On first tool call from a new client, the server returns a setup URL: `https://your-domain.com/authorize?session=<sid>`.
 2. Open the URL in a browser.
 3. Fill the relay form:
-   - Optional cloud API keys (Jina / Gemini / OpenAI / Cohere)
-   - Optional **Google Drive sync** -- click "Connect Google Drive", complete OAuth in browser, the token is stored encrypted per-user.
+   - Model selections, provider API bases, and matching keys for the current subject. Follow the [managed Minimax-free / paid Cohere policy](/reference/relay-flow/#managed-cloudflare-model-configuration) where applicable.
+   - Optional **Google Drive sync** on an eligible non-CF host -- complete Google consent only when synchronization was explicitly enabled.
 4. Submit. Credentials are encrypted and stored per JWT-sub at `~/.mnemo-mcp/subs/<sub>/`.
 5. Retry the tool call -- it now succeeds with your config.
 
@@ -184,9 +189,14 @@ Point clients to your server:
 Set API keys in your shell profile or MCP client settings:
 
 ```bash
-export JINA_AI_API_KEY="jina_..."
-export GEMINI_API_KEY="AIza..."
+export EMBEDDING_MODELS="cohere/embed-v4.0"
+export COHERE_API_KEY="<your-provider-key>"
 ```
+
+Cohere calls are paid; obtain explicit spending authorization with a cap before
+using this configuration. Managed HTTP configuration belongs in the subject's
+relay, including the Cloudflare AI Gateway API base, not in the user's OMP
+model/profile settings.
 
 ### Option B: Relay Form (HTTP Mode)
 
@@ -194,16 +204,19 @@ Use HTTP mode (Method 3 self-host) and complete the form in the browser. No env 
 
 ### Sync Setup (Optional)
 
-To sync memories across machines:
+On eligible non-CF hosts, to sync memories across machines:
 
 - **Stdio mode**: Set `SYNC_ENABLED=true` and provide a Google Drive OAuth token at `~/.mnemo-mcp/tokens/google_drive.json` (chmod 600). Manual token creation required.
 - **HTTP mode**: Set `SYNC_ENABLED=true` on the server, use the relay form's "Connect Google Drive" button -- the bundled Desktop OAuth client completes the flow in your browser.
 
 For S3-compatible storage (R2 / B2 / MinIO) instead of Google Drive, set `SYNC_S3_BUCKET` (plus `SYNC_S3_ENDPOINT` / `SYNC_S3_ACCESS_KEY_ID` / `SYNC_S3_SECRET_ACCESS_KEY` as needed) -- the backend auto-resolves to S3 when a bucket is set. Sync is native (Google Drive API or S3); no rclone is involved.
 
+For `MEMORY_DB_BACKEND=cf-d1`, these Google Drive/S3 sync instructions do not
+apply: the backend is disabled, even if old sync settings are still present.
+
 ## Environment Variable Reference
 
-All environment variables are **optional** -- mnemo works with zero env vars in stdio mode (local SQLite + Fastretrieval-managed local ONNX model). See [docs/setup-with-agent.md](setup-with-agent.md#environment-variables) for the complete table.
+Local stdio needs no provider API keys. HTTP, cloud models, and optional sync have their own requirements. See the [agent setup reference](/servers/mnemo-mcp/setup-with-agent/#environment-variables) for the complete table.
 
 ### Key Variables
 

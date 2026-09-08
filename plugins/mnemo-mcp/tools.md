@@ -42,10 +42,10 @@ Server configuration, sync, and credential setup.
 | Action | Purpose | Key parameters |
 |---|---|---|
 | `status` | Show config and database stats | -- |
-| `sync` | Trigger a manual full Google Drive sync | -- |
+| `sync` | Trigger full sync on an eligible non-CF host; disabled when `MEMORY_DB_BACKEND=cf-d1` | -- |
 | `set` | Update a runtime setting (`sync_enabled`, `sync_interval`, `log_level`) | `key` (required), `value` (required) |
 | `warmup` | Pre-download the embedding model | -- |
-| `setup_sync` | Start the Google Drive Device Code OAuth flow | -- |
+| `setup_sync` | Start Google Drive Device Code OAuth on an eligible non-CF host; skipped when `MEMORY_DB_BACKEND=cf-d1` | -- |
 | `setup_status` | Show credential state and configured providers | -- |
 | `setup_start` | Start credential relay setup | `key` (`force` bypasses an already-configured guard); returns `stdio_unsupported` under stdio |
 | `setup_skip` | Set local mode, skip the relay permanently | -- |

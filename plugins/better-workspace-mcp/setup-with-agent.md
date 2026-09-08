@@ -2,14 +2,14 @@
 
 > Give this file to your AI agent to set up better-workspace-mcp.
 
-Google Workspace over MCP: 11 composite tools (`docs`, `drive`, `calendar`, `gmail`, `sheets`, `slides`, `tasks`, `chat`, `people`, `forms`, `time`) plus `config` and `help`. Currently beta — `0.1.0-beta.2` on npm, `:beta` on Docker Hub / GHCR. No hosted instance exists; HTTP mode is self-host only.
+Google Workspace over MCP: 11 composite tools (`docs`, `drive`, `calendar`, `gmail`, `sheets`, `slides`, `tasks`, `chat`, `people`, `forms`, `time`) plus `config` and `help`. Choose artifacts from the [published releases](https://github.com/n24q02m/better-workspace-mcp/releases); replace `<version>` in Docker examples with a published image version. HTTP examples configure your own endpoint, not an assumed hosted deployment.
 
 ## Prerequisite: a Google OAuth client
 
 The user must create this themselves — the server ships no Google client, so the consent screen and quota belong to the user's own project. This step cannot be automated by the agent.
 
 1. Go to https://console.cloud.google.com/apis/credentials → Create credentials → OAuth client ID.
-2. Type: **Desktop app** for stdio (Options 1 and 2), **Web application** for HTTP (Option 3). Desktop is correct for stdio because consent returns to a loopback address; a Web client is required for HTTP because consent returns to a fixed `/accounts/callback` that Google must know in advance.
+2. Type: **Desktop app** for stdio (Options 1 and 2), **Web application** for HTTP (Option 3). Desktop consent returns to a loopback address. For the Web client, register both `<PUBLIC_URL>/callback` for delegated sign-in and `<PUBLIC_URL>/accounts/callback` for adding accounts.
 3. Enable the Workspace APIs to be used (Docs, Drive, Calendar, Gmail, Sheets, Slides, Tasks, Chat, People, Forms) on the same project.
 4. Add the user as a test user while the consent screen is unpublished.
 
@@ -73,7 +73,7 @@ The published image defaults to HTTP (`MCP_TRANSPORT=http` baked in) and there i
         "-e", "MCP_TRANSPORT=stdio",
         "-e", "GOOGLE_OAUTH_CLIENT_ID",
         "-e", "GOOGLE_OAUTH_CLIENT_SECRET",
-        "n24q02m/better-workspace-mcp:beta"
+        "n24q02m/better-workspace-mcp:<version>"
       ]
     }
   }
@@ -90,11 +90,12 @@ docker run -p 8080:8080 \
   -e PUBLIC_URL=https://<your-host> \
   -e GOOGLE_OAUTH_CLIENT_ID=<your-web-client-id>.apps.googleusercontent.com \
   -e GOOGLE_OAUTH_CLIENT_SECRET=<your-web-client-secret> \
+  -e CREDENTIAL_SECRET=<persistent-generated-secret> \
   -e MCP_RELAY_PASSWORD=$(openssl rand -hex 32) \
-  n24q02m/better-workspace-mcp:beta
+  n24q02m/better-workspace-mcp:<version>
 ```
 
-Register `https://<your-host>/accounts/callback` as an authorized redirect URI on the Web client. Auth is OAuth 2.1 delegated to Google; each user's credentials are keyed by their JWT `sub`.
+Register both `https://<your-host>/callback` and `https://<your-host>/accounts/callback` as authorized redirect URIs on the Web client. Auth is OAuth 2.1 delegated to Google; each user's credentials are keyed by their JWT `sub`. Preserve `CREDENTIAL_SECRET` across restarts; HTTP startup fails without it.
 
 `MCP_RELAY_PASSWORD` gates `/authorize` — without it, anyone who discovers the URL can open a session on the deployment. Share it out-of-band. It is optional only when `PUBLIC_URL` is localhost.
 
@@ -135,7 +136,7 @@ url = "https://<your-host>/mcp"
 | `MCP_TRANSPORT` | No | `stdio` | `http` selects HTTP mode (`--http` / `TRANSPORT_MODE=http` equivalent). |
 | `PUBLIC_URL` | Yes (http) | -- | Public URL used to build OAuth redirects. |
 | `MCP_RELAY_PASSWORD` | Yes (http, public) | -- | Gates `/authorize`. Optional only on localhost. |
-| `CREDENTIAL_SECRET` | No (http) | auto-generated | Per-user credential store key; auto-generated to a 0600 file if unset. Set it to survive restarts. |
+| `CREDENTIAL_SECRET` | Yes (http) | -- | Persistent secret deriving per-user credential-encryption keys and the JWT signing key. Required at HTTP startup. |
 | `PORT` | No | `8080` in the image | Listen port (http). |
 | `HOST` | No | -- | Bind address (http); `0.0.0.0` to expose the container. |
 | `MCP_AUTH_DISABLE` | No (http) | -- | `1` skips Bearer JWT verification. Only behind an external auth gateway. |

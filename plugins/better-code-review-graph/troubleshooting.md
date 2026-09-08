@@ -24,7 +24,19 @@ graph(action="build")
 
 ## Embeddings unavailable
 
-Vector search and node summaries need either the bundled local model or a cloud provider key. With no `EMBEDDING_MODELS`/`SUMMARY_MODELS` chain and no provider key configured, the server falls back to the local model; if that fails to download, set a provider key (`GEMINI_API_KEY`, `JINA_AI_API_KEY`, `OPENAI_API_KEY`, or `COHERE_API_KEY`).
+Vector search uses local Fastretrieval embeddings when `EMBEDDING_MODELS` is
+empty and the local leg is enabled. Cloud embeddings require an explicit model
+selection plus its matching key/API base; keys alone do not select a model.
+Node summaries require an explicit `SUMMARY_MODELS` completion selection and
+matching provider configuration. There is no local-summary fallback.
+
+For Cohere `embed-v4.0`, stored and returned vectors must be exactly 1024
+dimensions. Re-run `graph(action="embed")` for an old 768-wide index instead
+of slicing or padding results. If the graph disappeared after an upgrade,
+rebuild it with `graph(action="build", full_rebuild=true)` in the new
+`.better-code-review-graph/` state directory, then embed. Old
+`.code-review-graph` files may belong to another package and are not
+automatically adopted or removed.
 
 ## Security scan finds nothing / wrong engine
 

@@ -1,6 +1,6 @@
 # Better Workspace MCP -- Manual Setup Guide
 
-> **Beta.** The published artifacts are `0.1.0-beta.2` on npm (dist-tags `latest` and `beta`) and `:beta` on Docker Hub / GHCR. There is no stable tag yet, and there is no n24q02m-hosted instance -- HTTP mode is self-host only.
+> Choose a version from the [published releases](https://github.com/n24q02m/better-workspace-mcp/releases). The examples below configure your own HTTP endpoint; they do not assume an owner-hosted instance. Replace `<version>` in Docker examples with a published image version.
 
 ## Method overview
 
@@ -26,7 +26,7 @@ The server never ships a Google client of its own -- you bring your own, so the 
 1. Open the [Google Cloud Console → APIs & Services → Credentials](https://console.cloud.google.com/apis/credentials).
 2. Create an **OAuth client ID**. The type depends on the mode you plan to run:
    - **Desktop app** for stdio (Methods 1 and 2). Desktop is the right type because the server receives the consent redirect on a [loopback address](https://developers.google.com/identity/protocols/oauth2/native-app), not on a public URL.
-   - **Web application** for HTTP (Method 3). The redirect comes back to a fixed `/accounts/callback` on your host, and a Web client's redirect URI has to be registered with Google in advance.
+   - **Web application** for HTTP (Method 3). Register both `<PUBLIC_URL>/callback` for delegated sign-in and `<PUBLIC_URL>/accounts/callback` for adding Google accounts.
 3. Enable the Workspace APIs you plan to call on the same project (Docs, Drive, Calendar, Gmail, Sheets, Slides, Tasks, Chat, People, Forms — enable only what you need).
 4. While the consent screen is unpublished, add yourself as a test user.
 
@@ -82,7 +82,7 @@ Or configure it by hand in any MCP client:
 The published image defaults to **HTTP** mode (`MCP_TRANSPORT=http`, port 8080 baked in) and there is no separate `:stdio` tag, so stdio over Docker means overriding the transport explicitly with `-e MCP_TRANSPORT=stdio`:
 
 ```bash
-docker pull n24q02m/better-workspace-mcp:beta
+docker pull n24q02m/better-workspace-mcp:<version>
 ```
 
 ```json
@@ -95,7 +95,7 @@ docker pull n24q02m/better-workspace-mcp:beta
         "-e", "MCP_TRANSPORT=stdio",
         "-e", "GOOGLE_OAUTH_CLIENT_ID",
         "-e", "GOOGLE_OAUTH_CLIENT_SECRET",
-        "n24q02m/better-workspace-mcp:beta"
+        "n24q02m/better-workspace-mcp:<version>"
       ]
     }
   }
@@ -111,7 +111,7 @@ export GOOGLE_OAUTH_CLIENT_SECRET="<your-client-secret>"
 
 A container has no browser, so the first-run consent step cannot open one for you. Either authorize once via Method 1 first (the stored token is reused), or run HTTP mode, where each user consents through the server's own `/authorize`.
 
-GHCR carries the same image if you prefer it: `ghcr.io/n24q02m/better-workspace-mcp:beta`.
+The corresponding GHCR image is `ghcr.io/n24q02m/better-workspace-mcp:<version>`; select the version from the release's published assets.
 
 ## Why upgrade to HTTP mode?
 
@@ -129,7 +129,7 @@ Stdio mode is the default and works for single-user local development. Consider 
 
 > **Switching transport vs. setting credentials**: the `userConfig` prompt only configures the OAuth client for stdio mode (Method 1). To switch transport to HTTP, override `mcpServers` in your client settings per the snippets below — a separate path from `userConfig`, not driven by the install prompt.
 
-There is no hosted instance of this server. Run your own:
+Run your own HTTP service with the Web OAuth client and a persistent credential-encryption secret:
 
 ```bash
 # HOST=0.0.0.0 binds all interfaces so the host can reach the container.
@@ -139,11 +139,12 @@ docker run -p 8080:8080 \
   -e PUBLIC_URL=https://<your-host> \
   -e GOOGLE_OAUTH_CLIENT_ID=<your-web-client-id>.apps.googleusercontent.com \
   -e GOOGLE_OAUTH_CLIENT_SECRET=<your-web-client-secret> \
+  -e CREDENTIAL_SECRET=<persistent-generated-secret> \
   -e MCP_RELAY_PASSWORD=<generated-32-byte-hex> \
-  n24q02m/better-workspace-mcp:beta
+  n24q02m/better-workspace-mcp:<version>
 ```
 
-This mode wants an OAuth client of type **Web application**, with `https://<your-host>/accounts/callback` registered as an authorized redirect URI. Authentication is OAuth 2.1 delegated to Google, and credentials are stored per JWT `sub`.
+This mode requires a **Web application** OAuth client with both `https://<your-host>/callback` and `https://<your-host>/accounts/callback` registered as authorized redirect URIs. The first signs in to the server; the second adds a Google account. Authentication is OAuth 2.1 delegated to Google, and credentials are stored per JWT `sub`. Keep `CREDENTIAL_SECRET` stable across restarts; the HTTP server refuses to start without it.
 
 Point your MCP client at the host you deployed it on:
 
@@ -181,7 +182,7 @@ Share it out-of-band with anyone you invite. They see a login form when first op
 | `MCP_TRANSPORT` | No | `stdio` | `http` selects HTTP mode. `--http` on the command line and `TRANSPORT_MODE=http` do the same. |
 | `PUBLIC_URL` | Yes (http) | -- | The server's public URL, used to build OAuth redirects. |
 | `MCP_RELAY_PASSWORD` | Yes (http, public) | -- | Shared password gating `/authorize`. Optional only when `PUBLIC_URL` is localhost. |
-| `CREDENTIAL_SECRET` | No (http) | auto-generated | Encryption key for the per-user credential store. If unset, a 32-byte secret is generated and persisted to a 0600 file; set it to keep stores decryptable across restarts. |
+| `CREDENTIAL_SECRET` | Yes (http) | -- | Persistent secret deriving each subject's credential-encryption key and the JWT signing key. HTTP startup fails if it is absent. |
 | `PORT` | No | `8080` in the image | Listen port (http mode). |
 | `HOST` | No | -- | Bind address (http mode); set `0.0.0.0` to expose the container. |
 | `MCP_AUTH_DISABLE` | No (http) | -- | Set to `1` to skip Bearer JWT verification. Only for deploys already behind an external auth gateway — never on a directly-exposed host. |

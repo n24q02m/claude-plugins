@@ -7,7 +7,7 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'MCP n24q02m',
-      description: 'Unified docs for 9 MCP servers + mcp-core foundation library',
+      description: 'Unified docs for 9 MCP servers, shared libraries, and Agent Chat coordination',
       logo: {
         light: './src/assets/logo.svg',
         dark: './src/assets/logo-dark.svg',
@@ -46,6 +46,10 @@ export default defineConfig({
             { label: 'better-godot-mcp', items: [{ autogenerate: { directory: 'servers/better-godot-mcp' } }] },
             { label: 'better-workspace-mcp', items: [{ autogenerate: { directory: 'servers/better-workspace-mcp' } }] },
           ],
+        },
+        {
+          label: 'Coordination',
+          items: [{ label: 'Agent Chat', items: [{ autogenerate: { directory: 'servers/agent-chat-plugin' } }] }],
         },
         { label: 'Reference', items: [{ autogenerate: { directory: 'reference' } }] },
       ],

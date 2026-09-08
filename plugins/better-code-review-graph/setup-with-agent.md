@@ -41,6 +41,9 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 | `GEMINI_API_KEY` | Optional | https://aistudio.google.com/apikey |
 | `OPENAI_API_KEY` | Optional | https://platform.openai.com/api-keys |
 | `COHERE_API_KEY` | Optional | https://dashboard.cohere.com/api-keys |
+| `EMBEDDING_MODELS` / `SUMMARY_MODELS` | Optional | Explicit cloud model selection; empty leaves local embeddings / disabled summaries |
+| `LOCAL_EMBEDDING_MODEL` and its metadata fields | Optional | Built-in Fastretrieval ID, manifest-backed artifact directory, or external model with explicit dimensions |
+| `LOCAL_RERANK_MODEL` | Optional | Fastretrieval `TextCrossEncoder` model ID; empty disables query reranking |
 
 ### Steps
 
@@ -52,7 +55,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 
 The plugin includes SessionStart and PostToolUse hooks that auto-build and auto-update the code graph.
 
-> Other optional env vars (`GEMINI_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY`, `EMBEDDING_MODELS`, `SUMMARY_MODELS`, `LOCAL_EMBEDDING_MODEL`, etc.) are not part of the `userConfig` prompt; add them manually to `mcpServers.better-code-review-graph.env` in your settings if needed.
+> The manifest prompts for model selection, local-model metadata, and the listed provider keys. API-base settings for managed HTTP are configured per subject in the relay; see the [managed provider policy](/reference/relay-flow/#managed-cloudflare-model-configuration) before any paid calls.
 
 ## Environment Variables
 
@@ -62,26 +65,41 @@ All environment variables are **optional**. The server works with Fastretrieval'
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `JINA_AI_API_KEY` | No | -- | Jina AI key: embedding + reranking (highest priority) |
+| `JINA_AI_API_KEY` | No | -- | Key for explicitly selected `jina_ai/` embedding models; not used by the managed Cloudflare route |
 | `GEMINI_API_KEY` | No | -- | Google Gemini key: embedding (free tier available). Also accepts `GOOGLE_API_KEY` |
 | `GOOGLE_VERTEX_EXPRESS_API_KEY` | No | -- | Vertex AI Express: Gemini via API key, no Service Account. Get it at https://cloud.google.com/vertex-ai/generative-ai/docs/start/express-mode/overview |
 | `OPENAI_API_KEY` | No | -- | OpenAI key: embedding |
-| `COHERE_API_KEY` | No | -- | Cohere key: embedding + reranking. Also accepts `CO_API_KEY` |
+| `COHERE_API_KEY` | No | -- | Key for explicitly selected `cohere/` embeddings; Cohere calls are paid |
 
 ### Embedding Configuration
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `EMBEDDING_MODELS` | No | empty | Ordered CSV embedding model chain (`provider/model,...`); empty resolves Fastretrieval's local ONNX model manifest |
-| `EMBEDDING_DIMS` | No | `0` (auto) | Embedding dimensions; custom local models may require `LOCAL_EMBEDDING_DIM` |
+| `EMBEDDING_MODELS` | No | empty | CSV embedding model selection (`provider/model,...`); the current runtime selects the first entry, not a fallback chain |
 | `LOCAL_EMBEDDING_MODEL` | No | -- | Optional BYO local embedding model ID; empty uses Fastretrieval's bundled model manifest |
 | `LOCAL_EMBEDDING_MODEL_FILE` | No | `onnx/model.onnx` | ONNX file path for a BYO local embedding |
 | `LOCAL_EMBEDDING_DIM` | No | `0` | Required for a BYO local embedding when its model manifest does not provide dimensions |
 | `LOCAL_EMBEDDING_POOLING` | No | `MEAN` | Pooling for a BYO local embedding (`MEAN`, `CLS`, `LAST_TOKEN`, or `DISABLED`) |
 | `LOCAL_EMBEDDING_NORMALIZE` | No | `true` | Normalize BYO local embedding outputs |
+| `LOCAL_RERANK_MODEL` | No | empty | Fastretrieval `TextCrossEncoder` model ID for query reranking; empty disables reranking |
 | `SUMMARY_MODELS` | No | empty | Ordered CSV summary model chain (`provider/model,...`); empty leaves summaries disabled |
 
 Legacy aliases: `EMBEDDING_BACKEND`, `EMBEDDING_MODEL`, and `SUMMARY_MODEL` are deprecated and honored for one release. Use `EMBEDDING_MODELS` and `SUMMARY_MODELS` instead.
+
+CRG has no cloud rerank consumer: do not configure `RERANK_MODELS`,
+`RERANK_API_BASE`, or `LOCAL_RERANK_MODEL_FILE` for this server. A Cohere
+embedding selection does not enable Cohere reranking.
+
+Cohere `embed-v4.0` uses exactly 1024-dimensional stored vectors; other
+backends retain 768. Do not compensate for a mismatch by slicing or padding.
+Run `graph(action="embed")` to replace stale vectors after a model change.
+
+After upgrading to the package-owned `.better-code-review-graph/` state
+directory, first run `graph(action="build", full_rebuild=true)`, then embed
+if semantic search is needed. Leave `.code-review-graph/`,
+`.code-review-graph.db`, and their SQLite sidecars untouched; inspect and
+reapply desired suppression rules explicitly. See the
+[migration reference](/servers/better-code-review-graph/setup/#graph-state-migration).
 
 ### HTTP Mode (Self-Host)
 

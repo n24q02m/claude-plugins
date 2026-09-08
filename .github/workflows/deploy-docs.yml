@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
+      - 'plugins/*/.claude-plugin/plugin.json'
       - 'plugins/*/setup.md'
       - 'plugins/*/setup-with-agent.md'
       - 'plugins/*/tools.md'

@@ -19,7 +19,7 @@ Runs over stdio with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, a
 
 ## Configuration
 
-Works out of the box with a bundled local embedding model -- no keys required. Supply your own provider keys (`JINA_AI_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY`) as environment variables to use cloud embeddings or LLM-based consolidation. Use placeholders in shared config. Full walkthrough in [setup](/servers/mnemo-mcp/setup/).
+Works locally with Fastretrieval retrieval and no provider API keys. For cloud embeddings, reranking, or LLM consolidation, configure explicit model selections and matching keys in the stdio environment or the authenticated subject's HTTP relay configuration. The [managed Cloudflare route](/reference/relay-flow/#managed-cloudflare-model-configuration) uses Minimax-free completion and paid Cohere retrieval through Cloudflare AI Gateway. `MEMORY_DB_BACKEND=cf-d1` disables redundant Google Drive sync and OAuth setup; non-CF sync remains optional. Full walkthrough in [setup](/servers/mnemo-mcp/setup/).
 
 ## Next steps
 

@@ -1,6 +1,6 @@
 # Better Workspace MCP -- Overview
 
-Google Workspace for AI agents -- read and write Docs, Drive, Calendar, Gmail, Sheets, Slides, Tasks, Chat, People, and Forms through one composite tool per domain, across several Google accounts.
+Google Workspace for AI agents -- ten Google API domains, local time helpers, and multi-account OAuth through composite tools. Sheets and People provide read-only access; write operations are available where the upstream API and tool action support them.
 
 ## What it does
 
@@ -25,15 +25,15 @@ Every domain tool takes an `account` parameter -- the email of the Google accoun
 
 Defaults to `stdio` for single-user local use, and also runs as a self-hosted multi-user HTTP service where each user's Google credentials sit in their own bucket keyed by their JWT `sub`. Works with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, and Windsurf. See the [modes overview](/get-started/modes-overview/).
 
-There is no n24q02m-hosted instance of this server; HTTP mode is self-host only.
+For HTTP, use the endpoint supplied by your operator or follow the self-host setup guide. A configured URL alone does not establish that a deployment is available.
 
 ## Configuration
 
-Needs a Google OAuth client you create yourself, supplied as `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` -- **Desktop app** type for stdio, **Web application** type for HTTP. The server ships no Google client of its own, so the consent screen and the API quota belong to your project. The first run opens Google's consent screen once; the refresh token is then stored encrypted. Use placeholders in shared config and never commit real credentials. Full walkthrough in [setup](/servers/better-workspace-mcp/setup/).
+Needs a Google OAuth client you create yourself, supplied as `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` -- **Desktop app** type for stdio, **Web application** type for HTTP. The server ships no Google client of its own, so the consent screen and API quota belong to your project. HTTP also requires `CREDENTIAL_SECRET` to retain credential encryption and signing keys across restarts. Register both `/callback` and `/accounts/callback` on the Web client. Use placeholders in shared config and never commit real credentials. Full walkthrough in [setup](/servers/better-workspace-mcp/setup/).
 
-## Status and license
+## Distribution and license
 
-Still pre-1.0 -- published as `0.1.0-beta.x` on npm and `:beta` on the registries, with no stable tag yet.
+The npm package is [`@n24q02m/better-workspace-mcp`](https://www.npmjs.com/package/@n24q02m/better-workspace-mcp). Select a published version from the [release history](https://github.com/n24q02m/better-workspace-mcp/releases); package releases and deployed HTTP instances are separate surfaces.
 
 Like the rest of the stack, this server is **Apache-2.0** -- here from the start, because it vendors Apache-2.0 code from [gemini-cli-extensions/workspace](https://github.com/gemini-cli-extensions/workspace) and carries that license across the repo.
 

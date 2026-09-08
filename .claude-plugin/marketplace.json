@@ -13,7 +13,7 @@
     {
       "name": "wet-mcp",
       "source": "./plugins/wet-mcp",
-      "description": "Web search, content extraction, library docs & media — 5-strategy scraping, no API keys",
+      "description": "Web search, content extraction, library docs & media — configurable search backends and local retrieval",
       "category": "research"
     },
     {
@@ -67,7 +67,7 @@
     {
       "name": "agent-chat-plugin",
       "source": "./plugins/agent-chat-plugin",
-      "description": "Peer agents coordinate via markdown messages in shared folders — no orchestrator, autonomous zero-token waiting",
+      "description": "Portable CLI/Skill coordination for peer agents — shared Markdown/JSON messages, tasks, leases and path locks; no MCP server",
       "category": "development"
     }
   ]
