@@ -40,9 +40,9 @@
 
 
 
-9 MCP servers for Claude Code, Codex, and other AI coding agents.
+9 MCP servers and a portable Agent Chat coordination plugin for AI coding agents.
 
-**Full documentation: [mcp.n24q02m.com](https://mcp.n24q02m.com)** — unified docs for all 9 servers + the `mcp-core` foundation library. Covers setup methods, modes (stdio / local-relay / remote-relay / remote-oauth), multi-user deployment, and per-server tool reference.
+**Full documentation: [mcp.n24q02m.com](https://mcp.n24q02m.com)** — setup and tool references for all 9 servers, Agent Chat coordination, the `mcp-core` foundation, and [Fastretrieval](https://mcp.n24q02m.com/reference/fastretrieval/). Libraries and coordination plugins do not gain an MCP transport by appearing in the same documentation site.
 
 ## Install
 
@@ -65,27 +65,38 @@ Or browse all plugins: run `/plugin` and go to the **Discover** tab.
 | **better-godot-mcp** | Development | Godot Engine — 17 composite tools for game dev | `GODOT_PATH`, `GODOT_PROJECT_PATH` (both optional) |
 | **better-code-review-graph** | Development | Knowledge graph for token-efficient code reviews | All optional: `JINA_AI_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_VERTEX_EXPRESS_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY` |
 | **imagine-mcp** | Multimodal | Image/video understanding + generation across Gemini, OpenAI, Grok | All optional: `XAI_API_KEY` (default provider), `GEMINI_API_KEY`, `GOOGLE_VERTEX_EXPRESS_API_KEY`, `OPENAI_API_KEY` |
-| **better-workspace-mcp** | Productivity | Google Workspace — 11 composite tools (Docs, Drive, Calendar, Gmail, Sheets, Slides, Tasks, Chat, People, Forms) + multi-account | `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` (both required) |
+| **better-workspace-mcp** | Productivity | Google Workspace — 10 domains plus local time helpers, `config`, `help`, and multi-account OAuth | `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` (both required) |
+| **agent-chat-plugin** | Development | Portable CLI/Skill peer coordination through Markdown/JSON messages, tasks, leases, and path locks; not an MCP server | Shared folder and agent identity; no provider API keys |
+
+[Fastretrieval](https://mcp.n24q02m.com/reference/fastretrieval/) is the retrieval library used by Wet, Mnemo, and CRG. Install it as a Python dependency, not as a marketplace plugin or MCP endpoint.
 
 ## Configuration
 
 When you run `/plugin install`, Claude Code prompts for that plugin's credentials (declared in each plugin's `userConfig`) and stores sensitive values in your system keychain. You can also set them via the `env` block in `~/.claude/settings.local.json`, or `export` them in your shell profile.
 
-`better-notion-mcp`, `better-email-mcp`, and `better-workspace-mcp` require credentials to function. `better-telegram-mcp` needs a bot token only for bot mode. `wet-mcp`, `mnemo-mcp`, and `better-code-review-graph` run fully locally with no API keys (local ONNX embedding/reranking) — keys only enable optional cloud providers.
+`better-notion-mcp`, `better-email-mcp`, and `better-workspace-mcp` require credentials for their upstream APIs. `better-telegram-mcp` needs a bot token only for bot mode. Wet, Mnemo, and CRG preserve local Fastretrieval-based retrieval without provider API keys. Wet web search additionally needs a runnable backend: credential-free DuckDuckGo/Startpage, an external SearXNG endpoint, a configured cloud provider, or a local installation that can run SearXNG.
 
 ### Cloud providers (wet-mcp, mnemo-mcp, better-code-review-graph)
 
-Each provider is a separate, optional env var. None is required:
+Cloud model selection is separate from installing a plugin. Configure the model
+fields and matching provider keys in the server's environment for stdio or in
+the authenticated subject's relay form for multi-user HTTP. Do not infer a
+fallback chain just because several keys are present.
 
-```
-JINA_AI_API_KEY=jina_xxx
-GEMINI_API_KEY=AIza...
-GOOGLE_VERTEX_EXPRESS_API_KEY=AQ...
-OPENAI_API_KEY=sk-...
-COHERE_API_KEY=xxx
-```
+- Wet and Mnemo use `EMBEDDING_MODELS`, `RERANK_MODELS`, and `LLM_MODELS`.
+- CRG uses `EMBEDDING_MODELS` and `SUMMARY_MODELS`; its optional query reranker
+  is selected by `LOCAL_RERANK_MODEL`, not a cloud rerank chain.
+- Empty/local configuration and cloud behavior are server-specific; consult
+  the [setup references](https://mcp.n24q02m.com/servers/).
 
-Provider priority (wet-mcp / CRG): embedding Jina AI > Gemini > OpenAI > Cohere > local ONNX; reranking Jina AI > Cohere > local ONNX.
+The managed Cloudflare route uses exactly
+`openrouter/minimax/minimax-m3:free` for completion and
+`cohere/embed-v4.0` / `cohere/rerank-v4.0-fast` for supported embedding/rerank
+paths through Cloudflare AI Gateway. Cohere is paid and requires explicit
+spending authorization with a cap before calls. There is no Jina, GLM, or paid
+completion fallback in that route. CRG does not currently implement cloud
+reranking. This server-side policy does not change user-owned OMP model/profile
+settings or remove public local capabilities.
 
 ### imagine-mcp
 

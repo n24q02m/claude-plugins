@@ -4,18 +4,22 @@ wet-mcp exposes 5 tools: 3 multiplexed capability tools (`search`, `extract`, `m
 
 ## search
 
-Find information across the web, academic sources, X/Twitter, or indexed library documentation. Returns result listings (titles, URLs, snippets) -- not full page content. Wrapped as external content.
+Find information across the web, academic sources, or indexed library documentation. Returns result listings (titles, URLs, snippets) -- not full page content. Wrapped as external content.
 
 | Action | Purpose | Key parameters |
 |---|---|---|
-| `search` | Web search via SearXNG | `query` (required), `categories`, `max_results`, `time_range`, `include_domains`/`exclude_domains`, `expand` (LLM query expansion), `enrich` (fetch real snippets) |
+| `search` | Web search through `SEARCH_BACKENDS` (SearXNG, keyed providers, optional-key Firecrawl, or credential-free DuckDuckGo/Startpage) | `query` (required), `categories`, `max_results`, `time_range`, `include_domains`/`exclude_domains`, `expand` (LLM query expansion), `enrich` (fetch real snippets) |
 | `research` | Academic/scientific search (Google Scholar, arXiv, PubMed) | `query` (required), `max_results`, `time_range` |
-| `x` | X/Twitter search via xAI. Returns a **synthesized answer with citations**, not a link list -- X blocks direct extraction. Bills per query; requires `XAI_API_KEY` | `query` (required), `handles`/`exclude_handles` (up to 20 handles, mutually exclusive), `time_range`, `from_date`/`to_date` (ISO8601, override `time_range`), `video` (enable video understanding of linked media) |
 | `docs` | Search library documentation, auto-indexing on first query | `library` (required), `query` (required), `language`, `version` |
 | `docs_resolve` | Free-form library name -> ranked `library_id` list | `query` (library name, required) |
 | `docs_query` | Version-aware docs query honoring a project's locked library set + token cap | `library` (required), `query` (required), `version`, `topic`, `project_path`, `limit` |
 | `docs_lock_project` | Detect project manifests (pyproject/package.json/go.mod/Cargo.toml) and lock the library set for isolation (Cabinets) | `project_path` (required) |
 | `similar` | Find pages similar to a URL | `query` = full URL (required), `max_results` |
+
+The web-search fallbacks used by `research`, `similar`, and docs discovery use
+the same configured backend chain. Hosted requests resolve `SEARCH_BACKENDS`
+and matching keys from the current subject's relay vault; they do not inherit
+operator search credentials.
 
 ## extract
 
@@ -32,6 +36,10 @@ Read and return full page content from URLs or local files. Wrapped as external 
 | `agent` | Multi-step research orchestration: search the web, extract top results, synthesize a cited Markdown answer | `query` (required), `max_urls` (default 5, hard cap 20), `synthesis_model`, `token_budget` (default 10000) |
 | `interact` | Drive a page with click/fill/submit via a browser automation session | `url` (required), `actions` (required list of `{type, selector?, description?, value?}`), `session` (persistent session id), `screenshot` |
 | `diff` | Track content changes across fetches of the same URL(s) | `urls` (required), `refetch` (default `true` -- fetch a fresh copy before comparing; set `false` to compare already-recorded snapshots without a new network fetch) |
+
+`BROWSER_BACKENDS` selects extraction renderer escalation, including Cloudflare
+Browser Run. It does not route `interact`: that action uses native Patchright
+browser sessions and requires their local runtime.
 
 `diff` requires the web cache enabled (`WET_CACHE=true`). Returns per-URL `change_status` (`new`\|`same`\|`changed`) plus a unified `diff` (empty when unchanged) and `old_fetched_at`/`new_fetched_at` timestamps.
 
@@ -56,8 +64,8 @@ Server configuration and management, not wrapped as external content.
 | `set` | Update a runtime setting (`log_level`, `tool_timeout`, `wet_cache`, `sync_enabled`, `sync_folder`, `sync_interval`) | `key`, `value` (required) |
 | `cache_clear` | Clear the web cache | -- |
 | `docs_reindex` | Force re-index of a library's docs | `key` = library name (required) |
-| `warmup` | Pre-download models (SearXNG, Playwright, ONNX embed/rerank) | -- |
-| `setup_sync` | Configure Google Drive docs sync via OAuth Device Code flow | `remote_type` (default `drive`) |
+| `warmup` | Prepare enabled local search, browser, embedding, and rerank resources for the selected runtime | -- |
+| `setup_sync` | Configure Google Drive docs sync on eligible non-CF hosts; skipped when `DOCS_DB_BACKEND=cf-d1` | `remote_type` (default `drive`) |
 | `setup_status` | Show current credential state and which providers are configured | -- |
 | `setup_skip` | Opt into local-only mode (ONNX embed/rerank, no cloud keys) | -- |
 | `setup_reset` | Clear all credentials and reset state | -- |

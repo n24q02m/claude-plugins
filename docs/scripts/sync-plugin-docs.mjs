@@ -173,6 +173,7 @@ function buildServersIndex(entries) {
     '## See also',
     '',
     '- [Server comparison](/reference/server-comparison/)',
+    '- [Fastretrieval library](/reference/fastretrieval/)',
     '- [Modes overview](/get-started/modes-overview/)',
     '- [Plugin marketplace](/get-started/plugin-marketplace/)',
     ''

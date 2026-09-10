@@ -1,6 +1,6 @@
 ---
 title: MCP n24q02m
-description: Unified docs for 9 MCP servers + mcp-core foundation library
+description: Unified docs for 9 MCP servers, shared libraries, and Agent Chat coordination
 template: splash
 hero:
   tagline: Nine MCP servers on one foundation — one transport, one setup command, one multi-user auth model. Web search, memory, Notion, email, Telegram, Google Workspace, and more.
@@ -24,12 +24,11 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 A curated stack of MCP (Model Context Protocol) servers for Claude Code, Codex, Gemini CLI, Cursor, and Windsurf — sharing one foundation library (`mcp-core`) and one plugin marketplace (`n24q02m/claude-plugins`).
 
-Each server is published as a Claude Code plugin, an npm or PyPI package (per language), and a Docker image on GHCR. Setup takes one command.
+Servers are available through the Claude Code marketplace and npm or PyPI packages. Container availability and authentication requirements vary by server; see its setup guide for the supported distribution.
 
 ## The servers
 
 <CardGrid>
-  <LinkCard title="mcp-core (Foundation)" href="/servers/mcp-core/architecture/" description="Shared transport, OAuth AS, lifecycle. Used by every server." />
   <LinkCard title="wet-mcp" href="/servers/wet-mcp/setup/" description="Web search + content extraction + docs indexing." />
   <LinkCard title="mnemo-mcp" href="/servers/mnemo-mcp/setup/" description="Persistent AI memory with hybrid search." />
   <LinkCard title="better-code-review-graph" href="/servers/better-code-review-graph/setup/" description="Knowledge graph for token-efficient code reviews." />
@@ -38,7 +37,17 @@ Each server is published as a Claude Code plugin, an npm or PyPI package (per la
   <LinkCard title="better-notion-mcp" href="/servers/better-notion-mcp/setup/" description="Markdown-first Notion API server." />
   <LinkCard title="better-email-mcp" href="/servers/better-email-mcp/setup/" description="Email (IMAP + SMTP) composite tools." />
   <LinkCard title="better-godot-mcp" href="/servers/better-godot-mcp/setup/" description="Godot Engine integration." />
-  <LinkCard title="better-workspace-mcp" href="/servers/better-workspace-mcp/setup/" description="Google Workspace — Docs, Drive, Calendar, Gmail, and more." />
+  <LinkCard title="better-workspace-mcp" href="/servers/better-workspace-mcp/setup/" description="Ten Google Workspace domains, local time helpers, and multi-account OAuth." />
+</CardGrid>
+
+## Libraries and coordination
+
+These components support the stack without exposing their own MCP server:
+
+<CardGrid>
+  <LinkCard title="mcp-core (Foundation)" href="/servers/mcp-core/architecture/" description="Shared transport, OAuth AS, lifecycle, and credential primitives for server authors." />
+  <LinkCard title="fastretrieval" href="/reference/fastretrieval/" description="Multi-model Python retrieval: embeddings, reranking, ONNX, and optional GGUF." />
+  <LinkCard title="Agent Chat" href="/servers/agent-chat-plugin/setup/" description="Portable CLI/Skill coordination through shared Markdown and JSON files." />
 </CardGrid>
 
 ## Why these and not just any MCP server?

@@ -22,7 +22,7 @@ uvx --python 3.13 wet-mcp
 
 ## First run is slow / downloads a lot
 
-On first start the server downloads SearXNG, a Playwright browser, and local embedding/reranker models. Pre-download them instead of waiting on the first tool call:
+Downloads depend on the selected backends. Local embedding/reranker models and a native browser may need initial downloads; `uvx` does not auto-start embedded SearXNG. Use `SEARCH_BACKENDS=duckduckgo,startpage`, a configured cloud backend, or an external `SEARXNG_URL` for `uvx` search. Prepare enabled local resources with:
 
 ```
 config(action="warmup")

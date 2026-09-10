@@ -4,7 +4,7 @@ Web search, content extraction, media discovery, and version-aware library-docs 
 
 ## What it does
 
-- **Search** the web (metasearch), academic sources, and X/Twitter, plus auto-indexed library documentation with project-scoped version locking.
+- **Search** the web through an ordered backend chain, academic sources, and auto-indexed library documentation with project-scoped version locking.
 - **Extract** clean content from URLs and local files (PDF/DOCX/PPTX/XLSX to Markdown), with batch, crawl, site-map, structured-extraction, page-interaction, and multi-step research-agent modes.
 - **Media**: discover and download images, video, and audio from a page.
 - Everything fetched from the open web is wrapped in an XPIA safety marker so the model treats the content as data, not instructions.
@@ -19,12 +19,18 @@ Runs over stdio with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, a
 
 ## Configuration
 
-Basic web search works with no credentials. Optional capabilities are unlocked with your own keys and model chains, all supplied as environment variables -- leave any unset to fall back to bundled local defaults:
+Local retrieval needs no provider credentials. For web search, configure `SEARCH_BACKENDS`: credential-free `duckduckgo` / `startpage`, keyed `tavily` / `brave` / `exa` / `kagi`, optional-key `firecrawl`, or `searxng` with a runnable local installation or an external `SEARXNG_URL`. Upstream challenges or empty results advance to the next backend, not to an invented successful result.
 
 - `EMBEDDING_MODELS`, `RERANK_MODELS`, `LLM_MODELS` -- optional CSV model chains for embedding, reranking, and LLM features; empty falls back to the bundled local model or disables the feature.
 - Provider API keys (`JINA_AI_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY`) and `GITHUB_TOKEN` for a higher docs-discovery rate limit.
 
 Use placeholders in shared config and never commit real keys. Full walkthrough in [setup](/servers/wet-mcp/setup/).
+
+For the managed Cloudflare route, use per-subject Minimax-free completion and
+paid Cohere retrieval through Cloudflare AI Gateway; see the
+[provider configuration reference](/reference/relay-flow/#managed-cloudflare-model-configuration).
+`DOCS_DB_BACKEND=cf-d1` disables redundant Google Drive sync and its OAuth setup
+flows. This does not remove public local stdio or SearXNG support.
 
 ## Next steps
 

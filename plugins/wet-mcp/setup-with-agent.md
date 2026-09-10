@@ -1,6 +1,6 @@
 # WET (Web Extended Toolkit) -- Agent Setup Guide
 
-> **2026-08-30 Update**: Plugin install (Option 1) uses stdio mode. It provides local Fastretrieval embedding/reranking, extraction, and library docs without API keys. Web search needs a configured cloud/SearXNG endpoint or the locally built Docker image that bundles SearXNG.
+> Plugin install uses stdio mode with local Fastretrieval retrieval. For web search, select credential-free `duckduckgo,startpage`, a keyed provider, optional-key Firecrawl, or a runnable local/external SearXNG backend through `SEARCH_BACKENDS`.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 
 > Give this file to your AI agent to automatically set up wet-mcp.
@@ -21,7 +21,7 @@ All MCP servers across this stack share this priority hierarchy. `better-godot-m
 
 ## Option 1: Claude Code Plugin (stdio default)
 
-Plugin install uses **stdio mode**. Fastretrieval's local model registry provides ONNX embedding and reranking without API keys; content extraction and library docs also work without a search provider. Web search requires a configured cloud/SearXNG endpoint or the locally built Docker image that bundles SearXNG.
+Plugin install uses **stdio mode**. Fastretrieval supplies local ONNX retrieval without provider keys. `uvx` can search with `SEARCH_BACKENDS=duckduckgo,startpage`, a configured cloud backend, or an external `SEARXNG_URL`; embedded SearXNG needs the prerequisites supplied by a suitable local/source-built Docker installation.
 
 ### Credential prompts at install
 
@@ -29,10 +29,16 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 
 | Field | Required | Where to obtain |
 |---|---|---|
-| `RERANK_MODELS` | Optional | CSV rerank model chain such as `jina_ai/jina-reranker-v3`; leave empty for Fastretrieval's local ONNX reranker manifest |
-| `JINA_AI_API_KEY` | Optional | https://jina.ai/api-key (highest priority embedding+reranking) |
+| `EMBEDDING_MODELS` | Optional | Explicit CSV embedding selection; managed route: `cohere/embed-v4.0` (paid) |
+| `RERANK_MODELS` | Optional | Explicit CSV rerank selection, such as `cohere/rerank-v4.0-fast` (paid); see the managed provider policy before calls |
+| `LLM_MODELS` | Optional | Explicit CSV completion selection; managed route: `openrouter/minimax/minimax-m3:free` only |
+| `EMBEDDING_API_BASE` | Optional | Custom embedding endpoint; managed Cohere gateway URL ends in `/cohere/v2/embed` |
+| `RERANK_API_BASE` | Optional | Custom rerank endpoint; managed Cohere gateway base ends in `/cohere` and the client appends `/v1/rerank` |
+| `LLM_API_BASE` | Optional | Provider-appropriate completion endpoint or CF AI Gateway base |
+| `JINA_AI_API_KEY` | Optional | Key for explicitly selected public Jina capabilities; not used by the managed Cloudflare route |
 | `GEMINI_API_KEY` | Optional | https://aistudio.google.com/apikey |
 | `OPENAI_API_KEY` | Optional | https://platform.openai.com/api-keys |
+| `OPENROUTER_API_KEY` | Optional | https://openrouter.ai/settings/keys |
 | `COHERE_API_KEY` | Optional | https://dashboard.cohere.com/api-keys |
 | `GITHUB_TOKEN` | Optional | https://github.com/settings/tokens (bumps GitHub rate limit 60->5000/hr for library docs discovery) |
 
@@ -44,9 +50,9 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 /plugin install wet-mcp@n24q02m-plugins
 ```
 
-> Other optional env vars (`EMBEDDING_MODELS`, `LLM_MODELS`, `SEARCH_BACKENDS`, `TAVILY_API_KEY`, `BRAVE_API_KEY`, `EXA_API_KEY`, `BROWSER_BACKENDS`, `SYNC_ENABLED`, etc.) are not part of the `userConfig` prompt; add them manually to `mcpServers.wet.env` in your settings if needed.
+> Other optional env vars (`SEARCH_BACKENDS`, `TAVILY_API_KEY`, `BRAVE_API_KEY`, `EXA_API_KEY`, `BROWSER_BACKENDS`, `SYNC_ENABLED`, etc.) are not part of the `userConfig` prompt; configure them through the client's supported stdio environment settings when needed. Hosted requests instead use the current subject's relay configuration for search chains and provider keys.
 
-Without env vars: content extraction, library docs, and Fastretrieval-managed local embedding/reranking work. For web search, configure a cloud/SearXNG backend or use the locally built Docker image; other env vars enable cloud embedding/reranking, LLM analysis, and premium providers.
+Local retrieval and extraction do not require provider keys. Web search still needs a runnable backend; credential-free providers may return upstream challenges or rate limits. Configure only the backend chain the user selected, rather than silently introducing a paid fallback.
 
 > **Note**: This installs the full plugin (skills + agents + hooks + commands + stdio MCP server). If you'd rather use Option 2 (Docker stdio) or Option 3 (HTTP) below, DO NOT `/plugin install` this plugin — pick Option 2 or Option 3 instead. All three methods are mutually exclusive (see Method overview).
 
@@ -106,7 +112,7 @@ Stdio mode is the default and works for most personal/single-user scenarios. Con
 
 - **claude.ai web compatibility** -- HTTP transport is required to connect plugins to claude.ai web client (stdio only works with desktop clients)
 - **One server shared across N Claude Code sessions** -- single daemon serves all sessions instead of spawning a fresh stdio process per session (lower memory, shared cache)
-- **Browser-based GDrive OAuth flow** -- HTTP mode performs the Google Device Code flow via the bundled public client; no manual `GOOGLE_DRIVE_CLIENT_ID` setup required
+- **Optional non-CF GDrive OAuth** -- eligible local/self-hosted deployments can use the bundled public client; CF-hosted docs storage disables this redundant sync path.
 - **Multi-device credential sync** -- self-host the HTTP server once, log in from multiple machines without re-pasting API keys
 - **Multi-user team sharing** -- single self-hosted instance supports N users with per-JWT-sub credential isolation
 - **Always-on persistent process** -- ideal for webhooks, scheduled agents, or background automation
@@ -121,7 +127,7 @@ Stdio mode is the default and works for most personal/single-user scenarios. Con
 
 ### Self-host with docker-compose
 
-HTTP mode runs as a persistent multi-user server with browser-based credential setup. GDrive OAuth uses a **bundled public Google Desktop client** (`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`) per Google's official Desktop OAuth pattern -- no user-side OAuth registration is required. Users authenticate via the device-code flow in their browser.
+HTTP mode runs as a persistent multi-user server with browser-based credential setup. Eligible non-CF hosts can use the bundled public Google Desktop client for the Drive device-code flow. `DOCS_DB_BACKEND=cf-d1` disables redundant Drive sync, wizard/device-code setup, and auto-sync, even if stale sync settings remain.
 
 From the `wet-mcp` checkout, build the HTTP target and run it:
 
@@ -148,7 +154,16 @@ Configure MCP client to connect:
 }
 ```
 
-On first call, the client redirects to the relay form. Fill in API keys (all optional) and -- if `SYNC_ENABLED=true` -- complete the GDrive device-code flow in your browser using the bundled public client. Each user receives an isolated credential vault keyed by JWT sub.
+On first call, the client redirects to the relay form. Configure the current subject's models, API bases, matching provider keys, and explicit `SEARCH_BACKENDS` chain. For example, `tavily,duckduckgo,startpage` requires that subject's Tavily key before credential-free fallback; select only user-authorized providers. Hosted requests never inherit operator search/model chains or keys. Only eligible non-CF hosts with sync enabled offer the Drive device-code flow. Each user receives an isolated credential vault keyed by JWT sub.
+
+Follow the [managed provider policy](/reference/relay-flow/#managed-cloudflare-model-configuration)
+for Minimax-free completion and paid Cohere retrieval through Cloudflare AI
+Gateway. Cloudflare Browser Run (`BROWSER_BACKENDS=cf-browser-rendering`)
+provides extraction renderer escalation, not an implicit local browser.
+`extract(action="interact")` still requires native Patchright sessions;
+the renderer setting does not move interactive sessions to Browser Run.
+Do not edit the user's OMP model/profile settings or enable periodic sync as
+part of server setup.
 
 ### Edge auth: relay password
 
@@ -166,20 +181,23 @@ Share this password out-of-band (Signal/email/SMS) with anyone you invite to use
 
 ## Environment Variables
 
-All environment variables are **optional**. The server works in local mode (Fastretrieval-managed ONNX embedding + SearXNG) with zero configuration.
+Local stdio requires no provider API keys. HTTP authentication, selected cloud providers, and browser/search backends have their own requirements. Preserve the user's chosen local or managed configuration.
 
 ### API Keys (Cloud Providers)
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `JINA_AI_API_KEY` | No | -- | Jina AI key: search + extraction + embedding + reranking (highest priority) |
+| `JINA_AI_API_KEY` | No | -- | Key for explicitly selected public Jina capabilities; not used by the managed Cloudflare route |
 | `GEMINI_API_KEY` | No | -- | Google Gemini key: LLM (structured extraction, media analysis) + embedding |
 | `GOOGLE_VERTEX_EXPRESS_API_KEY` | No | -- | Vertex AI Express: Gemini via API key, no Service Account. Get it at https://cloud.google.com/vertex-ai/generative-ai/docs/start/express-mode/overview |
-| `OPENAI_API_KEY` | No | -- | OpenAI key: LLM + embedding (lower priority than Gemini) |
+| `OPENAI_API_KEY` | No | -- | Key for explicitly selected OpenAI models |
+| `OPENROUTER_API_KEY` | No | -- | Key for explicitly selected OpenRouter models |
 | `COHERE_API_KEY` | No | -- | Cohere key: embedding + reranking |
 | `BRAVE_API_KEY` | No | -- | Brave Search API key (premium search provider) |
 | `TAVILY_API_KEY` | No | -- | Tavily Search API key |
 | `EXA_API_KEY` | No | -- | Exa Search API key |
+| `KAGI_API_KEY` | No | -- | Required for the `kagi` search backend |
+| `FIRECRAWL_API_KEY` | No | -- | Optional for `firecrawl`; absent means a keyless attempt, not guaranteed free service |
 | `GITHUB_TOKEN` | No | auto-detect | GitHub token for docs discovery (60 -> 5000 req/hr). Auto-detected from `gh auth token` |
 
 ### Embedding and Reranking
@@ -188,6 +206,8 @@ All environment variables are **optional**. The server works in local mode (Fast
 |:---------|:---------|:--------|:------------|
 | `EMBEDDING_MODELS` | No | empty | Ordered CSV embedding model chain (`provider/model,...`); empty resolves Fastretrieval's local ONNX model manifest |
 | `RERANK_MODELS` | No | empty | Ordered CSV rerank model chain (`provider/model,...`); empty resolves Fastretrieval's local ONNX cross-encoder manifest |
+| `EMBEDDING_API_BASE` | No | -- | Custom embedding endpoint; managed Cohere gateway URL ends in `/cohere/v2/embed` |
+| `RERANK_API_BASE` | No | -- | Custom rerank endpoint; managed Cohere gateway base ends in `/cohere` |
 | `EMBEDDING_DIMS` | No | `0` (auto) | Embedding dimensions; custom local models may require `LOCAL_EMBEDDING_DIM` |
 | `LOCAL_EMBEDDING_MODEL` | No | -- | Optional BYO local embedding model ID; empty uses Fastretrieval's bundled model manifest |
 | `LOCAL_EMBEDDING_DIM` | No | `0` | Required for a BYO local embedding when its model manifest does not provide dimensions |
@@ -203,21 +223,27 @@ All environment variables are **optional**. The server works in local mode (Fast
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
 | `LLM_MODELS` | No | empty | Ordered CSV LLM model chain (`provider/model,...`); empty leaves optional LLM features disabled |
+| `LLM_API_BASE` | No | -- | Provider-appropriate completion endpoint or CF AI Gateway base |
 
 ### Legacy model aliases
 
 `EMBEDDING_BACKEND`, `EMBEDDING_MODEL`, `RERANK_BACKEND`, and `RERANK_MODEL` are deprecated and honored for one release. Use the plural `EMBEDDING_MODELS` and `RERANK_MODELS` chains instead.
 
-### SearXNG
+### Search backends
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `SEARCH_BACKENDS` | No | `searxng` | Ordered CSV search chain: `searxng`, `tavily`, `brave`, `exa` |
+| `SEARCH_BACKENDS` | No | `searxng` | Ordered CSV chain: `searxng`, `tavily`, `brave`, `exa`, `kagi`, `firecrawl`, `duckduckgo`, `startpage` |
 | `WET_AUTO_SEARXNG` | No | `true` | Auto-start bundled SearXNG when the runtime includes its prerequisites; `uvx` plugin environments do not bundle them |
 | `DISABLE_LOCAL_SEARCH` | No | `false` | Skip the embedded local SearXNG fallback while retaining external or cloud search backends |
 | `WET_SEARXNG_PORT` | No | `41592` | SearXNG port |
 | `SEARXNG_URL` | No | `http://localhost:41592` | URL for an external SearXNG deployment |
 | `SEARXNG_TIMEOUT` | No | `30` | SearXNG request timeout in seconds |
+
+`duckduckgo` and `startpage` require no credentials and work under `uvx`.
+Firecrawl can be attempted without a key. Challenges, errors, or empty results
+advance the configured chain; successful credential-free results are not
+guaranteed on every network. Public SearXNG remains supported.
 
 ### Browser Rendering
 
@@ -251,7 +277,7 @@ All environment variables are **optional**. The server works in local mode (Fast
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `SYNC_ENABLED` | No | `true` | Enable Google Drive sync |
+| `SYNC_ENABLED` | No | `true` | Enable sync on eligible non-CF hosts; `DOCS_DB_BACKEND=cf-d1` disables it |
 | `GOOGLE_DRIVE_CLIENT_ID` | No | bundled public client | OAuth client ID. HTTP mode auto-uses bundled public Desktop client |
 | `GOOGLE_DRIVE_CLIENT_SECRET` | No | bundled public secret | OAuth client secret (Desktop public client per Google docs) |
 | `SYNC_FOLDER` | No | `wet-mcp` | Google Drive folder name |

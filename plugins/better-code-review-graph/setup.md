@@ -38,11 +38,14 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 | `GEMINI_API_KEY` | Optional | https://aistudio.google.com/apikey |
 | `OPENAI_API_KEY` | Optional | https://platform.openai.com/api-keys |
 | `COHERE_API_KEY` | Optional | https://dashboard.cohere.com/api-keys |
+| `EMBEDDING_MODELS` / `SUMMARY_MODELS` | Optional | Explicit cloud model selection; empty leaves local embeddings / disabled summaries |
+| `LOCAL_EMBEDDING_MODEL` and its metadata fields | Optional | Built-in Fastretrieval ID, manifest-backed artifact directory, or external model with explicit dimensions |
+| `LOCAL_RERANK_MODEL` | Optional | Fastretrieval `TextCrossEncoder` model ID; empty disables query reranking |
 
 ### Steps
 
 1. Open Claude Code.
-2. Install the plugin (Claude Code prompts for `JINA_AI_API_KEY` -- press Enter to skip):
+2. Install the plugin (skip optional model/key prompts to keep local embeddings):
    ```bash
    /plugin marketplace add n24q02m/claude-plugins
    /plugin install better-code-review-graph@n24q02m-plugins
@@ -59,27 +62,30 @@ All API keys are **optional**. The server works with Fastretrieval's local ONNX 
 Set API keys in your MCP client `env` block or shell profile:
 
 ```bash
-export JINA_AI_API_KEY="jina_..."
-export GEMINI_API_KEY="AIza..."
+export EMBEDDING_MODELS="cohere/embed-v4.0"
+export COHERE_API_KEY="<your-provider-key>"
 ```
+
+For managed HTTP use, configure the authenticated subject's model, API base,
+and key through the relay instead. See the [managed provider policy](/reference/relay-flow/#managed-cloudflare-model-configuration) before any paid calls.
 
 ## Environment Variable Reference
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `JINA_AI_API_KEY` | No | -- | Jina AI: embedding + reranking (highest priority) |
+| `JINA_AI_API_KEY` | No | -- | Key for explicitly selected `jina_ai/` embedding models; not used by the managed Cloudflare route |
 | `GEMINI_API_KEY` | No | -- | Gemini: embedding (free tier). Also accepts `GOOGLE_API_KEY` |
 | `GOOGLE_VERTEX_EXPRESS_API_KEY` | No | -- | Vertex AI Express: Gemini via API key, no Service Account. Get it at https://cloud.google.com/vertex-ai/generative-ai/docs/start/express-mode/overview |
 | `OPENAI_API_KEY` | No | -- | OpenAI: embedding |
-| `COHERE_API_KEY` | No | -- | Cohere: embedding + reranking. Also accepts `CO_API_KEY` |
-| `EMBEDDING_MODELS` | No | empty | Ordered CSV embedding model chain (`provider/model,...`); empty resolves Fastretrieval's local ONNX model manifest |
-| `EMBEDDING_DIMS` | No | `0` (auto) | Embedding dimensions; custom local models may require `LOCAL_EMBEDDING_DIM` |
+| `COHERE_API_KEY` | No | -- | Key for explicitly selected `cohere/` embeddings; Cohere calls are paid |
+| `EMBEDDING_MODELS` | No | empty | CSV embedding model selection (`provider/model,...`); the current runtime selects the first entry, not a fallback chain |
 | `LOCAL_EMBEDDING_MODEL` | No | -- | Optional BYO local embedding model ID; empty uses Fastretrieval's bundled model manifest |
 | `LOCAL_RERANK_MODEL` | No | -- | Fastretrieval TextCrossEncoder model ID; empty = reranking disabled. |
 | `LOCAL_EMBEDDING_MODEL_FILE` | No | `onnx/model.onnx` | ONNX file path for a BYO local embedding |
 | `LOCAL_EMBEDDING_DIM` | No | `0` | Required for a BYO local embedding when its model manifest does not provide dimensions |
 | `LOCAL_EMBEDDING_POOLING` | No | `MEAN` | Pooling for a BYO local embedding (`MEAN`, `CLS`, `LAST_TOKEN`, or `DISABLED`) |
 | `LOCAL_EMBEDDING_NORMALIZE` | No | `true` | Normalize BYO local embedding outputs |
+| `LOCAL_RERANK_MODEL` | No | empty | Fastretrieval `TextCrossEncoder` model ID for query reranking; empty disables reranking |
 | `SUMMARY_MODELS` | No | empty | Ordered CSV summary model chain (`provider/model,...`); empty leaves summaries disabled |
 
 | `TRANSPORT_MODE` | No | `stdio` | Set to `http` to enable HTTP transport (multi-user). |
@@ -91,12 +97,32 @@ Legacy aliases: `EMBEDDING_BACKEND`, `EMBEDDING_MODEL`, and `SUMMARY_MODEL` are 
 
 ### Embedding provider selection
 
-- **Cloud**: a non-empty `EMBEDDING_MODELS` chain selects the first configured `provider/model`, with later entries as fallback.
+- **Cloud**: a non-empty `EMBEDDING_MODELS` value selects its first `provider/model`; later entries are not runtime fallbacks.
 - **Local**: an empty chain resolves Fastretrieval's local ONNX model registry/manifest; set `LOCAL_EMBEDDING_MODEL` only for a BYO local model.
 - **Custom local metadata**: a BYO model can use `LOCAL_EMBEDDING_MODEL_FILE`, `LOCAL_EMBEDDING_DIM`, `LOCAL_EMBEDDING_POOLING`, and `LOCAL_EMBEDDING_NORMALIZE`; manifest-backed models supply their own metadata.
 - **Legacy aliases**: `EMBEDDING_BACKEND` and `EMBEDDING_MODEL` are deprecated and honored for one release; migrate to `EMBEDDING_MODELS`.
 
-All embeddings are stored at a fixed dimension and tagged with the active provider/model identity. Changing the provider/model or dimensions changes the vector space: affected nodes are re-embedded, and semantic search uses the active provider/model vectors.
+Embeddings are tagged with the active provider/model identity. Cohere
+`embed-v4.0` requests and stores exactly **1024 dimensions**; other backends
+retain 768-dimensional storage. CRG does not slice or pad provider vectors.
+Run `graph(action="embed")` after changing models or upgrading an older
+768-wide Cohere index. Document embeddings use `search_document`; queries
+use `search_query`, and incompatible stored widths require re-embedding.
+
+Query reranking is local and opt-in through `LOCAL_RERANK_MODEL`. CRG does not
+currently implement `RERANK_MODELS`, `RERANK_API_BASE`, or a cloud reranking
+provider. A Cohere embedding selection does not enable Cohere reranking.
+
+### Graph-state migration
+
+Local graph, security scan cache, and suppression state use the package-owned
+`.better-code-review-graph/` directory. After upgrading, run
+`graph(action="build", full_rebuild=true)`, then `graph(action="embed")` if
+semantic search is needed. The old `.code-review-graph/`,
+`.code-review-graph.db`, and SQLite sidecars are left untouched because they
+may belong to the separate upstream package. Review and reapply desired
+suppression rules explicitly rather than deleting or adopting that state
+automatically.
 
 ### Supported Languages
 

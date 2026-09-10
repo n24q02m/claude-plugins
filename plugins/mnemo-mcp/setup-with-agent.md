@@ -4,7 +4,7 @@
 
 > **2026-05-02 Update**: Plugin install (Option 1) now uses pure stdio mode with local SQLite storage. No required env vars -- mnemo works out-of-box.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
-> Optional cloud providers (Jina/Gemini/OpenAI/Cohere) and Google Drive sync are still supported -- set them via env vars (Option 1/2) or configure them through the relay form in HTTP mode (see setup-manual.md "Method 3 (Docker HTTP — Self-host)").
+> Public local retrieval remains available without provider keys. Cloud models are configured explicitly; Google Drive sync is optional on non-CF hosts and disabled when `MEMORY_DB_BACKEND=cf-d1`. See the [manual HTTP setup](/servers/mnemo-mcp/setup/#method-3-docker-http-recommended).
 
 ## Method overview
 
@@ -90,12 +90,17 @@ Stdio is the default and works fine for single-user local setups. You may want t
 
 - **claude.ai web compatibility** -- claude.ai (the web UI) supports HTTP MCP servers but cannot spawn local stdio processes.
 - **One server shared across N Claude Code sessions** -- a single HTTP instance serves multiple terminals/IDEs without re-spawning per session, sharing the same memory database.
-- **Browser-based GDrive OAuth** -- enable Google Drive sync without manually exchanging an OAuth token in the env (the relay form completes the OAuth flow in your browser).
+- **Optional non-CF GDrive OAuth** -- eligible self-hosted servers can complete Google consent in the browser; CF-backed memory storage disables this redundant sync path.
 - **Multi-device credential sync** -- configure cloud API keys / GDrive once, the server uses them for any device/session that connects.
 - **Multi-user team sharing** -- a self-hosted server can serve multiple memory databases, each isolated per JWT-sub.
 - **Always-on persistent process for webhooks/agents** -- HTTP servers stay alive between sessions, enabling background sync, scheduled archive runs, or background memory consolidation.
 
-For self-hosting HTTP mode (your own multi-user mnemo server with bundled GDrive OAuth), see [setup-manual.md](setup-manual.md) "Method 3 (Docker HTTP — Self-host)".
+For self-hosted HTTP, see the [manual setup guide](/servers/mnemo-mcp/setup/#method-3-docker-http-recommended). When `MEMORY_DB_BACKEND=cf-d1`, sync resolves to disabled regardless of stale `SYNC_ENABLED` or S3 settings; do not start Drive OAuth, wizard/device-code setup, startup auto-sync, or manual sync.
+
+For the managed route, configure the authenticated subject's Minimax-free
+completion and paid Cohere retrieval through Cloudflare AI Gateway as
+described in the [provider policy](/reference/relay-flow/#managed-cloudflare-model-configuration).
+Do not change user-owned OMP model/profile settings or install periodic sync.
 
 ### Edge auth: relay password
 
@@ -119,10 +124,10 @@ All environment variables are **optional**. The server works in local mode (Fast
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `JINA_AI_API_KEY` | No | -- | Jina AI key: embedding + reranking (highest priority) |
+| `JINA_AI_API_KEY` | No | -- | Key for explicitly selected public Jina models; not used by the managed Cloudflare route |
 | `GEMINI_API_KEY` | No | -- | Google Gemini key: LLM (importance scoring, graph extraction) + embedding |
 | `GOOGLE_VERTEX_EXPRESS_API_KEY` | No | -- | Vertex AI Express: Gemini via API key, no Service Account. Get it at https://cloud.google.com/vertex-ai/generative-ai/docs/start/express-mode/overview |
-| `OPENAI_API_KEY` | No | -- | OpenAI key: LLM + embedding (lower priority than Gemini) |
+| `OPENAI_API_KEY` | No | -- | Key for explicitly selected OpenAI models |
 | `COHERE_API_KEY` | No | -- | Cohere key: embedding + reranking |
 
 ### Database and Storage
@@ -172,17 +177,17 @@ All environment variables are **optional**. The server works in local mode (Fast
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `SYNC_ENABLED` | No | `true` | Enable sync (native Google Drive API or S3) |
+| `SYNC_ENABLED` | No | `true` | Enable sync on eligible non-CF hosts; `MEMORY_DB_BACKEND=cf-d1` disables the backend |
 | `SYNC_FOLDER` | No | `mnemo-mcp` | Google Drive folder name |
 | `SYNC_INTERVAL` | No | `300` | Auto-sync interval in seconds (0=manual) |
-| `SYNC_S3_BUCKET` | No | `` | S3-compatible bucket (R2/B2/MinIO); set to use S3 instead of Google Drive |
+| `SYNC_S3_BUCKET` | No | `` | S3-compatible bucket (R2/B2/MinIO) for non-CF sync; does not override the CF-host suppression |
 | `SYNC_S3_ENDPOINT` | No | `` | Custom S3 endpoint URL (for R2/B2/MinIO) |
 
 ### HTTP Mode (Self-Hosting Only)
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `TRANSPORT_MODE` | No (`stdio`) | `stdio` | Set to `http` to enable HTTP transport (multi-user, bundled GDrive OAuth). |
+| `TRANSPORT_MODE` | No (`stdio`) | `stdio` | Set to `http` for multi-user HTTP; Google Drive sync is available only on eligible non-CF hosts. |
 | `PUBLIC_URL` | Yes (http) | -- | Server's public URL for OAuth redirects and `/authorize` setup page. |
 | `MCP_DCR_SERVER_SECRET` | Yes (http) | -- | HMAC secret for stateless Dynamic Client Registration. Generate via `openssl rand -hex 32`. |
 | `MCP_PORT` | No | `8080` | Server port (http mode only). |

@@ -157,6 +157,17 @@ jobs:
             printf "Synced chat.py\n"
           fi
 
+          # Agent Chat's entrypoint imports its adjacent runtime package.
+          if [ "$REPO" = "agent-chat-plugin" ]; then
+            for dir in agent_chat schemas; do
+              if [ -d "source/$dir" ]; then
+                rm -rf "$PLUGIN_DIR/$dir"
+                cp -r "source/$dir" "$PLUGIN_DIR/$dir"
+                printf "Synced %s/\n" "$dir"
+              fi
+            done
+          fi
+
       - name: Commit and push
         env:
           REPO: ${{ steps.inputs.outputs.repo }}
