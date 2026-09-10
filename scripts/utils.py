@@ -1,3 +1,4 @@
+import functools
 import os
 import re
 
@@ -7,8 +8,11 @@ def sanitize_log(msg: str) -> str:
     return str(msg).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
 
 
+@functools.lru_cache(maxsize=128)
 def _resolve_base_dir(base_dir: str) -> tuple[str, str]:
     """Cache base directory resolution for performance."""
+    # Bypasses the lookup overhead in tight validation loops,
+    # avoiding repeated stat/readlink syscalls for identical base_dirs.
     abs_base = os.path.abspath(base_dir)
     return abs_base, os.path.realpath(abs_base)
 
@@ -45,7 +49,7 @@ def get_safe_path(base_dir: str, sub_path: str) -> str:
     # ``symlink/..`` lexically before following the symlink, hiding an intermediate
     # escape. Containment after every resolved component closes that bypass.
     real_target = real_base
-    for component in re.split(r"[\\/]+", sub_path):
+    for component in _PATH_SEP_RE.split(sub_path):
         if component in ("", "."):
             continue
         if component == "..":
@@ -58,5 +62,7 @@ def get_safe_path(base_dir: str, sub_path: str) -> str:
     return os.path.relpath(real_target, real_base)
 
 
-# Pre-compile regex at module level to avoid cache lookup overhead
+# Pre-compile regex at module level to avoid cache lookup overhead.
+# Extracted for loop performance to bypass re.split's internal cache limits.
+_PATH_SEP_RE = re.compile(r"[\\/]+")
 PLUGIN_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9-]+$")
