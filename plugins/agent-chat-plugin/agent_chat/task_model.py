@@ -15,7 +15,6 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any, Mapping
 
-
 TASK_FIELDS = (
     "id",
     "channel",
@@ -31,17 +30,13 @@ TASK_FIELDS = (
     "updated_at",
 )
 
-VALID_STATUSES = frozenset(
-    {"open", "in_progress", "blocked", "done", "cancelled"}
-)
+VALID_STATUSES = frozenset({"open", "in_progress", "blocked", "done", "cancelled"})
 
 # Same-state writes are intentionally idempotent.  ``open`` is the released
 # state used by the later lease surface; ``done`` and ``cancelled`` are terminal.
 STATUS_TRANSITIONS = {
     "open": frozenset({"open", "in_progress", "blocked", "cancelled"}),
-    "in_progress": frozenset(
-        {"in_progress", "open", "blocked", "done", "cancelled"}
-    ),
+    "in_progress": frozenset({"in_progress", "open", "blocked", "done", "cancelled"}),
     "blocked": frozenset({"blocked", "open", "in_progress", "cancelled"}),
     "done": frozenset({"done"}),
     "cancelled": frozenset({"cancelled"}),
@@ -117,7 +112,9 @@ def parse_timestamp(value: Any, *, field: str = "updated_at") -> str:
     candidate = value.strip()
     # ``datetime.fromisoformat`` accepted ``Z`` starting with Python 3.11;
     # normalize it so the stdlib API remains usable on older supported Python.
-    parse_value = candidate[:-1] + "+00:00" if candidate.endswith(("Z", "z")) else candidate
+    parse_value = (
+        candidate[:-1] + "+00:00" if candidate.endswith(("Z", "z")) else candidate
+    )
     try:
         parsed = _dt.datetime.fromisoformat(parse_value)
     except (TypeError, ValueError):
@@ -152,6 +149,8 @@ def validate_workspace_path(path: Any, workspace: Path | None = None) -> str:
     drive, _ = ntpath.splitdrive(portable)
     if drive or portable.startswith("/"):
         raise _path_error(path, "absolute paths are not allowed")
+    if ":" in portable:
+        raise _path_error(path, "path names may not contain ':'")
     parts = PurePosixPath(portable).parts
     if any(part == ".." for part in parts):
         raise _path_error(path, "parent traversal is not allowed")
@@ -192,7 +191,9 @@ def _validate_list_of_text(
     return result
 
 
-def _validate_values(values: Mapping[str, Any], *, workspace: Path | None = None) -> None:
+def _validate_values(
+    values: Mapping[str, Any], *, workspace: Path | None = None
+) -> None:
     _validate_id(values["id"])
     _validate_channel(values["channel"])
     _require_text(values["title"], "title", allow_empty=True)
@@ -291,7 +292,7 @@ class TaskRecord:
     @classmethod
     def from_dict(
         cls, data: Mapping[str, Any], *, workspace: Path | None = None
-    ) -> "TaskRecord":
+    ) -> TaskRecord:
         if not isinstance(data, Mapping):
             raise _error("TASK_INVALID_RECORD", "task record must be a JSON object")
         actual = set(data)

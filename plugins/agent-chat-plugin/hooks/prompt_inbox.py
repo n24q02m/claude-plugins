@@ -5,8 +5,6 @@ from __future__ import annotations
 
 import os
 import sys
-from contextlib import redirect_stderr
-from io import StringIO
 from pathlib import Path
 
 
@@ -30,8 +28,9 @@ def main() -> None:
         return
     sys.path.insert(0, plugin_root)
     try:
+        from session_inbox import _bounded_unread_summary, _channels_to_check
+
         import chat
-        from session_inbox import _channels_to_check
     except Exception:
         return
 
@@ -45,11 +44,10 @@ def main() -> None:
             root, os.environ.get("AGENT_CHAT_CHANNELS", "")
         ):
             try:
-                with redirect_stderr(StringIO()):
-                    channel_path = chat.channel_dir(root, channel)
-            except SystemExit:
-                continue
-            if not (channel_path / "_meta.json").exists():
+                channel_path = chat.channel_dir(root, channel)
+                if not (channel_path / "_meta.json").exists():
+                    continue
+            except (chat.AgentChatError, OSError):
                 continue
             cursor = chat.read_cursor(channel_path, name)
             unread = 0
@@ -61,7 +59,9 @@ def main() -> None:
                         sequence = chat._seq_from_name(entry.name)
                         if sequence is None or sequence <= cursor:
                             continue
-                        if chat.is_relevant(chat.parse_frontmatter(Path(entry.path)), name):
+                        if chat.is_relevant(
+                            chat.parse_frontmatter(Path(entry.path)), name
+                        ):
                             unread += 1
             except OSError:
                 pass
@@ -69,9 +69,7 @@ def main() -> None:
                 unread_by_channel.append((channel, unread))
 
         if unread_by_channel:
-            summary = ", ".join(
-                f"#{channel} ({count})" for channel, count in unread_by_channel
-            )
+            summary = _bounded_unread_summary(unread_by_channel)
             print(
                 f"[agent-chat] {name} has unread peer messages: {summary}. "
                 "Run /agent-chat to read/reply."

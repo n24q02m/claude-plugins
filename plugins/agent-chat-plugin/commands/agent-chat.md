@@ -5,18 +5,27 @@ description: Read your peer-agent inbox and post/reply via the agent-chat shared
 Check the agent-chat shared folder for peer-agent messages and handle them.
 
 Your identity is `$AGENT_CHAT_NAME` (set as an env var by the user; ask if it
-is unset). All commands below run `python ${CLAUDE_PLUGIN_ROOT}/chat.py <cmd>`.
+is unset). All commands below run `python "${CLAUDE_PLUGIN_ROOT}/chat.py" <cmd>`.
 
-**Running outside Claude Code.** `${CLAUDE_PLUGIN_ROOT}` is a Claude Code
-plugin variable and only resolves there. On another harness (OMP, Codex,
-OpenCode, ...), substitute the real path to this plugin checkout, e.g.
-`python /path/to/agent-chat-plugin/chat.py <cmd>`, or install the CLI once
-(`pipx install agent-chat-plugin`, or `uvx --from agent-chat-plugin
-agent-chat`) and run `agent-chat <cmd>` with the same flags. The optional
-inbox hooks under `hooks/` are harness-neutral too: wire them by absolute path
-(e.g. `python /path/to/agent-chat-plugin/hooks/session_inbox.py`); every hook
-exits 0 and skips with a one-line stderr note when it cannot resolve its own
-plugin root.
+**Running outside Claude Code.** Use an actual complete checkout path:
+`python "/path/to/agent-chat-plugin/chat.py" <cmd>`. Keep `agent_chat/` beside
+`chat.py`; copying the script alone breaks structured coordination commands.
+Alternatively, `pipx install agent-chat-plugin` supplies `agent-chat <cmd>`,
+or use `uvx --from agent-chat-plugin agent-chat <cmd>` on each invocation.
+`uvx` is not a persistent install. Root precedence is `--root` (before the
+subcommand), `AGENT_CHAT_ROOT`, then `~/agent-chat`.
+
+PyPI does not install the skill, slash command, or inbox hooks. Checkout/plugin
+hooks may be invoked by absolute path, but the host must explicitly wire the
+lifecycle and interpret the output: session/prompt notices are bounded text,
+Stop emits bounded Claude-compatible `systemMessage` JSON. Hooks only peek
+relevant unread messages, always exit 0, and skip unresolved plugin roots with
+a one-line stderr note. They do not reply, advance cursors, block a turn, wake
+peers or synchronize machines.
+
+No Agent Chat command/hook calls an LLM, embedding/rerank provider, graph
+service or relay. This is not an MCP server. Do not change a host's models,
+credentials or MCP configuration to use its filesystem coordination.
 
 1. **See what channels exist**: `channels`. Each channel is a separate group
    chat; there may be more than one relevant to you.
@@ -41,25 +50,25 @@ lease records are human-readable JSON under
 `<root>/<channel>/claims/<task-id>.<owner>.json`:
 
 ```text
-python ${CLAUDE_PLUGIN_ROOT}/chat.py task create <channel> <task-id> \
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" task create <channel> <task-id> \
   --from $AGENT_CHAT_NAME --title "..."
-python ${CLAUDE_PLUGIN_ROOT}/chat.py task list <channel>
-python ${CLAUDE_PLUGIN_ROOT}/chat.py task show <channel> <task-id>
-python ${CLAUDE_PLUGIN_ROOT}/chat.py task update <channel> <task-id> \
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" task list <channel>
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" task show <channel> <task-id>
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" task update <channel> <task-id> \
   --as $AGENT_CHAT_NAME --status in_progress
-python ${CLAUDE_PLUGIN_ROOT}/chat.py task claim <channel> <task-id> \
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" task claim <channel> <task-id> \
   --as $AGENT_CHAT_NAME --lease-seconds 300
-python ${CLAUDE_PLUGIN_ROOT}/chat.py task renew <channel> <task-id> \
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" task renew <channel> <task-id> \
   --as $AGENT_CHAT_NAME --lease-seconds 300
-python ${CLAUDE_PLUGIN_ROOT}/chat.py task done <channel> <task-id> \
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" task done <channel> <task-id> \
   --as $AGENT_CHAT_NAME
-python ${CLAUDE_PLUGIN_ROOT}/chat.py task block <channel> <task-id> \
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" task block <channel> <task-id> \
   --as $AGENT_CHAT_NAME
-python ${CLAUDE_PLUGIN_ROOT}/chat.py task release <channel> <task-id> \
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" task release <channel> <task-id> \
   --as $AGENT_CHAT_NAME
-python ${CLAUDE_PLUGIN_ROOT}/chat.py task recover <channel> <task-id> \
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" task recover <channel> <task-id> \
   --as $AGENT_CHAT_NAME --reason "stale session" --lease-seconds 300
-python ${CLAUDE_PLUGIN_ROOT}/chat.py task recover-pending <channel> \
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" task recover-pending <channel> \
   --as $AGENT_CHAT_NAME \
   [--resolve-publication rollback|published]
 ```
@@ -135,15 +144,15 @@ task failures include `TASK_INVALID_COMMAND`, `TASK_INVALID_ARGUMENT`,
 Path locks coordinate exclusive access to files and directories across sessions:
 
 ```text
-python ${CLAUDE_PLUGIN_ROOT}/chat.py lock <channel> <paths...> \
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" lock <channel> <paths...> \
   --as $AGENT_CHAT_NAME [--lease-seconds 300]
-python ${CLAUDE_PLUGIN_ROOT}/chat.py check <channel> <paths...> \
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" check <channel> <paths...> \
   [--as $AGENT_CHAT_NAME]
-python ${CLAUDE_PLUGIN_ROOT}/chat.py unlock <channel> <lock-id-or-path> \
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" unlock <channel> <lock-id-or-path> \
   --as $AGENT_CHAT_NAME
-python ${CLAUDE_PLUGIN_ROOT}/chat.py recover <channel> <lock-id-or-path> \
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" recover <channel> <lock-id-or-path> \
   --as $AGENT_CHAT_NAME --reason "stale session" [--lease-seconds 300]
-python ${CLAUDE_PLUGIN_ROOT}/chat.py recover-pending <channel> \
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" recover-pending <channel> \
   --as $AGENT_CHAT_NAME [--resolve-publication rollback|published]
 ```
 
@@ -168,6 +177,24 @@ journaling. Path-lock errors exit nonzero with stable codes such as
 `PATH_LOCK_TRANSACTION_PENDING`, `PATH_LOCK_TRANSACTION_CLEANUP_FAILED`,
 `PATH_LOCK_TRANSACTION_INVALID`, `PATH_LOCK_AUDIT_FAILED`, and
 `PATH_LOCK_AUDIT_ROLLBACK_FAILED`.
+
+State and adapter-neutral event commands use the same channel:
+
+```text
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" state <channel> [--json] [--strict]
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" compact <channel> --as $AGENT_CHAT_NAME
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" event post <channel> \
+  --from $AGENT_CHAT_NAME --type capability --harness <host-name>
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" event post <channel> \
+  --from $AGENT_CHAT_NAME --type status --harness <host-name> --status ready
+python "${CLAUDE_PLUGIN_ROOT}/chat.py" event read <channel> [--type capability|status]
+```
+
+`state` renders a deterministic local summary; `compact` atomically writes the
+derived `state.md` and normally emits a `state.compacted` audit message. It
+does not replace or truncate authoritative records/cursors. Events advertise
+portable capabilities/status only, never host execution or provider access.
+
 If there is nothing new and nothing to send, say so briefly and stop -- do
 not invent work. If you need to start a new group chat, use
 `init <channel> --members a,b --topic "..."` first.

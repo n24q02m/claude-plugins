@@ -18,7 +18,6 @@ import os
 import posixpath
 import re
 import tempfile
-import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
@@ -26,6 +25,11 @@ from types import SimpleNamespace
 from typing import Any, Callable, Iterable, Mapping
 
 import chat
+from ._advisory_lock import (
+    AdvisoryFileLock,
+    AdvisoryLockTimeout,
+    acquire_advisory_file_lock,
+)
 
 
 LOCKS_DIRNAME = "locks"
@@ -452,34 +456,6 @@ def _paths_overlap(left: str, right: str) -> bool:
         or right.startswith(left + "/")
     )
 
-@dataclass
-class _MutationHandle:
-    path: Path
-    fd: int
-    released: bool = False
-
-    def release(self) -> None:
-        if self.released:
-            return
-        try:
-            os.lseek(self.fd, 0, os.SEEK_SET)
-            if os.name == "nt":
-                import msvcrt
-
-                msvcrt.locking(self.fd, msvcrt.LK_UNLCK, 1)
-            else:
-                import fcntl
-
-                fcntl.flock(self.fd, fcntl.LOCK_UN)
-        except OSError:
-            pass
-        finally:
-            self.released = True
-            try:
-                os.close(self.fd)
-            except OSError:
-                pass
-
 
 
 class PathLockStore:
@@ -492,13 +468,11 @@ class PathLockStore:
         *,
         clock: Callable[[], Any] | None = None,
         mutation_timeout: float = 10.0,
-        mutation_stale: float = 30.0,
     ):
         self.channel = Path(channel)
         self.root = Path(root) if root is not None else self.channel.parent
         self._clock = clock or chat.now_iso
         self._mutation_timeout = mutation_timeout
-        self._mutation_stale = mutation_stale
         self._assert_inside_root(self.channel)
         if not self.channel.is_dir() or not (self.channel / "_meta.json").is_file():
             raise PathLockError(
@@ -595,54 +569,25 @@ class PathLockStore:
         self._revalidate_storage()
         return self.locks_dir
 
-    def _acquire_mutation_lock(self) -> _MutationHandle:
+    def _acquire_mutation_lock(self) -> AdvisoryFileLock:
         path = self._revalidate_mutation_lock()
-        flags = os.O_RDWR | os.O_CREAT
-        no_follow = getattr(os, "O_NOFOLLOW", 0)
         try:
-            fd = os.open(str(path), flags | no_follow, 0o600)
+            lock = acquire_advisory_file_lock(path, timeout=self._mutation_timeout)
+        except AdvisoryLockTimeout as error:
+            raise PathLockError(
+                "PATH_LOCK_TIMEOUT", "could not acquire path-lock mutation lock"
+            ) from error
         except OSError as error:
-            raise _storage_error("mutation lock open", error) from error
-        if os.name == "nt":
-            try:
-                if os.fstat(fd).st_size == 0:
-                    os.write(fd, b"\0")
-            except OSError as error:
-                os.close(fd)
-                raise _storage_error("mutation lock initialization", error) from error
-        started = time.monotonic()
-        while True:
-            try:
-                os.lseek(fd, 0, os.SEEK_SET)
-                if os.name == "nt":
-                    import msvcrt
-
-                    msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
-                else:
-                    import fcntl
-
-                    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                self._revalidate_mutation_lock()
-                return _MutationHandle(path, fd)
-            except PathLockError:
-                try:
-                    os.close(fd)
-                except OSError:
-                    pass
-                raise
-            except OSError:
-                if time.monotonic() - started > self._mutation_timeout:
-                    try:
-                        os.close(fd)
-                    except OSError:
-                        pass
-                    raise PathLockError(
-                        "PATH_LOCK_TIMEOUT", "could not acquire path-lock mutation lock"
-                    )
-                time.sleep(0.01)
+            raise _storage_error("mutation lock acquisition", error) from error
+        try:
+            self._revalidate_mutation_lock()
+        except BaseException:
+            lock.release()
+            raise
+        return lock
 
     @staticmethod
-    def _release_mutation_lock(lock: _MutationHandle) -> None:
+    def _release_mutation_lock(lock: AdvisoryFileLock) -> None:
         lock.release()
 
     @contextlib.contextmanager
@@ -677,7 +622,7 @@ class PathLockStore:
             raise PathLockError(
                 "PATH_LOCK_NOT_FOUND", f"lock record does not exist: {path.stem}"
             ) from error
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        except (OSError, UnicodeError, json.JSONDecodeError) as error:
             raise PathLockError(
                 "PATH_LOCK_INVALID_RECORD",
                 f"could not read lock record {path.name}: {error}",

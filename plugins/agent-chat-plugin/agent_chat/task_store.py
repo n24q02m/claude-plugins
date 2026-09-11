@@ -8,14 +8,19 @@ from __future__ import annotations
 
 import json
 import os
+import stat
 import tempfile
-import time
 from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Iterator, Mapping
 
 import chat
+from ._advisory_lock import (
+    AdvisoryFileLock,
+    AdvisoryLockTimeout,
+    acquire_advisory_file_lock,
+)
 
 from .task_model import (
     TASK_FIELDS,
@@ -28,6 +33,19 @@ from .task_model import (
 
 
 TASK_DIRNAME = "tasks"
+
+
+def _is_reparse_point(path: Path) -> bool:
+    if os.name != "nt":
+        return False
+    try:
+        attributes = getattr(os.lstat(str(path)), "st_file_attributes", 0)
+    except FileNotFoundError:
+        return False
+    return bool(
+        attributes
+        & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x0400)
+    )
 
 
 class TaskStore:
@@ -83,39 +101,61 @@ class TaskStore:
         self.tasks_dir.mkdir(parents=True, exist_ok=True)
         return self.tasks_dir
 
-    def _acquire_mutation_lock(
-        self, timeout: float = 10.0, stale: float = 30.0
-    ) -> Path:
-        lock = self.channel / "_tasks.lock"
-        self._assert_inside_channel(lock)
-        started = time.monotonic()
-        while True:
-            try:
-                os.mkdir(lock)
-                return lock
-            except FileExistsError:
-                try:
-                    if time.time() - lock.stat().st_mtime > stale:
-                        try:
-                            os.rmdir(lock)
-                        except OSError:
-                            pass
-                        continue
-                except FileNotFoundError:
-                    continue
-                if time.monotonic() - started > timeout:
-                    raise TaskValidationError(
-                        "TASK_LOCK_TIMEOUT",
-                        "could not acquire task mutation lock",
-                    )
-                time.sleep(0.01)
+    @property
+    def mutation_lock_path(self) -> Path:
+        return self.channel / "_tasks.lock"
+
+    def _revalidate_mutation_lock(self) -> Path:
+        path = self.mutation_lock_path
+        self._assert_inside_channel(path)
+        try:
+            if (
+                path.is_symlink()
+                or os.path.islink(str(path))
+                or _is_reparse_point(path)
+            ):
+                raise TaskValidationError(
+                    "TASK_PATH_OUTSIDE_WORKSPACE",
+                    "mutation lock may not be a symlink or junction",
+                )
+            if path.exists() and not path.is_file():
+                raise TaskValidationError(
+                    "TASK_STORAGE_INVALID",
+                    f"mutation lock is not a regular file: {path}",
+                )
+        except TaskValidationError:
+            raise
+        except (OSError, RuntimeError, ValueError, UnicodeError) as error:
+            raise TaskValidationError(
+                "TASK_STORAGE_INVALID",
+                f"could not validate task mutation lock: {error}",
+            ) from error
+        return path
+
+    def _acquire_mutation_lock(self, timeout: float = 10.0) -> AdvisoryFileLock:
+        path = self._revalidate_mutation_lock()
+        try:
+            lock = acquire_advisory_file_lock(path, timeout=timeout)
+        except AdvisoryLockTimeout as error:
+            raise TaskValidationError(
+                "TASK_LOCK_TIMEOUT",
+                "could not acquire task mutation lock",
+            ) from error
+        except OSError as error:
+            raise TaskValidationError(
+                "TASK_IO_ERROR",
+                f"could not acquire task mutation lock: {error}",
+            ) from error
+        try:
+            self._revalidate_mutation_lock()
+        except BaseException:
+            lock.release()
+            raise
+        return lock
 
     @staticmethod
-    def _release_mutation_lock(lock: Path) -> None:
-        try:
-            os.rmdir(lock)
-        except OSError:
-            pass
+    def _release_mutation_lock(lock: AdvisoryFileLock) -> None:
+        lock.release()
 
     @contextmanager
     def _mutation_lock(self) -> Iterator[None]:
@@ -151,7 +191,7 @@ class TaskStore:
             raise TaskValidationError(
                 "TASK_NOT_FOUND", f"task record does not exist: {path.stem}"
             )
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        except (OSError, UnicodeError, json.JSONDecodeError) as error:
             raise TaskValidationError(
                 "TASK_INVALID_RECORD",
                 f"could not read task record {path.name}: {error}",

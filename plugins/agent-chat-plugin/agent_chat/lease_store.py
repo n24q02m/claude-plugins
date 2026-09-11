@@ -315,7 +315,7 @@ class LeaseStore:
                 raw = json.load(stream)
         except FileNotFoundError:
             raise LeaseError("LEASE_NOT_FOUND", f"lease record does not exist: {path.name}")
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        except (OSError, UnicodeError, json.JSONDecodeError) as error:
             raise LeaseError(
                 "LEASE_INVALID_RECORD",
                 f"could not read lease record {path.name}: {error}",
@@ -603,7 +603,7 @@ class LeaseStore:
             return None
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        except (OSError, UnicodeError, json.JSONDecodeError) as error:
             raise LeaseError(
                 "LEASE_TRANSACTION_INVALID",
                 f"could not read transaction journal: {error}",
@@ -662,7 +662,7 @@ class LeaseStore:
             return None
         try:
             raw = json.loads(decoded.decode("utf-8"))
-        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        except (UnicodeError, json.JSONDecodeError) as error:
             raise LeaseError(
                 "LEASE_TRANSACTION_INVALID",
                 f"claim {field} payload is not valid JSON: {error}",
@@ -691,7 +691,7 @@ class LeaseStore:
             return None
         try:
             return LeaseRecord.from_dict(json.loads(payload.decode("utf-8")))
-        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        except (UnicodeError, json.JSONDecodeError) as error:
             raise LeaseError(
                 "LEASE_TRANSACTION_INVALID",
                 f"claim {field} payload is not valid JSON: {error}",
@@ -841,7 +841,7 @@ class LeaseStore:
         for path in chat.message_files(self.channel):
             try:
                 body = path.read_text(encoding="utf-8")
-            except (OSError, UnicodeDecodeError):
+            except (OSError, UnicodeError):
                 continue
             if marker in body:
                 return True
@@ -906,7 +906,7 @@ class LeaseStore:
                     )
                 try:
                     decoded_json = json.loads(task_before.decode("utf-8"))
-                except (UnicodeDecodeError, json.JSONDecodeError) as decode_error:
+                except (UnicodeError, json.JSONDecodeError) as decode_error:
                     raise LeaseError(
                         "LEASE_TRANSACTION_INVALID",
                         f"transaction journal task_before is not valid JSON: {decode_error}",
@@ -937,7 +937,7 @@ class LeaseStore:
                 else:
                     try:
                         decoded_after_json = json.loads(task_after.decode("utf-8"))
-                    except (UnicodeDecodeError, json.JSONDecodeError) as decode_error:
+                    except (UnicodeError, json.JSONDecodeError) as decode_error:
                         raise LeaseError(
                             "LEASE_TRANSACTION_INVALID",
                             f"transaction journal task_after is not valid JSON: {decode_error}",

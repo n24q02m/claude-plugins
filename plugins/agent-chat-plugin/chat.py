@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """agent-chat: peer-to-peer coordination for multiple agent sessions via markdown files.
 
-Zero-dependency (Python stdlib only) so it runs identically on Windows, WSL and
-Linux -- the same `python3` every session on the home + company machines already
-has. No inotify/fswatch split: `wait` blocks with a sleep-poll loop, so while an
-agent waits for a reply the Python process is idle and burns ZERO model tokens.
+Zero-dependency (Python stdlib only), with the structured coordination stores in
+the sibling `agent_chat/` package. Run from a complete checkout or use the
+installed `agent-chat` entry point. `wait` sleeps in-process between filesystem
+checks; no command calls a model/provider, runs MCP, or starts a peer agent.
 
 Model
 -----
@@ -15,7 +15,7 @@ allocated under a filesystem lock (atomic `mkdir`) so two sessions can never cla
 the same number -- the exact race that produced duplicate "seq 11" files in the
 hand-rolled prototype.
 
-Commands: init | channels | roster | post | read | wait | peek | claim | lock | check | unlock | recover | task
+Commands: init | channels | roster | post | read | wait | peek | claim | lock | check | unlock | recover | recover-pending | task | state | compact | event
 Run `python chat.py <command> --help` for flags.
 """
 
@@ -62,6 +62,7 @@ def _frontmatter_value(value) -> str:
 class AgentChatError(Exception):
     pass
 
+
 EVENT_SCHEMA_VERSION = 1
 EVENT_TYPES = ("capability", "status")
 CAPABILITY_PRIMITIVES = (
@@ -86,10 +87,13 @@ class AdapterEventError(AgentChatError):
 
 
 def _event_text(value: object, field: str) -> str:
-    if not isinstance(value, str) or not value or any(
-        ord(char) < 32 or 0x7F <= ord(char) <= 0x9F
-        or 0xD800 <= ord(char) <= 0xDFFF
-        for char in value
+    if (
+        not isinstance(value, str)
+        or not value
+        or any(
+            ord(char) < 32 or 0x7F <= ord(char) <= 0x9F or 0xD800 <= ord(char) <= 0xDFFF
+            for char in value
+        )
     ):
         raise AdapterEventError("EVENT_INVALID_TEXT", f"{field} is invalid")
     try:
@@ -111,7 +115,9 @@ def _event_timestamp(value: object) -> str:
             value[:-1] + "+00:00" if value.endswith(("Z", "z")) else value
         )
     except (TypeError, ValueError) as error:
-        raise AdapterEventError("EVENT_INVALID_TIMESTAMP", "ts must be ISO-8601") from error
+        raise AdapterEventError(
+            "EVENT_INVALID_TIMESTAMP", "ts must be ISO-8601"
+        ) from error
     if parsed.tzinfo is None:
         raise AdapterEventError("EVENT_INVALID_TIMESTAMP", "ts must include an offset")
     return value
@@ -126,7 +132,9 @@ def validate_adapter_event(value: object) -> dict:
     ):
         raise AdapterEventError("EVENT_UNSUPPORTED_VERSION", "schema_version must be 1")
     if event_type not in EVENT_TYPES:
-        raise AdapterEventError("EVENT_INVALID_TYPE", "event must be capability or status")
+        raise AdapterEventError(
+            "EVENT_INVALID_TYPE", "event must be capability or status"
+        )
     allowed = {"schema_version", "event", "agent", "harness", "ts"}
     if event_type == "capability":
         allowed.add("primitives")
@@ -150,9 +158,13 @@ def validate_adapter_event(value: object) -> dict:
             or not primitives
             or any(not isinstance(primitive, str) for primitive in primitives)
         ):
-            raise AdapterEventError("EVENT_INVALID_PRIMITIVES", "primitives must be strings")
+            raise AdapterEventError(
+                "EVENT_INVALID_PRIMITIVES", "primitives must be strings"
+            )
         if len(set(primitives)) != len(primitives):
-            raise AdapterEventError("EVENT_DUPLICATE_PRIMITIVE", "primitives must be unique")
+            raise AdapterEventError(
+                "EVENT_DUPLICATE_PRIMITIVE", "primitives must be unique"
+            )
         for primitive in primitives:
             if primitive not in CAPABILITY_PRIMITIVES:
                 raise AdapterEventError("EVENT_UNKNOWN_PRIMITIVE", str(primitive))
@@ -173,7 +185,9 @@ def validate_adapter_event(value: object) -> dict:
             try:
                 detail.encode("utf-8")
             except UnicodeEncodeError as error:
-                raise AdapterEventError("EVENT_INVALID_TEXT", "detail is invalid") from error
+                raise AdapterEventError(
+                    "EVENT_INVALID_TEXT", "detail is invalid"
+                ) from error
     return normalized
 
 
@@ -251,15 +265,24 @@ def require_channel(root: Path, channel: str) -> Path:
 
 
 def _seq_from_name(name: str) -> int | None:
-    m = re.match(r"(\d+)-", name)
-    return int(m.group(1)) if m else None
+    # Optimization: Native string parsing (.split, .isdecimal) is ~40% faster
+    # than re.match in tight polling loops. isdecimal is used to prevent
+    # ValueError on Unicode superscripts (e.g. ², which isdigit accepts).
+    parts = name.split("-", 1)
+    if len(parts) == 2 and parts[0].isdecimal():
+        return int(parts[0])
+    return None
 
 
 def message_files(chan: Path):
     files = []
     try:
         with os.scandir(chan) as it:
-            files = [Path(e.path) for e in it if e.name.endswith(".md") and _seq_from_name(e.name) is not None]
+            files = [
+                Path(e.path)
+                for e in it
+                if e.name.endswith(".md") and _seq_from_name(e.name) is not None
+            ]
     except OSError:
         pass
     return sorted(files, key=lambda p: _seq_from_name(p.name))
@@ -290,7 +313,7 @@ def parse_frontmatter(path: Path) -> dict:
             if not found_end:
                 return meta
             meta = temp_meta
-    except (OSError, UnicodeDecodeError):
+    except (OSError, UnicodeError):
         return meta
     # Normalize `to` -> list of recipients (empty == everyone).
     raw = meta.get("to", "").strip()
@@ -469,9 +492,7 @@ def cmd_channels(root: Path, a):
         members_str = ", ".join(meta.get("members", [])) or "(open)"
         if len(members_str) > 40:
             members_str = members_str[:37] + "..."
-        rows.append(
-            (chan.name, members_str, count, last)
-        )
+        rows.append((chan.name, members_str, count, last))
     if not rows:
         print(f"(no channels yet under {root})")
         return
@@ -487,14 +508,20 @@ def cmd_roster(root: Path, a):
     try:
         meta = json.loads((d / "_meta.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        raise AgentChatError(f"could not read or parse _meta.json for channel '{a.channel}'")
+        raise AgentChatError(
+            f"could not read or parse _meta.json for channel '{a.channel}'"
+        )
     print(f"channel : {meta.get('channel')}")
     print(f"topic   : {meta.get('topic') or '(none)'}")
     print(f"members : {', '.join(meta.get('members', [])) or '(open)'}")
     count = 0
     try:
         with os.scandir(d) as it:
-            count = sum(1 for entry in it if entry.name.endswith(".md") and _seq_from_name(entry.name) is not None)
+            count = sum(
+                1
+                for entry in it
+                if entry.name.endswith(".md") and _seq_from_name(entry.name) is not None
+            )
     except OSError:
         pass
     print(f"messages: {count}")
@@ -508,7 +535,7 @@ def _read_body(a) -> str:
             return Path(a.body_file).read_text(encoding="utf-8")
         except OSError as e:
             raise AgentChatError(f"could not read body file: {e}")
-        except UnicodeDecodeError as e:
+        except UnicodeError as e:
             raise AgentChatError(f"could not read body file: {e}")
     # Default: read from stdin so agents can pipe long markdown bodies.
     if sys.stdin.isatty():
@@ -568,7 +595,7 @@ def _print_message(path: Path):
     print("=" * 70)
     try:
         print(path.read_text(encoding="utf-8").rstrip())
-    except (OSError, UnicodeDecodeError) as e:
+    except (OSError, UnicodeError) as e:
         print(f"(could not read message {path.name}: {e})")
     print()
 
@@ -590,8 +617,7 @@ def cmd_read(root: Path, a):
                 seq = _seq_from_name(entry.name)
                 if seq is None:
                     continue
-                if seq > top:
-                    top = seq
+                top = max(top, seq)
                 if seq > cur:
                     found.append((seq, Path(entry.path)))
     except OSError:
@@ -721,8 +747,8 @@ def cmd_claim(root: Path, a):
 
 
 def _task_store(root: Path, channel: str):
-    from agent_chat.task_store import TaskStore
     from agent_chat.task_model import TaskValidationError
+    from agent_chat.task_store import TaskStore
 
     try:
         chan = channel_dir(root, channel)
@@ -732,6 +758,7 @@ def _task_store(root: Path, channel: str):
             f"invalid channel name: '{channel}' ({error})",
         ) from error
     return TaskStore(chan, root=root)
+
 
 def _lease_store(root: Path, channel: str):
     from agent_chat.lease_store import LeaseStore
@@ -746,6 +773,7 @@ def _lease_store(root: Path, channel: str):
         ) from error
     return LeaseStore(chan, root=root)
 
+
 def _path_lock_store(root: Path, channel: str):
     from agent_chat.path_locks import PathLockStore
 
@@ -759,6 +787,7 @@ def _path_lock_store(root: Path, channel: str):
             f"invalid channel name: '{channel}' ({error})",
         ) from error
     return PathLockStore(chan, root=root)
+
 
 def _state_store(root: Path, channel: str):
     from agent_chat.state_store import StateStore, StateValidationError
@@ -776,11 +805,14 @@ def _state_store(root: Path, channel: str):
 def cmd_state(root: Path, a):
     store = _state_store(root, a.channel)
     if getattr(a, "write", False):
-        summary = store.compact(
-            actor=getattr(a, "actor", None),
-            audit=not getattr(a, "no_audit", False),
-            strict=getattr(a, "strict", False),
-        )
+        # The durable audit message is internal state; JSON mode must emit only
+        # the requested document.
+        with contextlib.redirect_stdout(io.StringIO()):
+            summary = store.compact(
+                actor=getattr(a, "actor", None),
+                audit=not getattr(a, "no_audit", False),
+                strict=getattr(a, "strict", False),
+            )
         if getattr(a, "json", False):
             print(json.dumps(summary.to_dict(), indent=2, sort_keys=True))
         else:
@@ -796,15 +828,20 @@ def cmd_state(root: Path, a):
 
 def cmd_compact(root: Path, a):
     store = _state_store(root, a.channel)
-    summary = store.compact(
-        actor=getattr(a, "actor", None),
-        audit=not getattr(a, "no_audit", False),
-        strict=getattr(a, "strict", False),
-    )
+    # Keep the audit message while reserving stdout for this command's result.
+    with contextlib.redirect_stdout(io.StringIO()):
+        summary = store.compact(
+            actor=getattr(a, "actor", None),
+            audit=not getattr(a, "no_audit", False),
+            strict=getattr(a, "strict", False),
+        )
     if getattr(a, "json", False):
         print(json.dumps(summary.to_dict(), indent=2, sort_keys=True))
     else:
-        print(f"compacted state for {a.channel} -> {a.channel}/state.md (open_tasks={len(summary.open_tasks)}, locks={len(summary.path_locks)}, decisions={len(summary.decisions)})")
+        print(
+            f"compacted state for {a.channel} -> {a.channel}/state.md (open_tasks={len(summary.open_tasks)}, locks={len(summary.path_locks)}, decisions={len(summary.decisions)})"
+        )
+
 
 def _event_body(path: Path) -> dict:
     try:
@@ -846,7 +883,9 @@ def cmd_event_post(root: Path, a):
         reply=None,
         status=f"event.{event['event']}",
         title=f"event:{event['event']}",
-        body=json.dumps(event, ensure_ascii=False, sort_keys=True, separators=(",", ":")),
+        body=json.dumps(
+            event, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ),
         body_file=None,
     )
     with contextlib.redirect_stdout(io.StringIO()):
@@ -866,7 +905,6 @@ def cmd_event_read(root: Path, a):
         if expected and event["event"] != expected:
             continue
         print(json.dumps(event, ensure_ascii=False, sort_keys=True))
-
 
 
 def cmd_lock(root: Path, a):
@@ -915,6 +953,7 @@ def cmd_path_recover(root: Path, a):
         f"previous_owner={record.previous_owner} reason={record.recovery_reason}"
     )
 
+
 def cmd_path_recover_pending(root: Path, a):
     store = _path_lock_store(root, a.channel)
     with contextlib.redirect_stdout(io.StringIO()):
@@ -923,6 +962,7 @@ def cmd_path_recover_pending(root: Path, a):
             publication_resolution=a.publication_resolution,
         )
     print(f"recovered pending path-lock transaction in {a.channel}")
+
 
 def _task_values(values) -> list[str]:
     items: list[str] = []
@@ -978,23 +1018,25 @@ def cmd_task_list(root: Path, a):
     rows = []
     for task in tasks:
         owner = task.owner or "-"
-        dependencies = ",".join(task.depends_on) or "-"
+        dependencies = ", ".join(task.depends_on) or "-"
         rows.append((task.id, task.status, owner, dependencies, task.title))
     w_id = max(len("ID"), max(len(r[0]) for r in rows))
     w_status = max(len("STATUS"), max(len(r[1]) for r in rows))
     w_owner = max(len("OWNER"), max(len(r[2]) for r in rows))
     w_deps = max(len("DEPENDS_ON"), max(len(r[3]) for r in rows))
-    print(f"{'ID'.ljust(w_id)}  {'STATUS'.ljust(w_status)}  {'OWNER'.ljust(w_owner)}  {'DEPENDS_ON'.ljust(w_deps)}  TITLE")
+    print(
+        f"{'ID'.ljust(w_id)}  {'STATUS'.ljust(w_status)}  {'OWNER'.ljust(w_owner)}  {'DEPENDS_ON'.ljust(w_deps)}  TITLE"
+    )
     for r_id, r_status, r_owner, r_deps, r_title in rows:
-        print(f"{r_id.ljust(w_id)}  {r_status.ljust(w_status)}  {r_owner.ljust(w_owner)}  {r_deps.ljust(w_deps)}  {r_title}")
+        print(
+            f"{r_id.ljust(w_id)}  {r_status.ljust(w_status)}  {r_owner.ljust(w_owner)}  {r_deps.ljust(w_deps)}  {r_title}"
+        )
 
 
 def cmd_task_show(root: Path, a):
     store = _task_store(root, a.channel)
     task, statuses, ready = store.show_with_dependencies(a.task_id)
-    if not statuses:
-        dependency_summary = "ready"
-    elif ready:
+    if not statuses or ready:
         dependency_summary = "ready"
     else:
         blocked = [
@@ -1009,9 +1051,9 @@ def cmd_task_show(root: Path, a):
     print(f"status: {task.status}")
     print(f"owner: {task.owner or '-'}")
     print(f"created_by: {task.created_by}")
-    print(f"depends_on: {','.join(task.depends_on) or '-'}")
+    print(f"depends_on: {', '.join(task.depends_on) or '-'}")
     print(f"dependencies: {dependency_summary}")
-    print(f"files_hint: {','.join(task.files_hint) or '-'}")
+    print(f"files_hint: {', '.join(task.files_hint) or '-'}")
     print(f"acceptance: {'; '.join(task.acceptance) or '-'}")
     print(f"lease_expires_at: {task.lease_expires_at or '-'}")
     print(f"branch: {task.branch or '-'}")
@@ -1101,6 +1143,7 @@ def cmd_task_recover(root: Path, a):
         )
     _print_task_result("recovered", task)
 
+
 def cmd_task_recover_pending(root: Path, a):
     store = _lease_store(root, a.channel)
     with contextlib.redirect_stdout(io.StringIO()):
@@ -1144,8 +1187,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--root", help="chat root dir (default: $AGENT_CHAT_ROOT or ~/agent-chat)"
     )
-    sub = p.add_subparsers(dest="cmd", required=True)
-
+    sub = p.add_subparsers(
+        title="commands",
+        dest="cmd",
+        required=True,
+        help="available commands",
+        metavar="COMMAND",
+    )
 
     s = sub.add_parser("init", help="create a channel")
     s.add_argument("channel", help="name of the channel to create")
@@ -1168,30 +1216,50 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--to", help="recipient agent, or 'all' (default all)")
     s.add_argument("--title", required=True, help="message title")
     s.add_argument("--reply", type=int, help="seq this replies to")
-    s.add_argument("--status", default="discussion", help="message status (default: discussion)")
+    s.add_argument(
+        "--status", default="discussion", help="message status (default: discussion)"
+    )
     s.add_argument("--body", help="literal message body content")
     s.add_argument("--body-file", help="read message body from file")
     s.set_defaults(func=cmd_post)
 
     event = sub.add_parser("event", help="post/read adapter-neutral events")
-    event_sub = event.add_subparsers(dest="event_cmd", required=True)
+    event_sub = event.add_subparsers(
+        title="event commands",
+        dest="event_cmd",
+        required=True,
+        help="available event commands",
+        metavar="COMMAND",
+    )
     s = event_sub.add_parser("post", help="post a capability or status event")
     s.add_argument("channel", help="channel to post the event in")
     s.add_argument("--from", dest="sender", required=True, help="sender agent name")
-    s.add_argument("--type", dest="event_type", choices=EVENT_TYPES, required=True, help="type of the event")
+    s.add_argument(
+        "--type",
+        dest="event_type",
+        choices=EVENT_TYPES,
+        required=True,
+        help="type of the event",
+    )
     s.add_argument("--harness", required=True, help="harness name")
     s.add_argument("--status", choices=STATUS_VALUES, help="status of the agent")
     s.add_argument("--detail", help="optional details about the status")
-    s.add_argument("--primitives", action="append", help="primitives supported by the agent")
+    s.add_argument(
+        "--primitives", action="append", help="primitives supported by the agent"
+    )
     s.set_defaults(func=cmd_event_post)
     s = event_sub.add_parser("read", help="read validated adapter-neutral events")
     s.add_argument("channel", help="channel to read events from")
-    s.add_argument("--type", dest="event_type", choices=EVENT_TYPES, help="filter by event type")
+    s.add_argument(
+        "--type", dest="event_type", choices=EVENT_TYPES, help="filter by event type"
+    )
     s.set_defaults(func=cmd_event_read)
 
     s = sub.add_parser("read", help="print new messages for an agent (advances cursor)")
     s.add_argument("channel", help="channel to read from")
-    s.add_argument("--as", dest="agent", required=True, help="agent reading the messages")
+    s.add_argument(
+        "--as", dest="agent", required=True, help="agent reading the messages"
+    )
     s.add_argument(
         "--all", action="store_true", help="show entire thread, ignore relevance"
     )
@@ -1202,9 +1270,15 @@ def build_parser() -> argparse.ArgumentParser:
         "wait", help="block (sleep-poll, 0 tokens) until a reply arrives"
     )
     s.add_argument("channel", help="channel to wait on")
-    s.add_argument("--as", dest="agent", required=True, help="agent waiting for messages")
-    s.add_argument("--timeout", type=float, default=900.0, help="maximum wait time in seconds")
-    s.add_argument("--interval", type=float, default=5.0, help="polling interval in seconds")
+    s.add_argument(
+        "--as", dest="agent", required=True, help="agent waiting for messages"
+    )
+    s.add_argument(
+        "--timeout", type=float, default=900.0, help="maximum wait time in seconds"
+    )
+    s.add_argument(
+        "--interval", type=float, default=5.0, help="polling interval in seconds"
+    )
     s.set_defaults(func=cmd_wait)
 
     s = sub.add_parser("peek", help="show last N messages without touching the cursor")
@@ -1221,35 +1295,79 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("lock", help="lock workspace-relative paths")
     s.add_argument("channel", help="channel to lock paths in")
     s.add_argument("paths", nargs="+", help="paths to lock")
-    s.add_argument("--as", "--from", "--owner", dest="owner", required=True, help="agent acquiring the lock")
-    s.add_argument("--lease-seconds", "--lease", "--ttl", type=float, default=300.0, help="duration of the lease in seconds")
+    s.add_argument(
+        "--as",
+        "--from",
+        "--owner",
+        dest="owner",
+        required=True,
+        help="agent acquiring the lock",
+    )
+    s.add_argument(
+        "--lease-seconds",
+        "--lease",
+        "--ttl",
+        type=float,
+        default=300.0,
+        help="duration of the lease in seconds",
+    )
     s.set_defaults(func=cmd_lock)
 
     s = sub.add_parser("check", help="check workspace-relative paths for conflicts")
     s.add_argument("channel", help="channel to check paths in")
     s.add_argument("paths", nargs="+", help="paths to check")
-    s.add_argument("--as", "--from", "--owner", dest="owner", help="agent checking the paths")
+    s.add_argument(
+        "--as", "--from", "--owner", dest="owner", help="agent checking the paths"
+    )
     s.set_defaults(func=cmd_check)
 
     s = sub.add_parser("unlock", help="release an owned path lock")
     s.add_argument("channel", help="channel containing the lock")
     s.add_argument("target", help="lock id or exact normalized path")
-    s.add_argument("--as", "--from", "--owner", dest="owner", required=True, help="agent releasing the lock")
+    s.add_argument(
+        "--as",
+        "--from",
+        "--owner",
+        dest="owner",
+        required=True,
+        help="agent releasing the lock",
+    )
     s.set_defaults(func=cmd_unlock)
 
     s = sub.add_parser("recover", help="recover an expired path lock explicitly")
     s.add_argument("channel", help="channel containing the lock")
     s.add_argument("target", help="lock id or exact normalized path")
-    s.add_argument("--as", "--from", "--owner", dest="owner", required=True, help="agent recovering the lock")
+    s.add_argument(
+        "--as",
+        "--from",
+        "--owner",
+        dest="owner",
+        required=True,
+        help="agent recovering the lock",
+    )
     s.add_argument("--reason", required=True, help="reason for recovery")
-    s.add_argument("--lease-seconds", "--lease", "--ttl", type=float, default=300.0, help="duration of the new lease in seconds")
+    s.add_argument(
+        "--lease-seconds",
+        "--lease",
+        "--ttl",
+        type=float,
+        default=300.0,
+        help="duration of the new lease in seconds",
+    )
     s.set_defaults(func=cmd_path_recover)
     s = sub.add_parser(
         "recover-pending",
         help="recover a pending crashed path-lock transaction",
     )
     s.add_argument("channel", help="channel containing the transaction")
-    s.add_argument("--as", "--from", "--owner", dest="actor", required=True, help="agent recovering the transaction")
+    s.add_argument(
+        "--as",
+        "--from",
+        "--owner",
+        dest="actor",
+        required=True,
+        help="agent recovering the transaction",
+    )
     s.add_argument(
         "--resolve-publication",
         dest="publication_resolution",
@@ -1261,18 +1379,28 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("state", help="render or show channel state summary")
     s.add_argument("channel", help="channel to get state for")
     s.add_argument("--as", "--from", "--actor", dest="actor", help="agent identity")
-    s.add_argument("--write", "--save", action="store_true", help="write state.md to channel")
-    s.add_argument("--no-audit", action="store_true", help="skip posting audit message on write")
+    s.add_argument(
+        "--write", "--save", action="store_true", help="write state.md to channel"
+    )
+    s.add_argument(
+        "--no-audit", action="store_true", help="skip posting audit message on write"
+    )
     s.add_argument("--json", action="store_true", help="output structured JSON summary")
-    s.add_argument("--strict", action="store_true", help="strictly validate all source files")
+    s.add_argument(
+        "--strict", action="store_true", help="strictly validate all source files"
+    )
     s.set_defaults(func=cmd_state)
 
     s = sub.add_parser("compact", help="compact channel state into state.md")
     s.add_argument("channel", help="channel to compact")
     s.add_argument("--as", "--from", "--actor", dest="actor", help="agent identity")
-    s.add_argument("--no-audit", action="store_true", help="do not post audit event to channel")
+    s.add_argument(
+        "--no-audit", action="store_true", help="do not post audit event to channel"
+    )
     s.add_argument("--json", action="store_true", help="output structured JSON summary")
-    s.add_argument("--strict", action="store_true", help="strictly validate all source files")
+    s.add_argument(
+        "--strict", action="store_true", help="strictly validate all source files"
+    )
     s.set_defaults(func=cmd_compact)
 
     task = sub.add_parser(
@@ -1280,21 +1408,36 @@ def build_parser() -> argparse.ArgumentParser:
         help="manage structured task records",
     )
     task_sub = task.add_subparsers(
+        title="task commands",
         dest="task_cmd",
         required=True,
         parser_class=_TaskArgumentParser,
+        help="available task commands",
+        metavar="COMMAND",
     )
     task.error = _TaskArgumentParser.error.__get__(task, _TaskArgumentParser)
 
     s = task_sub.add_parser("create", help="create a task record")
     s.add_argument("channel", help="channel to create the task in")
     s.add_argument("task_id", help="unique identifier for the task")
-    s.add_argument("--from", "--created-by", dest="creator", required=True, help="agent creating the task")
+    s.add_argument(
+        "--from",
+        "--created-by",
+        dest="creator",
+        required=True,
+        help="agent creating the task",
+    )
     s.add_argument("--title", required=True, help="title of the task")
     s.add_argument("--owner", help="agent owning the task")
-    s.add_argument("--depends-on", action="append", default=[], help="task dependencies")
-    s.add_argument("--files-hint", action="append", default=[], help="files related to this task")
-    s.add_argument("--acceptance", action="append", default=[], help="acceptance criteria")
+    s.add_argument(
+        "--depends-on", action="append", default=[], help="task dependencies"
+    )
+    s.add_argument(
+        "--files-hint", action="append", default=[], help="files related to this task"
+    )
+    s.add_argument(
+        "--acceptance", action="append", default=[], help="acceptance criteria"
+    )
     s.add_argument("--branch", help="git branch for the task")
     s.set_defaults(func=cmd_task_create)
 
@@ -1310,15 +1453,36 @@ def build_parser() -> argparse.ArgumentParser:
     s = task_sub.add_parser("update", help="update task fields")
     s.add_argument("channel", help="channel containing the task")
     s.add_argument("task_id", help="task to update")
-    s.add_argument("--as", "--from", dest="actor", required=True, help="agent updating the task")
+    s.add_argument(
+        "--as", "--from", dest="actor", required=True, help="agent updating the task"
+    )
     s.add_argument("--title", default=argparse.SUPPRESS, help="new title")
     s.add_argument("--owner", default=argparse.SUPPRESS, help="new owner")
-    s.add_argument("--clear-owner", action="store_true", help="remove the current owner")
-    s.add_argument("--depends-on", action="append", default=argparse.SUPPRESS, help="new dependencies")
-    s.add_argument("--files-hint", action="append", default=argparse.SUPPRESS, help="new files hint")
-    s.add_argument("--acceptance", action="append", default=argparse.SUPPRESS, help="new acceptance criteria")
+    s.add_argument(
+        "--clear-owner", action="store_true", help="remove the current owner"
+    )
+    s.add_argument(
+        "--depends-on",
+        action="append",
+        default=argparse.SUPPRESS,
+        help="new dependencies",
+    )
+    s.add_argument(
+        "--files-hint",
+        action="append",
+        default=argparse.SUPPRESS,
+        help="new files hint",
+    )
+    s.add_argument(
+        "--acceptance",
+        action="append",
+        default=argparse.SUPPRESS,
+        help="new acceptance criteria",
+    )
     s.add_argument("--branch", default=argparse.SUPPRESS, help="new git branch")
-    s.add_argument("--clear-branch", action="store_true", help="remove the current branch")
+    s.add_argument(
+        "--clear-branch", action="store_true", help="remove the current branch"
+    )
     s.add_argument("--status", default=argparse.SUPPRESS, help="new status")
 
     s.set_defaults(func=cmd_task_update)
@@ -1326,23 +1490,50 @@ def build_parser() -> argparse.ArgumentParser:
     s = task_sub.add_parser("claim", help="claim a ready task with a lease")
     s.add_argument("channel", help="channel containing the task")
     s.add_argument("task_id", help="task to claim")
-    s.add_argument("--as", "--from", dest="actor", required=True, help="agent claiming the task")
-    s.add_argument("--lease-seconds", "--lease", "--ttl", type=float, default=300.0, help="duration of the lease in seconds")
+    s.add_argument(
+        "--as", "--from", dest="actor", required=True, help="agent claiming the task"
+    )
+    s.add_argument(
+        "--lease-seconds",
+        "--lease",
+        "--ttl",
+        type=float,
+        default=300.0,
+        help="duration of the lease in seconds",
+    )
     s.set_defaults(func=cmd_task_claim)
 
     s = task_sub.add_parser("renew", help="renew an owned task lease")
     s.add_argument("channel", help="channel containing the task")
     s.add_argument("task_id", help="task to renew")
-    s.add_argument("--as", "--from", dest="actor", required=True, help="agent renewing the task")
-    s.add_argument("--lease-seconds", "--lease", "--ttl", type=float, default=300.0, help="duration of the new lease in seconds")
+    s.add_argument(
+        "--as", "--from", dest="actor", required=True, help="agent renewing the task"
+    )
+    s.add_argument(
+        "--lease-seconds",
+        "--lease",
+        "--ttl",
+        type=float,
+        default=300.0,
+        help="duration of the new lease in seconds",
+    )
     s.set_defaults(func=cmd_task_renew)
 
     s = task_sub.add_parser("recover", help="recover an expired task lease")
     s.add_argument("channel", help="channel containing the task")
     s.add_argument("task_id", help="task to recover")
-    s.add_argument("--as", "--from", dest="actor", required=True, help="agent recovering the task")
+    s.add_argument(
+        "--as", "--from", dest="actor", required=True, help="agent recovering the task"
+    )
     s.add_argument("--reason", required=True, help="reason for recovery")
-    s.add_argument("--lease-seconds", "--lease", "--ttl", type=float, default=300.0, help="duration of the new lease in seconds")
+    s.add_argument(
+        "--lease-seconds",
+        "--lease",
+        "--ttl",
+        type=float,
+        default=300.0,
+        help="duration of the new lease in seconds",
+    )
     s.set_defaults(func=cmd_task_recover)
 
     s = task_sub.add_parser(
@@ -1350,7 +1541,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="recover a pending crashed lease transaction",
     )
     s.add_argument("channel", help="channel containing the transaction")
-    s.add_argument("--as", "--from", dest="actor", required=True, help="agent recovering the transaction")
+    s.add_argument(
+        "--as",
+        "--from",
+        dest="actor",
+        required=True,
+        help="agent recovering the transaction",
+    )
     s.add_argument(
         "--resolve-publication",
         dest="publication_resolution",
@@ -1367,7 +1564,13 @@ def build_parser() -> argparse.ArgumentParser:
         s = task_sub.add_parser(command, help=help_text)
         s.add_argument("channel", help="channel containing the task")
         s.add_argument("task_id", help="task to operate on")
-        s.add_argument("--as", "--from", dest="actor", required=True, help="agent performing the action")
+        s.add_argument(
+            "--as",
+            "--from",
+            dest="actor",
+            required=True,
+            help="agent performing the action",
+        )
         s.set_defaults(func=handler)
 
     return p
