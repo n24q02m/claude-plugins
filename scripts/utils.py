@@ -1,4 +1,3 @@
-import functools
 import os
 import re
 
@@ -8,11 +7,13 @@ def sanitize_log(msg: str) -> str:
     return str(msg).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
 
 
-@functools.lru_cache(maxsize=128)
 def _resolve_base_dir(base_dir: str) -> tuple[str, str]:
-    """Cache base directory resolution for performance."""
-    # Bypasses the lookup overhead in tight validation loops,
-    # avoiding repeated stat/readlink syscalls for identical base_dirs.
+    """Resolve base directory paths.
+
+    Do not use @functools.lru_cache here. Caching realpath operations
+    introduces security vulnerabilities because stale cached paths can
+    bypass path traversal containment checks if underlying symlinks change.
+    """
     abs_base = os.path.abspath(base_dir)
     return abs_base, os.path.realpath(abs_base)
 
