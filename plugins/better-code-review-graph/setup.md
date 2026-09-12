@@ -87,6 +87,9 @@ and key through the relay instead. See the [managed provider policy](/reference/
 | `LOCAL_EMBEDDING_NORMALIZE` | No | `true` | Normalize BYO local embedding outputs |
 | `LOCAL_RERANK_MODEL` | No | empty | Fastretrieval `TextCrossEncoder` model ID for query reranking; empty disables reranking |
 | `SUMMARY_MODELS` | No | empty | Ordered CSV summary model chain (`provider/model,...`); empty leaves summaries disabled |
+| `EMBEDDING_API_BASE` | No | -- | Provider-compatible embedding endpoint or CF AI Gateway embedding URL; SSRF-guarded |
+| `LLM_API_BASE` | No | -- | Provider-compatible completion base URL or CF AI Gateway OpenRouter route; SSRF-guarded |
+| `OPENROUTER_API_KEY` | No | -- | Credential for explicitly selected `openrouter/` completion models |
 
 | `TRANSPORT_MODE` | No | `stdio` | Set to `http` to enable HTTP transport (multi-user). |
 | `PUBLIC_URL` | Yes (http) | -- | Server's public URL for relay form. |
