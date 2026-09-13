@@ -66,8 +66,8 @@ import sys
 import tempfile
 import threading
 import time
+from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Iterable
 
 from utils import sanitize_log
 
@@ -130,12 +130,12 @@ def _unbacktick(cell: str) -> str:
     return match.group(1) if match else cell
 
 
-def declared_names(markdown: str) -> set[str]:
+def declared_names(lines: Iterable[str]) -> set[str]:
     """Extract the tool names a ``tools.md`` page declares."""
     names: set[str] = set()
     in_tool_table = False
 
-    for line in markdown.splitlines():
+    for line in lines:
         heading = HEADING_RE.match(line)
         if heading:
             in_tool_table = False
@@ -169,7 +169,13 @@ def declared_names(markdown: str) -> set[str]:
 def read_declared(plugin_dir: str) -> set[str]:
     path = os.path.join(plugin_dir, "tools.md")
     with open(path, encoding="utf-8") as f:
-        return declared_names(f.read())
+        # Performance: Read line-by-line iteratively instead of reading the whole
+        # file into memory and using splitlines(), avoiding string allocation overhead.
+        # Stripping trailing newlines maintains backward compatibility.
+        def _line_iterator():
+            for line in f:
+                yield line.rstrip("\r\n")
+        return declared_names(_line_iterator())
 
 
 # --------------------------------------------------------------------------
