@@ -166,7 +166,7 @@ Build the `stdio` target from a reviewed release tag, then verify the volume
 mount. The repo path inside the container is `/repo`:
 
 ```bash
-git clone --branch <release-tag> --depth 1 https://github.com/n24q02m/better-code-review-graph.git
+git clone --branch <release-tag> --depth 1 https://github.com/n24q02m/crg.git
 cd better-code-review-graph
 docker build --target stdio -t better-code-review-graph:local .
 docker run -i --rm -v "/absolute/path/to/repo:/repo:ro" better-code-review-graph:local

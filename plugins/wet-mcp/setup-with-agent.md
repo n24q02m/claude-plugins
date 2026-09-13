@@ -66,7 +66,7 @@ Public OCI publication is discontinued. Clone a release tag, build the stdio
 target locally, then run it:
 
 ```bash
-git clone --branch <release-tag> --depth 1 https://github.com/n24q02m/wet-mcp.git
+git clone --branch <release-tag> --depth 1 https://github.com/n24q02m/wet.git
 cd wet-mcp
 docker build --target stdio -t wet-mcp:local .
 docker run -i --rm \

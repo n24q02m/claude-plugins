@@ -41,4 +41,4 @@ Claude Code matches MCP servers by **endpoint** (command string or URL), not by 
 
 ## Filing a bug
 
-Open an issue on [n24q02m/mnemo-mcp](https://github.com/n24q02m/mnemo-mcp) with your OS, server version, transport mode, and the last 50 lines of stderr.
+Open an issue on [n24q02m/mnemo-mcp](https://github.com/n24q02m/mnemo) with your OS, server version, transport mode, and the last 50 lines of stderr.

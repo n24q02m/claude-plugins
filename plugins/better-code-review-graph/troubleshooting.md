@@ -53,4 +53,4 @@ Claude Code matches MCP servers by **endpoint**, not by name. Installing the plu
 
 ## Filing a bug
 
-Open an issue on [n24q02m/better-code-review-graph](https://github.com/n24q02m/better-code-review-graph) with your OS, server version, transport mode, and the last 50 lines of stderr.
+Open an issue on [n24q02m/better-code-review-graph](https://github.com/n24q02m/crg) with your OS, server version, transport mode, and the last 50 lines of stderr.
