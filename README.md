@@ -36,6 +36,8 @@
 - [Configuration](#configuration)
 - [Skills](#skills)
 - [Other MCP Clients](#other-mcp-clients)
+- [Deployment](#deployment)
+- [Contributing](#contributing)
 - [License](#license)
 
 
@@ -196,6 +198,16 @@ Add to any MCP client's `settings.json`:
   }
 }
 ```
+
+## Deployment
+
+The docs site ([mcp.n24q02m.com](https://mcp.n24q02m.com)) lives in this repo (`docs/`, Astro). Every push to `main` that changes `docs/**` or a plugin doc source (`plugins/*/*.md`, plugin manifests) triggers [`.github/workflows/deploy-docs.yml`](.github/workflows/deploy-docs.yml), which builds the site with Bun and deploys `docs/dist` to the Cloudflare Pages project `mcp-n24q02m`. Pages under `docs/src/content/docs/servers/` are generated at build time by `docs/scripts/sync-plugin-docs.mjs` from the `plugins/<name>/*.md` sources — edit those source files, never the generated tree, and do not deploy the site manually with `wrangler`.
+
+Plugin assets are synced separately: when a server repo cuts a release, [`cd.yml`](.github/workflows/cd.yml) (`plugin-sync`) copies that release tag's `plugin.json`, skills, hooks, and commands into `plugins/<name>/` on `main`, and the docs site redeploys if doc sources changed.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
