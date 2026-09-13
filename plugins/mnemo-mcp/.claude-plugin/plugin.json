@@ -1,7 +1,7 @@
 {
   "name": "mnemo-mcp",
   "description": "Persistent AI memory — store, search, and recall knowledge across sessions",
-  "version": "2.14.0",
+  "version": "2.15.0",
   "userConfig": {
     "JINA_AI_API_KEY": {
       "type": "string",
@@ -36,7 +36,7 @@
     "name": "n24q02m",
     "url": "https://github.com/n24q02m"
   },
-  "homepage": "https://github.com/n24q02m/mnemo",
+  "homepage": "https://github.com/n24q02m/mnemo-mcp",
   "mcpServers": {
     "mnemo": {
       "command": "uvx",
