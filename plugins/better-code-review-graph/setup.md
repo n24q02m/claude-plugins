@@ -1,5 +1,10 @@
 # Better Code Review Graph -- Manual Setup Guide
 
+## CLI-first (2026-09-13)
+
+Repo is now `n24q02m/crg`. CLI-first: `crg --help` (config, doctor, graph, query, relay, review, security). PyPI package stays `better-code-review-graph`; both `crg` and legacy command work. MCP server is a secondary surface.
+
+
 > **2026-05-02 Update**: Plugin install (Method 1) now uses pure stdio mode. API keys are optional env vars.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 > If you relied on the relay form to enter API keys, please:

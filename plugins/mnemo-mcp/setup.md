@@ -1,5 +1,10 @@
 # Mnemo MCP -- Manual Setup Guide
 
+## CLI-first (2026-09-13)
+
+Repo is now `n24q02m/mnemo`. CLI-first: `mnemo --help` (capture, recall, reflect, fetch, standing-*). PyPI package stays `mnemo-mcp`; commands `mnemo`, `mnemo-mcp`, `mnemo-pilot` all work. MCP server is a secondary surface.
+
+
 > **2026-05-02 Update**: Plugin install (Method 1) now uses pure stdio mode with local SQLite storage. No required env vars -- mnemo works out-of-box.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 > Public local retrieval remains available without provider keys. Cloud models are configured explicitly; Google Drive sync is optional on non-CF hosts and disabled when `MEMORY_DB_BACKEND=cf-d1`.

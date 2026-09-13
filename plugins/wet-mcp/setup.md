@@ -1,5 +1,10 @@
 # WET (Web Extended Toolkit) -- Manual Setup Guide
 
+## CLI-first (2026-09-13)
+
+Repo is now `n24q02m/wet`. The CLI is the primary surface: `uvx wet --help` (subcommands: auth, config, docs, doctor, logout, relay, warmup). PyPI package stays `wet-mcp` — both `uvx wet` and legacy `uvx wet-mcp` commands work. MCP server = run `wet` with no subcommand (stdio passthrough).
+
+
 > Plugin install uses stdio mode with local Fastretrieval retrieval. For web search, select credential-free `duckduckgo,startpage`, a keyed provider, optional-key Firecrawl, or a runnable local/external SearXNG backend through `SEARCH_BACKENDS`.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 
