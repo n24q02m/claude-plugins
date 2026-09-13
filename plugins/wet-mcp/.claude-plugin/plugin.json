@@ -1,7 +1,7 @@
 {
   "name": "wet-mcp",
   "description": "Open-source MCP server for AI agents: web search, content extraction, and library docs.",
-  "version": "3.12.1",
+  "version": "3.14.2",
   "userConfig": {
     "EMBEDDING_MODELS": {
       "type": "string",
@@ -86,8 +86,8 @@
     "name": "n24q02m",
     "url": "https://github.com/n24q02m"
   },
-  "homepage": "https://github.com/n24q02m/wet",
-  "repository": "https://github.com/n24q02m/wet",
+  "homepage": "https://github.com/n24q02m/wet-mcp",
+  "repository": "https://github.com/n24q02m/wet-mcp",
   "license": "Apache-2.0",
   "keywords": [
     "web-search",
