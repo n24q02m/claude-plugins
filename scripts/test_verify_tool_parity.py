@@ -23,11 +23,11 @@ import verify_tool_parity as parity
 class TestDeclaredNames(unittest.TestCase):
     def test_h2_headings_are_tool_names(self):
         md = "# Title\n\n## search\n\ntext\n\n## config__open_relay\n"
-        self.assertEqual(parity.declared_names(md), {"search", "config__open_relay"})
+        self.assertEqual(parity.declared_names(md.splitlines()), {"search", "config__open_relay"})
 
     def test_prose_headings_are_ignored(self):
         md = "## Single-purpose memory tools\n\n## memory\n"
-        self.assertEqual(parity.declared_names(md), {"memory"})
+        self.assertEqual(parity.declared_names(md.splitlines()), {"memory"})
 
     def test_tool_column_table_rows_are_tool_names(self):
         md = (
@@ -36,7 +36,7 @@ class TestDeclaredNames(unittest.TestCase):
             "| `project` | Project-level operations |\n"
             "| `input_map` | Input action bindings |\n"
         )
-        self.assertEqual(parity.declared_names(md), {"project", "input_map"})
+        self.assertEqual(parity.declared_names(md.splitlines()), {"project", "input_map"})
 
     def test_action_tables_are_not_tool_names(self):
         # The per-tool tables list actions, not tools; their first column is
@@ -47,7 +47,7 @@ class TestDeclaredNames(unittest.TestCase):
             "|---|---|\n"
             "| `research` | Academic search |\n"
         )
-        self.assertEqual(parity.declared_names(md), {"search"})
+        self.assertEqual(parity.declared_names(md.splitlines()), {"search"})
 
     def test_heading_closes_an_open_tool_table(self):
         md = (
@@ -59,7 +59,7 @@ class TestDeclaredNames(unittest.TestCase):
             "|---|---|\n"
             "| `neighbors` | walk |\n"
         )
-        self.assertEqual(parity.declared_names(md), {"graph", "query"})
+        self.assertEqual(parity.declared_names(md.splitlines()), {"graph", "query"})
 
     def test_real_pages_declare_names(self):
         """Every shipped MCP tools.md must parse into at least one name."""
@@ -75,7 +75,7 @@ class TestDeclaredNames(unittest.TestCase):
                 continue
             pages += 1
             with open(page, encoding="utf-8") as f:
-                names = parity.declared_names(f.read())
+                names = parity.declared_names(line.rstrip("\r\n") for line in f)
             self.assertTrue(names, f"{entry}/tools.md declared no tool names")
             # help and config are the two universals every server ships.
             self.assertIn("help", names, f"{entry}/tools.md is missing `help`")
