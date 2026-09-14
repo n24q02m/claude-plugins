@@ -237,18 +237,19 @@ class LeaseStore:
     def _assert_exact_claim_path(self, path: Path, filename: str) -> None:
         self._assert_exact_layout(path, self.claims_dir, kind="claim")
         try:
-            for entry in self.claims_dir.iterdir():
-                if (
-                    os.name == "nt"
-                    and entry.name.casefold() == filename.casefold()
-                    and entry.name != filename
-                ):
-                    raise LeaseError(
-                        "LEASE_TRANSACTION_INVALID",
-                        f"claim filename case alias is not canonical: {filename!r}",
-                        file=filename,
-                        actual_file=entry.name,
-                    )
+            with os.scandir(self.claims_dir) as it:
+                for entry in it:
+                    if (
+                        os.name == "nt"
+                        and entry.name.casefold() == filename.casefold()
+                        and entry.name != filename
+                    ):
+                        raise LeaseError(
+                            "LEASE_TRANSACTION_INVALID",
+                            f"claim filename case alias is not canonical: {filename!r}",
+                            file=filename,
+                            actual_file=entry.name,
+                        )
         except OSError as error:
             raise LeaseError(
                 "LEASE_TRANSACTION_INVALID",
@@ -350,9 +351,15 @@ class LeaseStore:
                 f"claim storage is not a directory: {self.claims_dir}",
             )
         matches: list[tuple[Path, LeaseRecord]] = []
-        for path in sorted(self.claims_dir.glob("*.json"), key=lambda item: item.name):
-            if path.name.startswith((".", "_")):
-                continue
+        found_paths = []
+        try:
+            with os.scandir(self.claims_dir) as it:
+                for entry in it:
+                    if entry.name.endswith(".json") and not entry.name.startswith((".", "_")):
+                        found_paths.append(Path(entry.path))
+        except OSError:
+            pass
+        for path in sorted(found_paths, key=lambda item: item.name):
             self._assert_inside_channel(path)
             record = self._read_claim(path)
             if record.channel == self.channel.name and record.task_id == task_id:
@@ -390,9 +397,15 @@ class LeaseStore:
                     f"claim storage is not a directory: {self.claims_dir}",
                 )
             records = []
-            for path in sorted(self.claims_dir.glob("*.json"), key=lambda item: item.name):
-                if path.name.startswith((".", "_")):
-                    continue
+            found_paths = []
+            try:
+                with os.scandir(self.claims_dir) as it:
+                    for entry in it:
+                        if entry.name.endswith(".json") and not entry.name.startswith((".", "_")):
+                            found_paths.append(Path(entry.path))
+            except OSError:
+                pass
+            for path in sorted(found_paths, key=lambda item: item.name):
                 self._assert_inside_channel(path)
                 records.append(self._read_claim(path))
             return records
@@ -840,11 +853,12 @@ class LeaseStore:
         marker = f'"transaction_id": "{transaction_id}"'
         for path in chat.message_files(self.channel):
             try:
-                body = path.read_text(encoding="utf-8")
+                with path.open(encoding="utf-8") as f:
+                    for line in f:
+                        if marker in line:
+                            return True
             except (OSError, UnicodeError):
                 continue
-            if marker in body:
-                return True
         return False
 
 

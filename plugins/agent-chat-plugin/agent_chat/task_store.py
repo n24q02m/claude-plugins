@@ -218,9 +218,15 @@ class TaskStore:
                 f"task storage is not a directory: {self.tasks_dir}",
             )
         records = []
-        for path in sorted(self.tasks_dir.glob("*.json"), key=lambda item: item.name):
-            if path.name.startswith((".", "_")):
-                continue
+        found_paths = []
+        try:
+            with os.scandir(self.tasks_dir) as it:
+                for entry in it:
+                    if entry.name.endswith(".json") and not entry.name.startswith((".", "_")):
+                        found_paths.append(Path(entry.path))
+        except OSError:
+            pass
+        for path in sorted(found_paths, key=lambda item: item.name):
             self._assert_inside_channel(path)
             records.append(self._read_path(path))
         return records

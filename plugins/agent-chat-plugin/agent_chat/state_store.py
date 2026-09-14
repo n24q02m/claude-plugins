@@ -515,7 +515,15 @@ class StateStore:
             # records that cannot satisfy the authoritative task contract.
             tasks_dir = self.channel / "tasks"
             if tasks_dir.exists() and tasks_dir.is_dir():
-                for path in sorted(tasks_dir.glob("*.json"), key=lambda item: item.name):
+                found_paths = []
+                try:
+                    with os.scandir(tasks_dir) as it:
+                        for entry in it:
+                            if entry.name.endswith(".json"):
+                                found_paths.append(Path(entry.path))
+                except OSError:
+                    pass
+                for path in sorted(found_paths, key=lambda item: item.name):
                     try:
                         resolved = path.resolve(strict=False)
                         resolved.relative_to(tasks_dir.resolve(strict=False))

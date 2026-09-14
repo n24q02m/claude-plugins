@@ -1597,7 +1597,7 @@ def main(argv=None):
     except OSError as error:
         if "args" in locals() and getattr(args, "cmd", None) == "task":
             die(f"TASK_IO_ERROR: {error}", code=2)
-        raise
+        die(f"I/O error: {error}", code=1)
     except Exception as error:
         if _is_task_error(error):
             die(str(error), code=2)
