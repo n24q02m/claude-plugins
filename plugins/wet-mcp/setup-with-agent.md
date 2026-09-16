@@ -1,6 +1,7 @@
 # WET (Web Extended Toolkit) -- Agent Setup Guide
 
 > Plugin install uses stdio mode with local Fastretrieval retrieval. For web search, select credential-free `duckduckgo,startpage`, a keyed provider, optional-key Firecrawl, or a runnable local/external SearXNG backend through `SEARCH_BACKENDS`.
+> **2026-08-22 Update (v3.7.4+)**: Plugin install (Option 1) uses stdio mode. In a `uvx` tool environment, web search needs a configured cloud backend (`TAVILY_API_KEY`, `BRAVE_API_KEY`, or `EXA_API_KEY`) or an external `SEARXNG_URL`; local SearXNG auto-start is unavailable there. Use Option 2 (Docker stdio) for bundled local SearXNG.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 
 > Give this file to your AI agent to automatically set up wet-mcp.
@@ -22,6 +23,7 @@ All MCP servers across this stack share this priority hierarchy. `better-godot-m
 ## Option 1: Claude Code Plugin (stdio default)
 
 Plugin install uses **stdio mode**. Fastretrieval supplies local ONNX retrieval without provider keys. `uvx` can search with `SEARCH_BACKENDS=duckduckgo,startpage`, a configured cloud backend, or an external `SEARXNG_URL`; embedded SearXNG needs the prerequisites supplied by a suitable local/source-built Docker installation.
+Plugin install uses **stdio mode**. In a `uvx` tool environment, web search requires a cloud/external backend or Docker; content extraction and other non-SearXNG paths remain available without search credentials. Advanced features require optional API keys.
 
 ### Credential prompts at install
 
@@ -53,6 +55,9 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 > Other optional env vars (`SEARCH_BACKENDS`, `TAVILY_API_KEY`, `BRAVE_API_KEY`, `EXA_API_KEY`, `BROWSER_BACKENDS`, `SYNC_ENABLED`, etc.) are not part of the `userConfig` prompt; configure them through the client's supported stdio environment settings when needed. Hosted requests instead use the current subject's relay configuration for search chains and provider keys.
 
 Local retrieval and extraction do not require provider keys. Web search still needs a runnable backend; credential-free providers may return upstream challenges or rate limits. Configure only the backend chain the user selected, rather than silently introducing a paid fallback.
+> Other optional env vars (`BRAVE_API_KEY`, `TAVILY_API_KEY`, `EXA_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY`, `GITHUB_TOKEN`, `SYNC_ENABLED`, etc.) are not part of the `userConfig` prompt; add them manually to `mcpServers.wet.env` in your settings if needed.
+
+Without env vars: content extraction and local library-docs paths can run, but `uvx` stdio web search cannot auto-start local SearXNG. Set a cloud backend key or `SEARXNG_URL`, or use Option 2 for bundled SearXNG. With env vars: cloud embedding/reranking, Gemini LLM analysis, and premium search providers.
 
 > **Note**: This installs the full plugin (skills + agents + hooks + commands + stdio MCP server). If you'd rather use Option 2 (Docker stdio) or Option 3 (HTTP) below, DO NOT `/plugin install` this plugin — pick Option 2 or Option 3 instead. All three methods are mutually exclusive (see Method overview).
 
@@ -182,6 +187,7 @@ Share this password out-of-band (Signal/email/SMS) with anyone you invite to use
 ## Environment Variables
 
 Local stdio requires no provider API keys. HTTP authentication, selected cloud providers, and browser/search backends have their own requirements. Preserve the user's chosen local or managed configuration.
+All environment variables are **optional** for the process, but `uvx` stdio web search needs a cloud/external backend or Docker because it cannot auto-start local SearXNG.
 
 ### API Keys (Cloud Providers)
 
@@ -198,6 +204,9 @@ Local stdio requires no provider API keys. HTTP authentication, selected cloud p
 | `EXA_API_KEY` | No | -- | Exa Search API key |
 | `KAGI_API_KEY` | No | -- | Required for the `kagi` search backend |
 | `FIRECRAWL_API_KEY` | No | -- | Optional for `firecrawl`; absent means a keyless attempt, not guaranteed free service |
+| `BRAVE_API_KEY` | No | -- | Brave Search API key (cloud search provider) |
+| `TAVILY_API_KEY` | No | -- | Tavily Search API key (cloud search provider) |
+| `EXA_API_KEY` | No | -- | Exa Search API key (cloud search provider) |
 | `GITHUB_TOKEN` | No | auto-detect | GitHub token for docs discovery (60 -> 5000 req/hr). Auto-detected from `gh auth token` |
 
 ### Embedding and Reranking
@@ -238,6 +247,9 @@ Local stdio requires no provider API keys. HTTP authentication, selected cloud p
 | `DISABLE_LOCAL_SEARCH` | No | `false` | Skip the embedded local SearXNG fallback while retaining external or cloud search backends |
 | `WET_SEARXNG_PORT` | No | `41592` | SearXNG port |
 | `SEARXNG_URL` | No | `http://localhost:41592` | URL for an external SearXNG deployment |
+| `WET_AUTO_SEARXNG` | No | `true` | Auto-start embedded SearXNG when the runtime can launch it; `uvx` stdio uses Docker or an external backend instead |
+| `WET_SEARXNG_PORT` | No | `41592` | SearXNG port for source/Docker runs |
+| `SEARXNG_URL` | No | -- | External SearXNG URL |
 | `SEARXNG_TIMEOUT` | No | `30` | SearXNG request timeout in seconds |
 
 `duckduckgo` and `startpage` require no credentials and work under `uvx`.
@@ -297,6 +309,7 @@ guaranteed on every network. Public SearXNG remains supported.
 ### Stdio Mode (default)
 
 Set provider keys and endpoints directly as environment variables. A stdio `uvx` install still needs a configured SearXNG endpoint or cloud search provider for web search; cloud embedding, LLM, and premium search features activate from their corresponding variables. Credentials live only in the local process environment.
+Set API keys or `SEARXNG_URL` according to the selected transport. In `uvx` stdio, basic web search is not zero-config because local SearXNG cannot auto-start; content extraction and other non-SearXNG paths remain available without search credentials. HTTP/Docker modes can use the configured backend chain and relay auth.
 
 ### HTTP Mode (optional, multi-user)
 

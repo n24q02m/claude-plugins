@@ -6,6 +6,7 @@ Repo is now `n24q02m/wet`. The CLI is the primary surface: `uvx wet --help` (sub
 
 
 > Plugin install uses stdio mode with local Fastretrieval retrieval. For web search, select credential-free `duckduckgo,startpage`, a keyed provider, optional-key Firecrawl, or a runnable local/external SearXNG backend through `SEARCH_BACKENDS`.
+> **2026-08-22 Update (v3.7.4+)**: Plugin install (Method 1) uses stdio mode. In a `uvx` tool environment, web search needs a configured cloud backend (`TAVILY_API_KEY`, `BRAVE_API_KEY`, or `EXA_API_KEY`) or an external `SEARXNG_URL`; local SearXNG auto-start is unavailable there. Use Method 2 (Docker stdio) for bundled local SearXNG.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
 
 ## Method overview
@@ -31,6 +32,7 @@ All MCP servers across this stack share this priority hierarchy. Note: 2 plugins
 ## Method 1: Plugin Install (stdio default)
 
 For Claude Code users, plugin marketplace install runs the server in **pure stdio mode**. Fastretrieval supplies local ONNX retrieval without provider keys. `uvx` can search with `SEARCH_BACKENDS=duckduckgo,startpage`, a configured cloud backend, or an external `SEARXNG_URL`; embedded SearXNG needs the prerequisites supplied by a suitable local/source-built Docker installation.
+For Claude Code users, the plugin approach is the simplest. Plugin install uses **stdio mode**. In a `uvx` tool environment, web search requires a cloud/external backend or Docker; content extraction and other non-SearXNG paths remain available without search credentials. Advanced features require optional API keys.
 
 ### Credential prompts at install
 
@@ -62,6 +64,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 3. Restart Claude Code -- the server starts automatically when CC launches with the values injected.
 
 Local retrieval and extraction do not require provider keys. Web search still needs a runnable backend. Credential-free providers can be challenged or rate-limited by upstream sites; they do not guarantee the same availability as a keyed service.
+Without env vars: content extraction and local library-docs paths can run, but `uvx` stdio web search cannot auto-start local SearXNG. Set a cloud backend key or `SEARXNG_URL`, or use Method 2 for bundled SearXNG. With env vars: cloud embedding/reranking (faster), Gemini LLM analysis, and premium search providers.
 
 > **Note**: This installs the full plugin (skills + agents + hooks + commands + stdio MCP server). If you'd rather use Method 2 (Docker stdio) or Method 3 (HTTP) below, DO NOT `/plugin install` this plugin — pick Method 2 or Method 3 instead. All three methods are mutually exclusive (see Method overview).
 
@@ -262,6 +265,11 @@ Local stdio needs no provider API keys; HTTP, cloud providers, and optional back
 | `DISABLE_LOCAL_SEARCH` | `false` | Skip the embedded local SearXNG fallback while retaining external or cloud search backends |
 | `BROWSER_BACKENDS` | empty -> `native` | Ordered CSV render chain: `native`, `browserless`, `cf-browser-rendering` |
 | `SYNC_ENABLED` | `true` | Enable sync on eligible non-CF hosts; `DOCS_DB_BACKEND=cf-d1` disables it |
+| `TAVILY_API_KEY` | -- | Tavily Search API key (cloud search) |
+| `EXA_API_KEY` | -- | Exa Search API key (cloud search) |
+| `GITHUB_TOKEN` | auto-detect | GitHub token for docs discovery |
+| `WET_AUTO_SEARXNG` | `true` | Auto-start embedded SearXNG when the runtime can launch it; `uvx` stdio uses Docker or an external backend instead |
+| `SYNC_ENABLED` | `true` | Enable Google Drive sync |
 | `LOG_LEVEL` | `INFO` | Logging level |
 
 ### Backend Selection
@@ -271,3 +279,7 @@ Local stdio needs no provider API keys; HTTP, cloud providers, and optional back
 - **Legacy aliases**: `EMBEDDING_BACKEND`, `EMBEDDING_MODEL`, `RERANK_BACKEND`, and `RERANK_MODEL` are deprecated and honored for one release; migrate to the plural model chains.
 - **Browser rendering**: `BROWSER_BACKENDS` escalates extraction renderers in listed order; an empty chain uses the local `native` browser. It does not select the browser used by `extract(action="interact")`.
 - **Search**: `SEARCH_BACKENDS` tries providers in order on error or empty results. Hosted requests read the current subject's explicit chain and keys from the relay vault; only single-user stdio uses process settings. `duckduckgo` and `startpage` are credential-free and `uvx`-safe; keyed providers and an external `SEARXNG_URL` also work. Embedded SearXNG requires a suitable local/source-built runtime.
+- **Embedding**: Jina AI > Gemini > OpenAI > Cohere > local ONNX model
+- **Reranking**: Jina AI > Cohere > local ONNX model
+- **LLM**: Gemini > OpenAI > Disabled
+- **Search**: configured `SEARCH_BACKENDS` chain (`searxng`, `tavily`, `brave`, `exa`); local SearXNG is available in source/Docker runs, while `uvx` stdio requires a cloud key or external `SEARXNG_URL`

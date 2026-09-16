@@ -14,7 +14,7 @@ Replace `<X.Y.0bN>` with the exact beta version (for example, the value shown on
 
 ## Server fails to start on Python 3.14+
 
-wet-mcp requires **Python 3.13** -- the bundled SearXNG search engine is not compatible with 3.14+. Always pin the interpreter:
+wet-mcp requires **Python 3.13**. The `uvx` plugin path also cannot auto-start local SearXNG; configure a cloud/external search backend or use the Docker method for bundled SearXNG. Always pin the interpreter:
 
 ```sh
 uvx --python 3.13 wet-mcp
@@ -23,6 +23,7 @@ uvx --python 3.13 wet-mcp
 ## First run is slow / downloads a lot
 
 Downloads depend on the selected backends. Local embedding/reranker models and a native browser may need initial downloads; `uvx` does not auto-start embedded SearXNG. Use `SEARCH_BACKENDS=duckduckgo,startpage`, a configured cloud backend, or an external `SEARXNG_URL` for `uvx` search. Prepare enabled local resources with:
+On first start the server may download a Playwright browser and local embedding/reranker models. In a source/Docker run, `config(action="warmup")` can pre-download local assets; in `uvx` stdio, web search needs a cloud/external backend or Docker because local SearXNG auto-start is unavailable.
 
 ```
 config(action="warmup")
@@ -30,7 +31,7 @@ config(action="warmup")
 
 ## SearXNG port conflict
 
-If the embedded SearXNG port is already in use, move it:
+If a source/Docker run uses embedded SearXNG and port 41592 is already in use, move it:
 
 ```sh
 export WET_SEARXNG_PORT=<alternate-port>

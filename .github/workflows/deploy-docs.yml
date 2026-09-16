@@ -35,6 +35,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Checkout tools-docs
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: n24q02m/tools-docs
+          path: tools-docs
+
+      - name: Sync tools docs
+        working-directory: docs
+        env:
+          TOOLS_DOCS_DIR: ${{ github.workspace }}/tools-docs
+        run: node scripts/sync-tools-docs.mjs
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:

@@ -51,6 +51,7 @@ export default defineConfig({
           label: 'Coordination',
           items: [{ label: 'Agent Chat', items: [{ autogenerate: { directory: 'servers/agent-chat-plugin' } }] }],
         },
+        { label: 'Tools', items: [{ autogenerate: { directory: 'tools' } }] },
         { label: 'Reference', items: [{ autogenerate: { directory: 'reference' } }] },
       ],
     }),
