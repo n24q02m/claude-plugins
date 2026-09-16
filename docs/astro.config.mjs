@@ -47,6 +47,7 @@ export default defineConfig({
             { label: 'better-workspace-mcp', items: [{ autogenerate: { directory: 'servers/better-workspace-mcp' } }] },
           ],
         },
+        { label: 'Tools', items: [{ autogenerate: { directory: 'tools' } }] },
         { label: 'Reference', items: [{ autogenerate: { directory: 'reference' } }] },
       ],
     }),

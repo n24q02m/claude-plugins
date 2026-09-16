@@ -18,3 +18,4 @@ yarn-error.log*
 # Environment
 .env
 .env.production
+src/content/docs/tools/
