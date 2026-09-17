@@ -1,9 +1,9 @@
 ---
-title: MCP n24q02m
-description: Unified docs for 9 MCP servers, shared libraries, and Agent Chat coordination
+title: n24q02m docs
+description: Unified docs hub — MCP servers, shared libraries, skret, better-semantic-release, better-drive, and Agent Chat coordination
 template: splash
 hero:
-  tagline: Nine MCP servers on one foundation — one transport, one setup command, one multi-user auth model. Web search, memory, Notion, email, Telegram, Google Workspace, and more.
+  tagline: One hub for the whole stack — nine MCP servers on one foundation, plus skret secrets, better-semantic-release, and better-drive. Web search, memory, Notion, email, Telegram, Google Workspace, and more.
   image:
     light: ../../assets/logo.svg
     dark: ../../assets/logo-dark.svg
@@ -48,6 +48,16 @@ These components support the stack without exposing their own MCP server:
   <LinkCard title="mcp-core (Foundation)" href="/servers/mcp-core/architecture/" description="Shared transport, OAuth AS, lifecycle, and credential primitives for server authors." />
   <LinkCard title="fastretrieval" href="/reference/fastretrieval/" description="Multi-model Python retrieval: embeddings, reranking, ONNX, and optional GGUF." />
   <LinkCard title="Agent Chat" href="/servers/agent-chat-plugin/setup/" description="Portable CLI/Skill coordination through shared Markdown and JSON files." />
+</CardGrid>
+
+## Tools
+
+Standalone CLIs and release tooling, documented here too:
+
+<CardGrid>
+  <LinkCard title="skret" href="/skret/" description="Cloud-provider secret manager CLI — secrets without the server." />
+  <LinkCard title="better-semantic-release" href="/tools/bsr/overview/" description="python-semantic-release fork with release-safety guards." />
+  <LinkCard title="better-drive" href="/tools/bdrive/overview/" description="Two-way Google Drive sync CLI." />
 </CardGrid>
 
 ## Why these and not just any MCP server?
