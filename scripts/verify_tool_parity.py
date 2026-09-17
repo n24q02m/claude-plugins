@@ -594,6 +594,9 @@ def main(argv: Iterable[str] | None = None) -> int:
     )
     args = parser.parse_args(list(argv) if argv is not None else None)
 
+    if args.timeout is not None and (args.timeout < 1 or args.timeout > 7200):
+        parser.error("--timeout must be between 1 and 7200")
+
     if args.version and len(args.plugins) != 1:
         parser.error("--version applies to exactly one plugin")
 
