@@ -4,12 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "predev": "node scripts/sync-plugin-docs.mjs && node scripts/sync-tools-docs.mjs",
+    "predev": "node scripts/sync-plugin-docs.mjs && node scripts/sync-tools-docs.mjs && node scripts/sync-skret-docs.mjs",
     "dev": "bunx astro dev",
-    "prebuild": "node scripts/sync-plugin-docs.mjs && node scripts/sync-tools-docs.mjs",
+    "prebuild": "node scripts/sync-plugin-docs.mjs && node scripts/sync-tools-docs.mjs && node scripts/sync-skret-docs.mjs",
     "build": "bunx astro build",
     "preview": "bunx astro preview",
-    "sync": "node scripts/sync-plugin-docs.mjs && node scripts/sync-tools-docs.mjs"
+    "sync": "node scripts/sync-plugin-docs.mjs && node scripts/sync-tools-docs.mjs && node scripts/sync-skret-docs.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",
