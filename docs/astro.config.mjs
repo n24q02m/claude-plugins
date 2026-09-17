@@ -52,6 +52,7 @@ export default defineConfig({
           items: [{ label: 'Agent Chat', items: [{ autogenerate: { directory: 'servers/agent-chat-plugin' } }] }],
         },
         { label: 'Tools', items: [{ autogenerate: { directory: 'tools' } }] },
+        { label: 'skret', items: [{ autogenerate: { directory: 'skret' } }] },
         { label: 'Reference', items: [{ autogenerate: { directory: 'reference' } }] },
       ],
     }),

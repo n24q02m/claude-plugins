@@ -19,3 +19,5 @@ yarn-error.log*
 .env
 .env.production
 src/content/docs/tools/
+src/content/docs/skret/
+src/assets/skret/
