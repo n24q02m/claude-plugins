@@ -4,10 +4,24 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
+  # pull_request_target runs in the base context (secrets available, base ref
+  # checked out) -- required by the email-notify job for outside PRs.
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
   issues:
     types: [opened, reopened]
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      plugins:
+        description: "Space-separated plugin names, or 'all'"
+        required: false
+        default: 'all'
+        type: string
 
 permissions:
   contents: read
@@ -75,3 +89,280 @@ jobs:
         with:
           fail-on-severity: moderate
           comment-summary-in-pr: always
+
+  governance:
+    name: Bot PR Rate Limit & Duplicate Check
+    # Internal PRs only. This repo is public, so `pull_request` gives a fork a
+    # read-only GITHUB_TOKEN that the `permissions:` block above cannot raise --
+    # `gh pr close` would then fail under `set -e` and abort the job. Closing an
+    # outside contributor's PR because someone else spent the rate limit is the
+    # wrong outcome anyway; the bots this governs push their branches to this
+    # repo, so fork PRs are never in scope. Comparing full_name rather than
+    # head.repo.fork keeps this correct if this repository is ever itself a
+    # fork, where head.repo.fork would be true for internal branches too.
+    # The event_name guard keeps this off pull_request_target (which this file
+    # also triggers on for email-notify) so internal PRs are not governed twice.
+    if: >-
+      github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Detect and govern bot PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ github.head_ref }}
+          ACTOR: ${{ github.actor }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -e
+
+          # Detect if this is a bot-created PR by branch name pattern.
+          # Two signals:
+          #   1. Explicit bot-tool prefixes (Bolt, Palette, Jules, fix/web-scraper)
+          #   2. Any branch ending with a long numeric task/trace ID (-[0-9]{14,})
+          IS_BOT_PR=false
+          if echo "$BRANCH" | grep -qE \
+              '^(bolt[-/]|palette-ux-|fix/web-scraper-|jules[-/])'; then
+            IS_BOT_PR=true
+          elif echo "$BRANCH" | grep -qE -- \
+              '-[0-9]{14,}$'; then
+            IS_BOT_PR=true
+          fi
+
+          if [ "$IS_BOT_PR" = "false" ]; then
+            echo "Not a bot PR ($BRANCH), skipping governance checks."
+            exit 0
+          fi
+
+          echo "Bot PR detected on branch: $BRANCH"
+          gh pr edit "$PR_NUMBER" --add-label "bot-generated" --repo "$REPO" || true
+
+          # --- Rate limit: max 5 bot PRs/actor/day ---
+          SINCE=$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || \
+                  date -u -v-24H +%Y-%m-%dT%H:%M:%SZ)
+          COUNT=$(gh pr list --repo "$REPO" --state open \
+                   --json createdAt,headRefName,author \
+                   --jq "[.[] |
+                          select(.author.login == \"$ACTOR\") |
+                          select(.createdAt > \"$SINCE\") |
+                          select(.headRefName | test(
+                            \"^(bolt[-/]|palette-ux-|fix/web-scraper-|jules[-/])\" +
+                            \"|-[0-9]{14,}$\"
+                          ))] | length" 2>/dev/null || echo 0)
+
+          echo "Bot PRs by $ACTOR in last 24h: $COUNT"
+
+          if [ "${COUNT:-0}" -gt 5 ]; then
+            gh pr close "$PR_NUMBER" --repo "$REPO" \
+              --comment "**Bot rate limit exceeded**: $COUNT PRs created in the last 24 hours (limit: 5/day). This PR has been automatically closed to reduce PR backlog and CI resource waste. Please consolidate related fixes."
+            echo "PR #$PR_NUMBER closed: rate limit exceeded ($COUNT/5 today)"
+            exit 0
+          fi
+
+          # --- Duplicate detection by title keyword ---
+          KEYWORD=$(echo "$PR_TITLE" | sed 's/[^a-zA-Z0-9 _-]//g' | \
+                    tr '[:upper:]' '[:lower:]' | cut -c1-50 | xargs)
+          if [ -z "$KEYWORD" ]; then
+            echo "No keyword extracted, skipping duplicate check."
+            exit 0
+          fi
+
+          DUPES=$(gh pr list --repo "$REPO" --state open --search "$KEYWORD" \
+                   --json number \
+                   --jq "[.[] | select(.number != $PR_NUMBER)] | length" \
+                   2>/dev/null || echo 0)
+
+          echo "Similar open PRs for '$KEYWORD': $DUPES"
+          if [ "${DUPES:-0}" -ge 1 ]; then
+            gh pr edit "$PR_NUMBER" --repo "$REPO" \
+              --add-label "possible-duplicate" || true
+            gh pr comment "$PR_NUMBER" --repo "$REPO" \
+              --body "**Possible duplicate**: found ${DUPES} open PR(s) with similar title ('${KEYWORD}'). Check before merging: \`gh pr list --search '${KEYWORD}' --state open\`"
+          fi
+
+  # Asks each shipped server for its own tool list (MCP `tools/list`) and
+  # compares it against the names documented in plugins/<name>/tools.md.
+  # Needed because nothing else closes this loop: the plugin-sync job copies
+  # plugin.json / skills / hooks from the source repos but never the .md pages,
+  # and plugin.json carries no tool list at all. A server can rename a tool and
+  # the marketplace + docs site keep showing the old name.
+  # The original path-filtered triggers are folded into the shared CI triggers;
+  # the Select step below already no-ops when no plugin-relevant file changed.
+  parity:
+    name: Verify tool names
+    if: >-
+      github.event_name == 'pull_request'
+      || github.event_name == 'push'
+      || github.event_name == 'schedule'
+      || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    concurrency:
+      group: tool-parity-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          enable-cache: true
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Select plugins to check
+        id: select
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+          DISPATCH_PLUGINS: ${{ inputs.plugins }}
+        run: |
+          set -euo pipefail
+
+          case "$EVENT" in
+            pull_request)
+              # fetch-depth: 0 above already provides every origin/* branch.
+              CHANGED=$(git diff --name-only "origin/$BASE_REF...HEAD")
+              ;;
+            push)
+              if [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ] \
+                 && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+                CHANGED=$(git diff --name-only "$BEFORE" "${{ github.sha }}")
+              else
+                CHANGED=$(git diff --name-only HEAD~1 HEAD)
+              fi
+              ;;
+            *)
+              CHANGED=""
+              ;;
+          esac
+
+          if [ "$EVENT" = "schedule" ]; then
+            SELECTED="--all"
+          elif [ "$EVENT" = "workflow_dispatch" ]; then
+            if [ "$DISPATCH_PLUGINS" = "all" ] || [ -z "$DISPATCH_PLUGINS" ]; then
+              SELECTED="--all"
+            else
+              SELECTED="$DISPATCH_PLUGINS"
+            fi
+          else
+            # Map changed paths back to plugin directory names.
+            SELECTED=$(printf '%s\n' "$CHANGED" \
+              | sed -n 's#^plugins/\([^/]*\)/.*#\1#p' \
+              | sort -u | tr '\n' ' ')
+            # A change to the checker or this workflow re-checks everything.
+            if printf '%s\n' "$CHANGED" | grep -qE '^(scripts/verify_tool_parity\.py|\.github/workflows/ci\.yml)$'; then
+              SELECTED="--all"
+            fi
+          fi
+
+          SELECTED=$(printf '%s' "$SELECTED" | xargs || true)
+          printf "selected=%s\n" "$SELECTED" >> "$GITHUB_OUTPUT"
+          printf "Checking: %s\n" "${SELECTED:-<nothing>}"
+
+      - name: Verify tool names against live tools/list
+        if: steps.select.outputs.selected != ''
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC2086
+          python3 scripts/verify_tool_parity.py ${{ steps.select.outputs.selected }}
+
+  email-notify:
+    name: Email Notification
+    permissions:
+      contents: read
+    # Only the events the original notify.yml triggered on; the shared CI file
+    # also fires on push/schedule/dispatch where issue/PR context is absent.
+    if: >-
+      (github.event_name == 'pull_request_target' || github.event_name == 'issues')
+      && github.actor != github.repository_owner
+      && github.event.sender.type != 'Bot'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Parse SMTP credential
+        run: |
+          set -euo pipefail
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+
+          # Mask extracted credentials to prevent plaintext logging
+          SMTP_USER_VAL="${SMTP_CREDENTIAL%%:*}"
+          SMTP_PASS_VAL="${SMTP_CREDENTIAL#*:}"
+          printf "::add-mask::%s\n" "$SMTP_USER_VAL"
+          printf "::add-mask::%s\n" "$SMTP_PASS_VAL"
+
+          printf "SMTP_USER<<%s\n" "$EOF" >> "$GITHUB_ENV"
+          printf "%s\n" "$SMTP_USER_VAL" >> "$GITHUB_ENV"
+          printf "%s\n" "$EOF" >> "$GITHUB_ENV"
+
+          printf "SMTP_PASS<<%s\n" "$EOF" >> "$GITHUB_ENV"
+          printf "%s\n" "$SMTP_PASS_VAL" >> "$GITHUB_ENV"
+          printf "%s\n" "$EOF" >> "$GITHUB_ENV"
+        env:
+          SMTP_CREDENTIAL: ${{ secrets.SMTP_CREDENTIAL }}
+
+      - name: Sanitize inputs
+        run: |
+          python3 -c "
+          import os
+          import uuid
+
+          title = os.environ.get('RAW_TITLE', '')
+          body = os.environ.get('RAW_BODY', '')
+
+          # Sanitize title: single line, no leading/trailing whitespace
+          sanitized_title = ' '.join(title.splitlines()).strip()
+          delimiter = f'EOF_{uuid.uuid4().hex}'
+
+          with open(os.environ['GITHUB_ENV'], 'a') as f:
+              f.write(f'SANITIZED_TITLE={sanitized_title}\n')
+              f.write(f'SANITIZED_BODY<<{delimiter}\n')
+              f.write(body + '\n')
+              f.write(f'{delimiter}\n')
+          "
+        env:
+          RAW_TITLE: ${{ github.event.issue.title || github.event.pull_request.title }}
+          RAW_BODY: ${{ github.event.issue.body || github.event.pull_request.body || 'No description provided.' }}
+
+      - name: Send email notification
+        uses: dawidd6/action-send-mail@03a02a49409134de07636216fb379a026c52991e # v21
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ env.SMTP_USER }}
+          password: ${{ env.SMTP_PASS }}
+          subject: >-
+            [${{ github.event.repository.name }}]
+            ${{ github.event_name == 'issues' && 'Issue' || 'PR' }}
+            #${{ github.event.issue.number || github.event.pull_request.number }}:
+            ${{ env.SANITIZED_TITLE }}
+          to: ${{ env.SMTP_USER }}
+          from: GitHub Notify <${{ env.SMTP_USER }}>
+          body: |
+            ${{ github.event_name == 'issues' && 'New issue' || 'New pull request' }} in ${{ github.repository }}
+
+            Title: ${{ env.SANITIZED_TITLE }}
+            Author: ${{ github.actor }}
+            URL: ${{ github.event.issue.html_url || github.event.pull_request.html_url }}
+            Action: ${{ github.event.action }}
+
+            ---
+            ${{ env.SANITIZED_BODY }}
