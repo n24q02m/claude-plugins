@@ -2,7 +2,7 @@ name: CD
 
 on:
   repository_dispatch:
-    types: [plugin-sync]
+    types: [plugin-sync, tools-docs-sync]
   workflow_dispatch:
     inputs:
       repo:
@@ -51,7 +51,10 @@ concurrency:
 jobs:
   sync:
     name: Sync Plugin
-    if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
+    # repository_dispatch must be narrowed to plugin-sync: the workflow also
+    # listens for tools-docs-sync (hub redeploy), which carries no repo/tag
+    # payload and must not enter the plugin sync path.
+    if: (github.event_name == 'repository_dispatch' && github.event.action == 'plugin-sync') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
@@ -227,7 +230,10 @@ jobs:
     # push: docs-relevant paths (filtered at workflow level above).
     # workflow_dispatch: manual redeploy; the shared dispatch form requires the
     # repo/tag inputs used by sync -- pick any valid pair, they are ignored here.
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    # repository_dispatch(tools-docs-sync): fired by n24q02m/tools-docs CD after
+    # its own Pages deploy, so tools-docs pushes redeploy the hub with fresh
+    # inlined docs (sync-tools-docs.mjs reads tools-docs at build time).
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'repository_dispatch' && github.event.action == 'tools-docs-sync')
     permissions:
       contents: read
       deployments: write
