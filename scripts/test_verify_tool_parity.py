@@ -358,6 +358,22 @@ class TestMain(unittest.TestCase):
         with self.assertRaises(SystemExit):
             parity.main(["srv", "--jobs", "0"])
 
+    def test_jobs_must_be_less_than_1024(self):
+        with self.assertRaises(SystemExit):
+            parity.main(["srv", "--jobs", "2000"])
+
+    def test_timeout_must_be_positive(self):
+        with self.assertRaises(SystemExit):
+            parity.main(["srv", "--timeout", "0"])
+
+    def test_version_max_length(self):
+        with self.assertRaises(SystemExit):
+            parity.main(["srv", "--version", "a" * 129])
+
+    def test_plugin_max_length(self):
+        with self.assertRaises(SystemExit):
+            parity.main(["a" * 129])
+
     def _max_workers_for(self, argv):
         with mock.patch.object(parity, "verify_plugin", return_value=([], [], [])):
             with mock.patch.object(

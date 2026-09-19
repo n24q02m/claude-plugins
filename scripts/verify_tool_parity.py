@@ -594,11 +594,18 @@ def main(argv: Iterable[str] | None = None) -> int:
     )
     args = parser.parse_args(list(argv) if argv is not None else None)
 
+    if args.timeout is not None and (args.timeout < 1 or args.timeout > 3600):
+        parser.error("--timeout must be between 1 and 3600")
+    if args.version and len(args.version) > 128:
+        parser.error("--version exceeds maximum length of 128")
+    if any(len(p) > 128 for p in args.plugins):
+        parser.error("plugin name exceeds maximum length of 128")
+
     if args.version and len(args.plugins) != 1:
         parser.error("--version applies to exactly one plugin")
 
-    if args.jobs is not None and args.jobs < 1:
-        parser.error("--jobs must be at least 1")
+    if args.jobs is not None and (args.jobs < 1 or args.jobs > 1024):
+        parser.error("--jobs must be between 1 and 1024")
 
     if not os.path.isdir(PLUGINS_DIR):
         print(f"::error ::{sanitize_log(f'plugins dir not found: {PLUGINS_DIR}')}")
