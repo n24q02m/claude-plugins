@@ -18,8 +18,8 @@ Public OCI publication for Wet is discontinued. Build the HTTP target from a
 reviewed release tag, then self-host it:
 
 ```sh
-git clone --branch <release-tag> --depth 1 https://github.com/n24q02m/wet-mcp.git
-cd wet-mcp
+git clone --branch <release-tag> --depth 1 https://github.com/n24q02m/wet.git
+cd wet
 docker build --target http -t wet-mcp-http:local .
 docker run -d \
   -p 8080:8080 \

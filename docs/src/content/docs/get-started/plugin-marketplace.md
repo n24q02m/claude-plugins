@@ -39,4 +39,4 @@ Select the **Installed** tab to view, enable, disable, or uninstall plugins.
 
 ## Other MCP-compatible clients
 
-Each server's setup page documents `mcp.json` snippets for Codex, Gemini CLI, Cursor, and Windsurf. Look under "Install" on the server's docs page (e.g. [`/servers/wet-mcp/setup/`](/servers/wet-mcp/setup/)).
+Each server's setup page documents `mcp.json` snippets for Codex, Gemini CLI, Cursor, and Windsurf. Look under "Install" on the server's docs page (e.g. [`/servers/wet/setup/`](/servers/wet/setup/)).

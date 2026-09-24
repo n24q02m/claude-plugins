@@ -23,7 +23,7 @@ Example response shape:
   "tagline": "Web search + content extraction + docs indexing.",
   "version": "2.1.0",
   "mode": "local-relay",
-  "docs_url": "https://mcp.n24q02m.com/servers/wet-mcp/",
+  "docs_url": "https://docs.n24q02m.com/servers/wet/",
   "tools": [
     { "name": "search", "description": "Find URLs by keyword." },
     { "name": "extract", "description": "Read full text from a URL." },

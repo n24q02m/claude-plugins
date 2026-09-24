@@ -6,15 +6,17 @@ description: Side-by-side comparison of all 9 servers in the stack, plus the mcp
 | Server | Tools | Default mode | Multi-user | Docker | Language | License |
 |---|---:|---|:-:|:-:|---|---|
 | `mcp-core` | — | (foundation lib) | — | — | TypeScript + Python | Apache-2.0 |
-| `wet-mcp` | 4 + 2 | `local-relay` | yes (relay) | GHCR | Python | Apache-2.0 |
-| `mnemo-mcp` | 5 + 2 | `local-relay` | yes (relay) | GHCR | Python | Apache-2.0 |
-| `better-code-review-graph` | 5 + 2 | `local-relay` | yes (relay) | GHCR | Python | Apache-2.0 |
-| `imagine-mcp` | 4 + 2 | `local-relay` | yes (relay) | GHCR | Python | Apache-2.0 |
-| `better-telegram-mcp` | 6 + 2 | `remote-relay` | yes (relay+OAuth) | GHCR | Python | Apache-2.0 |
-| `better-notion-mcp` | 7 + 2 | `remote-oauth` | yes (relay+OAuth) | GHCR | TypeScript | Apache-2.0 |
-| `better-email-mcp` | 6 + 2 | `remote-relay` | yes (relay+OAuth) | GHCR | TypeScript | Apache-2.0 |
-| `better-godot-mcp` | 19 + 2 | `stdio` | no | GHCR | TypeScript | Apache-2.0 |
-| `better-workspace-mcp` | 11 + 2 | `stdio` | yes (OAuth) | GHCR | TypeScript | Apache-2.0 |
+| `wet` | 4 + 2 | `local-relay` | yes (relay) | GHCR | Python | Apache-2.0 |
+| `mnemo` | 5 + 2 | `local-relay` | yes (relay) | GHCR | Python | Apache-2.0 |
+| `crg` | 5 + 2 | `local-relay` | yes (relay) | GHCR | Python | Apache-2.0 |
+| `imagine-mcp` † | 4 + 2 | `local-relay` | yes (relay) | GHCR | Python | Apache-2.0 |
+| `better-telegram-mcp` † | 6 + 2 | `remote-relay` | yes (relay+OAuth) | GHCR | Python | Apache-2.0 |
+| `better-notion-mcp` † | 7 + 2 | `remote-oauth` | yes (relay+OAuth) | GHCR | TypeScript | Apache-2.0 |
+| `better-email-mcp` † | 6 + 2 | `remote-relay` | yes (relay+OAuth) | GHCR | TypeScript | Apache-2.0 |
+| `better-godot-mcp` † | 19 + 2 | `stdio` | no | GHCR | TypeScript | Apache-2.0 |
+| `better-workspace-mcp` † | 11 + 2 | `stdio` | yes (OAuth) | GHCR | TypeScript | Apache-2.0 |
+
+(† archived — docs kept for reference, project no longer maintained.)
 
 (N + 2 = N domain tools plus the universal `help` and `config` tools — see [tool layout standard](/reference/tool-layout-standard/).)
 
@@ -30,13 +32,13 @@ description: Side-by-side comparison of all 9 servers in the stack, plus the mcp
 
 For most users:
 
-- **wet-mcp** — search the web. Useful in any agent context.
-- **mnemo-mcp** — give the agent a long-term memory. Pairs with wet for "what did we discuss last week?" queries.
-- **better-code-review-graph** — for code-aware workflows; provides token-efficient code-review context in agent calls.
+- **wet** — search the web. Useful in any agent context.
+- **mnemo** — give the agent a long-term memory. Pairs with wet for "what did we discuss last week?" queries.
+- **crg** — for code-aware workflows; provides token-efficient code-review context in agent calls.
 
 For specific workflows:
 
-- Coding in unfamiliar repo → `better-code-review-graph`
+- Coding in unfamiliar repo → `crg`
 - Drafting docs/blog → `better-notion-mcp`
 - Image / video tasks → `imagine-mcp`
 - Telegram bot work → `better-telegram-mcp`

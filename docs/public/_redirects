@@ -1,0 +1,13 @@
+# Server docs slugs follow the renamed GitHub repos (2026-09-13):
+# wet-mcp -> wet, mnemo-mcp -> mnemo, better-code-review-graph -> crg.
+# Keep the old slugs redirecting so external links and repo homepages
+# pointing at the pre-rename URLs keep resolving.
+/servers/wet-mcp /servers/wet/ 301
+/servers/wet-mcp/ /servers/wet/ 301
+/servers/wet-mcp/* /servers/wet/:splat 301
+/servers/mnemo-mcp /servers/mnemo/ 301
+/servers/mnemo-mcp/ /servers/mnemo/ 301
+/servers/mnemo-mcp/* /servers/mnemo/:splat 301
+/servers/better-code-review-graph /servers/crg/ 301
+/servers/better-code-review-graph/ /servers/crg/ 301
+/servers/better-code-review-graph/* /servers/crg/:splat 301

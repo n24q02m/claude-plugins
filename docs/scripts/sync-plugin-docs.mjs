@@ -50,6 +50,62 @@ const PLUGIN_FILES = [
 
 const REPO_RAW_BASE = 'https://github.com/n24q02m/claude-plugins/edit/main/plugins';
 
+// Docs slugs follow the renamed GitHub repos (wet, mnemo, crg — renamed
+// 2026-09-13), while plugins/<dir> keeps the marketplace plugin id. Map
+// marketplace dir -> docs slug; unlisted dirs use their own name.
+const SLUG_MAP = {
+  'wet-mcp': 'wet',
+  'mnemo-mcp': 'mnemo',
+  'better-code-review-graph': 'crg',
+};
+
+// Canonical GitHub repo per marketplace dir (renamed repos differ from the
+// plugin id). Used for "GitHub: n24q02m/<repo>" links on generated pages.
+const REPO_NAME = {
+  'wet-mcp': 'wet',
+  'mnemo-mcp': 'mnemo',
+  'better-code-review-graph': 'crg',
+};
+
+// Repos archived on GitHub (2026-09-13): docs stay reachable but are marked
+// archived and grouped under a collapsed sidebar section.
+const ARCHIVED = new Set([
+  'imagine-mcp',
+  'better-telegram-mcp',
+  'better-notion-mcp',
+  'better-email-mcp',
+  'better-godot-mcp',
+  'better-workspace-mcp',
+]);
+const ARCHIVED_BANNER =
+  ':::caution[Archived]\n' +
+  'This project is archived and no longer maintained. The documentation below is kept for reference.\n' +
+  ':::';
+
+function slugFor(pluginName) {
+  return SLUG_MAP[pluginName] || pluginName;
+}
+
+function repoFor(pluginName) {
+  return REPO_NAME[pluginName] || pluginName;
+}
+
+// Rewrite /servers/<plugin-id>/ links to the docs slug for every renamed
+// server — not just the file's own plugin — so cross-links keep working.
+function rewriteServerLinks(content) {
+  for (const [id, slug] of Object.entries(SLUG_MAP)) {
+    content = content.replace(new RegExp(`/servers/${id}/`, 'g'), `/servers/${slug}/`);
+  }
+  return content;
+}
+
+// Display name for generated pages: renamed servers use the new repo name,
+// everything else uses the manifest/plugin id.
+function displayName(pluginName, meta) {
+  if (SLUG_MAP[pluginName]) return SLUG_MAP[pluginName];
+  return meta.name || pluginName;
+}
+
 // mcp-core is a foundation library, not a runnable server — frame it that way
 // and skip the marketplace-install pointer (it has no end-user install flow).
 const FOUNDATION = 'mcp-core';
@@ -91,18 +147,20 @@ function yamlQuote(value) {
   return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\s*\n\s*/g, ' ').trim()}"`;
 }
 
-// Synthesize the section landing page so /servers/<name>/ resolves.
+// Synthesize the section landing page so /servers/<slug>/ resolves.
 function buildIndex(pluginName, meta, copiedFiles) {
+  const slug = slugFor(pluginName);
   const isFoundation = pluginName === FOUNDATION;
   const isCoordination = pluginName === COORDINATION;
+  const isArchived = ARCHIVED.has(pluginName);
   const description =
     meta.description ||
     (isFoundation
       ? FOUNDATION_DESCRIPTION
       : isCoordination
         ? COORDINATION_DESCRIPTION
-        : `${pluginName} — part of the n24q02m MCP server stack.`);
-  const repoUrl = `https://github.com/n24q02m/${pluginName}`;
+        : `${slug} — part of the n24q02m MCP server stack.`);
+  const repoUrl = `https://github.com/n24q02m/${repoFor(pluginName)}`;
   const editUrl = `${REPO_RAW_BASE}/${pluginName}/.claude-plugin/plugin.json`;
 
   const pageLinks = copiedFiles
@@ -112,11 +170,12 @@ function buildIndex(pluginName, meta, copiedFiles) {
 
   const lines = [
     '---',
-    `title: ${yamlQuote(meta.name || pluginName)}`,
+    `title: ${yamlQuote(isArchived ? `${displayName(pluginName, meta)} (archived)` : displayName(pluginName, meta))}`,
     `description: ${yamlQuote(description)}`,
     `editUrl: ${editUrl}`,
     '---',
     '',
+    ...(isArchived ? [ARCHIVED_BANNER, ''] : []),
     description,
     ...(isCoordination
       ? ['This is a portable CLI/Skill coordination plugin, not an MCP server.']
@@ -128,7 +187,7 @@ function buildIndex(pluginName, meta, copiedFiles) {
     '',
     '## Source',
     '',
-    `- [GitHub: n24q02m/${pluginName}](${repoUrl})`,
+    `- [GitHub: n24q02m/${repoFor(pluginName)}](${repoUrl})`,
   ];
   if (!isFoundation) {
     lines.push('- Install via the [n24q02m plugin marketplace](/get-started/plugin-marketplace/)');
@@ -140,15 +199,18 @@ function buildIndex(pluginName, meta, copiedFiles) {
 // Synthesize the top-level /servers/ landing so the section root resolves
 // instead of 404ing. The route retains its historical name, while coordination
 // plugins are classified separately from runnable MCP servers.
-// `entries` is [{ name, description, isFoundation, isCoordination }].
+// `entries` is [{ name, slug, description, isFoundation, isCoordination, isArchived }].
 function buildServersIndex(entries) {
   const servers = entries
-    .filter((entry) => !entry.isFoundation && !entry.isCoordination)
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .filter((entry) => !entry.isFoundation && !entry.isCoordination && !entry.isArchived)
+    .sort((a, b) => a.slug.localeCompare(b.slug));
+  const archived = entries
+    .filter((entry) => entry.isArchived)
+    .sort((a, b) => a.slug.localeCompare(b.slug));
   const coordination = entries.filter((entry) => entry.isCoordination);
   const foundation = entries.filter((entry) => entry.isFoundation);
 
-  const toItem = (e) => `- [${e.name}](/servers/${e.name}/) -- ${e.description}`;
+  const toItem = (e) => `- [${e.slug}](/servers/${e.slug}/) -- ${e.description}`;
 
   const lines = [
     '---',
@@ -162,6 +224,9 @@ function buildServersIndex(entries) {
     '',
     ...servers.map(toItem),
   ];
+  if (archived.length > 0) {
+    lines.push('', '## Archived', '', ...archived.map(toItem));
+  }
   if (coordination.length > 0) {
     lines.push('', '## Coordination', '', ...coordination.map(toItem));
   }
@@ -185,7 +250,7 @@ async function syncOne(pluginName, file) {
   const src = join(PLUGINS_DIR, pluginName, file);
   if (!(await pathExists(src))) return false;
 
-  const content = await readFile(src, 'utf-8');
+  const content = rewriteServerLinks(await readFile(src, 'utf-8'));
 
   // Inject editUrl into frontmatter so "Edit this page" points to source.
   // If file already has frontmatter, append; else create one.
@@ -209,7 +274,13 @@ async function syncOne(pluginName, file) {
     updated = `---\ntitle: ${titleCased}\neditUrl: ${editUrl}\n---\n\n${content}`;
   }
 
-  const dest = join(TARGET_DIR, pluginName, file);
+  // Archived plugins get the banner on every synced page, not just the
+  // generated landing — a deep link must not look maintained.
+  if (ARCHIVED.has(pluginName)) {
+    updated = updated.replace(/^(---\r?\n[\s\S]*?\r?\n---\r?\n)/, `$1\n${ARCHIVED_BANNER}\n`);
+  }
+
+  const dest = join(TARGET_DIR, slugFor(pluginName), file);
   await mkdir(dirname(dest), { recursive: true });
   await writeFile(dest, updated, 'utf-8');
   return true;
@@ -246,15 +317,17 @@ async function main() {
 
       if (copiedFiles.length > 0) {
         const meta = await readPluginMeta(name);
+        const slug = slugFor(name);
+        const isArchived = ARCHIVED.has(name);
         // Generate the section landing page unless the source already ships one.
         if (!copiedFiles.includes('index.md')) {
           await writeFile(
-            join(TARGET_DIR, name, 'index.md'),
+            join(TARGET_DIR, slug, 'index.md'),
             buildIndex(name, meta, copiedFiles),
             'utf-8'
           );
         }
-        console.log(`  ${name}: ${copiedFiles.length} file(s) + index`);
+        console.log(`  ${name} -> /servers/${slug}/: ${copiedFiles.length} file(s) + index`);
         const isFoundation = name === FOUNDATION;
         const isCoordination = name === COORDINATION;
         const description =
@@ -266,10 +339,12 @@ async function main() {
               : `${name} — part of the n24q02m MCP server stack.`);
         return {
           name,
+          slug,
           count: copiedFiles.length,
           description,
           isFoundation,
           isCoordination,
+          isArchived,
         };
       }
       return { name, count: 0 };

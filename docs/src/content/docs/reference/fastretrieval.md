@@ -74,6 +74,6 @@ behavior, and stored vector dimensions consistent. Changing a model or output
 size requires the consumer to rebuild affected vectors rather than mix
 incompatible vector spaces. See each server's setup reference:
 
-- [Wet](/servers/wet-mcp/setup/)
-- [Mnemo](/servers/mnemo-mcp/setup/)
-- [Better Code Review Graph](/servers/better-code-review-graph/setup/)
+- [Wet](/servers/wet/setup/)
+- [Mnemo](/servers/mnemo/setup/)
+- [Better Code Review Graph](/servers/crg/setup/)

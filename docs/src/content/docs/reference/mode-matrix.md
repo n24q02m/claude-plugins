@@ -10,9 +10,9 @@ Each server has a fixed set of supported modes. Pick based on your scenario; swi
 | Server | stdio | local-relay | remote-relay | remote-oauth | Default |
 |---|:-:|:-:|:-:|:-:|---|
 | `mcp-core` | — | — | — | — | (foundation library, not a server) |
-| `wet-mcp` | yes | yes | yes | — | `local-relay` |
-| `mnemo-mcp` | yes | yes | yes | — | `local-relay` |
-| `better-code-review-graph` | yes | yes | yes | — | `local-relay` |
+| `wet` | yes | yes | yes | — | `local-relay` |
+| `mnemo` | yes | yes | yes | — | `local-relay` |
+| `crg` | yes | yes | yes | — | `local-relay` |
 | `imagine-mcp` | yes | yes | yes | — | `local-relay` |
 | `better-telegram-mcp` | yes | yes | yes | yes | `remote-relay` |
 | `better-notion-mcp` | yes | yes | yes | yes | `remote-oauth` |

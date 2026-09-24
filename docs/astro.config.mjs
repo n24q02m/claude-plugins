@@ -3,11 +3,11 @@ import starlight from '@astrojs/starlight';
 import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  site: 'https://mcp.n24q02m.com',
+  site: 'https://docs.n24q02m.com',
   integrations: [
     starlight({
       title: 'MCP n24q02m',
-      description: 'Unified docs for 9 MCP servers, shared libraries, and Agent Chat coordination',
+      description: 'Unified docs for the n24q02m MCP server stack, tools, and skret',
       logo: {
         light: './src/assets/logo.svg',
         dark: './src/assets/logo-dark.svg',
@@ -19,9 +19,9 @@ export default defineConfig({
         { tag: 'link', attrs: { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' } },
         { tag: 'link', attrs: { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' } },
         { tag: 'meta', attrs: { property: 'og:type', content: 'website' } },
-        { tag: 'meta', attrs: { property: 'og:image', content: 'https://mcp.n24q02m.com/og-image.png' } },
+        { tag: 'meta', attrs: { property: 'og:image', content: 'https://docs.n24q02m.com/og-image.png' } },
         { tag: 'meta', attrs: { name: 'twitter:card', content: 'summary_large_image' } },
-        { tag: 'meta', attrs: { name: 'twitter:image', content: 'https://mcp.n24q02m.com/og-image.png' } },
+        { tag: 'meta', attrs: { name: 'twitter:image', content: 'https://docs.n24q02m.com/og-image.png' } },
       ],
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/n24q02m/claude-plugins' },
@@ -36,15 +36,21 @@ export default defineConfig({
           items: [
             { label: 'All servers', link: '/servers/' },
             { label: 'mcp-core (Foundation)', items: [{ autogenerate: { directory: 'servers/mcp-core' } }] },
-            { label: 'wet-mcp', items: [{ autogenerate: { directory: 'servers/wet-mcp' } }] },
-            { label: 'mnemo-mcp', items: [{ autogenerate: { directory: 'servers/mnemo-mcp' } }] },
-            { label: 'better-code-review-graph', items: [{ autogenerate: { directory: 'servers/better-code-review-graph' } }] },
-            { label: 'imagine-mcp', items: [{ autogenerate: { directory: 'servers/imagine-mcp' } }] },
-            { label: 'better-telegram-mcp', items: [{ autogenerate: { directory: 'servers/better-telegram-mcp' } }] },
-            { label: 'better-notion-mcp', items: [{ autogenerate: { directory: 'servers/better-notion-mcp' } }] },
-            { label: 'better-email-mcp', items: [{ autogenerate: { directory: 'servers/better-email-mcp' } }] },
-            { label: 'better-godot-mcp', items: [{ autogenerate: { directory: 'servers/better-godot-mcp' } }] },
-            { label: 'better-workspace-mcp', items: [{ autogenerate: { directory: 'servers/better-workspace-mcp' } }] },
+            { label: 'wet', items: [{ autogenerate: { directory: 'servers/wet' } }] },
+            { label: 'mnemo', items: [{ autogenerate: { directory: 'servers/mnemo' } }] },
+            { label: 'crg', items: [{ autogenerate: { directory: 'servers/crg' } }] },
+            {
+              label: 'Archived',
+              collapsed: true,
+              items: [
+                { label: 'imagine-mcp', items: [{ autogenerate: { directory: 'servers/imagine-mcp' } }] },
+                { label: 'better-telegram-mcp', items: [{ autogenerate: { directory: 'servers/better-telegram-mcp' } }] },
+                { label: 'better-notion-mcp', items: [{ autogenerate: { directory: 'servers/better-notion-mcp' } }] },
+                { label: 'better-email-mcp', items: [{ autogenerate: { directory: 'servers/better-email-mcp' } }] },
+                { label: 'better-godot-mcp', items: [{ autogenerate: { directory: 'servers/better-godot-mcp' } }] },
+                { label: 'better-workspace-mcp', items: [{ autogenerate: { directory: 'servers/better-workspace-mcp' } }] },
+              ],
+            },
           ],
         },
         {
