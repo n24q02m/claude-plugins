@@ -11,3 +11,16 @@
 /servers/better-code-review-graph /servers/crg/ 301
 /servers/better-code-review-graph/ /servers/crg/ 301
 /servers/better-code-review-graph/* /servers/crg/:splat 301
+
+# skret installer + asset aliases (2026-09-24): skret.n24q02m.com and
+# tools.n24q02m.com 301 here before Pages _redirects can serve the files,
+# so the hub must carry the raw-file aliases itself.
+/skret/install.sh https://raw.githubusercontent.com/n24q02m/skret/main/install.sh 302
+/skret/install.ps1 https://raw.githubusercontent.com/n24q02m/skret/main/install.ps1 302
+/tools/install.sh https://raw.githubusercontent.com/n24q02m/skret/main/install.sh 302
+/tools/install.ps1 https://raw.githubusercontent.com/n24q02m/skret/main/install.ps1 302
+/skret/logo.svg https://raw.githubusercontent.com/n24q02m/skret/main/docs/public/logo.svg 302
+/skret/demo.gif https://raw.githubusercontent.com/n24q02m/skret/main/docs/public/demo.gif 302
+/skret/hub-screenshot.png https://raw.githubusercontent.com/n24q02m/skret/main/docs/public/hub-screenshot.png 302
+/skret/og-image.png https://raw.githubusercontent.com/n24q02m/skret/main/docs/public/og-image.png 302
+/skret/llms.txt https://raw.githubusercontent.com/n24q02m/skret/main/docs/public/llms.txt 302
