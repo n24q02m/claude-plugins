@@ -69,14 +69,11 @@ const REPO_NAME = {
 };
 
 // Repos archived on GitHub (2026-09-13): docs stay reachable but are marked
-// archived and grouped under a collapsed sidebar section.
+// archived and grouped under a collapsed sidebar section. telegram, notion,
+// email and workspace were unarchived on 2026-10-09 and are active again.
 const ARCHIVED = new Set([
   'imagine-mcp',
-  'telegram',
-  'notion',
-  'email',
   'better-godot-mcp',
-  'workspace',
 ]);
 const ARCHIVED_BANNER =
   ':::caution[Archived]\n' +
@@ -100,10 +97,13 @@ function rewriteServerLinks(content) {
   return content;
 }
 
-// Display name for generated pages: renamed servers use the new repo name,
-// everything else uses the manifest/plugin id.
+// Display name for generated pages: renamed servers use the new repo name
+// (the docs slug), everything else uses the manifest/plugin id. A dir whose
+// name differs from its manifest id was moved to the new repo name, so the
+// dir name wins there.
 function displayName(pluginName, meta) {
   if (SLUG_MAP[pluginName]) return SLUG_MAP[pluginName];
+  if (meta.name && meta.name !== pluginName) return pluginName;
   return meta.name || pluginName;
 }
 

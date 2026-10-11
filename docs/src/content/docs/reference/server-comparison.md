@@ -10,11 +10,11 @@ description: Side-by-side comparison of all 9 servers in the stack, plus the mcp
 | `mnemo` | 5 + 2 | `local-relay` | yes (relay) | GHCR | Python | Apache-2.0 |
 | `crg` | 5 + 2 | `local-relay` | yes (relay) | GHCR | Python | Apache-2.0 |
 | `imagine-mcp` † | 4 + 2 | `local-relay` | yes (relay) | GHCR | Python | Apache-2.0 |
-| `better-telegram-mcp` † | 6 + 2 | `remote-relay` | yes (relay+OAuth) | GHCR | Python | Apache-2.0 |
-| `better-notion-mcp` † | 7 + 2 | `remote-oauth` | yes (relay+OAuth) | GHCR | TypeScript | Apache-2.0 |
-| `better-email-mcp` † | 6 + 2 | `remote-relay` | yes (relay+OAuth) | GHCR | TypeScript | Apache-2.0 |
+| `telegram` | 6 + 2 | `remote-relay` | yes (relay+OAuth) | GHCR | Python | Apache-2.0 |
+| `notion` | 7 + 2 | `remote-oauth` | yes (relay+OAuth) | GHCR | TypeScript | Apache-2.0 |
+| `email` | 6 + 2 | `remote-relay` | yes (relay+OAuth) | GHCR | TypeScript | Apache-2.0 |
 | `better-godot-mcp` † | 19 + 2 | `stdio` | no | GHCR | TypeScript | Apache-2.0 |
-| `better-workspace-mcp` † | 11 + 2 | `stdio` | yes (OAuth) | GHCR | TypeScript | Apache-2.0 |
+| `workspace` | 11 + 2 | `stdio` | yes (OAuth) | GHCR | TypeScript | Apache-2.0 |
 
 († archived — docs kept for reference, project no longer maintained.)
 
@@ -39,22 +39,22 @@ For most users:
 For specific workflows:
 
 - Coding in unfamiliar repo → `crg`
-- Drafting docs/blog → `better-notion-mcp`
+- Drafting docs/blog → `notion`
 - Image / video tasks → `imagine-mcp`
-- Telegram bot work → `better-telegram-mcp`
-- Email triage → `better-email-mcp`
+- Telegram bot work → `telegram`
+- Email triage → `email`
 - Godot game dev → `better-godot-mcp`
-- Google Docs / Drive / Calendar / Gmail → `better-workspace-mcp`
+- Google Docs / Drive / Calendar / Gmail → `workspace`
 
 ## Versioning
 
 Each server cuts independent releases (`vMAJOR.MINOR.PATCH`). All servers depend on `mcp-core` — major version bumps in `mcp-core` propagate as bumps to all consumers. See each server's CHANGELOG.
 
-`better-workspace-mcp` is still pre-1.0: it publishes beta artifacts only (`0.1.0-beta.x` on npm, `:beta` on the registries), with no stable tag yet.
+`workspace` is still pre-1.0: it publishes beta artifacts only (`0.1.0-beta.x` on npm, `:beta` on the registries), with no stable tag yet.
 
 ## License
 
-Every repo in the stack is **Apache-2.0**. Several started out MIT and keep the original terms alongside in a `LICENSE-MIT` file, as the MIT license requires; `LICENSE` is the one that governs. `better-workspace-mcp` has been Apache-2.0 from the start, because it vendors Apache-2.0 code from [gemini-cli-extensions/workspace](https://github.com/gemini-cli-extensions/workspace) and keeps that license for the whole repo.
+Every repo in the stack is **Apache-2.0**. Several started out MIT and keep the original terms alongside in a `LICENSE-MIT` file, as the MIT license requires; `LICENSE` is the one that governs. `workspace` has been Apache-2.0 from the start, because it vendors Apache-2.0 code from [gemini-cli-extensions/workspace](https://github.com/gemini-cli-extensions/workspace) and keeps that license for the whole repo.
 
 Forks and self-host welcome — no license fees, no telemetry phoning home.
 
