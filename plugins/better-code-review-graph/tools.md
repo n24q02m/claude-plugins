@@ -1,6 +1,6 @@
 # Better Code Review Graph -- Tools Reference
 
-better-code-review-graph (crg) builds a knowledge graph of a codebase and exposes it through 6 tools driven by an `action` parameter, plus `help` and `config__open_relay`. None of these tools wrap results as external/untrusted content.
+better-code-review-graph (crg) builds a knowledge graph of a codebase and exposes it through 5 tools driven by an `action` parameter, plus `help`. None of these tools wrap results as external/untrusted content.
 
 ## graph
 
@@ -61,11 +61,11 @@ Server configuration, status, and credential setup.
 | `status` | Show graph path, node/edge counts, backend, last-updated | -- |
 | `set` | Update a runtime setting (`log_level` only) | `key`, `value` (required) |
 | `cache_clear` | Wipe all computed embeddings | -- |
-| `setup_status` | Show credential state and setup URL | -- |
-| `setup_start` | Start relay browser setup for API keys | `force` (default `false`) |
-| `setup_skip` | Set local mode, skip the relay permanently | -- |
-| `setup_reset` | Clear credentials, reset to `awaiting_setup` | -- |
-| `setup_complete` | Re-resolve credentials from environment variables | -- |
+| `setup_status` | Show current state and which model cells have keys | -- |
+| `setup_start` | Explain where the host configures keys | `force` (default `false`) |
+| `setup_skip` | Set local mode (local ONNX embedding, no cloud cells) | -- |
+| `setup_reset` | Reset state to local; host config re-resolves on next call | -- |
+| `setup_complete` | Re-resolve credential state from host config | -- |
 
 ## help
 
@@ -74,7 +74,3 @@ Get full documentation for a topic.
 | Parameter | Values |
 |---|---|
 | `topic` | `graph` (default) \| `query` \| `review` \| `config` \| `security` \| `recipes` |
-
-## config__open_relay
-
-Re-triggers the relay configuration form (e.g. after credential expiry). No parameters.
