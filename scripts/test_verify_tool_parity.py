@@ -71,15 +71,21 @@ class TestDeclaredNames(unittest.TestCase):
             if not os.path.isfile(page):
                 continue
             plugin_dir = os.path.join(plugins, entry)
-            if parity.server_spec(plugin_dir) is None:
-                continue
+            remote = False
+            try:
+                if parity.server_spec(plugin_dir) is None:
+                    continue
+            except parity.RemoteEndpoint:
+                remote = True  # a remote server still documents its tools here
             pages += 1
             with open(page, encoding="utf-8") as f:
                 names = parity.declared_names(line.rstrip("\r\n") for line in f)
             self.assertTrue(names, f"{entry}/tools.md declared no tool names")
-            # help and config are the two universals every server ships.
-            self.assertIn("help", names, f"{entry}/tools.md is missing `help`")
             self.assertIn("config", names, f"{entry}/tools.md is missing `config`")
+            # `help` is a universal of the stdio servers built on the shared
+            # core; HTTP-only servers (mnemo 2.20+) dropped it.
+            if not remote:
+                self.assertIn("help", names, f"{entry}/tools.md is missing `help`")
         self.assertGreater(pages, 0, "no tools.md pages found")
 
 
@@ -166,6 +172,23 @@ class TestServerSpec(unittest.TestCase):
     def test_plugin_without_mcp_server_has_no_spec(self):
         pdir = self._plugin(self._manifest(mcpServers={}))
         self.assertIsNone(parity.server_spec(pdir))
+
+    def test_remote_http_entry_raises_remote_endpoint(self):
+        manifest = self._manifest(
+            mcpServers={
+                "srv": {"type": "http", "url": "${user_config.SRV_URL}"}
+            }
+        )
+        pdir = self._plugin(manifest)
+        with self.assertRaises(parity.RemoteEndpoint) as ctx:
+            parity.server_spec(pdir)
+        self.assertEqual(ctx.exception.transport, "http")
+        self.assertEqual(ctx.exception.url, "${user_config.SRV_URL}")
+
+    def test_entry_without_command_or_url_is_invalid(self):
+        pdir = self._plugin(self._manifest(mcpServers={"srv": {"type": "http"}}))
+        with self.assertRaises(ValueError):
+            parity.server_spec(pdir)
 
     def test_multiple_servers_rejected(self):
         manifest = self._manifest(
@@ -310,6 +333,45 @@ class TestVerifyPlugin(unittest.TestCase):
             result = parity.verify_plugin("srv", False, 10)
 
         self.assertEqual(result, ([], [], []))
+
+    def _make_remote(self):
+        manifest = os.path.join("plugins", "srv", ".claude-plugin", "plugin.json")
+        with open(manifest, "w", encoding="utf-8") as stream:
+            json.dump(
+                {
+                    "name": "srv",
+                    "mcpServers": {
+                        "srv": {"type": "http", "url": "${user_config.SRV_URL}"}
+                    },
+                },
+                stream,
+            )
+
+    def test_remote_server_warns_without_launching(self):
+        self._make_remote()
+        self._write_tools_md("## search\n\n## config\n\n## help\n")
+        with mock.patch.object(
+            parity, "live_names", side_effect=AssertionError("must not be called")
+        ):
+            errors, warnings, output = parity.verify_plugin("srv", False, 10)
+        self.assertEqual((errors, output), ([], []))
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("NOT verified", warnings[0])
+        self.assertIn("remote http endpoint", warnings[0])
+
+    def test_remote_server_still_checks_declared_names(self):
+        self._make_remote()
+        self._write_tools_md("## search\n\n## config\n\n## help\n")
+        errors, warnings, output = parity.verify_plugin("srv", True, 10)
+        self.assertEqual((errors, warnings), ([], []))
+        self.assertIn("declares 3 tool(s)", output[0])
+
+    def test_remote_server_with_unparseable_page_is_an_error(self):
+        self._make_remote()
+        self._write_tools_md("# Tools\n\nProse only, no tool names.\n")
+        errors, _, _ = parity.verify_plugin("srv", False, 10)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("declares no tool names", errors[0])
 
     def test_unparseable_page_is_an_error(self):
         self._write_tools_md("# Tools\n\nProse only, no tool names.\n")

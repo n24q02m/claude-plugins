@@ -112,6 +112,22 @@ class ProbeTimeout(RuntimeError):
     """
 
 
+class RemoteEndpoint(Exception):
+    """The ``mcpServers`` entry is a remote (``http``/``sse``) endpoint.
+
+    Such an entry ships a ``url`` -- usually a ``${user_config.X}`` template
+    pointing at an instance the user runs -- instead of a ``command``. There is
+    nothing for this script to launch, so only the static half of the check
+    (``tools.md`` declares names) applies; the live comparison is reported as
+    not verified rather than crashing on the missing ``command``.
+    """
+
+    def __init__(self, transport: str, url: str) -> None:
+        super().__init__(f"remote {transport} endpoint {url}")
+        self.transport = transport
+        self.url = url
+
+
 # --------------------------------------------------------------------------
 # Declared names (static, no network)
 # --------------------------------------------------------------------------
@@ -198,7 +214,11 @@ def pin_version(spec: str, version: str) -> str:
 def server_spec(
     plugin_dir: str, version: str | None = None, placeholders: bool = False
 ) -> tuple[list[str], dict[str, str]] | None:
-    """Return (argv, env) for the plugin's MCP server, or None if it has none."""
+    """Return (argv, env) for the plugin's MCP server, or None if it has none.
+
+    Raises ``RemoteEndpoint`` when the entry is a ``url`` rather than a
+    ``command`` -- there is no argv to build for it.
+    """
     manifest = os.path.join(plugin_dir, ".claude-plugin", "plugin.json")
     with open(manifest, encoding="utf-8") as f:
         data = json.load(f)
@@ -212,6 +232,10 @@ def server_spec(
         )
 
     entry = next(iter(servers.values()))
+    if "command" not in entry:
+        if entry.get("url"):
+            raise RemoteEndpoint(entry.get("type", "http"), entry["url"])
+        raise ValueError("mcpServers entry has neither 'command' nor 'url'")
     args = list(entry.get("args", []))
 
     if version:
@@ -437,6 +461,12 @@ PROBE_TIMEOUT_HINT = (
     "credential gate and would only cost a second full timeout"
 )
 
+REMOTE_ENDPOINT_HINT = (
+    "the plugin connects to an instance the user runs, so there is no shipped "
+    "stdio command to probe -- the drift check for it belongs in the server "
+    "repo's own CI, which can start the server (see AGENTS.md)"
+)
+
 
 def verify_plugin(
     name: str, declared_only: bool, timeout: int, version: str | None = None
@@ -453,14 +483,18 @@ def verify_plugin(
     if not os.path.isfile(os.path.join(plugin_dir, "tools.md")):
         return [], [], []
 
+    remote: RemoteEndpoint | None = None
     try:
         spec = server_spec(plugin_dir, version=version)
+    except RemoteEndpoint as exc:
+        remote = exc
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         return [f"{name}: invalid MCP server manifest: {exc}"], [], []
-    if spec is None:
-        # Portable CLI/Skill plugins can document commands in tools.md without
-        # exposing an MCP tools/list surface.
-        return [], [], []
+    else:
+        if spec is None:
+            # Portable CLI/Skill plugins can document commands in tools.md
+            # without exposing an MCP tools/list surface.
+            return [], [], []
 
     declared = read_declared(plugin_dir)
     if not declared:
@@ -475,6 +509,15 @@ def verify_plugin(
             f"{name}: declares {len(declared)} tool(s): {', '.join(sorted(declared))}"
         )
         return [], [], [line]
+
+    if remote is not None:
+        # The manifest points at a running instance the user supplies; there is
+        # no shipped command to launch, so the live half of the check cannot run.
+        return (
+            [],
+            [f"{name}: tool names NOT verified -- {remote}. ({REMOTE_ENDPOINT_HINT})"],
+            [],
+        )
 
     try:
         live = live_names(plugin_dir, timeout=timeout, version=version)
