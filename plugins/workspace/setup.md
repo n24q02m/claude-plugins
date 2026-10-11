@@ -208,7 +208,7 @@ Before the first consent this reports `awaiting_setup`; afterwards it names the 
 
 ## Multi-account
 
-Every domain tool takes an `account` parameter — the email of the Google account the call acts as. Omit it and the call runs against the primary account. Accounts are managed through `config`: `account_add`, `account_list`, `account_remove`, `account_set_default`. See the [tools reference](/servers/better-workspace-mcp/tools/).
+Every domain tool takes an `account` parameter — the email of the Google account the call acts as. Omit it and the call runs against the primary account. Accounts are managed through `config`: `account_add`, `account_list`, `account_remove`, `account_set_default`. See the [tools reference](/servers/workspace/tools/).
 
 In HTTP mode, `account_add` completes through `/accounts/callback` on your host.
 

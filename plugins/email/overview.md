@@ -11,7 +11,7 @@ IMAP/SMTP email for AI agents -- search, read, triage, and send across multiple 
 
 ## Tools
 
-Four action-driven tools -- `messages`, `folders`, `attachments`, and `config` -- plus `config__open_relay` and `help`; `config__open_relay` reopens the browser credential form. Every action and parameter is listed in the [tools reference](/servers/better-email-mcp/tools/).
+Four action-driven tools -- `messages`, `folders`, `attachments`, and `config` -- plus `config__open_relay` and `help`; `config__open_relay` reopens the browser credential form. Every action and parameter is listed in the [tools reference](/servers/email/tools/).
 
 ## Clients
 
@@ -19,10 +19,10 @@ Defaults to a team-shared remote deployment (`remote-relay`) and also runs over 
 
 ## Configuration
 
-Needs IMAP/SMTP credentials for one or more accounts, supplied as `EMAIL_CREDENTIALS` via the browser relay form (or an environment variable for local use). Most providers require an app-specific password or OAuth token rather than your login password. Use placeholders in shared config and never commit real credentials. Full walkthrough in [setup](/servers/better-email-mcp/setup/).
+Needs IMAP/SMTP credentials for one or more accounts, supplied as `EMAIL_CREDENTIALS` via the browser relay form (or an environment variable for local use). Most providers require an app-specific password or OAuth token rather than your login password. Use placeholders in shared config and never commit real credentials. Full walkthrough in [setup](/servers/email/setup/).
 
 ## Next steps
 
-- [Setup](/servers/better-email-mcp/setup/) -- install and configure
-- [Tools reference](/servers/better-email-mcp/tools/) -- every action and parameter
-- [Troubleshooting](/servers/better-email-mcp/troubleshooting/)
+- [Setup](/servers/email/setup/) -- install and configure
+- [Tools reference](/servers/email/tools/) -- every action and parameter
+- [Troubleshooting](/servers/email/troubleshooting/)

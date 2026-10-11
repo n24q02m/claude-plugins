@@ -12,7 +12,7 @@ Telegram access for AI agents in both Bot API and MTProto (user) modes -- messag
 
 ## Tools
 
-Four composite tools -- `message`, `chat`, `media`, and `contact` -- driven by an `action` parameter, plus the universal `config` and `help`; `config__open_relay` reopens the browser credential form. Every action and parameter is listed in the [tools reference](/servers/better-telegram-mcp/tools/).
+Four composite tools -- `message`, `chat`, `media`, and `contact` -- driven by an `action` parameter, plus the universal `config` and `help`; `config__open_relay` reopens the browser credential form. Every action and parameter is listed in the [tools reference](/servers/telegram/tools/).
 
 ## Clients
 
@@ -20,10 +20,10 @@ Defaults to a team-shared remote deployment (`remote-relay`) and also runs over 
 
 ## Configuration
 
-Bot mode needs a bot token (`TELEGRAM_BOT_TOKEN`); user mode authenticates an MTProto session through the browser relay form. Supply credentials via the relay form or environment variables, use placeholders in shared config, and never commit a real token. Full walkthrough in [setup](/servers/better-telegram-mcp/setup/).
+Bot mode needs a bot token (`TELEGRAM_BOT_TOKEN`); user mode authenticates an MTProto session through the browser relay form. Supply credentials via the relay form or environment variables, use placeholders in shared config, and never commit a real token. Full walkthrough in [setup](/servers/telegram/setup/).
 
 ## Next steps
 
-- [Setup](/servers/better-telegram-mcp/setup/) -- install and configure
-- [Tools reference](/servers/better-telegram-mcp/tools/) -- every action and parameter
-- [Troubleshooting](/servers/better-telegram-mcp/troubleshooting/)
+- [Setup](/servers/telegram/setup/) -- install and configure
+- [Tools reference](/servers/telegram/tools/) -- every action and parameter
+- [Troubleshooting](/servers/telegram/troubleshooting/)

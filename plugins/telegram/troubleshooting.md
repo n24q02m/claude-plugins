@@ -28,7 +28,7 @@ The Bot API cannot look up a message's media by `(chat_id, message_id)`. In bot 
 
 ## Transport mismatch / duplicate entries in `/mcp`
 
-Claude Code matches MCP servers by **endpoint**, not by name. Installing the plugin *and* adding a Docker/HTTP override loads both. Pick one method and uninstall the other. See [setup](/servers/better-telegram-mcp/setup/).
+Claude Code matches MCP servers by **endpoint**, not by name. Installing the plugin *and* adding a Docker/HTTP override loads both. Pick one method and uninstall the other. See [setup](/servers/telegram/setup/).
 
 ## Filing a bug
 

@@ -12,7 +12,7 @@ Markdown-first access to a Notion workspace for AI agents. Read and write pages 
 
 ## Tools
 
-Eight composite tools -- `pages`, `databases`, `blocks`, `users`, `workspace`, `comments`, `file_uploads`, and `content_convert` -- plus the universal `config` and `help`; `config__open_relay` reopens the browser credential form. Every action and parameter is listed in the [tools reference](/servers/better-notion-mcp/tools/).
+Eight composite tools -- `pages`, `databases`, `blocks`, `users`, `workspace`, `comments`, `file_uploads`, and `content_convert` -- plus the universal `config` and `help`; `config__open_relay` reopens the browser credential form. Every action and parameter is listed in the [tools reference](/servers/notion/tools/).
 
 ## Clients
 
@@ -20,10 +20,10 @@ Defaults to a team-shared remote deployment (`remote-oauth`) and also runs over 
 
 ## Configuration
 
-Needs a Notion integration token (`NOTION_TOKEN`), supplied via the browser relay form or an environment variable. The integration must be shared with each page or database you want the agent to reach. Use a placeholder in shared config and never commit a real token. Full walkthrough in [setup](/servers/better-notion-mcp/setup/).
+Needs a Notion integration token (`NOTION_TOKEN`), supplied via the browser relay form or an environment variable. The integration must be shared with each page or database you want the agent to reach. Use a placeholder in shared config and never commit a real token. Full walkthrough in [setup](/servers/notion/setup/).
 
 ## Next steps
 
-- [Setup](/servers/better-notion-mcp/setup/) -- install and configure
-- [Tools reference](/servers/better-notion-mcp/tools/) -- every action and parameter
-- [Troubleshooting](/servers/better-notion-mcp/troubleshooting/)
+- [Setup](/servers/notion/setup/) -- install and configure
+- [Tools reference](/servers/notion/tools/) -- every action and parameter
+- [Troubleshooting](/servers/notion/troubleshooting/)

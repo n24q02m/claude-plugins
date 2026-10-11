@@ -52,7 +52,8 @@ const REPO_RAW_BASE = 'https://github.com/n24q02m/claude-plugins/edit/main/plugi
 
 // Docs slugs follow the renamed GitHub repos (wet, mnemo, crg — renamed
 // 2026-09-13), while plugins/<dir> keeps the marketplace plugin id. Map
-// marketplace dir -> docs slug; unlisted dirs use their own name.
+// marketplace dir -> docs slug; unlisted dirs use their own name (the
+// workspace, notion, email and telegram dirs already carry the new repo name).
 const SLUG_MAP = {
   'wet-mcp': 'wet',
   'mnemo-mcp': 'mnemo',
@@ -71,11 +72,11 @@ const REPO_NAME = {
 // archived and grouped under a collapsed sidebar section.
 const ARCHIVED = new Set([
   'imagine-mcp',
-  'better-telegram-mcp',
-  'better-notion-mcp',
-  'better-email-mcp',
+  'telegram',
+  'notion',
+  'email',
   'better-godot-mcp',
-  'better-workspace-mcp',
+  'workspace',
 ]);
 const ARCHIVED_BANNER =
   ':::caution[Archived]\n' +

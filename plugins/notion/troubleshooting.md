@@ -31,7 +31,7 @@ Every tool call returning 401 usually means the JWT `sub` is changing between ca
 
 ## Transport mismatch / duplicate entries in `/mcp`
 
-Claude Code matches MCP servers by **endpoint**, not by name. Installing the plugin *and* adding a Docker/HTTP override loads both. Pick one method and uninstall the other. See [setup](/servers/better-notion-mcp/setup/).
+Claude Code matches MCP servers by **endpoint**, not by name. Installing the plugin *and* adding a Docker/HTTP override loads both. Pick one method and uninstall the other. See [setup](/servers/notion/setup/).
 
 ## Filing a bug
 

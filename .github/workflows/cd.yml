@@ -9,15 +9,21 @@ on:
         description: "Source repo name (e.g., wet-mcp)"
         required: true
         type: choice
+        # Renamed source repos are listed under both names; the pre-rename
+        # names stay accepted until every renamed repo dispatches the new one.
         options:
           - wet-mcp
           - mnemo-mcp
+          - telegram
           - better-telegram-mcp
           - better-code-review-graph
+          - notion
           - better-notion-mcp
+          - email
           - better-email-mcp
           - better-godot-mcp
           - imagine-mcp
+          - workspace
           - better-workspace-mcp
           - agent-chat-plugin
           - mcp-core
@@ -101,7 +107,7 @@ jobs:
           }
 
           case "$REPO" in
-            wet-mcp|mnemo-mcp|better-telegram-mcp|better-code-review-graph|better-notion-mcp|better-email-mcp|better-godot-mcp|imagine-mcp|better-workspace-mcp|agent-chat-plugin|mcp-core)
+            wet-mcp|mnemo-mcp|telegram|better-telegram-mcp|better-code-review-graph|notion|better-notion-mcp|email|better-email-mcp|better-godot-mcp|imagine-mcp|workspace|better-workspace-mcp|agent-chat-plugin|mcp-core)
               ;;
             *)
               printf "::error::Invalid repo: %s\n" "$(sanitize "$REPO")"
@@ -134,7 +140,16 @@ jobs:
           TAG: ${{ steps.inputs.outputs.tag }}
         run: |
           set -euo pipefail
-          PLUGIN_DIR="marketplace/plugins/$REPO"
+          # Both the pre-rename and the current repo name sync into the
+          # current plugin folder.
+          case "$REPO" in
+            better-workspace-mcp) PLUGIN_NAME=workspace ;;
+            better-notion-mcp) PLUGIN_NAME=notion ;;
+            better-email-mcp) PLUGIN_NAME=email ;;
+            better-telegram-mcp) PLUGIN_NAME=telegram ;;
+            *) PLUGIN_NAME="$REPO" ;;
+          esac
+          PLUGIN_DIR="marketplace/plugins/$PLUGIN_NAME"
           VERSION="${TAG#v}"
 
           # Sync plugin.json

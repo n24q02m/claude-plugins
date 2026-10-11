@@ -118,7 +118,7 @@ test_sync_plugins() {
   ROOT="$old_root"
 }
 
-assert "workspace plugin configured for sync" contains_plugin "better-workspace-mcp"
+assert "workspace plugin configured for sync" contains_plugin "workspace"
 
 printf "%s\n" "=== has_files tests ==="
 test_has_files
