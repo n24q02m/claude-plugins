@@ -1,4 +1,4 @@
-# Better Notion MCP -- Agent Setup Guide
+# Notion MCP -- Agent Setup Guide
 
 > Give this file to your AI agent to automatically set up better-notion-mcp.
 

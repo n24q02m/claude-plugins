@@ -1,4 +1,4 @@
-# Better Workspace MCP -- Overview
+# Workspace MCP -- Overview
 
 Google Workspace for AI agents -- ten Google API domains, local time helpers, and multi-account OAuth through composite tools. Sheets and People provide read-only access; write operations are available where the upstream API and tool action support them.
 
@@ -33,7 +33,7 @@ Needs a Google OAuth client you create yourself, supplied as `GOOGLE_OAUTH_CLIEN
 
 ## Distribution and license
 
-The npm package is [`@n24q02m/better-workspace-mcp`](https://www.npmjs.com/package/@n24q02m/better-workspace-mcp). Select a published version from the [release history](https://github.com/n24q02m/better-workspace-mcp/releases); package releases and deployed HTTP instances are separate surfaces.
+The npm package is [`@n24q02m/better-workspace-mcp`](https://www.npmjs.com/package/@n24q02m/better-workspace-mcp). Select a published version from the [release history](https://github.com/n24q02m/workspace/releases); package releases and deployed HTTP instances are separate surfaces.
 
 Like the rest of the stack, this server is **Apache-2.0** -- here from the start, because it vendors Apache-2.0 code from [gemini-cli-extensions/workspace](https://github.com/gemini-cli-extensions/workspace) and carries that license across the repo.
 

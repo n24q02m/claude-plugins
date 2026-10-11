@@ -1,4 +1,4 @@
-# Better Notion MCP -- Manual Setup Guide
+# Notion MCP -- Manual Setup Guide
 
 > **2026-05-02 Update**: Plugin install (Method 1) now uses pure stdio mode with `NOTION_TOKEN` env var.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
@@ -41,7 +41,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 
 1. Create a Notion integration token:
    - Go to https://www.notion.so/my-integrations
-   - Click "New integration", name it (e.g. "Better Notion MCP"), select your workspace
+   - Click "New integration", name it (e.g. "Notion MCP"), select your workspace
    - Copy the "Internal Integration Secret" (starts with `ntn_`)
    - **Share pages with the integration**: open a Notion page > "..." > Connections > select your integration. Repeat for each page or database you want accessible.
 2. Open Claude Code in your terminal

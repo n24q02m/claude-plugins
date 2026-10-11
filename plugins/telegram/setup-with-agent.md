@@ -1,4 +1,4 @@
-# Better Telegram MCP -- Agent Setup Guide
+# Telegram MCP -- Agent Setup Guide
 
 > Give this file to your AI agent to automatically set up better-telegram-mcp.
 
@@ -97,8 +97,8 @@ Stdio (Options 1-2) is the simplest path for **bot mode**, but stdio cannot host
 For private deployments (single user or team), clone the repo and run via Docker:
 
 ```bash
-git clone https://github.com/n24q02m/better-telegram-mcp.git
-cd better-telegram-mcp
+git clone https://github.com/n24q02m/telegram.git
+cd telegram
 cp .env.example .env
 # edit .env: PUBLIC_URL=https://your-domain.com, MCP_DCR_SERVER_SECRET=<32+ random bytes> (legacy DCR_SERVER_SECRET still works)
 docker compose up -d

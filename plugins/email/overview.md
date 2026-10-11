@@ -1,4 +1,4 @@
-# Better Email MCP -- Overview
+# Email MCP -- Overview
 
 IMAP/SMTP email for AI agents -- search, read, triage, and send across multiple accounts through a small set of composite tools.
 

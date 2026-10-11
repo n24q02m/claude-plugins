@@ -1,4 +1,4 @@
-# Better Workspace MCP -- Troubleshooting
+# Workspace MCP -- Troubleshooting
 
 Common issues specific to better-workspace-mcp. For daemon, lock-file, and general relay problems shared across the stack, see the [general troubleshooting guide](/get-started/troubleshooting/).
 
@@ -65,4 +65,4 @@ Claude Code matches MCP servers by **endpoint**, not by name. Installing the plu
 
 ## Filing a bug
 
-Open an issue on [n24q02m/better-workspace-mcp](https://github.com/n24q02m/better-workspace-mcp) with your OS, server version, transport mode, and the last 50 lines of stderr.
+Open an issue on [n24q02m/workspace](https://github.com/n24q02m/workspace) with your OS, server version, transport mode, and the last 50 lines of stderr.

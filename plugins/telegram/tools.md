@@ -1,4 +1,4 @@
-# Better Telegram MCP -- Tools Reference
+# Telegram MCP -- Tools Reference
 
 better-telegram-mcp exposes Telegram (dual-mode: Bot API + MTProto) through 4 composite tools driven by an `action` parameter, plus `config` (credential setup), `help`, and `config__open_relay`.
 
