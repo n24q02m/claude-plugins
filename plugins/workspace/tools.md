@@ -181,7 +181,7 @@ Credential state and account management.
 
 The first account authorized becomes the primary. Removing the primary promotes one of the remaining accounts; removing the last one puts the server back to `awaiting_setup`. Adding an account never changes which one is primary -- use `account_set_default` for that.
 
-In HTTP mode, `account_add` completes through the server's `/accounts/callback`, so the OAuth client has to be a Web application type with that redirect URI registered. See [setup](/servers/better-workspace-mcp/setup/).
+In HTTP mode, `account_add` completes through the server's `/accounts/callback`, so the OAuth client has to be a Web application type with that redirect URI registered. See [setup](/servers/workspace/setup/).
 
 ## help
 

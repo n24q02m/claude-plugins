@@ -15,7 +15,7 @@ Google Workspace for AI agents -- ten Google API domains, local time helpers, an
 
 ## Tools
 
-Eleven composite tools -- `docs`, `drive`, `calendar`, `gmail`, `sheets`, `slides`, `tasks`, `chat`, `people`, `forms`, and `time` -- each driven by an `action` parameter, plus the universal `config` (credential state and account management) and `help`. Every action and parameter is listed in the [tools reference](/servers/better-workspace-mcp/tools/).
+Eleven composite tools -- `docs`, `drive`, `calendar`, `gmail`, `sheets`, `slides`, `tasks`, `chat`, `people`, `forms`, and `time` -- each driven by an `action` parameter, plus the universal `config` (credential state and account management) and `help`. Every action and parameter is listed in the [tools reference](/servers/workspace/tools/).
 
 ## Multi-account
 
@@ -29,7 +29,7 @@ For HTTP, use the endpoint supplied by your operator or follow the self-host set
 
 ## Configuration
 
-Needs a Google OAuth client you create yourself, supplied as `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` -- **Desktop app** type for stdio, **Web application** type for HTTP. The server ships no Google client of its own, so the consent screen and API quota belong to your project. HTTP also requires `CREDENTIAL_SECRET` to retain credential encryption and signing keys across restarts. Register both `/callback` and `/accounts/callback` on the Web client. Use placeholders in shared config and never commit real credentials. Full walkthrough in [setup](/servers/better-workspace-mcp/setup/).
+Needs a Google OAuth client you create yourself, supplied as `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` -- **Desktop app** type for stdio, **Web application** type for HTTP. The server ships no Google client of its own, so the consent screen and API quota belong to your project. HTTP also requires `CREDENTIAL_SECRET` to retain credential encryption and signing keys across restarts. Register both `/callback` and `/accounts/callback` on the Web client. Use placeholders in shared config and never commit real credentials. Full walkthrough in [setup](/servers/workspace/setup/).
 
 ## Distribution and license
 
@@ -39,6 +39,6 @@ Like the rest of the stack, this server is **Apache-2.0** -- here from the start
 
 ## Next steps
 
-- [Setup](/servers/better-workspace-mcp/setup/) -- install and configure
-- [Tools reference](/servers/better-workspace-mcp/tools/) -- every action and parameter
-- [Troubleshooting](/servers/better-workspace-mcp/troubleshooting/)
+- [Setup](/servers/workspace/setup/) -- install and configure
+- [Tools reference](/servers/workspace/tools/) -- every action and parameter
+- [Troubleshooting](/servers/workspace/troubleshooting/)

@@ -11,6 +11,20 @@
 /servers/better-code-review-graph /servers/crg/ 301
 /servers/better-code-review-graph/ /servers/crg/ 301
 /servers/better-code-review-graph/* /servers/crg/:splat 301
+# Second rename wave: better-workspace-mcp -> workspace, better-notion-mcp ->
+# notion, better-email-mcp -> email, better-telegram-mcp -> telegram.
+/servers/better-workspace-mcp /servers/workspace/ 301
+/servers/better-workspace-mcp/ /servers/workspace/ 301
+/servers/better-workspace-mcp/* /servers/workspace/:splat 301
+/servers/better-notion-mcp /servers/notion/ 301
+/servers/better-notion-mcp/ /servers/notion/ 301
+/servers/better-notion-mcp/* /servers/notion/:splat 301
+/servers/better-email-mcp /servers/email/ 301
+/servers/better-email-mcp/ /servers/email/ 301
+/servers/better-email-mcp/* /servers/email/:splat 301
+/servers/better-telegram-mcp /servers/telegram/ 301
+/servers/better-telegram-mcp/ /servers/telegram/ 301
+/servers/better-telegram-mcp/* /servers/telegram/:splat 301
 
 # skret installer + asset aliases (2026-09-24): skret.n24q02m.com and
 # tools.n24q02m.com 301 here before Pages _redirects can serve the files,

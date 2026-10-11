@@ -45,7 +45,7 @@ The consent never completed. In stdio, re-run the flow with `config(action="setu
 
 ## Docker container starts in HTTP mode when you wanted stdio
 
-The published image is built from the Dockerfile's `http` stage, so `MCP_TRANSPORT=http` and `PORT=8080` are baked in, and there is no separate `:stdio` tag. Override it on the run: `docker run -i --rm -e MCP_TRANSPORT=stdio n24q02m/better-workspace-mcp:beta`. See [setup](/servers/better-workspace-mcp/setup/).
+The published image is built from the Dockerfile's `http` stage, so `MCP_TRANSPORT=http` and `PORT=8080` are baked in, and there is no separate `:stdio` tag. Override it on the run: `docker run -i --rm -e MCP_TRANSPORT=stdio n24q02m/better-workspace-mcp:beta`. See [setup](/servers/workspace/setup/).
 
 ## Anyone can reach `/authorize` on my deployment
 
@@ -61,7 +61,7 @@ Set `MCP_RELAY_PASSWORD`. Without it, a public deployment lets anyone who discov
 
 ## Transport mismatch / duplicate entries in `/mcp`
 
-Claude Code matches MCP servers by **endpoint**, not by name. Installing the plugin *and* adding a Docker or HTTP override loads both. Pick one method and uninstall the other. See [setup](/servers/better-workspace-mcp/setup/).
+Claude Code matches MCP servers by **endpoint**, not by name. Installing the plugin *and* adding a Docker or HTTP override loads both. Pick one method and uninstall the other. See [setup](/servers/workspace/setup/).
 
 ## Filing a bug
 

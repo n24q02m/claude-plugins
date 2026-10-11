@@ -35,7 +35,7 @@ The `messages` actions `new`, `reply`, and `forward` accept at most 10 attachmen
 
 ## Transport mismatch / duplicate entries in `/mcp`
 
-Claude Code matches MCP servers by **endpoint**, not by name. Installing the plugin *and* adding a Docker/HTTP override loads both. Pick one method and uninstall the other. See [setup](/servers/better-email-mcp/setup/).
+Claude Code matches MCP servers by **endpoint**, not by name. Installing the plugin *and* adding a Docker/HTTP override loads both. Pick one method and uninstall the other. See [setup](/servers/email/setup/).
 
 ## Filing a bug
 

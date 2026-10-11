@@ -304,7 +304,7 @@ class TestHarnessAdapterSchema(unittest.TestCase):
             "id": "better-notion-mcp",
             "name": "Better Notion MCP",
             "version": "2.37.0-beta.3",
-            "source_ref": "plugins/better-notion-mcp",
+            "source_ref": "plugins/notion",
         }
         row.update(
             {

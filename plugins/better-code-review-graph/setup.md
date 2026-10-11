@@ -95,6 +95,8 @@ and key through the relay instead. See the [managed provider policy](/reference/
 | `EMBEDDING_API_BASE` | No | -- | Provider-compatible embedding endpoint or CF AI Gateway embedding URL; SSRF-guarded |
 | `LLM_API_BASE` | No | -- | Provider-compatible completion base URL or CF AI Gateway OpenRouter route; SSRF-guarded |
 | `OPENROUTER_API_KEY` | No | -- | Credential for explicitly selected `openrouter/` completion models |
+| `HULL_EMBED_API_KEY` | No | -- | Host-injected key for the `[models.embed]` cell transport (OpenRouter pre-wired default); overrides the cell `api_key`. The model name still comes from `EMBEDDING_MODELS` |
+| `HULL_CHAT_API_KEY` | No | -- | Host-injected key for the `[models.chat]` cell transport (OpenRouter pre-wired default); enables LLM summaries when the cell model is set |
 
 | `TRANSPORT_MODE` | No | `stdio` | Set to `http` to enable HTTP transport (multi-user). |
 | `PUBLIC_URL` | Yes (http) | -- | Server's public URL for relay form. |

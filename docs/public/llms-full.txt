@@ -49,15 +49,15 @@ Docs: https://mcp.n24q02m.com/servers/imagine-mcp/setup/
 
 ### better-telegram-mcp
 Telegram integration for AI agents over both the Bot API and MTProto (user client). Send and read messages, manage chats. Message content from other users is returned marked as untrusted external content.
-Docs: https://mcp.n24q02m.com/servers/better-telegram-mcp/setup/
+Docs: https://mcp.n24q02m.com/servers/telegram/setup/
 
 ### better-notion-mcp
 Markdown-first Notion API server: read and write pages and databases as Markdown rather than raw Notion block JSON. Page content is returned marked as untrusted external content.
-Docs: https://mcp.n24q02m.com/servers/better-notion-mcp/setup/
+Docs: https://mcp.n24q02m.com/servers/notion/setup/
 
 ### better-email-mcp
 Email over IMAP and SMTP with composite tools for reading, searching, and sending. Message content is returned marked as untrusted external content.
-Docs: https://mcp.n24q02m.com/servers/better-email-mcp/setup/
+Docs: https://mcp.n24q02m.com/servers/email/setup/
 
 ### better-godot-mcp
 Godot Engine integration for AI agents. Project file content is returned marked as untrusted external content.
@@ -65,7 +65,7 @@ Docs: https://mcp.n24q02m.com/servers/better-godot-mcp/setup/
 
 ### better-workspace-mcp
 Google Workspace — Docs, Drive, Calendar, Gmail, Sheets, Slides, Tasks, Chat, People, and Forms, as one composite tool per domain. Every tool takes an `account` parameter, so one server acts across several Google accounts. You supply your own Google OAuth client, so the consent screen and API quota stay on your project. Currently beta, and Apache-2.0 like the rest of the stack -- here because it vendors Apache-2.0 upstream code.
-Docs: https://mcp.n24q02m.com/servers/better-workspace-mcp/setup/
+Docs: https://mcp.n24q02m.com/servers/workspace/setup/
 
 ## Get started
 
