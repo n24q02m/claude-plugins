@@ -1,297 +1,201 @@
 # Mnemo MCP -- Manual Setup Guide
 
-## CLI-first (2026-09-13)
+mnemo is a self-hosted memory server. It speaks **Streamable HTTP only** on a single `/mcp` endpoint -- there is no stdio transport and no hosted public instance. You run one instance (locally or on a host you control) and point MCP clients at it.
 
-Repo is now `n24q02m/mnemo`. CLI-first: `mnemo --help` (capture, recall, reflect, fetch, standing-*). PyPI package stays `mnemo-mcp`; commands `mnemo`, `mnemo-mcp`, `mnemo-pilot` all work. MCP server is a secondary surface.
+The repo is `n24q02m/mnemo`; the PyPI package is `mnemo-mcp` and ships two commands:
 
-
-> **2026-05-02 Update**: Plugin install (Method 1) now uses pure stdio mode with local SQLite storage. No required env vars -- mnemo works out-of-box.
-> The previous "Zero-Config Relay" auto-spawn pattern has been removed.
-> Public local retrieval remains available without provider keys. Cloud models are configured explicitly; Google Drive sync is optional on non-CF hosts and disabled when `MEMORY_DB_BACKEND=cf-d1`.
+- `mnemo-mcp` -- a bare invocation starts the HTTP server; the subcommands `config-init`, `warmup`, `token-hash`, and `token-verify` run one operator action and exit.
+- `mnemo` -- a CLI over the memory database (`capture`, `recall`, `reflect`, `fetch`, `standing-*`, each taking `--db <path>`). It never starts a server.
 
 ## Method overview
 
-This plugin supports 3 install methods. Pick the one that matches your use case:
+| Method | What runs where | Best for |
+|---|---|---|
+| **1. Plugin + running instance** | Claude Code plugin (skills + hooks) connects to your instance via `MNEMO_URL` | Claude Code users who want the skills and hooks |
+| **2. Local server + `claude mcp add`** | `uvx --from mnemo-mcp mnemo-mcp` on your machine | Any MCP client, no plugin |
+| **3. docker compose (token auth)** | Always-on container, published on loopback | One instance shared across sessions and clients |
+| **4. Remote host** | Your instance behind a TLS proxy at `https://<your-host>/mcp` | Multi-device, claude.ai web, team use |
 
-| Priority | Method | Transport | Best for |
-|---|---|---|---|
-| **1. Default** | Plugin install (`uvx`/`npx`) | stdio | Quick local start, single workstation, no OAuth/HTTP needed. |
-| **2. Fallback** | Docker stdio (`docker run -i --rm`) | stdio | Windows/macOS where native uvx/npx hits PATH or Python version issues. |
-| **3. Recommended** | Docker HTTP (`docker run -p 8080:8080`) | HTTP | Multi-device, OAuth/relay-form auth, team self-host, claude.ai web compatibility. |
+Every method needs a running instance -- Method 1 only changes how Claude Code connects to it.
 
-All MCP servers across this stack share this priority hierarchy. Note: 2 plugins (`better-godot-mcp` and `better-code-review-graph`) default to **stdio via plugin install** and do not offer a hosted remote-relay/OAuth mode. They do ship Docker images (`:stdio` and `:http` targets) and support HTTP transport for self-hosting (`MCP_TRANSPORT=http` / `--http`), so Methods 2 and 3 are available as advanced self-host paths -- they are just not the default.
-
-> **⚠️ Mutually exclusive — pick ONE per plugin**: If you choose Method 2 (Docker stdio override) OR Method 3 (HTTP), do NOT also `/plugin install` this plugin via marketplace. Both load simultaneously and create duplicate entries in `/mcp` dialog (plugin's stdio + your override). Plugin matching is by **endpoint** (URL or command string) per CC docs, not by name — and `npx`/`uvx` ≠ `docker` ≠ HTTP URL, so all three are distinct endpoints. Trade-off: choosing Method 2 or Method 3 means you lose this plugin's skills/agents/hooks/commands. For full plugin features, use Method 1 (default plugin install) with `userConfig` credentials prompted at install time.
+> **Pick one registration per client.** Claude Code matches MCP servers by **endpoint** (URL), not by name. If you install the plugin (Method 1) *and* `claude mcp add` an entry for the same instance, both load and `/mcp` shows duplicates. With the plugin installed, set `MNEMO_URL` instead of adding a manual entry.
 
 ## Prerequisites
 
-- **Python 3.13** (3.14+ is NOT supported)
-- `uv` or `uvx` installed ([docs](https://docs.astral.sh/uv/getting-started/installation/))
-- Docker (optional, for containerized setup)
+- **Python 3.13** (3.14+ is not supported) and [`uv`](https://docs.astral.sh/uv/getting-started/installation/), for Methods 1, 2, and 4
+- Docker with Compose, for Method 3
 
-## Method 1: Claude Code Plugin (Recommended)
+## Start an instance
 
-Plugin marketplace install runs the server in **pure stdio mode**. mnemo works with **zero required env vars** -- it falls back to local SQLite + Fastretrieval's local model registry/runtime (ONNX embedding and reranking). Cloud providers and GDrive sync are optional.
+### Dev: `uvx` (no-auth, loopback only)
 
-### Credential prompts at install
+```bash
+uvx --from mnemo-mcp mnemo-mcp
+# MCP endpoint: http://127.0.0.1:8000/mcp
+```
 
-When you run `/plugin install`, Claude Code prompts you for the following credentials (declared in `userConfig` per CC docs). Sensitive values are stored in your system keychain and persist across `/plugin update`:
+With no config file the server binds `127.0.0.1:8000` with `auth = "no-auth"`. `no-auth` refuses any non-loopback bind, so this instance is localhost-only by construction. Override the bind with `MNEMO_HOST` / `MNEMO_PORT`.
 
-| Field | Required | Where to obtain |
-|---|---|---|
-| `JINA_AI_API_KEY` | Optional | https://jina.ai/api-key |
-| `GEMINI_API_KEY` | Optional | https://aistudio.google.com/apikey |
-| `OPENAI_API_KEY` | Optional | https://platform.openai.com/api-keys |
-| `COHERE_API_KEY` | Optional | https://dashboard.cohere.com/api-keys |
+To write a real config to edit:
 
-### Steps
+```bash
+uvx --from mnemo-mcp mnemo-mcp config-init   # writes ~/.mnemo/config.toml; --force overwrites
+```
 
-1. Open Claude Code in your terminal.
-2. Install the plugin (Claude Code prompts for `JINA_AI_API_KEY` -- press Enter to skip):
+### Always-on: docker compose
+
+Public container images are no longer published; build from source. In a clone of `n24q02m/mnemo`:
+
+```bash
+cp mnemo-config/config.example.toml mnemo-config/config.toml   # then edit, see "Instance config"
+docker compose -f docker-compose.http.yml up --build -d
+# MCP endpoint: http://127.0.0.1:8771/mcp   (change the host port with MNEMO_PORT=9000)
+```
+
+`docker-compose.http.yml` publishes only on `127.0.0.1`, keeps all state in the `mnemo-data` volume, and mounts `mnemo-config/config.toml` read-only. Inside the container the server binds `0.0.0.0`, so the config **must** use `auth = "token"` or `"multi"` -- `no-auth` refuses that bind. For `auth = "multi"`, also mount `users.toml` (the commented line in the compose file).
+
+To build the image without Compose: `docker build --target http .`
+
+## Instance config (`~/.mnemo/config.toml`)
+
+All auth and provider settings live in this host-owned file. MCP clients never see it.
+
+### `[server]` -- bind and auth
+
+| Key | Meaning |
+|---|---|
+| `host`, `port` | Bind address. `MNEMO_HOST` / `MNEMO_PORT` override them. |
+| `auth` | `no-auth` (loopback only), `token` (one shared Bearer token), or `multi` (per-user tokens and namespaces via `users.toml`) |
+| `token_hash` | `scrypt$...` hash of the shared token. There is no plaintext token field. |
+| `rpm` | Optional rate limit for shared mode |
+
+| `auth` | Bind allowed | Storage | Who can read the data |
+|---|---|---|---|
+| `no-auth` (default) | loopback only | `~/.mnemo/memories.db` | Only your OS user |
+| `token` | any | same, one shared namespace | Anyone holding the shared token |
+| `multi` | any | per-namespace `~/.mnemo/subs/<ns>/memories.db` | Each token holder sees only their own namespace |
+
+### Token setup (`auth = "token"`)
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"   # 1. mint a token
+MNEMO_AUTH_TOKEN=<token> uvx --from mnemo-mcp mnemo-mcp token-hash   # 2. print the scrypt$ hash
+```
+
+3. Paste the printed `scrypt$...` value into `token_hash` and restart the server.
+4. Give clients the **plaintext** token; they send it as `Authorization: Bearer <token>`. In a source checkout, `uv run mnemo-mcp token-hash` works the same way.
+
+`mnemo-mcp token-verify <token> <scrypt$...>` checks a token against a stored hash.
+
+### `[models.*]` -- provider cells
+
+Each task has its own independent cell with `base_url`, `api_key`, and `model`, spoken over OpenAI-compatible HTTP:
+
+| Cell | Used for |
+|---|---|
+| `[models.embed]` | Embedding vectors for semantic search |
+| `[models.rerank]` | Cross-encoder reranking of search results |
+| `[models.chat]` | LLM features: compression, consolidation, importance scoring |
+| `[models.jev_score]` | LLM-based scoring |
+
+- OpenRouter is pre-wired as the default `base_url`. Any OpenAI-compatible endpoint works, cloud or local, and the cells can be mixed (for example a cloud `chat` cell with local `embed`/`rerank`).
+- `mnemo-config/config.example.toml` in the repo shows a complete set of example cells. Choose the models yourself; the example values are not a recommendation.
+- `api_key` may be left empty in the file and supplied by env instead: `HULL_EMBED_API_KEY`, `HULL_RERANK_API_KEY`, `HULL_CHAT_API_KEY`, `HULL_JEV_SCORE_API_KEY`. These are host-only.
+- With no `embed`/`rerank` cell, mnemo falls back to the local Fastretrieval ONNX models (downloaded on first use, ~570 MB). An unconfigured cell never silently selects a paid provider. `consolidate_memories` returns an error naming the missing cell when `[models.chat]` is not configured.
+
+### Changing the embedding model
+
+Vectors from one embedding model cannot be searched with another. After changing the `[models.embed]` model, start the server once with `REINDEX_ON_MODEL_CHANGE=true` to rebuild the vectors, then run `config(action="backfill_embeddings")` for any memory still missing one.
+
+## Method 1: Claude Code plugin
+
+The plugin installs the mnemo skills (`recall-context`, `memory-commit`, `knowledge-audit`, `session-handoff`, `temporal-query`) and hooks, and registers an HTTP MCP entry pointing at your instance.
+
+1. Start an instance (see above) and note its endpoint.
+2. Install the plugin:
    ```bash
    /plugin marketplace add n24q02m/claude-plugins
    /plugin install mnemo-mcp@n24q02m-plugins
    ```
-3. Restart Claude Code.
+3. Answer the install prompts (stored by Claude Code; sensitive values go to the system keychain and persist across `/plugin update`):
 
-> **Note**: This installs the full plugin (skills + agents + hooks + commands + stdio MCP server). If you'd rather use Method 2 (Docker stdio) or Method 3 (HTTP) below, DO NOT `/plugin install` this plugin — pick Method 2 or Method 3 instead. All three methods are mutually exclusive (see Method overview).
+   | Field | Required | Value |
+   |---|---|---|
+   | `MNEMO_URL` | Optional | Streamable HTTP endpoint of your instance, e.g. `http://127.0.0.1:8000/mcp` (uvx) or `http://127.0.0.1:8771/mcp` (compose) |
+   | `MNEMO_TOKEN` | Optional | The plaintext token for `auth = "token"` / `"multi"`; leave empty for a loopback `no-auth` instance |
 
-## Method 2: Docker stdio (fallback)
+   Without `MNEMO_URL` the skills and hooks still install, but the MCP entry has no endpoint and its tools do not connect.
+4. Restart Claude Code and check `/mcp`.
 
-> **⚠️ Before adding the Docker stdio override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall mnemo-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's `npx`/`uvx` stdio + your `docker run` stdio) will load simultaneously since plugin matches by endpoint (command string), not by name.
->
-> **Trade-off accepted**: Choosing this method means you lose this plugin's skills/agents/hooks/commands. Use Method 1 instead if you want full plugin features.
+Hooks: a SessionStart hook nudges `recall-context` on every session. The PostToolUse hook that hints `memory-commit` after edits to `CLAUDE.md` / `AGENTS.md` / docs is opt-in via `CAPTURE_AUTO_ENABLED=true`.
 
-1. Pull the image:
-   ```bash
-   docker pull n24q02m/mnemo-mcp:latest
-   ```
-
-2. Run with optional environment variables:
-   ```bash
-   docker run -i --rm \
-     --name mcp-mnemo \
-     -v mnemo-data:/data \
-     -e JINA_AI_API_KEY=your_key_here \
-     -e GEMINI_API_KEY=your_key_here \
-     n24q02m/mnemo-mcp:latest
-   ```
-
-3. Or add to your MCP client config:
-   ```json
-   {
-     "mcpServers": {
-       "mnemo": {
-         "command": "docker",
-         "args": [
-           "run", "-i", "--rm",
-           "--name", "mcp-mnemo",
-           "-v", "mnemo-data:/data",
-           "-e", "JINA_AI_API_KEY",
-           "-e", "GEMINI_API_KEY",
-           "n24q02m/mnemo-mcp:latest"
-         ]
-       }
-     }
-   }
-   ```
-
-## Why upgrade to HTTP mode?
-
-Stdio is the default and works fine for single-user local setups. You may want to switch to HTTP mode (Method 3 self-host) when you need any of the following:
-
-- **claude.ai web compatibility** -- claude.ai (the web UI) supports HTTP MCP servers but cannot spawn local stdio processes.
-- **One server shared across N Claude Code sessions** -- a single HTTP instance serves multiple terminals/IDEs without re-spawning per session, sharing the same memory database.
-- **Optional non-CF GDrive OAuth** -- eligible self-hosted servers can complete Google consent in the browser; CF-backed memory storage disables this redundant sync path.
-- **Multi-device credential sync** -- configure cloud API keys / GDrive once, the server uses them for any device/session that connects.
-- **Multi-user team sharing** -- a self-hosted server can serve multiple memory databases, each isolated per JWT-sub.
-- **Always-on persistent process for webhooks/agents** -- HTTP servers stay alive between sessions, enabling background sync, scheduled archive runs, or background memory consolidation.
-
-## Method 3: Docker HTTP (recommended)
-
-> **⚠️ Before adding the HTTP override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall mnemo-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's stdio + your HTTP override) will load simultaneously since plugin matches by endpoint, not name.
->
-> **Trade-off accepted**: Choosing this method means you lose this plugin's skills/agents/hooks/commands. For example, the `mnemo-mcp:knowledge-audit` skill will no longer be available. Use Method 1 instead if you want full plugin features.
-
-> **Switching transport vs. setting credentials**: The `userConfig` prompt only configures credentials for stdio mode (Method 1 / Option 1). To switch transport to HTTP, override `mcpServers` in your client settings per the snippets below -- this is a separate path from `userConfig` and is not driven by the install prompt.
-
-### Self-host with docker-compose
-
-Host your own multi-user mnemo server. Always-multi-user (per-JWT-sub credential isolation) -- a single multi-user mode, no `MCP_MODE` selector. Google Drive OAuth uses a **bundled Desktop OAuth public client** (same pattern as `wet-mcp`); no separate Google Cloud Console registration is required.
-
-When `MEMORY_DB_BACKEND=cf-d1`, redundant synchronization is disabled regardless
-of stale `SYNC_ENABLED` or S3 bucket values. Do not start the Drive wizard,
-device-code flow, direct OAuth, startup auto-sync, or manual sync on that host.
-This leaves explicitly enabled non-CF Google Drive synchronization available.
-
-### Required Env
-
-| Variable | Description |
-|:---------|:------------|
-| `TRANSPORT_MODE=http` | Selects HTTP transport. |
-| `PUBLIC_URL` | Public URL of your server (e.g. `https://your-domain.com`). Used for OAuth redirects and the `/authorize` setup page. |
-| `MCP_DCR_SERVER_SECRET` | HMAC secret for stateless Dynamic Client Registration. Generate via `openssl rand -hex 32`. |
-| `MCP_PORT` | (optional, default `8080`) Server port. |
-
-### Optional Env (per-deployment defaults)
-
-| Variable | Description |
-|:---------|:------------|
-| `JINA_AI_API_KEY` / `GEMINI_API_KEY` / `OPENAI_API_KEY` / `COHERE_API_KEY` | Default cloud API keys for the deployment (per-user values can override via the relay form). |
-| `SYNC_ENABLED=true` | Enable sync on eligible non-CF hosts; ignored by the disabled sync backend when `MEMORY_DB_BACKEND=cf-d1`. |
-
-### Edge auth: relay password
-
-Public HTTP deployments expose `<your-domain>/authorize` to URL discovery. To prevent random Internet users from accessing the relay form, mint a relay password:
+## Method 2: local server + `claude mcp add`
 
 ```bash
-openssl rand -hex 32
-# Save in your skret / .env as:
-MCP_RELAY_PASSWORD=<generated-32-byte-hex>
+uvx --from mnemo-mcp mnemo-mcp
+claude mcp add --transport http mnemo http://127.0.0.1:8000/mcp
 ```
 
-Share this password out-of-band (Signal/email/SMS) with anyone you invite to use your server. They will see a login form when first opening `/authorize`; once logged in, the cookie persists 24 hours.
+For a token-auth instance, add `--header "Authorization: Bearer <token>"`. Other clients (Codex, Gemini CLI, Cursor, Windsurf) register the same URL in their MCP settings:
 
-**Single-user dev exception**: If `PUBLIC_URL=http://localhost:8080`, you can leave `MCP_RELAY_PASSWORD` empty to disable the gate. The server logs a warning if you skip the password with a non-localhost `PUBLIC_URL`.
-
-### Run the Server
-
-```bash
-docker run -p 8080:8080 \
-  -e TRANSPORT_MODE=http \
-  -e PUBLIC_URL=https://your-domain.com \
-  -e MCP_DCR_SERVER_SECRET=$(openssl rand -hex 32) \
-  -v mnemo-data:/data \
-  n24q02m/mnemo-mcp:latest
-```
-
-Point clients to your server:
 ```json
 {
   "mcpServers": {
     "mnemo": {
       "type": "http",
-      "url": "https://your-domain.com/mcp"
+      "url": "http://127.0.0.1:8000/mcp",
+      "headers": { "Authorization": "Bearer <token>" }
     }
   }
 }
 ```
 
-### Browser Setup Flow
+Drop `headers` for a `no-auth` instance.
 
-1. On first tool call from a new client, the server returns a setup URL: `https://your-domain.com/authorize?session=<sid>`.
-2. Open the URL in a browser.
-3. Fill the relay form:
-   - Model selections, provider API bases, and matching keys for the current subject. Follow the [managed Minimax-free / paid Cohere policy](/reference/relay-flow/#managed-cloudflare-model-configuration) where applicable.
-   - Optional **Google Drive sync** on an eligible non-CF host -- complete Google consent only when synchronization was explicitly enabled.
-4. Submit. Credentials are encrypted and stored per JWT-sub at `~/.mnemo-mcp/subs/<sub>/`.
-5. Retry the tool call -- it now succeeds with your config.
+## Method 3: docker compose
 
-## Credential Setup
+Start the compose stack (see "Always-on" above), then register `http://127.0.0.1:8771/mcp` with the Bearer header -- through the plugin's `MNEMO_URL` / `MNEMO_TOKEN`, or with `claude mcp add` as in Method 2.
 
-### Option A: Environment Variables (Stdio Mode)
+## Method 4: remote host
 
-Set API keys in your shell profile or MCP client settings:
+Run the instance on a reachable host with `auth = "token"` or `"multi"`, and front it with a TLS proxy of your choice (the server itself serves plain HTTP). Clients use `https://<your-host>/mcp`:
 
 ```bash
-export EMBEDDING_MODELS="cohere/embed-v4.0"
-export COHERE_API_KEY="<your-provider-key>"
+claude mcp add --transport http mnemo https://<your-host>/mcp --header "Authorization: Bearer <token>"
 ```
 
-Cohere calls are paid; obtain explicit spending authorization with a cap before
-using this configuration. Managed HTTP configuration belongs in the subject's
-relay, including the Cloudflare AI Gateway API base, not in the user's OMP
-model/profile settings.
+claude.ai web and other remote clients connect the same way.
 
-### Option B: Relay Form (HTTP Mode)
+## Backup and migration
 
-Use HTTP mode (Method 3 self-host) and complete the form in the browser. No env vars needed beyond the HTTP server's required env (`TRANSPORT_MODE`, `PUBLIC_URL`, `MCP_DCR_SERVER_SECRET`).
+All state is one SQLite (WAL) database plus `config.toml` under `~/.mnemo/` (under `/data/.mnemo/` in the container). The server has no embedded sync; back up or move the directory with `rclone` or any file tool while the server is stopped, or use `export_memories` / `import_memories`.
 
-### Sync Setup (Optional)
+## Environment variables
 
-On eligible non-CF hosts, to sync memories across machines:
-
-- **Stdio mode**: Set `SYNC_ENABLED=true` and provide a Google Drive OAuth token at `~/.mnemo-mcp/tokens/google_drive.json` (chmod 600). Manual token creation required.
-- **HTTP mode**: Set `SYNC_ENABLED=true` on the server, use the relay form's "Connect Google Drive" button -- the bundled Desktop OAuth client completes the flow in your browser.
-
-For S3-compatible storage (R2 / B2 / MinIO) instead of Google Drive, set `SYNC_S3_BUCKET` (plus `SYNC_S3_ENDPOINT` / `SYNC_S3_ACCESS_KEY_ID` / `SYNC_S3_SECRET_ACCESS_KEY` as needed) -- the backend auto-resolves to S3 when a bucket is set. Sync is native (Google Drive API or S3); no rclone is involved.
-
-For `MEMORY_DB_BACKEND=cf-d1`, these Google Drive/S3 sync instructions do not
-apply: the backend is disabled, even if old sync settings are still present.
-
-## Environment Variable Reference
-
-Local stdio needs no provider API keys. HTTP, cloud models, and optional sync have their own requirements. See the [agent setup reference](/servers/mnemo-mcp/setup-with-agent/#environment-variables) for the complete table.
-
-### Key Variables
+Most settings live in `config.toml`. The server also reads:
 
 | Variable | Default | Description |
-|:---------|:--------|:------------|
-| `JINA_AI_API_KEY` | -- | Jina AI: embedding + reranking (highest priority) |
-| `GEMINI_API_KEY` | -- | Gemini: LLM + embedding (free tier) |
-| `GOOGLE_VERTEX_EXPRESS_API_KEY` | -- | Vertex AI Express: Gemini via API key, no Service Account. Get it at https://cloud.google.com/vertex-ai/generative-ai/docs/start/express-mode/overview |
-| `OPENAI_API_KEY` | -- | OpenAI: LLM + embedding |
-| `ANTHROPIC_API_KEY` | -- | Anthropic: LLM dispatch (Phase 1 multi-provider auto-detect) |
-| `XAI_API_KEY` | -- | xAI/Grok: LLM dispatch (Phase 1 multi-provider auto-detect) |
-| `COHERE_API_KEY` | -- | Cohere: embedding + reranking |
-| `EMBEDDING_MODELS` | -- | Ordered CSV embedding model chain (`provider/model,...`); empty resolves Fastretrieval's local ONNX model manifest |
-| `RERANK_MODELS` | -- | Ordered CSV rerank model chain (`provider/model,...`); empty resolves Fastretrieval's local ONNX cross-encoder manifest |
-| `EMBEDDING_DIMS` | `0` (auto) | Embedding dimensions; custom local models may require `LOCAL_EMBEDDING_DIM` |
-| `LOCAL_EMBEDDING_MODEL` | -- | Optional BYO local embedding model ID; empty uses Fastretrieval's bundled model manifest |
-| `LOCAL_EMBEDDING_DIM` | `0` | Required for a BYO local embedding when its model manifest does not provide dimensions |
-| `LOCAL_EMBEDDING_POOLING` | `MEAN` | Pooling for a BYO local embedding (`MEAN`, `CLS`, `LAST_TOKEN`, or `DISABLED`) |
-| `LOCAL_EMBEDDING_NORMALIZE` | `true` | Normalize BYO local embedding outputs |
-| `LOCAL_RERANK_MODEL` | -- | Optional BYO local reranker model ID; empty uses Fastretrieval's bundled model manifest |
-| `LOCAL_RERANK_MODEL_FILE` | `onnx/model.onnx` | ONNX file path for a BYO local reranker |
-| `LLM_MODELS` | -- | Ordered CSV LLM model chain (`provider/model,...`); empty leaves optional LLM features disabled |
-| `DB_PATH` | `~/.mnemo-mcp/memories.db` | Database location |
-| `DEDUP_THRESHOLD` | `0.9` | Embedding similarity threshold for capture dedup short-circuit (Phase 1) |
-| `RECENCY_HALF_LIFE_DAYS` | `7` | Temporal decay half-life for retrieval scoring (Phase 1 RRF + rerank) |
-| `ARCHIVE_AFTER_DAYS` | `90` | Soft-archive threshold via importance × recency policy (Phase 1) |
-| `ARCHIVE_TRIGGER_EVERY` | `100` | Auto-archive sweep on every N captures (Phase 1) |
-| `CAPTURE_AUTO_ENABLED` | `false` | Opt-in PostToolUse hook for auto-capture on Write/Edit (Phase 1 plugin trinity) |
-| `RERANK_ENABLED` | `true` | Toggle cross-encoder rerank chain (local → Jina → Cohere) |
-| `SYNC_ENABLED` | `true` | Enable Google Drive sync |
+|---|---|---|
+| `MNEMO_HOST` / `MNEMO_PORT` | from `[server]` | Override the bind address |
+| `MNEMO_AUTH_TOKEN` | -- | Token read by `mnemo-mcp token-hash` |
+| `HULL_EMBED_API_KEY` / `HULL_RERANK_API_KEY` / `HULL_CHAT_API_KEY` / `HULL_JEV_SCORE_API_KEY` | -- | `api_key` for the matching `[models.*]` cell |
+| `DB_PATH` / `MNEMO_DB_PATH` | `~/.mnemo/memories.db` | Database location |
+| `REINDEX_ON_MODEL_CHANGE` | `false` | One-shot vector rebuild after changing the embedding model |
+| `RERANK_ENABLED` | `true` | Toggle reranking |
+| `RERANK_TOP_N` | `10` | Results kept after reranking |
+| `DEDUP_THRESHOLD` | `0.9` | Similarity above which a capture is treated as a duplicate |
+| `DEDUP_WARN_THRESHOLD` | `0.7` | Similarity above which a capture warns about a near-duplicate |
+| `RECENCY_HALF_LIFE_DAYS` | `7` | Half-life for temporal decay in search scoring |
+| `ARCHIVE_ENABLED` | `true` | Auto-archive old, low-importance memories |
+| `ARCHIVE_AFTER_DAYS` | `90` | Age before a memory is eligible for auto-archive |
+| `ARCHIVE_IMPORTANCE_THRESHOLD` | `0.3` | Memories below this importance are auto-archived |
+| `ARCHIVE_TRIGGER_EVERY` | `100` | Run the archive sweep every N captures |
+| `COMPRESSION_ENABLED` | `true` | LLM compression on capture (needs `[models.chat]`) |
+| `KG_AUTO_ENABLED` | `false` | Auto-extract entities into the knowledge graph on capture |
 | `LOG_LEVEL` | `INFO` | Logging level |
 
-### Provider Priority
-
-- **Embedding**: use the ordered `EMBEDDING_MODELS` chain; an empty chain resolves Fastretrieval's local ONNX model manifest, while a non-empty chain selects cloud providers in the listed order.
-- **Reranking**: use the ordered `RERANK_MODELS` chain; an empty chain resolves Fastretrieval's local ONNX cross-encoder manifest, while a non-empty chain selects cloud providers in the listed order.
-- **LLM**: use the ordered `LLM_MODELS` chain; an empty chain leaves optional LLM features disabled.
-- **Legacy aliases**: `EMBEDDING_BACKEND`, `EMBEDDING_MODEL`, `RERANK_BACKEND`, and `RERANK_MODEL` are deprecated and honored for one release. Use the plural model chains instead.
+`CAPTURE_AUTO_ENABLED=true` is read by the plugin's PostToolUse hook, not by the server.
 
 ## Troubleshooting
 
-### First run takes a long time
-
-On first start, the server downloads the ONNX embedding model (~570MB). Use the warmup command to pre-download:
-
-```
-config(action="warmup")
-```
-
-### Database locked errors
-
-If you see SQLite database locked errors, ensure only one instance of mnemo-mcp is running. Check for orphaned processes:
-
-```bash
-# Linux/macOS
-ps aux | grep mnemo-mcp
-
-# Windows
-tasklist | findstr mnemo
-```
-
-### Sync conflicts
-
-Sync uses JSONL-based merge strategy. If conflicts occur, the most recent version wins. You can export/import memories manually:
-
-```
-memory(action="export")
-memory(action="import", file_path="/path/to/memories.jsonl")
-```
-
-### Embedding model download fails
-
-If ONNX model download fails behind a proxy, use cloud embedding instead by setting any API key (e.g., `GEMINI_API_KEY`).
+See the [troubleshooting page](/servers/mnemo-mcp/troubleshooting/).
