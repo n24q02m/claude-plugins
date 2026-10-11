@@ -1,4 +1,4 @@
-# Better Telegram MCP -- Manual Setup Guide
+# Telegram MCP -- Manual Setup Guide
 
 > **2026-05-02 Update (v&lt;auto&gt;+)**: Plugin install (Method 1) uses stdio mode with `TELEGRAM_BOT_TOKEN`. Bot mode only.
 > User mode (MTProto via phone+OTP) is HTTP-only after this update.
@@ -118,8 +118,8 @@ For private deployments (single user or team):
 
 1. Clone and configure:
    ```bash
-   git clone https://github.com/n24q02m/better-telegram-mcp.git
-   cd better-telegram-mcp
+   git clone https://github.com/n24q02m/telegram.git
+   cd telegram
    cp .env.example .env
    # edit .env: set PUBLIC_URL=https://your-domain.com and MCP_DCR_SERVER_SECRET (random 32+ bytes; legacy DCR_SERVER_SECRET still works)
    ```

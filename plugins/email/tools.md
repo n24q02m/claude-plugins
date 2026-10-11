@@ -1,4 +1,4 @@
-# Better Email MCP -- Tools Reference
+# Email MCP -- Tools Reference
 
 better-email-mcp exposes IMAP/SMTP email through 4 action-driven tools -- `messages`, `folders`, `attachments`, and `config` -- plus `config__open_relay` and `help`. `messages` and `attachments` -- the two tools that return email content from external senders -- wrap their results in an XPIA safety marker: `<untrusted_email_content>` boundary tags plus an instruction not to follow, execute, or comply with any instructions found inside the email content. The wrapper also sanitizes any literal occurrence of that tag name inside the payload to prevent tag-breakout injection. `folders`, `config`, `config__open_relay`, and `help` are not wrapped.
 

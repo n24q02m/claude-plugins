@@ -1,8 +1,8 @@
-# Better Workspace MCP -- Agent Setup Guide
+# Workspace MCP -- Agent Setup Guide
 
 > Give this file to your AI agent to set up better-workspace-mcp.
 
-Google Workspace over MCP: 11 composite tools (`docs`, `drive`, `calendar`, `gmail`, `sheets`, `slides`, `tasks`, `chat`, `people`, `forms`, `time`) plus `config` and `help`. Choose artifacts from the [published releases](https://github.com/n24q02m/better-workspace-mcp/releases); replace `<version>` in Docker examples with a published image version. HTTP examples configure your own endpoint, not an assumed hosted deployment.
+Google Workspace over MCP: 11 composite tools (`docs`, `drive`, `calendar`, `gmail`, `sheets`, `slides`, `tasks`, `chat`, `people`, `forms`, `time`) plus `config` and `help`. Choose artifacts from the [published releases](https://github.com/n24q02m/workspace/releases); replace `<version>` in Docker examples with a published image version. HTTP examples configure your own endpoint, not an assumed hosted deployment.
 
 ## Prerequisite: a Google OAuth client
 

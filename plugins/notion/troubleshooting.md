@@ -1,4 +1,4 @@
-# Better Notion MCP -- Troubleshooting
+# Notion MCP -- Troubleshooting
 
 Common issues specific to better-notion-mcp. For daemon, lock-file, and general relay problems shared across the stack, see the [general troubleshooting guide](/get-started/troubleshooting/).
 
@@ -35,4 +35,4 @@ Claude Code matches MCP servers by **endpoint**, not by name. Installing the plu
 
 ## Filing a bug
 
-Open an issue on [n24q02m/better-notion-mcp](https://github.com/n24q02m/better-notion-mcp) with your OS, server version, transport mode, and the last 50 lines of stderr.
+Open an issue on [n24q02m/notion](https://github.com/n24q02m/notion) with your OS, server version, transport mode, and the last 50 lines of stderr.

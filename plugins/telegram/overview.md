@@ -1,4 +1,4 @@
-# Better Telegram MCP -- Overview
+# Telegram MCP -- Overview
 
 Telegram access for AI agents in both Bot API and MTProto (user) modes -- messages, chats, media, and contacts through a small set of composite tools.
 

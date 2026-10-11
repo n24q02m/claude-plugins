@@ -1,4 +1,4 @@
-# Better Workspace MCP -- Tools Reference
+# Workspace MCP -- Tools Reference
 
 better-workspace-mcp exposes Google Workspace through 11 composite tools driven by an `action` parameter, plus `config` (credential and account management) and `help`. That is the N+2 layout every server in this stack follows: one tool per domain, never one tool per API call.
 

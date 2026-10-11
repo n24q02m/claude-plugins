@@ -1,4 +1,4 @@
-# Better Notion MCP -- Overview
+# Notion MCP -- Overview
 
 Markdown-first access to a Notion workspace for AI agents. Read and write pages and databases as Markdown instead of wrestling with raw Notion block JSON, with roughly 95% API coverage in a curated composite tool set.
 

@@ -1,6 +1,6 @@
-# Better Workspace MCP -- Manual Setup Guide
+# Workspace MCP -- Manual Setup Guide
 
-> Choose a version from the [published releases](https://github.com/n24q02m/better-workspace-mcp/releases). The examples below configure your own HTTP endpoint; they do not assume an owner-hosted instance. Replace `<version>` in Docker examples with a published image version.
+> Choose a version from the [published releases](https://github.com/n24q02m/workspace/releases). The examples below configure your own HTTP endpoint; they do not assume an owner-hosted instance. Replace `<version>` in Docker examples with a published image version.
 
 ## Method overview
 

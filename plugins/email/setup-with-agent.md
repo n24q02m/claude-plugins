@@ -1,4 +1,4 @@
-# Better Email MCP -- Agent Setup Guide
+# Email MCP -- Agent Setup Guide
 
 > **2026-05-02 Update (v&lt;auto&gt;+)**: Plugin install (Option 1) uses stdio mode with `EMAIL_PROVIDER` + `EMAIL_USER` + `EMAIL_APP_PASSWORD` env vars.
 > The previous "Zero-Config Relay" auto-spawn pattern has been removed.
