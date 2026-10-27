@@ -1,6 +1,6 @@
 {
-  "name": "better-workspace-mcp",
-  "version": "0.5.0",
+  "name": "workspace",
+  "version": "0.6.0",
   "description": "Google Workspace MCP server — Docs/Drive/Calendar/Gmail/Sheets/Slides/Tasks/Chat/People/Forms + multi-account",
   "userConfig": {
     "GOOGLE_OAUTH_CLIENT_ID": {
@@ -22,11 +22,11 @@
     "name": "n24q02m",
     "url": "https://github.com/n24q02m"
   },
-  "homepage": "https://github.com/n24q02m/better-workspace-mcp",
+  "homepage": "https://github.com/n24q02m/workspace",
   "mcpServers": {
-    "better-workspace-mcp": {
+    "workspace": {
       "command": "npx",
-      "args": ["--yes", "@n24q02m/better-workspace-mcp@latest"],
+      "args": ["--yes", "@n24q02m/workspace@latest"],
       "env": {
         "MCP_TRANSPORT": "stdio",
         "GOOGLE_OAUTH_CLIENT_ID": "${user_config.GOOGLE_OAUTH_CLIENT_ID}",
