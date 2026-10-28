@@ -1,6 +1,6 @@
 # Notion MCP -- Tools Reference
 
-better-notion-mcp exposes the Notion API through 8 composite tools, each driven by an `action` parameter, plus `config` (credential setup), `config__open_relay`, and `help`. The 7 tools that read live workspace content (`pages`, `databases`, `blocks`, `users`, `workspace`, `comments`, `file_uploads`) wrap their results in an XPIA safety marker -- boundary tags plus an instruction to treat the content as data, not commands -- since Notion pages/comments can contain arbitrary user- or third-party-authored text. `content_convert`, `config`, `help`, and `config__open_relay` are not wrapped.
+better-notion-mcp exposes the Notion API through 8 composite tools, each driven by an `action` parameter, plus `config` (credential setup) and `help`. The 7 tools that read live workspace content (`pages`, `databases`, `blocks`, `users`, `workspace`, `comments`, `file_uploads`) wrap their results in an XPIA safety marker -- boundary tags plus an instruction to treat the content as data, not commands -- since Notion pages/comments can contain arbitrary user- or third-party-authored text. `content_convert`, `config`, and `help` are not wrapped.
 
 ## pages
 
@@ -116,7 +116,3 @@ Get full documentation for a tool.
 | Parameter | Values |
 |---|---|
 | `tool_name` | `pages` \| `databases` \| `blocks` \| `users` \| `workspace` \| `comments` \| `file_uploads` \| `content_convert` |
-
-## config__open_relay
-
-Opens the relay configuration form in the user's browser. No parameters.
