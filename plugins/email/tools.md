@@ -1,6 +1,6 @@
 # Email MCP -- Tools Reference
 
-better-email-mcp exposes IMAP/SMTP email through 4 action-driven tools -- `messages`, `folders`, `attachments`, and `config` -- plus `config__open_relay` and `help`. `messages` and `attachments` -- the two tools that return email content from external senders -- wrap their results in an XPIA safety marker: `<untrusted_email_content>` boundary tags plus an instruction not to follow, execute, or comply with any instructions found inside the email content. The wrapper also sanitizes any literal occurrence of that tag name inside the payload to prevent tag-breakout injection. `folders`, `config`, `config__open_relay`, and `help` are not wrapped.
+better-email-mcp exposes IMAP/SMTP email through 4 action-driven tools -- `messages`, `folders`, `attachments`, and `config` -- plus `help`. `messages` and `attachments` -- the two tools that return email content from external senders -- wrap their results in an XPIA safety marker: `<untrusted_email_content>` boundary tags plus an instruction not to follow, execute, or comply with any instructions found inside the email content. The wrapper also sanitizes any literal occurrence of that tag name inside the payload to prevent tag-breakout injection. `folders`, `config`, and `help` are not wrapped.
 
 ## messages
 
@@ -61,7 +61,3 @@ Get full documentation for a tool.
 | Parameter | Values |
 |---|---|
 | `tool_name` | `messages` \| `folders` \| `attachments` \| `config` \| `help` |
-
-## config__open_relay
-
-Opens the relay configuration form (`/authorize`) in the user's browser and returns the relay URL, whether the browser launched, and the credential state. No parameters.
