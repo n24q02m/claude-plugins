@@ -12,7 +12,7 @@ This plugin supports 3 install methods. Pick the one that matches your use case:
 |---|---|---|---|
 | **1. Default** | Plugin install (`uvx`/`npx`) | stdio | Quick local start, single workstation, no OAuth/HTTP needed. |
 | **2. Fallback** | Docker stdio (`docker run -i --rm`) | stdio | Windows/macOS where native uvx/npx hits PATH or Python version issues. |
-| **3. Recommended** | Docker HTTP (`docker run -p 8080:8080`) | HTTP | Multi-device, OAuth/relay-form auth, team self-host, claude.ai web compatibility. |
+| **3. Recommended** | Docker HTTP (`docker run -p 8080:8080`) | HTTP | Multi-device, OAuth/web-form auth, team self-host, claude.ai web compatibility. |
 
 All MCP servers across this stack share this priority hierarchy. Note: 2 plugins (`better-godot-mcp` and `better-code-review-graph`) default to **stdio via plugin install** and do not offer a hosted remote-relay/OAuth mode. They do ship Docker images (`:stdio` and `:http` targets) and support HTTP transport for self-hosting (`MCP_TRANSPORT=http` / `--http`), so Methods 2 and 3 are available as advanced self-host paths -- they are just not the default.
 
@@ -35,7 +35,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 
 | Field | Required | Where to obtain |
 |---|---|---|
-| `TELEGRAM_BOT_TOKEN` | Optional (required for stdio bot mode) | From @BotFather. Note: HTTP user-mode (phone+OTP) is configured via relay form at `/authorize`, not via plugin install prompt. |
+| `TELEGRAM_BOT_TOKEN` | Optional (required for stdio bot mode) | From @BotFather. Note: HTTP user-mode (phone+OTP) is configured via setup form at `/authorize`, not via plugin install prompt. |
 
 ### Steps
 
@@ -124,7 +124,7 @@ For private deployments (single user or team):
    # edit .env: set PUBLIC_URL=https://your-domain.com and MCP_DCR_SERVER_SECRET (random 32+ bytes; legacy DCR_SERVER_SECRET still works)
    ```
 
-2. Bundled Telegram dev credentials (`api_id=37984984`, `api_hash=2f5f4c76c4de7c07302380c788390100`) are baked into the image -- you do **not** need to register at my.telegram.org. Each user authenticates through the relay form by entering their own phone number and OTP code.
+2. Bundled Telegram dev credentials are baked into the image -- you do **not** need to register at my.telegram.org. Each user authenticates through the setup form by entering their own phone number and OTP code.
 
 3. Start the server (Docker compose recommended):
    ```bash
@@ -143,7 +143,7 @@ For private deployments (single user or team):
    }
    ```
 
-   The client registers a public DCR client at `/register`, then opens `/authorize` to fill the Telegram relay form. The form supports both modes:
+   The client registers a public DCR client at `/register`, then opens `/authorize` to fill the Telegram setup form. The form supports both modes:
 
    - **Bot mode** -- paste your bot token from [@BotFather](https://t.me/BotFather)
    - **User mode** -- enter your phone number, then the OTP code Telegram sends to your Telegram app, then your 2FA password if enabled
@@ -178,7 +178,7 @@ Share this password out-of-band (Signal/email/SMS) with anyone you invite to use
 
 ### HTTP Mode (Bot + User)
 
-HTTP mode credentials are entered via the browser-based relay form, not env vars. Server-side env vars for self-hosting:
+HTTP mode credentials are entered via the browser-based setup form, not env vars. Server-side env vars for self-hosting:
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
@@ -187,7 +187,7 @@ HTTP mode credentials are entered via the browser-based relay form, not env vars
 | `HOST` | Self-host | `0.0.0.0` | Bind address |
 | `PORT` | Self-host | `8080` | HTTP port |
 
-The bundled Telegram dev `api_id` (`37984984`) and `api_hash` (`2f5f4c76c4de7c07302380c788390100`) are public dev credentials baked into the source.
+
 
 ## Troubleshooting
 
@@ -209,7 +209,7 @@ The OTP code is sent to the **Telegram app** as a message from "Telegram" servic
 
 ### Session expired (HTTP user mode)
 
-Re-run the `/authorize` flow on the HTTP server -- the relay form will prompt for phone+OTP again.
+Re-run the `/authorize` flow on the HTTP server -- the setup form will prompt for phone+OTP again.
 
 ### 2FA password prompt
 
