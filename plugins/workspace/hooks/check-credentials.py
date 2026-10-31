@@ -15,7 +15,7 @@ import sys
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
-from mcp_common import is_relay_configured, read_mcp_hook_input
+from mcp_common import read_mcp_hook_input
 
 SERVER_NAME = "better-workspace-mcp"
 CREDENTIAL_KEYS = ["GOOGLE_OAUTH_CLIENT_ID"]
@@ -26,7 +26,7 @@ def _is_configured() -> bool:
     for k in CREDENTIAL_KEYS:
         if os.environ.get(k):
             return True
-    return is_relay_configured()
+    return False
 
 
 def main() -> None:
