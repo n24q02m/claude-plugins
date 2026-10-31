@@ -23,11 +23,8 @@ on:
           - better-notion-mcp
           - email
           - better-email-mcp
-          - better-godot-mcp
-          - imagine-mcp
           - workspace
           - better-workspace-mcp
-          - agent-chat-plugin
           - mcp-core
       tag:
         description: "Release tag (e.g., v2.18.1)"
@@ -109,7 +106,7 @@ jobs:
           }
 
           case "$REPO" in
-            wet|wet-mcp|mnemo|mnemo-mcp|telegram|better-telegram-mcp|better-code-review-graph|notion|better-notion-mcp|email|better-email-mcp|better-godot-mcp|imagine-mcp|workspace|better-workspace-mcp|agent-chat-plugin|mcp-core)
+            wet|wet-mcp|mnemo|mnemo-mcp|telegram|better-telegram-mcp|better-code-review-graph|notion|better-notion-mcp|email|better-email-mcp|workspace|better-workspace-mcp|mcp-core)
               ;;
             *)
               printf "::error::Invalid repo: %s\n" "$(sanitize "$REPO")"
@@ -198,16 +195,7 @@ jobs:
             printf "Synced chat.py\n"
           fi
 
-          # Agent Chat's entrypoint imports its adjacent runtime package.
-          if [ "$REPO" = "agent-chat-plugin" ]; then
-            for dir in agent_chat schemas; do
-              if [ -d "source/$dir" ]; then
-                rm -rf "$PLUGIN_DIR/$dir"
-                cp -r "source/$dir" "$PLUGIN_DIR/$dir"
-                printf "Synced %s/\n" "$dir"
-              fi
-            done
-          fi
+
 
       - name: Commit and push
         env:
