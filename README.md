@@ -6,17 +6,14 @@
 
 | Project | Tagline | Tag |
 |---|---|---|
-| [agent-chat-plugin](https://github.com/n24q02m/agent-chat-plugin) | Peer AI agents chat in a shared folder — no human relay, no orchestrator, wor... | Tooling |
 | [better-code-review-graph](https://github.com/n24q02m/better-code-review-graph) | Knowledge graph for token-efficient code reviews -- semantic search and call-... | MCP |
 | [better-drive](https://github.com/n24q02m/better-drive) | 2-way Google Drive sync with .driveignore filter — rclone engine, Windows tray | Tooling |
 | [better-email-mcp](https://github.com/n24q02m/better-email-mcp) | IMAP/SMTP email for AI agents -- read, send, organize folders, and manage att... | MCP |
-| [better-godot-mcp](https://github.com/n24q02m/better-godot-mcp) | Composite MCP server for Godot Engine -- 17 composite tools for AI-assisted g... | MCP |
 | [better-notion-mcp](https://github.com/n24q02m/better-notion-mcp) | Markdown-first Notion for AI agents -- pages, databases, blocks, and comments... | MCP |
 | [better-semantic-release](https://github.com/n24q02m/better-semantic-release) | Drop-in python-semantic-release fork with built-in release-safety guards (orp... | Tooling |
 | [better-telegram-mcp](https://github.com/n24q02m/better-telegram-mcp) | Telegram for AI agents -- messages, chats, media, and contacts across both bo... | MCP |
 | [better-workspace-mcp](https://github.com/n24q02m/better-workspace-mcp) | Google Workspace MCP server (Docs/Drive/Calendar/Gmail/Sheets/Slides/Tasks/Ch... | MCP |
 | [claude-plugins](https://github.com/n24q02m/claude-plugins) | Claude Code plugin marketplace for the n24q02m MCP servers -- install web sea... | Marketplace |
-| [imagine-mcp](https://github.com/n24q02m/imagine-mcp) | Image and video understanding + generation for AI agents -- across Gemini, Op... | MCP |
 | [jules-task-archiver](https://github.com/n24q02m/jules-task-archiver) | Chrome Extension for bulk operations on Jules tasks via batchexecute API -- a... | Tooling |
 | [mcp-core](https://github.com/n24q02m/mcp-core) | Shared foundation for building MCP servers -- Streamable HTTP transport, OAut... | MCP |
 | [mnemo-mcp](https://github.com/n24q02m/mnemo-mcp) | Persistent AI memory with hybrid search and embedded sync. Open, free, unlimi... | MCP |
@@ -64,11 +61,8 @@ Or browse all plugins: run `/plugin` and go to the **Discover** tab.
 | **better-notion-mcp** | Productivity | Notion API — 11 composite tools, ~95% coverage | `NOTION_TOKEN` (required) |
 | **better-email-mcp** | Communication | Email IMAP/SMTP — multi-account | `EMAIL_CREDENTIALS` (required) |
 | **better-telegram-mcp** | Communication | Telegram dual-mode (Bot API + MTProto) — messages, chats, media | `TELEGRAM_BOT_TOKEN` (optional; required for bot mode) |
-| **better-godot-mcp** | Development | Godot Engine — 17 composite tools for game dev | `GODOT_PATH`, `GODOT_PROJECT_PATH` (both optional) |
 | **better-code-review-graph** | Development | Knowledge graph for token-efficient code reviews | All optional: `JINA_AI_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_VERTEX_EXPRESS_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY` |
-| **imagine-mcp** | Multimodal | Image/video understanding + generation across Gemini, OpenAI, Grok | All optional: `XAI_API_KEY` (default provider), `GEMINI_API_KEY`, `GOOGLE_VERTEX_EXPRESS_API_KEY`, `OPENAI_API_KEY` |
 | **better-workspace-mcp** | Productivity | Google Workspace — 10 domains plus local time helpers, `config`, `help`, and multi-account OAuth | `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` (both required) |
-| **agent-chat-plugin** | Development | Portable CLI/Skill peer coordination through Markdown/JSON messages, tasks, leases, and path locks; not an MCP server | Shared folder and agent identity; no provider API keys |
 
 [Fastretrieval](https://mcp.n24q02m.com/reference/fastretrieval/) is the retrieval library used by Wet, Mnemo, and CRG. Install it as a Python dependency, not as a marketplace plugin or MCP endpoint.
 
@@ -100,15 +94,6 @@ completion fallback in that route. CRG does not currently implement cloud
 reranking. This server-side policy does not change user-owned OMP model/profile
 settings or remove public local capabilities.
 
-### imagine-mcp
-
-```
-XAI_API_KEY=xai-...      # default provider
-GEMINI_API_KEY=AIza...   # optional alternative
-GOOGLE_VERTEX_EXPRESS_API_KEY=AQ...  # optional alternative
-OPENAI_API_KEY=sk-...    # optional alternative
-```
-
 ### Telegram
 
 ```
@@ -133,13 +118,6 @@ NOTION_TOKEN=ntn_xxx
 
 Get your token from [notion.so/my-integrations](https://www.notion.so/my-integrations).
 
-### Godot
-
-```
-GODOT_PATH=/path/to/godot           # optional; auto-detects from PATH if empty
-GODOT_PROJECT_PATH=/path/to/project # optional default project root
-```
-
 ### Google Workspace
 
 ```
@@ -160,9 +138,7 @@ Most plugins ship skills, invoked in Claude Code as `<plugin>:<skill>`:
 | better-notion-mcp | `organize-database`, `bulk-update` |
 | better-email-mcp | `inbox-review`, `follow-up` |
 | better-telegram-mcp | `setup-bot`, `channel-post` |
-| better-godot-mcp | `build-scene`, `debug-issue`, `add-mechanic` |
 | better-code-review-graph | `review-pr`, `review-delta`, `refactor-check` |
-| imagine-mcp | `image-describe` |
 
 ## Other MCP Clients
 
@@ -175,7 +151,6 @@ uvx --python 3.13 wet-mcp
 uvx --python 3.13 mnemo-mcp
 uvx --python 3.13 better-telegram-mcp
 uvx --python 3.13 better-code-review-graph
-uvx --python 3.13 imagine-mcp
 ```
 
 **TypeScript plugins** (npx / bunx / docker):
@@ -183,7 +158,6 @@ uvx --python 3.13 imagine-mcp
 ```bash
 npx -y @n24q02m/better-notion-mcp
 npx -y @n24q02m/better-email-mcp
-npx -y @n24q02m/better-godot-mcp
 ```
 
 Add to any MCP client's `settings.json`:

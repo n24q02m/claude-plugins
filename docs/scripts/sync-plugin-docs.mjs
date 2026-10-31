@@ -45,7 +45,6 @@ const PLUGIN_FILES = [
   'trust-model.md',
   'migration.md',
   'shared-services.md',
-  // imagine-mcp specific:
 ];
 
 const REPO_RAW_BASE = 'https://github.com/n24q02m/claude-plugins/edit/main/plugins';
@@ -71,10 +70,7 @@ const REPO_NAME = {
 // Repos archived on GitHub (2026-09-13): docs stay reachable but are marked
 // archived and grouped under a collapsed sidebar section. telegram, notion,
 // email and workspace were unarchived on 2026-10-09 and are active again.
-const ARCHIVED = new Set([
-  'imagine-mcp',
-  'better-godot-mcp',
-]);
+const ARCHIVED = new Set([]);
 const ARCHIVED_BANNER =
   ':::caution[Archived]\n' +
   'This project is archived and no longer maintained. The documentation below is kept for reference.\n' +
@@ -114,7 +110,7 @@ const FOUNDATION_DESCRIPTION =
   'Foundation library for the n24q02m MCP stack — shared Streamable HTTP transport, ' +
   'OAuth 2.1 Authorization Server, lifecycle management, and credential-relay primitives ' +
   'consumed by every server. Not a runnable MCP server.';
-const COORDINATION = 'agent-chat-plugin';
+const COORDINATION = '';
 const COORDINATION_DESCRIPTION =
   'Portable CLI/Skill coordination for peer agent sessions using shared Markdown and JSON files. ' +
   'Not an MCP server and not an agent executor.';

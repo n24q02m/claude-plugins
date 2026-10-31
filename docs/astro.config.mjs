@@ -43,19 +43,7 @@ export default defineConfig({
             { label: 'notion', items: [{ autogenerate: { directory: 'servers/notion' } }] },
             { label: 'email', items: [{ autogenerate: { directory: 'servers/email' } }] },
             { label: 'telegram', items: [{ autogenerate: { directory: 'servers/telegram' } }] },
-            {
-              label: 'Archived',
-              collapsed: true,
-              items: [
-                { label: 'imagine-mcp', items: [{ autogenerate: { directory: 'servers/imagine-mcp' } }] },
-                { label: 'better-godot-mcp', items: [{ autogenerate: { directory: 'servers/better-godot-mcp' } }] },
-              ],
-            },
           ],
-        },
-        {
-          label: 'Coordination',
-          items: [{ label: 'Agent Chat', items: [{ autogenerate: { directory: 'servers/agent-chat-plugin' } }] }],
         },
         { label: 'Tools', items: [{ autogenerate: { directory: 'tools' } }] },
         { label: 'skret', items: [{ autogenerate: { directory: 'skret' } }] },

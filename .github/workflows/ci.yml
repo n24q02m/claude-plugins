@@ -260,10 +260,14 @@ jobs:
               SELECTED="$DISPATCH_PLUGINS"
             fi
           else
-            # Map changed paths back to plugin directory names.
+            # Map changed paths back to plugin directory names (only existing directories).
             SELECTED=$(printf '%s\n' "$CHANGED" \
               | sed -n 's#^plugins/\([^/]*\)/.*#\1#p' \
-              | sort -u | tr '\n' ' ')
+              | sort -u | while read -r p; do
+                if [ -n "$p" ] && [ -d "plugins/$p" ]; then
+                  echo "$p"
+                fi
+              done | tr '\n' ' ')
             # A change to the checker or this workflow re-checks everything.
             if printf '%s\n' "$CHANGED" | grep -qE '^(scripts/verify_tool_parity\.py|\.github/workflows/ci\.yml)$'; then
               SELECTED="--all"
