@@ -1,0 +1,42 @@
+# Mise configuration for claude-plugins
+# https://mise.jdx.dev/
+#
+# Setup: mise run setup
+#
+# The task bodies mirror the source checks in .github/workflows/ci.yml. CI is
+# the authority; if a command here stops matching the workflow, change it here.
+
+[tools]
+python = "3.13"
+node = "24"
+bun = "latest"
+
+[settings]
+trusted_config_paths = ["."]
+
+[tasks.setup]
+description = "Set up the development environment"
+run = [
+  "mise install",
+  "bun install --cwd docs --frozen-lockfile",
+  "pre-commit install",
+]
+
+[tasks.lint]
+description = "Run the repository pre-commit hooks"
+run = "pre-commit run --all-files"
+
+[tasks.test]
+description = "Run the source checks that CI runs"
+run = [
+  "python scripts/validate_marketplace.py",
+  "python scripts/verify_docs_current.py",
+  "python scripts/verify_tool_parity.py --all --declared-only",
+  "python scripts/test_harness_adapter_schema.py",
+  "node --test docs/scripts/test-sync-plugin-docs.mjs",
+]
+
+[tasks.docs]
+description = "Run the docs dev server"
+dir = "docs"
+run = "bun run dev"

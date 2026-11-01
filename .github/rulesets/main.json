@@ -14,7 +14,7 @@
   "conditions": {
     "ref_name": {
       "exclude": [],
-      "include": ["refs/heads/main"]
+      "include": ["~DEFAULT_BRANCH"]
     }
   },
   "rules": [
