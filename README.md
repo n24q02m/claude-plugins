@@ -1,5 +1,12 @@
 # n24q02m Claude Plugins
 
+**Claude Code plugin marketplace for the n24q02m MCP servers -- install web search, memory, Notion, email, Telegram, Godot, code review, and image/video tools in one command.**
+
+[![CI](https://github.com/n24q02m/claude-plugins/actions/workflows/ci.yml/badge.svg)](https://github.com/n24q02m/claude-plugins/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Renovate](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](https://renovatebot.com)
+[![Claude Code](https://img.shields.io/badge/Claude_Code-plugin_marketplace-D97757)](https://code.claude.com/docs/en/plugin-marketplaces)
+
 <!-- BEGIN: AUTO-GENERATED-CROSS-PROMO -->
 <details>
   <summary><strong>Sister projects from n24q02m</strong> (click to expand)</summary>
