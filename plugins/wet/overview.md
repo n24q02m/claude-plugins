@@ -23,7 +23,7 @@ wet speaks **Streamable HTTP only** on a single `/mcp` endpoint. There is no std
 - **docker compose**: build from the source repo and publish on loopback with token auth.
 - **Your own host**: run the instance behind a TLS proxy you control and use `auth = "token"` or `"multi"`.
 
-Clients: Claude Code (with the plugin, or `claude mcp add --transport http`), Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web for a remote instance. The Claude Code plugin adds the wet skill and registers an HTTP MCP entry for your instance through `WET_URL` / `WET_TOKEN`.
+Clients: Claude Code (with the plugin, or `claude mcp add --transport http`), Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web for a remote instance. The Claude Code plugin adds the wet skill; its bundled stdio MCP entry cannot connect to wet 3.20.0 (HTTP-only), so register your instance with `claude mcp add --transport http`.
 
 ## Configuration
 

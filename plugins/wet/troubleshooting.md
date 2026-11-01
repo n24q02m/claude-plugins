@@ -28,11 +28,11 @@ wet has no stdio mode: the client must reach a running HTTP instance. Check it:
 wet server status
 ```
 
-It reports the pid, the lock, and HTTP liveness for the configured port. If HTTP is down, run `wet server start` (or `--foreground` to see errors). Then check that `WET_URL` (plugin) or the URL given to `claude mcp add` ends in `/mcp` and uses the same port as `[server].port` (default 8000). `wet search <query>` is a quick end-to-end check; it exits with code 2 and a hint when no server is running.
+It reports the pid, the lock, and HTTP liveness for the configured port. If HTTP is down, run `wet server start` (or `--foreground` to see errors). Then check that the URL given to `claude mcp add` ends in `/mcp` and uses the same port as `[server].port` (default 8000). `wet search <query>` is a quick end-to-end check; it exits with code 2 and a hint when no server is running.
 
 ## 401 Unauthorized
 
-The server stores only `token_hash`; clients must send the **plaintext** token as `Authorization: Bearer <token>` (plugin: `WET_TOKEN`). A `scrypt$...` hash in the client config is wrong. Regenerate the hash with `wet token hash <token>` if you are unsure which token the server holds.
+The server stores only `token_hash`; clients must send the **plaintext** token as `Authorization: Bearer <token>`. A `scrypt$...` hash in the client config is wrong. Regenerate the hash with `wet token hash <token>` if you are unsure which token the server holds.
 
 ## Server refuses to bind (no-auth)
 
@@ -80,7 +80,7 @@ Docs discovery calls the GitHub API, limited to 60 requests per hour without a t
 
 ## Transport mismatch / duplicate entries in `/mcp`
 
-Claude Code matches MCP servers by **endpoint** (URL), not by name. Installing the plugin *and* adding a manual `claude mcp add` entry for the same instance loads both and creates duplicates. Pick one method: uninstall the plugin (`/plugin uninstall wet@n24q02m-plugins`) before adding a manual entry, or remove the manual entry and set `WET_URL` in the plugin. See [setup](/servers/wet/setup/) for the full method matrix.
+Claude Code matches MCP servers by **endpoint** (URL), not by name. Do not register the same instance twice with `claude mcp add`. The `plugin:wet:wet` entry shown as failed is the plugin's bundled stdio entry: wet 3.20.0 is HTTP-only and the `wet-mcp` entry point prints its CLI usage and exits, so it cannot connect. Use your manual HTTP entry and ignore it. See [setup](/servers/wet/setup/) for the full method matrix.
 
 ## Filing a bug
 

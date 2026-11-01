@@ -40,7 +40,7 @@ This detaches and binds `127.0.0.1:8000` with `auth = "no-auth"`, which refuses 
 /plugin install wet@n24q02m-plugins
 ```
 
-At the install prompts, set `WET_URL` to the endpoint and, for a token-auth instance, `WET_TOKEN` to the plaintext token. Leave `WET_TOKEN` empty for a loopback `no-auth` instance. Do not also run `claude mcp add` for the same URL; Claude Code matches servers by endpoint and would show duplicates.
+The plugin installs the skill only: wet 3.20.0 is HTTP-only. The `wet-mcp` entry point on PyPI is the control-plane CLI: run bare, it prints its usage and exits 0, so the stdio entry bundled in the plugin manifest (`uvx --python 3.13 wet-mcp` with `MCP_TRANSPORT=stdio`) exits immediately and `/mcp` reports a failed connection. Register the instance with the `claude mcp add` command below; ignore the failed `plugin:wet:wet` entry in `/mcp`.
 
 **Claude Code without the plugin:**
 
