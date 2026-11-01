@@ -108,7 +108,7 @@ function displayName(pluginName, meta) {
 const FOUNDATION = 'mcp-core';
 const FOUNDATION_DESCRIPTION =
   'Foundation library for the n24q02m MCP stack — shared Streamable HTTP transport, ' +
-  'OAuth 2.1 Authorization Server, lifecycle management, and credential-relay primitives ' +
+  'lifecycle management, and credential-storage primitives ' +
   'consumed by every server. Not a runnable MCP server.';
 const COORDINATION = '';
 const COORDINATION_DESCRIPTION =

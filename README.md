@@ -81,25 +81,24 @@ When you run `/plugin install`, Claude Code prompts for that plugin's credential
 
 ### Cloud providers (wet-mcp, mnemo-mcp, better-code-review-graph)
 
-Cloud model selection is separate from installing a plugin. Configure the model
-fields and matching provider keys in the server's environment for stdio or in
-the authenticated subject's relay form for multi-user HTTP. Do not infer a
+Cloud model selection is separate from installing a plugin and is configured on
+the machine that runs the server, in `~/.<server>/config.toml`. Do not infer a
 fallback chain just because several keys are present.
 
-- Wet and Mnemo use `EMBEDDING_MODELS`, `RERANK_MODELS`, and `LLM_MODELS`.
-- CRG uses `EMBEDDING_MODELS` and `SUMMARY_MODELS`; its optional query reranker
-  is selected by `LOCAL_RERANK_MODEL`, not a cloud rerank chain.
-- Empty/local configuration and cloud behavior are server-specific; consult
+- Wet and Mnemo use model cells: `[models.embed]`, `[models.rerank]` and
+  `[models.chat]`, each with `base_url`, `model` and `api_key`. The environment
+  variable `HULL_<TASK>_API_KEY` (for example `HULL_EMBED_API_KEY`) overrides
+  the key in the file, and `OPENROUTER_API_KEY` serves the pre-wired default
+  cells. An empty embed or rerank cell falls back to local ONNX models.
+- CRG uses `[models.chat]` for summaries and `EMBEDDING_MODELS` for embeddings
+  (empty means local ONNX); its optional query reranker is selected by
+  `LOCAL_RERANK_MODEL`, not a cloud rerank chain.
+- Without a chat key, LLM-backed features are switched off rather than failing.
+- Empty/local configuration and cloud behavior are server-specific; see
+  [Credential setup](https://mcp.n24q02m.com/reference/credential-setup/) and
   the [setup references](https://mcp.n24q02m.com/servers/).
 
-The managed Cloudflare route uses exactly
-`openrouter/minimax/minimax-m3:free` for completion and
-`cohere/embed-v4.0` / `cohere/rerank-v4.0-fast` for supported embedding/rerank
-paths through Cloudflare AI Gateway. Cohere is paid and requires explicit
-spending authorization with a cap before calls. There is no Jina, GLM, or paid
-completion fallback in that route. CRG does not currently implement cloud
-reranking. This server-side policy does not change user-owned OMP model/profile
-settings or remove public local capabilities.
+CRG does not currently implement cloud reranking.
 
 ### Telegram
 

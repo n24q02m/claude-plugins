@@ -21,8 +21,8 @@ Each server ships as a Claude Code plugin, an npm or PyPI package, and a Docker 
 
 - [Install in Claude Code](https://mcp.n24q02m.com/get-started/install-claude-code/): One command to install any server.
 - [Plugin marketplace](https://mcp.n24q02m.com/get-started/plugin-marketplace/): Browse and install any server as a Claude Code plugin.
-- [Modes overview](https://mcp.n24q02m.com/get-started/modes-overview/): stdio, local-relay, remote-relay, and remote-oauth — when to use each.
-- [Multi-user setup](https://mcp.n24q02m.com/get-started/multi-user/): Per-user credential storage scoped by JWT subject.
+- [Modes overview](https://mcp.n24q02m.com/get-started/modes-overview/): stdio or self-hosted HTTP, and the HTTP auth modes (no-auth, token, multi) — when to use each.
+- [Multi-user setup](https://mcp.n24q02m.com/get-started/multi-user/): Per-user credential storage scoped by bearer token and namespace.
 
 ## Reference
 

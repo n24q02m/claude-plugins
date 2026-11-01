@@ -5,7 +5,7 @@ description: Multi-model Python retrieval runtime for dense, sparse, late-intera
 
 [fastretrieval](https://github.com/n24q02m/fastretrieval) is the Python retrieval
 runtime used by Wet, Mnemo, and Better Code Review Graph. It is a library, not an
-MCP server or a marketplace plugin: it has no MCP endpoint, relay, credential
+MCP server or a marketplace plugin: it has no MCP endpoint, credential
 form, or transport configuration.
 
 ## Package and capabilities
