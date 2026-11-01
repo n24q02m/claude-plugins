@@ -50,7 +50,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 ```bash
 # Install from marketplace (includes skills: /refactor-check, /review-delta, /review-pr + hooks)
 /plugin marketplace add n24q02m/claude-plugins
-/plugin install better-code-review-graph@n24q02m-plugins
+/plugin install crg@n24q02m-plugins
 ```
 
 The plugin includes SessionStart and PostToolUse hooks that auto-build and auto-update the code graph.
@@ -100,7 +100,7 @@ directory, first run `graph(action="build", full_rebuild=true)`, then embed
 if semantic search is needed. Leave `.code-review-graph/`,
 `.code-review-graph.db`, and their SQLite sidecars untouched; inspect and
 reapply desired suppression rules explicitly. See the
-[migration reference](/servers/better-code-review-graph/setup/#graph-state-migration).
+[migration reference](/servers/crg/setup/#graph-state-migration).
 
 ### HTTP Mode (Self-Host)
 

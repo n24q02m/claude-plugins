@@ -115,7 +115,7 @@ The plugin installs the mnemo skills (`recall-context`, `memory-commit`, `knowle
 2. Install the plugin:
    ```bash
    /plugin marketplace add n24q02m/claude-plugins
-   /plugin install mnemo-mcp@n24q02m-plugins
+   /plugin install mnemo@n24q02m-plugins
    ```
 3. Answer the install prompts (stored by Claude Code; sensitive values go to the system keychain and persist across `/plugin update`):
 
@@ -198,4 +198,4 @@ Most settings live in `config.toml`. The server also reads:
 
 ## Troubleshooting
 
-See the [troubleshooting page](/servers/mnemo-mcp/troubleshooting/).
+See the [troubleshooting page](/servers/mnemo/troubleshooting/).

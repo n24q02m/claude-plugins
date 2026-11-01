@@ -13,7 +13,7 @@
 
 | Project | Tagline | Tag |
 |---|---|---|
-| [better-code-review-graph](https://github.com/n24q02m/better-code-review-graph) | Knowledge graph for token-efficient code reviews -- semantic search and call-... | MCP |
+| [crg](https://github.com/n24q02m/crg) | Knowledge graph for token-efficient code reviews -- semantic search and call-... | MCP |
 | [better-drive](https://github.com/n24q02m/better-drive) | 2-way Google Drive sync with .driveignore filter — rclone engine, Windows tray | Tooling |
 | [better-email-mcp](https://github.com/n24q02m/better-email-mcp) | IMAP/SMTP email for AI agents -- read, send, organize folders, and manage att... | MCP |
 | [better-notion-mcp](https://github.com/n24q02m/better-notion-mcp) | Markdown-first Notion for AI agents -- pages, databases, blocks, and comments... | MCP |
@@ -23,12 +23,12 @@
 | [claude-plugins](https://github.com/n24q02m/claude-plugins) | Claude Code plugin marketplace for the n24q02m MCP servers -- install web sea... | Marketplace |
 | [jules-task-archiver](https://github.com/n24q02m/jules-task-archiver) | Chrome Extension for bulk operations on Jules tasks via batchexecute API -- a... | Tooling |
 | [mcp-core](https://github.com/n24q02m/mcp-core) | Shared foundation for building MCP servers -- Streamable HTTP transport, OAut... | MCP |
-| [mnemo-mcp](https://github.com/n24q02m/mnemo-mcp) | Persistent AI memory with hybrid search and embedded sync. Open, free, unlimi... | MCP |
+| [mnemo](https://github.com/n24q02m/mnemo) | Persistent AI memory with hybrid search and embedded sync. Open, free, unlimi... | MCP |
 | [qwen3-embed](https://github.com/n24q02m/qwen3-embed) | Lightweight Qwen3 text embedding and reranking via ONNX Runtime and GGUF | Library |
 | [skret](https://github.com/n24q02m/skret) | Secrets without the server. | CLI |
 | [tacet](https://github.com/n24q02m/tacet) | A self-distilling neuro-symbolic cascade that amortises LLM cost across knowl... | Tooling |
 | [web-core](https://github.com/n24q02m/web-core) | Shared web infrastructure package for search, scraping, HTTP security, and st... | Library |
-| [wet-mcp](https://github.com/n24q02m/wet-mcp) | Open-source MCP server for AI agents: web search, content extraction, and lib... | MCP |
+| [wet](https://github.com/n24q02m/wet) | Open-source MCP server for AI agents: web search, content extraction, and lib... | MCP |
 
 </details>
 <!-- END: AUTO-GENERATED-CROSS-PROMO -->
@@ -63,12 +63,12 @@ Or browse all plugins: run `/plugin` and go to the **Discover** tab.
 
 | Plugin | Category | Description | Config (env / userConfig) |
 |--------|----------|-------------|----------|
-| **wet-mcp** | Research | Web search, content extraction, library docs, media download | All optional: `OPENROUTER_API_KEY`, `SEARCH_BACKENDS`, `TAVILY_API_KEY`, `BRAVE_API_KEY`, `EXA_API_KEY`, `KAGI_API_KEY`, `FIRECRAWL_API_KEY`, `GITHUB_TOKEN` |
-| **mnemo-mcp** | Productivity | Persistent AI memory across sessions | All optional: `MNEMO_URL` (Streamable HTTP endpoint of a running mnemo), `MNEMO_TOKEN` (bearer token when that instance uses token or multi auth) |
+| **wet** | Research | Web search, content extraction, library docs, media download | All optional: `OPENROUTER_API_KEY`, `SEARCH_BACKENDS`, `TAVILY_API_KEY`, `BRAVE_API_KEY`, `EXA_API_KEY`, `KAGI_API_KEY`, `FIRECRAWL_API_KEY`, `GITHUB_TOKEN` |
+| **mnemo** | Productivity | Persistent AI memory across sessions | All optional: `MNEMO_URL` (Streamable HTTP endpoint of a running mnemo), `MNEMO_TOKEN` (bearer token when that instance uses token or multi auth) |
 | **better-notion-mcp** | Productivity | Notion API — 11 composite tools, ~95% coverage | `NOTION_TOKEN` (required) |
 | **better-email-mcp** | Communication | Email IMAP/SMTP — multi-account | `EMAIL_CREDENTIALS` (required) |
 | **better-telegram-mcp** | Communication | Telegram dual-mode (Bot API + MTProto) — messages, chats, media | `TELEGRAM_BOT_TOKEN` (optional; required for bot mode) |
-| **better-code-review-graph** | Development | Knowledge graph for token-efficient code reviews | All optional: `EMBEDDING_MODELS`, `LOCAL_EMBEDDING_MODEL`, `LOCAL_RERANK_MODEL`, `LOCAL_EMBEDDING_DIM`, `LOCAL_EMBEDDING_MODEL_FILE`, `LOCAL_EMBEDDING_POOLING`, `LOCAL_EMBEDDING_NORMALIZE`, `HULL_EMBED_API_KEY`, `HULL_CHAT_API_KEY` |
+| **crg** | Development | Knowledge graph for token-efficient code reviews | All optional: `EMBEDDING_MODELS`, `LOCAL_EMBEDDING_MODEL`, `LOCAL_RERANK_MODEL`, `LOCAL_EMBEDDING_DIM`, `LOCAL_EMBEDDING_MODEL_FILE`, `LOCAL_EMBEDDING_POOLING`, `LOCAL_EMBEDDING_NORMALIZE`, `HULL_EMBED_API_KEY`, `HULL_CHAT_API_KEY` |
 | **better-workspace-mcp** | Productivity | Google Workspace — 10 domains plus local time helpers, `config`, `help`, and multi-account OAuth | `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` (both required) |
 
 [Fastretrieval](https://docs.n24q02m.com/reference/fastretrieval/) is the retrieval library used by Wet, Mnemo, and CRG. Install it as a Python dependency, not as a marketplace plugin or MCP endpoint.
@@ -139,12 +139,12 @@ Most plugins ship skills, invoked in Claude Code as `<plugin>:<skill>`:
 
 | Plugin | Skills |
 |--------|--------|
-| wet-mcp | `fact-check`, `compare`, `research-topic`, `lock-project-stack` |
-| mnemo-mcp | `session-handoff`, `knowledge-audit`, `recall-context`, `memory-commit`, `passport-bootstrap` |
+| wet | `fact-check`, `compare`, `research-topic`, `lock-project-stack` |
+| mnemo | `session-handoff`, `knowledge-audit`, `recall-context`, `memory-commit`, `passport-bootstrap` |
 | better-notion-mcp | `organize-database`, `bulk-update` |
 | better-email-mcp | `inbox-review`, `follow-up` |
 | better-telegram-mcp | `setup-bot`, `channel-post` |
-| better-code-review-graph | `review-pr`, `review-delta`, `refactor-check` |
+| crg | `review-pr`, `review-delta`, `refactor-check` |
 
 ## Other MCP Clients
 

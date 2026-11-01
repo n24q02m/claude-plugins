@@ -7,9 +7,9 @@ Each server ships as a Claude Code plugin, an npm or PyPI package, and a Docker 
 ## Servers
 
 - [hull (foundation)](https://github.com/n24q02m/hull): Shared core used by every active server — HTTP MCP transport, token auth, encrypted credential storage, CLI built-ins. PyPI `n24q02m-hull`, npm `@n24q02m/hull`.
-- [wet-mcp](https://docs.n24q02m.com/servers/wet/setup/): Web search, content extraction, documentation indexing, and X/Twitter search.
-- [mnemo-mcp](https://docs.n24q02m.com/servers/mnemo/setup/): Persistent AI memory with hybrid search.
-- [better-code-review-graph](https://docs.n24q02m.com/servers/crg/setup/): Knowledge graph for token-efficient code reviews.
+- [wet](https://docs.n24q02m.com/servers/wet/setup/): Web search, content extraction, documentation indexing, and X/Twitter search.
+- [mnemo](https://docs.n24q02m.com/servers/mnemo/setup/): Persistent AI memory with hybrid search.
+- [crg](https://docs.n24q02m.com/servers/crg/setup/): Knowledge graph for token-efficient code reviews.
 - imagine-mcp (archived, no docs page): Image and video understanding and generation across providers.
 - [better-telegram-mcp](https://docs.n24q02m.com/servers/telegram/setup/): Telegram (Bot API + MTProto) for AI agents.
 - [better-notion-mcp](https://docs.n24q02m.com/servers/notion/setup/): Markdown-first Notion API server.

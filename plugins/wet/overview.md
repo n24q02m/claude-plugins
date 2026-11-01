@@ -11,7 +11,7 @@ Web search, content extraction, media discovery, and version-aware library-docs 
 
 ## Tools
 
-Three multiplexed capability tools -- `search`, `extract`, and `media`, each driven by an `action` parameter -- plus the two universal tools every server in this stack ships: `config` (status, runtime settings, credential setup) and `help` (full per-tool docs). In HTTP self-host mode, `config__open_relay` reopens the browser credential form. Every action and parameter is listed in the [tools reference](/servers/wet-mcp/tools/).
+Three multiplexed capability tools -- `search`, `extract`, and `media`, each driven by an `action` parameter -- plus the two universal tools every server in this stack ships: `config` (status, runtime settings, credential setup) and `help` (full per-tool docs). In HTTP self-host mode, `config__open_relay` reopens the browser credential form. Every action and parameter is listed in the [tools reference](/servers/wet/tools/).
 
 ## Clients
 
@@ -33,7 +33,7 @@ Optional capabilities are unlocked with your own keys and model chains:
 - Provider API keys (`JINA_AI_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`,
   `COHERE_API_KEY`) and `GITHUB_TOKEN` for a higher docs-discovery rate limit.
 
-Use placeholders in shared config and never commit real keys. Full walkthrough in [setup](/servers/wet-mcp/setup/).
+Use placeholders in shared config and never commit real keys. Full walkthrough in [setup](/servers/wet/setup/).
 
 For the managed Cloudflare route, use per-subject Minimax-free completion and
 paid Cohere retrieval through Cloudflare AI Gateway; see the
@@ -43,6 +43,6 @@ flows. This does not remove public local stdio or SearXNG support.
 
 ## Next steps
 
-- [Setup](/servers/wet-mcp/setup/) -- install and configure
-- [Tools reference](/servers/wet-mcp/tools/) -- every action and parameter
-- [Troubleshooting](/servers/wet-mcp/troubleshooting/)
+- [Setup](/servers/wet/setup/) -- install and configure
+- [Tools reference](/servers/wet/tools/) -- every action and parameter
+- [Troubleshooting](/servers/wet/troubleshooting/)

@@ -1,5 +1,5 @@
 {
-  "name": "mnemo-mcp",
+  "name": "mnemo",
   "description": "Persistent AI memory — store, search, and recall knowledge across sessions",
   "version": "2.21.0",
   "userConfig": {

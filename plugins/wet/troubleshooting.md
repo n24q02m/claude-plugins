@@ -44,7 +44,7 @@ export WET_SEARXNG_PORT=<alternate-port>
 
 ## Transport mismatch / duplicate entries in `/mcp`
 
-Claude Code matches MCP servers by **endpoint** (command string or URL), not by name. Installing the plugin *and* adding a Docker or HTTP override loads both and creates duplicates. Pick one method: uninstall the plugin (`/plugin uninstall wet-mcp@n24q02m-plugins`) before adding a `docker run` or HTTP override. See [setup](/servers/wet-mcp/setup/) for the full method matrix.
+Claude Code matches MCP servers by **endpoint** (command string or URL), not by name. Installing the plugin *and* adding a Docker or HTTP override loads both and creates duplicates. Pick one method: uninstall the plugin (`/plugin uninstall wet@n24q02m-plugins`) before adding a `docker run` or HTTP override. See [setup](/servers/wet/setup/) for the full method matrix.
 
 ## Filing a bug
 

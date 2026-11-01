@@ -49,23 +49,14 @@ const PLUGIN_FILES = [
 
 const REPO_RAW_BASE = 'https://github.com/n24q02m/claude-plugins/edit/main/plugins';
 
-// Docs slugs follow the renamed GitHub repos (wet, mnemo, crg — renamed
-// 2026-09-13), while plugins/<dir> keeps the marketplace plugin id. Map
-// marketplace dir -> docs slug; unlisted dirs use their own name (the
-// workspace, notion, email and telegram dirs already carry the new repo name).
-const SLUG_MAP = {
-  'wet-mcp': 'wet',
-  'mnemo-mcp': 'mnemo',
-  'better-code-review-graph': 'crg',
-};
+// Docs slugs follow the renamed GitHub repos (wet, mnemo, crg), and the
+// plugins/<dir> folders carry the same names. Map marketplace dir -> docs slug
+// only for a dir whose slug differs from its own name (none today).
+const SLUG_MAP = {};
 
 // Canonical GitHub repo per marketplace dir (renamed repos differ from the
 // plugin id). Used for "GitHub: n24q02m/<repo>" links on generated pages.
-const REPO_NAME = {
-  'wet-mcp': 'wet',
-  'mnemo-mcp': 'mnemo',
-  'better-code-review-graph': 'crg',
-};
+const REPO_NAME = {};
 
 // Repos archived on GitHub (2026-09-13): docs stay reachable but are marked
 // archived and grouped under a collapsed sidebar section. telegram, notion,

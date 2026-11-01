@@ -7,7 +7,7 @@ Each MCP server in this stack exposes a uniform tool surface — **N domain tool
 
 ## Why uniform
 
-AI agents that switch between servers don't have to relearn navigation. Asking `wet-mcp.help()` and `mnemo-mcp.help()` returns the same shape — server description, tool list, mode, version, links. Same for `config()` — identical schema for credential introspection.
+AI agents that switch between servers don't have to relearn navigation. Asking `wet.help()` and `mnemo.help()` returns the same shape — server description, tool list, mode, version, links. Same for `config()` — identical schema for credential introspection.
 
 ## The two universals
 
@@ -19,7 +19,7 @@ Example response shape:
 
 ```json
 {
-  "name": "wet-mcp",
+  "name": "wet",
   "tagline": "Web search + content extraction + docs indexing.",
   "version": "2.1.0",
   "transport": "http",

@@ -10,7 +10,7 @@ Persistent, searchable long-term memory for AI agents. Store facts, preferences,
 
 ## Tools
 
-Eleven single-purpose memory tools (the primary interface), the deprecated `memory` dispatcher that mirrors them and adds the entity graph, timeline, and point-in-time actions, and `config` for status, runtime settings, model warmup, and embedding backfill. Every action and parameter is listed in the [tools reference](/servers/mnemo-mcp/tools/).
+Eleven single-purpose memory tools (the primary interface), the deprecated `memory` dispatcher that mirrors them and adds the entity graph, timeline, and point-in-time actions, and `config` for status, runtime settings, model warmup, and embedding backfill. Every action and parameter is listed in the [tools reference](/servers/mnemo/tools/).
 
 ## Deployment
 
@@ -20,10 +20,10 @@ All state is one SQLite database under `~/.mnemo/`; back it up or move it with a
 
 ## Configuration
 
-Auth and providers live in the host-owned `~/.mnemo/config.toml`. Each task -- embedding, reranking, chat (compression, consolidation, importance scoring), and scoring -- has its own `[models.*]` cell with an OpenAI-compatible `base_url`, `api_key`, and `model`, so cloud and local providers can be mixed. With no embedding or rerank cell, mnemo uses local Fastretrieval ONNX models and needs no API key; an unconfigured cell never selects a paid provider. Full walkthrough in [setup](/servers/mnemo-mcp/setup/).
+Auth and providers live in the host-owned `~/.mnemo/config.toml`. Each task -- embedding, reranking, chat (compression, consolidation, importance scoring), and scoring -- has its own `[models.*]` cell with an OpenAI-compatible `base_url`, `api_key`, and `model`, so cloud and local providers can be mixed. With no embedding or rerank cell, mnemo uses local Fastretrieval ONNX models and needs no API key; an unconfigured cell never selects a paid provider. Full walkthrough in [setup](/servers/mnemo/setup/).
 
 ## Next steps
 
-- [Setup](/servers/mnemo-mcp/setup/) -- start an instance and connect a client
-- [Tools reference](/servers/mnemo-mcp/tools/) -- every action and parameter
-- [Troubleshooting](/servers/mnemo-mcp/troubleshooting/)
+- [Setup](/servers/mnemo/setup/) -- start an instance and connect a client
+- [Tools reference](/servers/mnemo/tools/) -- every action and parameter
+- [Troubleshooting](/servers/mnemo/troubleshooting/)

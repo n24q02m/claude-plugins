@@ -78,8 +78,8 @@ pushes to `main`, weekly, and on demand.
 
 Two things to know before changing it:
 
-- Not every server can be read from a public runner. `wet-mcp`, `mnemo-mcp`,
-  `better-godot-mcp` and `better-code-review-graph` answer `tools/list` with no
+- Not every server can be read from a public runner. `wet`, `mnemo`,
+  `better-godot-mcp` and `crg` answer `tools/list` with no
   credentials at all. Others exit at startup unless a credential is present; for
   those the checker retries once with an obviously fake value, which is enough
   when the server only checks that something is set (`better-notion-mcp`). A

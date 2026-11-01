@@ -11,14 +11,14 @@
   },
   "plugins": [
     {
-      "name": "wet-mcp",
-      "source": "./plugins/wet-mcp",
+      "name": "wet",
+      "source": "./plugins/wet",
       "description": "Web search, content extraction, library docs & media — configurable search backends and local retrieval",
       "category": "research"
     },
     {
-      "name": "mnemo-mcp",
-      "source": "./plugins/mnemo-mcp",
+      "name": "mnemo",
+      "source": "./plugins/mnemo",
       "description": "Persistent AI memory across sessions",
       "category": "productivity"
     },
@@ -41,8 +41,8 @@
       "category": "communication"
     },
     {
-      "name": "better-code-review-graph",
-      "source": "./plugins/better-code-review-graph",
+      "name": "crg",
+      "source": "./plugins/crg",
       "description": "Knowledge graph for token-efficient code reviews",
       "category": "development"
     },

@@ -14,8 +14,8 @@ The `n24q02m/claude-plugins` repo is a Claude Code plugin marketplace. Adding it
 ## Install a server
 
 ```sh
-/plugin install wet-mcp@n24q02m-plugins
-/plugin install mnemo-mcp@n24q02m-plugins
+/plugin install wet@n24q02m-plugins
+/plugin install mnemo@n24q02m-plugins
 /plugin install better-notion-mcp@n24q02m-plugins
 # ... etc
 ```
@@ -34,7 +34,7 @@ Select the **Installed** tab to view, enable, disable, or uninstall plugins.
 
 ```sh
 /plugin marketplace update n24q02m-plugins
-/plugin uninstall wet-mcp@n24q02m-plugins
+/plugin uninstall wet@n24q02m-plugins
 ```
 
 ## Other MCP-compatible clients

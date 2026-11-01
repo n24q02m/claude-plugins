@@ -53,7 +53,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 2. Install the plugin (skip optional model/key prompts to keep local embeddings):
    ```bash
    /plugin marketplace add n24q02m/claude-plugins
-   /plugin install better-code-review-graph@n24q02m-plugins
+   /plugin install crg@n24q02m-plugins
    ```
 3. The server starts automatically when Claude Code launches.
 4. The SessionStart hook auto-builds the graph for the current project; PostToolUse updates it after edits.
