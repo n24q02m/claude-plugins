@@ -48,7 +48,7 @@
 
 9 MCP servers and a portable Agent Chat coordination plugin for AI coding agents.
 
-**Full documentation: [mcp.n24q02m.com](https://mcp.n24q02m.com)** — setup and tool references for all 9 servers, Agent Chat coordination, the `mcp-core` foundation, and [Fastretrieval](https://mcp.n24q02m.com/reference/fastretrieval/). Libraries and coordination plugins do not gain an MCP transport by appearing in the same documentation site.
+**Full documentation: [docs.n24q02m.com](https://docs.n24q02m.com)** — setup and tool references for all 9 servers, Agent Chat coordination, the `mcp-core` foundation, and [Fastretrieval](https://docs.n24q02m.com/reference/fastretrieval/). Libraries and coordination plugins do not gain an MCP transport by appearing in the same documentation site.
 
 ## Install
 
@@ -71,7 +71,7 @@ Or browse all plugins: run `/plugin` and go to the **Discover** tab.
 | **better-code-review-graph** | Development | Knowledge graph for token-efficient code reviews | All optional: `JINA_AI_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_VERTEX_EXPRESS_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY` |
 | **better-workspace-mcp** | Productivity | Google Workspace — 10 domains plus local time helpers, `config`, `help`, and multi-account OAuth | `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` (both required) |
 
-[Fastretrieval](https://mcp.n24q02m.com/reference/fastretrieval/) is the retrieval library used by Wet, Mnemo, and CRG. Install it as a Python dependency, not as a marketplace plugin or MCP endpoint.
+[Fastretrieval](https://docs.n24q02m.com/reference/fastretrieval/) is the retrieval library used by Wet, Mnemo, and CRG. Install it as a Python dependency, not as a marketplace plugin or MCP endpoint.
 
 ## Configuration
 
@@ -95,8 +95,8 @@ fallback chain just because several keys are present.
   `LOCAL_RERANK_MODEL`, not a cloud rerank chain.
 - Without a chat key, LLM-backed features are switched off rather than failing.
 - Empty/local configuration and cloud behavior are server-specific; see
-  [Credential setup](https://mcp.n24q02m.com/reference/credential-setup/) and
-  the [setup references](https://mcp.n24q02m.com/servers/).
+  [Credential setup](https://docs.n24q02m.com/reference/credential-setup/) and
+  the [setup references](https://docs.n24q02m.com/servers/).
 
 CRG does not currently implement cloud reranking.
 
@@ -181,7 +181,7 @@ Add to any MCP client's `settings.json`:
 
 ## Deployment
 
-The docs site ([mcp.n24q02m.com](https://mcp.n24q02m.com)) lives in this repo (`docs/`, Astro). Every push to `main` that changes `docs/**` or a plugin doc source (`plugins/*/*.md`, plugin manifests) triggers [`.github/workflows/deploy-docs.yml`](.github/workflows/deploy-docs.yml), which builds the site with Bun and deploys `docs/dist` to the Cloudflare Pages project `mcp-n24q02m`. Pages under `docs/src/content/docs/servers/` are generated at build time by `docs/scripts/sync-plugin-docs.mjs` from the `plugins/<name>/*.md` sources — edit those source files, never the generated tree, and do not deploy the site manually with `wrangler`.
+The docs site ([docs.n24q02m.com](https://docs.n24q02m.com)) lives in this repo (`docs/`, Astro). It is built and deployed to the Cloudflare Pages project `mcp-n24q02m` by the `deploy-docs` job in [`cd.yml`](.github/workflows/cd.yml), which runs only on `workflow_dispatch` or `repository_dispatch` (`plugin-sync`, `tools-docs-sync`); a push to `main` does not deploy. The old host `mcp.n24q02m.com` redirects (301) to `docs.n24q02m.com`. Pages under `docs/src/content/docs/servers/` are generated at build time by `docs/scripts/sync-plugin-docs.mjs` from the `plugins/<name>/*.md` sources — edit those source files, never the generated tree, and do not deploy the site manually with `wrangler`.
 
 Plugin assets are synced separately: when a server repo cuts a release, [`cd.yml`](.github/workflows/cd.yml) (`plugin-sync`) copies that release tag's `plugin.json`, skills, hooks, and commands into `plugins/<name>/` on `main`, and the docs site redeploys after each `plugin-sync` run, on a manual `workflow_dispatch`, or on a `tools-docs-sync` dispatch from `tools-docs`.
 

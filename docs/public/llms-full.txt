@@ -2,7 +2,7 @@
 
 > A curated suite of nine MCP (Model Context Protocol) servers on one foundation library — one transport, one setup command, and one multi-user auth model — so you run web search, memory, Notion, email, Telegram, code review, image generation, Google Workspace, and Godot without wiring up nine inconsistent servers.
 
-Site: https://mcp.n24q02m.com
+Site: https://docs.n24q02m.com
 Marketplace + source: https://github.com/n24q02m/claude-plugins
 
 ## What this is
@@ -30,52 +30,52 @@ Every server runs on a machine you control; there is no hosted endpoint and no b
 
 ### mcp-core (foundation library)
 Shared transport (Streamable HTTP), OAuth 2.1 authorization server, lifecycle management, install automation, and per-user credential primitives. Every server depends on it. Not a runnable server itself — consumed as a library (npm `@n24q02m/mcp-core`, PyPI `n24q02m-mcp-core`).
-Docs: https://mcp.n24q02m.com/servers/mcp-core/architecture/
+Docs: https://docs.n24q02m.com/servers/mcp-core/architecture/
 
 ### wet-mcp
 Web search, content extraction, documentation indexing, and X/Twitter search. Search returns result listings; extract reads full page content from a URL; a docs workflow indexes and answers questions over a library's documentation; X search returns a synthesized answer with citations. Web and X content is returned marked as untrusted external content.
-Docs: https://mcp.n24q02m.com/servers/wet-mcp/setup/
+Docs: https://docs.n24q02m.com/servers/wet/setup/
 
 ### mnemo-mcp
 Persistent AI memory with hybrid (semantic + keyword) search. Save preferences, decisions, and facts; search before recommending; consolidate and export memories.
-Docs: https://mcp.n24q02m.com/servers/mnemo-mcp/setup/
+Docs: https://docs.n24q02m.com/servers/mnemo/setup/
 
 ### better-code-review-graph
 Builds a knowledge graph of a codebase so code reviews are token-efficient — query relationships and impacted areas instead of re-reading whole files.
-Docs: https://mcp.n24q02m.com/servers/better-code-review-graph/setup/
+Docs: https://docs.n24q02m.com/servers/crg/setup/
 
 ### imagine-mcp
 Image and video understanding and generation across providers.
-Docs: https://mcp.n24q02m.com/servers/imagine-mcp/setup/
+Docs: none (archived project).
 
 ### better-telegram-mcp
 Telegram integration for AI agents over both the Bot API and MTProto (user client). Send and read messages, manage chats. Message content from other users is returned marked as untrusted external content.
-Docs: https://mcp.n24q02m.com/servers/telegram/setup/
+Docs: https://docs.n24q02m.com/servers/telegram/setup/
 
 ### better-notion-mcp
 Markdown-first Notion API server: read and write pages and databases as Markdown rather than raw Notion block JSON. Page content is returned marked as untrusted external content.
-Docs: https://mcp.n24q02m.com/servers/notion/setup/
+Docs: https://docs.n24q02m.com/servers/notion/setup/
 
 ### better-email-mcp
 Email over IMAP and SMTP with composite tools for reading, searching, and sending. Message content is returned marked as untrusted external content.
-Docs: https://mcp.n24q02m.com/servers/email/setup/
+Docs: https://docs.n24q02m.com/servers/email/setup/
 
 ### better-godot-mcp
 Godot Engine integration for AI agents. Project file content is returned marked as untrusted external content.
-Docs: https://mcp.n24q02m.com/servers/better-godot-mcp/setup/
+Docs: none (archived project).
 
 ### better-workspace-mcp
 Google Workspace — Docs, Drive, Calendar, Gmail, Sheets, Slides, Tasks, Chat, People, and Forms, as one composite tool per domain. Every tool takes an `account` parameter, so one server acts across several Google accounts. You supply your own Google OAuth client, so the consent screen and API quota stay on your project. Currently beta, and Apache-2.0 like the rest of the stack -- here because it vendors Apache-2.0 upstream code.
-Docs: https://mcp.n24q02m.com/servers/workspace/setup/
+Docs: https://docs.n24q02m.com/servers/workspace/setup/
 
 ## Get started
 
-- Install in Claude Code: https://mcp.n24q02m.com/get-started/install-claude-code/
-- Plugin marketplace: https://mcp.n24q02m.com/get-started/plugin-marketplace/
-- Modes overview: https://mcp.n24q02m.com/get-started/modes-overview/
-- Multi-user setup: https://mcp.n24q02m.com/get-started/multi-user/
+- Install in Claude Code: https://docs.n24q02m.com/get-started/install-claude-code/
+- Plugin marketplace: https://docs.n24q02m.com/get-started/plugin-marketplace/
+- Modes overview: https://docs.n24q02m.com/get-started/modes-overview/
+- Multi-user setup: https://docs.n24q02m.com/get-started/multi-user/
 
 ## Reference
 
-- Server comparison: https://mcp.n24q02m.com/reference/server-comparison/
-- Tool-layout standard (N+2): https://mcp.n24q02m.com/reference/tool-layout-standard/
+- Server comparison: https://docs.n24q02m.com/reference/server-comparison/
+- Tool-layout standard (N+2): https://docs.n24q02m.com/reference/tool-layout-standard/
