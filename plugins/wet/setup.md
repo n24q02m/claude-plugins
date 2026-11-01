@@ -59,7 +59,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 2. Install the plugin (skip optional model/key prompts to keep local retrieval):
    ```bash
    /plugin marketplace add n24q02m/claude-plugins
-   /plugin install wet-mcp@n24q02m-plugins
+   /plugin install wet@n24q02m-plugins
    ```
 3. Restart Claude Code -- the server starts automatically when CC launches with the values injected.
 
@@ -70,7 +70,7 @@ Without env vars: content extraction and local library-docs paths can run, but `
 
 ## Method 2: Docker stdio (fallback)
 
-> **⚠️ Before adding the Docker stdio override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall wet-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's `npx`/`uvx` stdio + your `docker run` stdio) will load simultaneously since plugin matches by endpoint (command string), not by name.
+> **⚠️ Before adding the Docker stdio override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall wet@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's `npx`/`uvx` stdio + your `docker run` stdio) will load simultaneously since plugin matches by endpoint (command string), not by name.
 >
 > **Trade-off accepted**: Choosing this method means you lose this plugin's skills/agents/hooks/commands. Use Method 1 instead if you want full plugin features.
 
@@ -125,7 +125,7 @@ Stdio mode is the default and works for most personal/single-user scenarios. Con
 
 ## Method 3: Docker HTTP (recommended)
 
-> **⚠️ Before adding the HTTP override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall wet-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's stdio + your HTTP override) will load simultaneously since plugin matches by endpoint, not name.
+> **⚠️ Before adding the HTTP override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall wet@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's stdio + your HTTP override) will load simultaneously since plugin matches by endpoint, not name.
 >
 > **Trade-off accepted**: Choosing this method means you lose this plugin's skills/agents/hooks/commands. For example, the `wet-mcp:fact-check` skill will no longer be available. Use Method 1 instead if you want full plugin features.
 
@@ -226,7 +226,7 @@ If local model download fails behind a proxy, fix artifact access or explicitly 
 
 ## Environment Variable Reference
 
-Local stdio needs no provider API keys; HTTP, cloud providers, and optional backends have their own requirements. See the [agent setup reference](/servers/wet-mcp/setup-with-agent/#environment-variables) for the complete table.
+Local stdio needs no provider API keys; HTTP, cloud providers, and optional backends have their own requirements. See the [agent setup reference](/servers/wet/setup-with-agent/#environment-variables) for the complete table.
 
 ### Key Variables
 

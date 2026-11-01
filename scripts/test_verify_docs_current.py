@@ -76,7 +76,7 @@ class TestVerifyDocsCurrent(unittest.TestCase):
 
     def test_discontinued_wet_public_image_claim_fails(self):
         self._make_plugin(
-            "wet-mcp",
+            "wet",
             user_config={},
             docs=self._full_docs(extra="docker pull n24q02m/wet-mcp:latest"),
         )
@@ -87,7 +87,7 @@ class TestVerifyDocsCurrent(unittest.TestCase):
         self.assertEqual(cm.exception.code, 1)
 
     def test_discontinued_wet_public_image_claim_in_docs_site_fails(self):
-        self._make_plugin("wet-mcp", user_config={}, docs=self._full_docs())
+        self._make_plugin("wet", user_config={}, docs=self._full_docs())
         docs_dir = os.path.join("docs", "src", "content", "docs", "reference")
         os.makedirs(docs_dir)
         with open(
@@ -102,7 +102,7 @@ class TestVerifyDocsCurrent(unittest.TestCase):
 
     def test_discontinued_crg_public_image_claim_fails(self):
         self._make_plugin(
-            "better-code-review-graph",
+            "crg",
             user_config={},
             docs=self._full_docs(
                 extra="docker pull n24q02m/better-code-review-graph:latest"
@@ -116,7 +116,7 @@ class TestVerifyDocsCurrent(unittest.TestCase):
 
     def test_wet_cross_plugin_docker_denial_claim_fails(self):
         self._make_plugin(
-            "wet-mcp",
+            "wet",
             user_config={},
             docs=self._full_docs(
                 extra="The other plugins don't ship Docker / HTTP variants."
@@ -129,7 +129,7 @@ class TestVerifyDocsCurrent(unittest.TestCase):
         self.assertEqual(cm.exception.code, 1)
 
     def test_source_built_docker_denial_claim_fails(self):
-        for plugin in ("better-code-review-graph", "better-godot-mcp"):
+        for plugin in ("crg", "better-godot-mcp"):
             with self.subTest(plugin=plugin):
                 self._make_plugin(
                     plugin,

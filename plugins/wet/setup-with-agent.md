@@ -49,7 +49,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 ```bash
 # Install from marketplace (includes skills: /fact-check, /compare)
 /plugin marketplace add n24q02m/claude-plugins
-/plugin install wet-mcp@n24q02m-plugins
+/plugin install wet@n24q02m-plugins
 ```
 
 > Other optional env vars (`SEARCH_BACKENDS`, `TAVILY_API_KEY`, `BRAVE_API_KEY`, `EXA_API_KEY`, `BROWSER_BACKENDS`, `SYNC_ENABLED`, etc.) are not part of the `userConfig` prompt; configure them through the client's supported stdio environment settings when needed. Hosted requests instead use the current subject's relay configuration for search chains and provider keys.
@@ -63,7 +63,7 @@ Without env vars: content extraction and local library-docs paths can run, but `
 
 ## Option 2: Docker stdio (fallback)
 
-> **⚠️ Before adding the Docker stdio override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall wet-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's `npx`/`uvx` stdio + your `docker run` stdio) will load simultaneously since plugin matches by endpoint (command string), not by name.
+> **⚠️ Before adding the Docker stdio override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall wet@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's `npx`/`uvx` stdio + your `docker run` stdio) will load simultaneously since plugin matches by endpoint (command string), not by name.
 >
 > **Trade-off accepted**: Choosing this method means you lose this plugin's skills/agents/hooks/commands. Use Option 1 instead if you want full plugin features.
 
@@ -124,7 +124,7 @@ Stdio mode is the default and works for most personal/single-user scenarios. Con
 
 ## Option 3: Docker HTTP (recommended)
 
-> **⚠️ Before adding the HTTP override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall wet-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's stdio + your HTTP override) will load simultaneously since plugin matches by endpoint, not name.
+> **⚠️ Before adding the HTTP override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall wet@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's stdio + your HTTP override) will load simultaneously since plugin matches by endpoint, not name.
 >
 > **Trade-off accepted**: Choosing this method means you lose this plugin's skills/agents/hooks/commands. For example, the `wet-mcp:fact-check` skill will no longer be available. Use Option 1 instead if you want full plugin features.
 

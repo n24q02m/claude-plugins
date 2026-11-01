@@ -10,13 +10,13 @@ Claude Code plugin marketplace and registry for n24q02m plugins.
 
 ## Plugins
 
-- wet-mcp
-- mnemo-mcp
+- wet
+- mnemo
 - better-notion-mcp
 - better-telegram-mcp
 - better-email-mcp
 - better-godot-mcp
-- better-code-review-graph
+- crg
 - imagine-mcp
 - better-workspace-mcp
 

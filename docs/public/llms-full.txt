@@ -32,15 +32,15 @@ Every server runs on a machine you control; there is no hosted endpoint and no b
 Shared core of the stack. The Python dist `n24q02m-hull` (import packages `hull_core`, `hull_web`, `hull_embedding_daemon`) serves wet, mnemo, crg and telegram; the TypeScript package `@n24q02m/hull` (MCP Streamable HTTP transport, token-table HTTP auth with no-auth/token/multi modes, encrypted credential storage, CLI builder) serves notion, email and workspace. Both are released together at the same version. It has no OAuth authorization server or relay. Not a runnable server itself — consumed as a library. It replaces the archived `mcp-core` library.
 Source: https://github.com/n24q02m/hull
 
-### wet-mcp
+### wet
 Web search, content extraction, documentation indexing, and X/Twitter search. Search returns result listings; extract reads full page content from a URL; a docs workflow indexes and answers questions over a library's documentation; X search returns a synthesized answer with citations. Web and X content is returned marked as untrusted external content.
 Docs: https://docs.n24q02m.com/servers/wet/setup/
 
-### mnemo-mcp
+### mnemo
 Persistent AI memory with hybrid (semantic + keyword) search. Save preferences, decisions, and facts; search before recommending; consolidate and export memories.
 Docs: https://docs.n24q02m.com/servers/mnemo/setup/
 
-### better-code-review-graph
+### crg
 Builds a knowledge graph of a codebase so code reviews are token-efficient — query relationships and impacted areas instead of re-reading whole files.
 Docs: https://docs.n24q02m.com/servers/crg/setup/
 

@@ -43,8 +43,8 @@ GLOBAL_FORBIDDEN_DISTRIBUTION_CLAIMS = (
     "only offers Method 1",
 )
 PLUGIN_FORBIDDEN_DISTRIBUTION_CLAIMS = {
-    "better-code-review-graph": ("n24q02m/better-code-review-graph:latest",),
-    "wet-mcp": ("n24q02m/wet-mcp:latest",),
+    "crg": ("n24q02m/better-code-review-graph:latest", "n24q02m/crg:latest"),
+    "wet": ("n24q02m/wet-mcp:latest", "n24q02m/wet:latest"),
 }
 
 def _markdown_blob(plugin_dir: str) -> str:

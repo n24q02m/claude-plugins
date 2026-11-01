@@ -30,7 +30,7 @@ The Bearer token the client sends does not match the instance's `token_hash`.
 
 ## Server refuses to start on a non-loopback address
 
-`auth = "no-auth"` only binds loopback. Inside the compose container (which binds `0.0.0.0`) or on any published host, set `auth = "token"` or `"multi"` in `config.toml`. See [instance config](/servers/mnemo-mcp/setup/#instance-config-mnemoconfigtoml).
+`auth = "no-auth"` only binds loopback. Inside the compose container (which binds `0.0.0.0`) or on any published host, set `auth = "token"` or `"multi"` in `config.toml`. See [instance config](/servers/mnemo/setup/#instance-config-mnemoconfigtoml).
 
 ## First run is slow
 
@@ -59,7 +59,7 @@ Vectors from one embedding model cannot be searched with another, so the server 
 
 ## Duplicate entries in `/mcp`
 
-Claude Code matches MCP servers by **endpoint** (URL), not by name. Installing the plugin *and* adding a manual `claude mcp add` entry for the same instance loads both. Pick one registration and remove the other. See [setup](/servers/mnemo-mcp/setup/).
+Claude Code matches MCP servers by **endpoint** (URL), not by name. Installing the plugin *and* adding a manual `claude mcp add` entry for the same instance loads both. Pick one registration and remove the other. See [setup](/servers/mnemo/setup/).
 
 ## Filing a bug
 

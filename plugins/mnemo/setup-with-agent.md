@@ -2,7 +2,7 @@
 
 > Give this file to your AI agent to set up mnemo-mcp.
 
-mnemo is a self-hosted memory server that speaks **Streamable HTTP only** on a single `/mcp` endpoint. There is no stdio transport and no hosted public instance: the agent starts (or finds) an instance, then registers its endpoint with the client. Full reference: the [manual setup guide](/servers/mnemo-mcp/setup/).
+mnemo is a self-hosted memory server that speaks **Streamable HTTP only** on a single `/mcp` endpoint. There is no stdio transport and no hosted public instance: the agent starts (or finds) an instance, then registers its endpoint with the client. Full reference: the [manual setup guide](/servers/mnemo/setup/).
 
 ## Step 1: Check for a running instance
 
@@ -44,7 +44,7 @@ Choose **one** of the following per client; Claude Code matches servers by URL, 
 
 ```bash
 /plugin marketplace add n24q02m/claude-plugins
-/plugin install mnemo-mcp@n24q02m-plugins
+/plugin install mnemo@n24q02m-plugins
 ```
 
 The install prompts ask for:
@@ -91,4 +91,4 @@ Expected: database statistics including the total memory count. `config(action="
 
 - `config(action="warmup")` pre-downloads the local embedding model (~570 MB) so the first search is not slow.
 - The plugin's PostToolUse capture hint is opt-in: `CAPTURE_AUTO_ENABLED=true`.
-- Server env vars (`MNEMO_HOST`, `MNEMO_PORT`, `DB_PATH`, archive/dedup/rerank tuning, `KG_AUTO_ENABLED`, `LOG_LEVEL`) are listed in the [manual setup guide](/servers/mnemo-mcp/setup/#environment-variables).
+- Server env vars (`MNEMO_HOST`, `MNEMO_PORT`, `DB_PATH`, archive/dedup/rerank tuning, `KG_AUTO_ENABLED`, `LOG_LEVEL`) are listed in the [manual setup guide](/servers/mnemo/setup/#environment-variables).

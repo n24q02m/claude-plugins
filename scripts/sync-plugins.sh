@@ -38,12 +38,25 @@ sync_dir() {
   fi
 }
 
-PLUGINS=(wet-mcp mnemo-mcp telegram better-code-review-graph notion email workspace)
+PLUGINS=(wet mnemo telegram crg notion email workspace)
 
 sync_plugins() {
   for repo in "${PLUGINS[@]}"; do
     src="$REPOS_DIR/$repo"
     dst="$ROOT/plugins/$repo"
+
+    # Checkouts made before the repo renames keep the old directory name.
+    if [ ! -d "$src" ]; then
+      case "$repo" in
+        wet) legacy="wet-mcp" ;;
+        mnemo) legacy="mnemo-mcp" ;;
+        crg) legacy="better-code-review-graph" ;;
+        *) legacy="" ;;
+      esac
+      if [ -n "$legacy" ] && [ -d "$REPOS_DIR/$legacy" ]; then
+        src="$REPOS_DIR/$legacy"
+      fi
+    fi
 
     if [ ! -d "$src" ]; then
       printf "%s\n" "SKIP $repo (not found at $src)"

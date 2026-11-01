@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       repo:
-        description: "Source repo name (e.g., wet-mcp)"
+        description: "Source repo name (e.g., wet)"
         required: true
         type: choice
         # Renamed source repos are listed under both names; the pre-rename
@@ -19,6 +19,7 @@ on:
           - mnemo-mcp
           - telegram
           - better-telegram-mcp
+          - crg
           - better-code-review-graph
           - notion
           - better-notion-mcp
@@ -93,7 +94,7 @@ jobs:
           }
 
           case "$REPO" in
-            wet|wet-mcp|mnemo|mnemo-mcp|telegram|better-telegram-mcp|better-code-review-graph|notion|better-notion-mcp|email|better-email-mcp|workspace|better-workspace-mcp|mcp-core)
+            wet|wet-mcp|mnemo|mnemo-mcp|telegram|better-telegram-mcp|crg|better-code-review-graph|notion|better-notion-mcp|email|better-email-mcp|workspace|better-workspace-mcp|mcp-core)
               ;;
             *)
               printf "::error::Invalid repo: %s\n" "$(sanitize "$REPO")"
@@ -127,11 +128,11 @@ jobs:
         run: |
           set -euo pipefail
           # Both the pre-rename and the current repo name sync into the
-          # current plugin folder. wet and mnemo dispatch their renamed repo
-          # name while their plugin folders keep the published -mcp name.
+          # current plugin folder (plugins/wet, plugins/mnemo, plugins/crg).
           case "$REPO" in
-            wet) PLUGIN_NAME=wet-mcp ;;
-            mnemo) PLUGIN_NAME=mnemo-mcp ;;
+            wet-mcp) PLUGIN_NAME=wet ;;
+            mnemo-mcp) PLUGIN_NAME=mnemo ;;
+            better-code-review-graph) PLUGIN_NAME=crg ;;
             better-workspace-mcp) PLUGIN_NAME=workspace ;;
             better-notion-mcp) PLUGIN_NAME=notion ;;
             better-email-mcp) PLUGIN_NAME=email ;;

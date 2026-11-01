@@ -11,7 +11,7 @@ A persistent, incremental knowledge graph of a codebase, exposed to an AI agent 
 
 ## Tools
 
-Domain tools `graph`, `query`, `review`, and `security`, each driven by an `action` parameter, plus the universal `config` (status, runtime settings, credential setup) and `help`; `config__open_relay` reopens the browser credential form. Every action and parameter is listed in the [tools reference](/servers/better-code-review-graph/tools/).
+Domain tools `graph`, `query`, `review`, and `security`, each driven by an `action` parameter, plus the universal `config` (status, runtime settings, credential setup) and `help`; `config__open_relay` reopens the browser credential form. Every action and parameter is listed in the [tools reference](/servers/crg/tools/).
 
 ## Clients
 
@@ -24,10 +24,10 @@ The graph, heuristic security scan, and most queries work with no credentials. O
 - `EMBEDDING_MODELS`, `SUMMARY_MODELS` -- optional CSV model chains for node embeddings and function summaries; empty falls back to the bundled local model or disables the feature.
 - Provider API keys (`JINA_AI_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY`).
 
-Use placeholders in shared config and never commit real keys. Full walkthrough in [setup](/servers/better-code-review-graph/setup/).
+Use placeholders in shared config and never commit real keys. Full walkthrough in [setup](/servers/crg/setup/).
 
 ## Next steps
 
-- [Setup](/servers/better-code-review-graph/setup/) -- install and configure
-- [Tools reference](/servers/better-code-review-graph/tools/) -- every action and parameter
-- [Troubleshooting](/servers/better-code-review-graph/troubleshooting/)
+- [Setup](/servers/crg/setup/) -- install and configure
+- [Tools reference](/servers/crg/tools/) -- every action and parameter
+- [Troubleshooting](/servers/crg/troubleshooting/)
