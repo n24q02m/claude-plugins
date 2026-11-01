@@ -12,15 +12,15 @@ Markdown-first access to a Notion workspace for AI agents. Read and write pages 
 
 ## Tools
 
-Eight composite tools -- `pages`, `databases`, `blocks`, `users`, `workspace`, `comments`, `file_uploads`, and `content_convert` -- plus the universal `config` and `help`; `config__open_relay` reopens the browser credential form. Every action and parameter is listed in the [tools reference](/servers/notion/tools/).
+Eight composite tools -- `pages`, `databases`, `blocks`, `users`, `workspace`, `comments`, `file_uploads`, and `content_convert` -- plus the universal `config` (credential state) and `help`. Every action and parameter is listed in the [tools reference](/servers/notion/tools/).
 
-## Clients
+## Deployment
 
-Defaults to a team-shared remote deployment (`remote-oauth`) and also runs over stdio for single-user local use. Works with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web. See the [modes overview](/get-started/modes-overview/).
+Defaults to `stdio` for single-user local use, and also runs as a self-hosted HTTP service behind bearer-token auth. There is no endpoint hosted by the author: for HTTP you run the server yourself and point your MCP client at it. Works with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, and Windsurf. See the [modes overview](/get-started/modes-overview/).
 
 ## Configuration
 
-Needs a Notion integration token (`NOTION_TOKEN`), supplied via the browser relay form or an environment variable. The integration must be shared with each page or database you want the agent to reach. Use a placeholder in shared config and never commit a real token. Full walkthrough in [setup](/servers/notion/setup/).
+Needs a Notion integration token (`NOTION_TOKEN`, starts with `ntn_`). Supply it through the plugin's `NOTION_TOKEN` field or an environment variable, or store it once with `notion auth` (saved under `~/.better-notion/`). In HTTP `multi` mode each user gets their own token, stored with `notion auth --user <namespace>` on the server host. The integration must be shared with each page or database you want the agent to reach. Use a placeholder in shared config and never commit a real token. Full walkthrough in [setup](/servers/notion/setup/).
 
 ## Next steps
 

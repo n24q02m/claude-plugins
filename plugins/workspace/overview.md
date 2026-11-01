@@ -23,17 +23,17 @@ Every domain tool takes an `account` parameter -- the email of the Google accoun
 
 ## Clients
 
-Defaults to `stdio` for single-user local use, and also runs as a self-hosted multi-user HTTP service where each user's Google credentials sit in their own bucket keyed by their JWT `sub`. Works with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, and Windsurf. See the [modes overview](/get-started/modes-overview/).
+Defaults to `stdio` for single-user local use, and also runs as a self-hosted multi-user HTTP service. In HTTP mode each request carries a bearer token from a users file (`WORKSPACE_USERS_FILE`), and each user's Google credentials sit in their own bucket keyed by that user's namespace. Works with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, and Windsurf. See the [modes overview](/get-started/modes-overview/).
 
-For HTTP, use the endpoint supplied by your operator or follow the self-host setup guide. A configured URL alone does not establish that a deployment is available.
+There is no endpoint hosted by the author. For HTTP you run the server yourself, put your own TLS reverse proxy in front of it, and point your MCP client at that host.
 
 ## Configuration
 
-Needs a Google OAuth client you create yourself, supplied as `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` -- **Desktop app** type for stdio, **Web application** type for HTTP. The server ships no Google client of its own, so the consent screen and API quota belong to your project. HTTP also requires `CREDENTIAL_SECRET` to retain credential encryption and signing keys across restarts. Register both `/callback` and `/accounts/callback` on the Web client. Use placeholders in shared config and never commit real credentials. Full walkthrough in [setup](/servers/workspace/setup/).
+Needs a Google OAuth client you create yourself, supplied as `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` -- **Desktop app** type for stdio, **Web application** type for HTTP. The server ships no Google client of its own, so the consent screen and API quota belong to your project. In stdio mode the first run opens the Google consent screen once. In HTTP mode the server needs `CREDENTIAL_SECRET` (it derives each user's credential-encryption key) and `WORKSPACE_USERS_FILE`, and each user consents on the server host with `workspace auth --user <namespace>`; consent is never served over HTTP. Use placeholders in shared config and never commit real credentials. Full walkthrough in [setup](/servers/workspace/setup/).
 
 ## Distribution and license
 
-The npm package is [`@n24q02m/better-workspace-mcp`](https://www.npmjs.com/package/@n24q02m/better-workspace-mcp). Select a published version from the [release history](https://github.com/n24q02m/workspace/releases); package releases and deployed HTTP instances are separate surfaces.
+The npm package is [`@n24q02m/workspace`](https://www.npmjs.com/package/@n24q02m/workspace) (Node >= 24.21.0). Select a published version from the [release history](https://github.com/n24q02m/workspace/releases); package releases and self-hosted HTTP deployments are separate surfaces.
 
 Like the rest of the stack, this server is **Apache-2.0** -- here from the start, because it vendors Apache-2.0 code from [gemini-cli-extensions/workspace](https://github.com/gemini-cli-extensions/workspace) and carries that license across the repo.
 

@@ -11,20 +11,21 @@ A persistent, incremental knowledge graph of a codebase, exposed to an AI agent 
 
 ## Tools
 
-Domain tools `graph`, `query`, `review`, and `security`, each driven by an `action` parameter, plus the universal `config` (status, runtime settings, credential setup) and `help`; `config__open_relay` reopens the browser credential form. Every action and parameter is listed in the [tools reference](/servers/crg/tools/).
+Domain tools `graph`, `query`, `review`, and `security`, each driven by an `action` parameter, plus the universal `config` (status, runtime settings, model-cell setup state) and `help`. The same actions are available from the local `crg` CLI. Every action and parameter is listed in the [tools reference](/servers/crg/tools/).
 
 ## Clients
 
-Defaults to `stdio` and runs against a local checkout; it ships Docker `:http` builds for advanced self-host but has no hosted remote-relay mode by default. Works with any stdio MCP client -- Claude Code, Codex, Gemini CLI, Cursor, and Windsurf. See the [modes overview](/get-started/modes-overview/).
+crg is local-first. It defaults to `stdio` and runs against a local checkout, and the CLI and bundled skills are the primary surface. Works with any stdio MCP client -- Claude Code, Codex, Gemini CLI, Cursor, and Windsurf. HTTP is opt-in and self-host only: you run one instance (`crg server start`, or a container built from source) and authenticate clients with a Bearer token. There is no hosted endpoint. See the [modes overview](/get-started/modes-overview/).
 
 ## Configuration
 
-The graph, heuristic security scan, and most queries work with no credentials. Optional cloud embeddings and LLM node summaries are unlocked with your own keys and model chains, all supplied as environment variables:
+The graph, heuristic security scan, and most queries work with no configuration. Optional cloud embeddings and LLM node summaries are unlocked through the host-owned instance config and a few environment variables:
 
-- `EMBEDDING_MODELS`, `SUMMARY_MODELS` -- optional CSV model chains for node embeddings and function summaries; empty falls back to the bundled local model or disables the feature.
-- Provider API keys (`JINA_AI_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY`).
+- `EMBEDDING_MODELS` -- optional CSV of embedding models; the first entry is active. Empty falls back to the bundled local model.
+- `HULL_EMBED_API_KEY`, `HULL_CHAT_API_KEY` -- optional keys for the `[models.embed]` and `[models.chat]` provider cells. Node summaries need a configured chat cell; without one they are skipped.
+- `LOCAL_EMBEDDING_MODEL` and its metadata fields, `LOCAL_RERANK_MODEL` -- optional local embedding and reranking models.
 
-Use placeholders in shared config and never commit real keys. Full walkthrough in [setup](/servers/crg/setup/).
+crg does not read per-vendor key variables such as `OPENAI_API_KEY`. Use placeholders in shared config and never commit real keys. Full walkthrough in [setup](/servers/crg/setup/).
 
 ## Next steps
 

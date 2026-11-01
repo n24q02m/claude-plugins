@@ -43,15 +43,16 @@ List and download email attachments. Wrapped as external content.
 
 ## config
 
-Manage email credential setup and runtime configuration. Not wrapped as external content.
+Report credential state and setup guidance. Not wrapped as external content. Credentials are read from the server environment (or saved Outlook tokens) at startup; this tool never opens a form or returns a setup URL.
 
 | Action | Purpose | Key parameters |
 |---|---|---|
-| `status` | Show credential state, setup URL, configured accounts | -- |
-| `setup_start` | Return the relay setup URL | `force` (restart setup) |
-| `setup_reset` | Wipe saved credentials | -- |
-| `setup_complete` | Re-check state after relay form submission | -- |
-| `set` | No-op -- email has no mutable runtime settings | `key`, `value` |
+| `status` | Show credential `state` and the configured `accounts` | -- |
+| `setup_status` | Show the credential `state` only | -- |
+| `setup_start` | Return setup instructions: set `EMAIL_CREDENTIALS` (or `EMAIL_USER` + `EMAIL_APP_PASSWORD`) and restart, or run `email auth outlook <address>` | -- |
+| `setup_reset` | Delete the saved config and return to `awaiting_setup` | -- |
+| `setup_complete` | Re-check the state; returns `previous_state`, `state`, and `accounts` | -- |
+| `set` | No-op -- email has no mutable runtime settings; always returns `ok: false` | `key`, `value` |
 | `cache_clear` | Clear the Sent-folder cache, archive-folder cache, and OAuth token cache | -- |
 
 ## help

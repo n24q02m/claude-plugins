@@ -1,10 +1,6 @@
 # Notion MCP -- Manual Setup Guide
 
-> **2026-05-02 Update**: Plugin install (Method 1) now uses pure stdio mode with `NOTION_TOKEN` env var.
-> The previous "Zero-Config Relay" auto-spawn pattern has been removed.
-> If you relied on the relay form to enter your token, please:
-> 1. Set `NOTION_TOKEN` directly in plugin config (Method 1), OR
-> 2. Switch to HTTP mode (Method 3 (Docker HTTP — Self-host)) for browser-based OAuth.
+> The Notion server authenticates with a **Notion integration token** (`ntn_...`). There is no browser setup form and no OAuth flow: the token comes from the `NOTION_TOKEN` environment variable or from `notion auth`, which stores it under `~/.better-notion/`.
 
 ## Method overview
 
@@ -12,26 +8,26 @@ This plugin supports 3 install methods. Pick the one that matches your use case:
 
 | Priority | Method | Transport | Best for |
 |---|---|---|---|
-| **1. Default** | Plugin install (`uvx`/`npx`) | stdio | Quick local start, single workstation, no OAuth/HTTP needed. |
-| **2. Fallback** | Docker stdio (`docker run -i --rm`) | stdio | Windows/macOS where native uvx/npx hits PATH or Python version issues. |
-| **3. Recommended** | Docker HTTP (`docker run -p 8080:8080`) | HTTP | Multi-device, OAuth/relay-form auth, team self-host, claude.ai web compatibility. |
+| **1. Default** | Plugin install (`npx`) | stdio | Quick local start, single workstation, no HTTP needed. |
+| **2. Fallback** | Docker stdio (`docker run -i --rm`) | stdio | Windows/macOS where native `npx` hits PATH or Node version issues. |
+| **3. Self-host** | Docker HTTP (`docker run -p 8080:8080`) | HTTP | Multi-device, team self-host, claude.ai web compatibility. |
 
-All MCP servers across this stack share this priority hierarchy. Note: 2 plugins (`better-godot-mcp` and `better-code-review-graph`) default to **stdio via plugin install** and do not offer a hosted remote-relay/OAuth mode. They do ship Docker images (`:stdio` and `:http` targets) and support HTTP transport for self-hosting (`MCP_TRANSPORT=http` / `--http`), so Methods 2 and 3 are available as advanced self-host paths -- they are just not the default.
+There is no endpoint hosted by the author. For HTTP you run the server yourself and put your own TLS reverse proxy in front of it.
 
-> **⚠️ Mutually exclusive — pick ONE per plugin**: If you choose Method 2 (Docker stdio override) OR Method 3 (HTTP), do NOT also `/plugin install` this plugin via marketplace. Both load simultaneously and create duplicate entries in `/mcp` dialog (plugin's stdio + your override). Plugin matching is by **endpoint** (URL or command string) per CC docs, not by name — and `npx`/`uvx` ≠ `docker` ≠ HTTP URL, so all three are distinct endpoints. Trade-off: choosing Method 2 or Method 3 means you lose this plugin's skills/agents/hooks/commands. For full plugin features, use Method 1 (default plugin install) with `userConfig` credentials prompted at install time.
+> **Warning -- mutually exclusive, pick ONE per plugin**: If you choose Method 2 (Docker stdio override) or Method 3 (HTTP), do NOT also `/plugin install` this plugin via marketplace. Both load simultaneously and create duplicate entries in the `/mcp` dialog (the plugin's stdio plus your override). Plugin matching is by **endpoint** (URL or command string), not by name -- and `npx` is not `docker` is not an HTTP URL, so all three are distinct endpoints. Trade-off: choosing Method 2 or Method 3 means you lose this plugin's skills and hooks. For full plugin features, use Method 1 (default plugin install) with `userConfig` credentials prompted at install time.
 
 ## Prerequisites
 
-- **Node.js** >= 24.14.1
+- **Node.js** >= 24.21.0 (Method 1) or Docker (Methods 2 and 3)
 - A **Notion account** with access to create integrations
 
 ## Method 1: Claude Code Plugin (Recommended)
 
-Plugin marketplace install runs the server in **pure stdio mode** with `NOTION_TOKEN` env var. No daemon-bridge, no auto-spawn, no relay form.
+Plugin marketplace install runs the server in **stdio mode** with the `NOTION_TOKEN` env var. There is no daemon bridge and no setup form.
 
 ### Credential prompts at install
 
-When you run `/plugin install`, Claude Code prompts you for the following credentials (declared in `userConfig` per CC docs). Sensitive values are stored in your system keychain and persist across `/plugin update`:
+When you run `/plugin install`, Claude Code prompts you for the following credentials (declared in `userConfig`). Sensitive values are stored in your system keychain and persist across `/plugin update`:
 
 | Field | Required | Where to obtain |
 |---|---|---|
@@ -52,29 +48,57 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
    ```
 4. Restart Claude Code. The plugin auto-loads with your token injected via `${user_config.NOTION_TOKEN}`.
 
-> **Note**: This installs the full plugin (skills + agents + hooks + commands + stdio MCP server). If you'd rather use Method 2 (Docker stdio) or Method 3 (HTTP) below, DO NOT `/plugin install` this plugin — pick Method 2 or Method 3 instead. All three methods are mutually exclusive (see Method overview).
+> **Note**: This installs the full plugin (skills + hooks + stdio MCP server). If you would rather use Method 2 (Docker stdio) or Method 3 (HTTP) below, do NOT `/plugin install` this plugin -- pick Method 2 or Method 3 instead. All three methods are mutually exclusive (see Method overview).
+
+Or configure it by hand in any MCP client:
+
+```jsonc
+{
+  "mcpServers": {
+    "notion": {
+      "command": "npx",
+      "args": ["--yes", "@n24q02m/notion@latest"],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "NOTION_TOKEN": "<your-notion-token>"
+      }
+    }
+  }
+}
+```
+
+### Store the token with `notion auth` instead
+
+If you would rather not keep the token in client config, store it once on the machine that runs the server:
+
+```bash
+NOTION_TOKEN=<your-notion-token> npx -y @n24q02m/notion auth
+```
+
+`notion auth` reads the token from `NOTION_TOKEN` or prompts for it (it is never taken from command-line arguments), checks it against Notion, and saves it to `~/.better-notion/config.json` with owner-only file permissions. Later runs pick it up without `NOTION_TOKEN` being set. If neither is present in stdio mode, the server exits with an error on stderr listing both options.
 
 ## Method 2: Docker stdio (fallback)
 
-> **⚠️ Before adding the Docker stdio override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall better-notion-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's `npx`/`uvx` stdio + your `docker run` stdio) will load simultaneously since plugin matches by endpoint (command string), not by name.
+> **Warning -- before adding the Docker stdio override below, ensure this plugin is NOT installed via marketplace**: run `/plugin uninstall better-notion-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (the plugin's `npx` stdio and your `docker run` stdio) load simultaneously, since plugins match by endpoint (command string), not by name.
 >
-> **Trade-off accepted**: Choosing this method means you lose this plugin's skills/agents/hooks/commands. Use Method 1 instead if you want full plugin features.
+> **Trade-off accepted**: choosing this method means you lose this plugin's skills and hooks. Use Method 1 instead if you want full plugin features.
 
 1. Pull the image:
    ```bash
-   docker pull n24q02m/better-notion-mcp:latest
+   docker pull n24q02m/notion:latest
    ```
 
 2. Add to your MCP client config:
    ```json
    {
      "mcpServers": {
-       "better-notion-mcp": {
+       "notion": {
          "command": "docker",
          "args": [
            "run", "-i", "--rm",
+           "-e", "MCP_TRANSPORT=stdio",
            "-e", "NOTION_TOKEN",
-           "n24q02m/better-notion-mcp:latest"
+           "n24q02m/notion:latest"
          ]
        }
      }
@@ -86,80 +110,69 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
    export NOTION_TOKEN="ntn_..."
    ```
 
-## Why upgrade to HTTP mode?
+The image is also published as `ghcr.io/n24q02m/notion` (multi-arch: amd64 and arm64).
 
-Stdio is the default and works fine for single-user local setups. You may want to switch to HTTP mode (Method 3 Docker HTTP (Self-host)) when you need any of the following:
+## Why use HTTP mode?
+
+Stdio is the default and works fine for single-user local setups. Consider a self-hosted HTTP instance (Method 3) when you need any of the following:
 
 - **claude.ai web compatibility** -- claude.ai (the web UI) supports HTTP MCP servers but cannot spawn local stdio processes.
-- **One server shared across N Claude Code sessions** -- a single HTTP instance serves multiple terminals/IDEs without re-spawning per session.
-- **OAuth flow delegated to `api.notion.com`** -- no manual token paste; users grant access through Notion's standard authorization page.
-- **Multi-device credential sync** -- sign in once on your laptop, the same OAuth grant works from your desktop / tablet without copying tokens.
-- **Multi-user team sharing** -- a self-hosted server can serve multiple Notion accounts, each with isolated per-user tokens (per-JWT-sub).
-- **Always-on persistent process for webhooks/agents** -- HTTP servers stay alive between sessions, enabling background work, scheduled agents, or webhook listeners.
+- **One server shared across N Claude Code sessions** -- a single HTTP instance serves multiple terminals and IDEs without re-spawning per session.
+- **Multi-device access** -- the Notion token stays on the server host; each device only needs the server URL and its own bearer token.
+- **Multi-user team sharing** -- in `multi` mode each user has their own bearer token and their own Notion token namespace.
+- **Always-on persistent process** -- an HTTP server stays alive between sessions.
 
-## Method 3: Docker HTTP (recommended)
+## Method 3: Docker HTTP (self-host)
 
-> **⚠️ Before adding the HTTP override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall better-notion-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's stdio + your HTTP override) will load simultaneously since plugin matches by endpoint, not name.
+> **Warning -- before adding the HTTP override below, ensure this plugin is NOT installed via marketplace**: run `/plugin uninstall better-notion-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (the plugin's stdio and your HTTP override) load simultaneously, since plugins match by endpoint, not name.
 >
-> **Trade-off accepted**: Choosing this method means you lose this plugin's skills/agents/hooks/commands. For example, the `better-notion-mcp:organize-database` skill will no longer be available. Use Method 1 instead if you want full plugin features.
+> **Trade-off accepted**: choosing this method means you lose this plugin's skills and hooks. For example, the `organize-database` skill will no longer be available. Use Method 1 instead if you want full plugin features.
 
-> **Switching transport vs. setting credentials**: The `userConfig` prompt only configures credentials for stdio mode (Method 1 / Option 1). To switch transport to HTTP, override `mcpServers` in your client settings per the snippets below -- this is a separate path from `userConfig` and is not driven by the install prompt.
+> **Switching transport vs. setting credentials**: the `userConfig` prompt only configures `NOTION_TOKEN` for stdio mode (Method 1). To switch transport to HTTP, override `mcpServers` in your client settings per the snippets below -- a separate path from `userConfig`, not driven by the install prompt.
 
-### Self-host with docker-compose
+HTTP mode is turned on with `--http`, `MCP_TRANSPORT=http`, or `TRANSPORT_MODE=http`. Clients authenticate to the server with a **bearer token**; the server talks to Notion with an integration token stored on the host. Choose how clients authenticate with `MCP_AUTH_MODE`:
 
-Host your own multi-user OAuth server. Always-OAuth, single multi-user mode (per-JWT-sub token isolation). Requires you to register your own Notion public integration.
+| `MCP_AUTH_MODE` | Behavior |
+|---|---|
+| `multi` (default) | Each user is listed in the users file (`MCP_USERS_FILE`, default `~/.hull/users.toml`) and gets their own bearer token and Notion token namespace. Store a user's Notion token with `notion auth --user <namespace>` on the server host. |
+| `token` | Every client shares one bearer token. Set `MCP_AUTH_TOKEN_HASH` to its `scrypt$...` hash, minted with the `token hash` subcommand. `MCP_RPM` optionally caps requests per minute. The Notion token is the default one (`NOTION_TOKEN` or `notion auth`). |
+| `no-auth` | No bearer check. Use only on a trusted local network or loopback. |
 
-### Prerequisites
+### Run the server
 
-1. Create a **Public Integration** at https://www.notion.so/my-integrations (you, the operator, must own this OAuth app -- one per self-host deployment).
-2. Set the redirect URI to `https://your-domain.com/callback`
-3. Note the `client_id` and `client_secret`
-
-### Required Env
-
-| Variable | Description |
-|:---------|:------------|
-| `TRANSPORT_MODE=http` | Selects HTTP transport. |
-| `PUBLIC_URL` | Public URL of your server (e.g. `https://your-domain.com`). Used for OAuth redirects. |
-| `NOTION_OAUTH_CLIENT_ID` | Your Notion Public Integration client ID. |
-| `NOTION_OAUTH_CLIENT_SECRET` | Your Notion Public Integration client secret. |
-
-### Edge auth: relay password
-
-Public HTTP deployments expose `<your-domain>/authorize` to URL discovery. To prevent random Internet users from accessing the relay form, mint a relay password:
-
-```bash
-openssl rand -hex 32
-# Save in your skret / .env as:
-MCP_RELAY_PASSWORD=<generated-32-byte-hex>
-```
-
-Share this password out-of-band (Signal/email/SMS) with anyone you invite to use your server. They will see a login form when first opening `/authorize`; once logged in, the cookie persists 24 hours.
-
-**Single-user dev exception**: If `PUBLIC_URL=http://localhost:8080`, you can leave `MCP_RELAY_PASSWORD` empty to disable the gate. The server logs a warning if you skip the password with a non-localhost `PUBLIC_URL`.
-
-### Run the Server
+Shared-token example:
 
 ```bash
 docker run -p 8080:8080 \
   -e TRANSPORT_MODE=http \
   -e PORT=8080 \
   -e HOST=0.0.0.0 \
-  -e PUBLIC_URL=https://your-domain.com \
-  -e NOTION_OAUTH_CLIENT_ID=your-client-id \
-  -e NOTION_OAUTH_CLIENT_SECRET=your-client-secret \
-  n24q02m/better-notion-mcp:latest
+  -e MCP_AUTH_MODE=token \
+  -e MCP_AUTH_TOKEN_HASH='scrypt$...' \
+  -e NOTION_TOKEN \
+  n24q02m/notion:latest
 ```
 
-Point clients to your server:
+Or use the compose file shipped in the server repo, which publishes the server on the host loopback interface only (`127.0.0.1:8081`):
+
+```bash
+export MCP_AUTH_MODE=token
+export MCP_AUTH_TOKEN_HASH='scrypt$...'
+docker compose -f docker-compose.http.yml up
+```
+
+The server then listens on `http://localhost:8081/mcp`. To expose it beyond the host, put your own TLS reverse proxy in front of the loopback port.
+
+Point clients at the host you deployed it on:
 
 **Claude Code** -- `.claude/settings.json` or `~/.claude/settings.json`:
 ```json
 {
   "mcpServers": {
-    "better-notion-mcp": {
+    "notion": {
       "type": "http",
-      "url": "https://your-domain.com/mcp"
+      "url": "https://<your-host>/mcp",
+      "headers": { "Authorization": "Bearer <your-token>" }
     }
   }
 }
@@ -167,50 +180,46 @@ Point clients to your server:
 
 **Codex CLI** -- `~/.codex/config.toml`:
 ```toml
-[mcp_servers.better-notion-mcp]
+[mcp_servers.notion]
 type = "http"
-url = "https://your-domain.com/mcp"
+url = "https://<your-host>/mcp"
 ```
 
 **OpenCode** -- `opencode.json`:
 ```json
 {
   "mcpServers": {
-    "better-notion-mcp": {
+    "notion": {
       "type": "http",
-      "url": "https://your-domain.com/mcp"
+      "url": "https://<your-host>/mcp",
+      "headers": { "Authorization": "Bearer <your-token>" }
     }
   }
 }
 ```
 
-On first use, a browser window opens for Notion authorization. Grant access to the pages and databases you want the agent to work with.
+In `token` and `multi` modes the client must send `Authorization: Bearer <your-token>`. How to set that header differs per client (the Codex CLI block above omits it); see your client's documentation for passing a header or bearer token.
 
 ## Credential Setup
-
-### Integration Token (Stdio Mode)
 
 1. Go to https://www.notion.so/my-integrations
 2. Create a new integration for your workspace
 3. Copy the "Internal Integration Secret" (`ntn_...`)
-4. Share each page/database with the integration via the Connections menu
-
-### OAuth (HTTP Mode)
-
-No manual token setup. Users authorize via Notion's OAuth flow in the browser.
+4. Share each page or database with the integration via the Connections menu
+5. Provide the token as `NOTION_TOKEN` (plugin field or environment variable), or store it with `notion auth` (or `notion auth --user <namespace>` for a user in HTTP `multi` mode)
 
 ## Environment Variable Reference
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `NOTION_TOKEN` | Yes (stdio) | -- | Notion internal integration token (`ntn_...`). |
-| `TRANSPORT_MODE` | No | `stdio` | Set to `http` to enable HTTP transport (multi-user OAuth). |
-| `PUBLIC_URL` | Yes (http) | -- | Server's public URL for OAuth redirects. |
-| `NOTION_OAUTH_CLIENT_ID` | Yes (http) | -- | Notion Public Integration client ID. |
-| `NOTION_OAUTH_CLIENT_SECRET` | Yes (http) | -- | Notion Public Integration client secret. |
-| `MCP_AUTH_DISABLE` | No (http) | -- | Set to `1` to skip Bearer JWT verification (for deploys behind an external auth gateway). |
-| `PORT` | No | `0` (OS-assigned) | Server port. |
-| `HOST` | No | -- | Bind address (http mode); set `0.0.0.0` to expose the container. |
+| `NOTION_TOKEN` | Yes (stdio, unless stored with `notion auth`) | -- | Notion internal integration token (`ntn_...`). In HTTP mode it applies to the default namespace only. |
+| `MCP_TRANSPORT` / `TRANSPORT_MODE` | No | `stdio` | Set either to `http` to enable HTTP transport (`--http` on the command line does the same). |
+| `MCP_AUTH_MODE` | No (http) | `multi` | `multi`, `token`, or `no-auth`. |
+| `MCP_USERS_FILE` | No (http, `multi`) | `~/.hull/users.toml` | Users file for `multi` mode. |
+| `MCP_AUTH_TOKEN_HASH` | Yes (http, `token`) | -- | `scrypt$...` hash of the shared bearer token. |
+| `MCP_RPM` | No (http, `token`) | -- | Optional per-minute request cap. |
+| `PORT` | No | `0` (OS-assigned) | Server port; set explicitly to bind a fixed port. |
+| `HOST` | No | `127.0.0.1` | Bind address (http mode); set `0.0.0.0` to expose the container. |
 
 ## Troubleshooting
 
@@ -218,23 +227,20 @@ No manual token setup. Users authorize via Notion's OAuth flow in the browser.
 
 - Verify your `NOTION_TOKEN` starts with `ntn_` and is a valid Internal Integration Secret.
 - Ensure the integration has not been deleted or revoked at https://www.notion.so/my-integrations.
+- In HTTP mode a 401 on the MCP endpoint itself means the bearer token is missing or wrong; a Notion 401 inside a tool result means the stored Notion token is bad.
 
 ### Tool returns empty results
 
 - The integration can only access pages explicitly shared with it. Click "..." on a Notion page > Connections > add your integration.
 - Child pages inherit the parent's connections, but databases must be shared individually.
 
-### OAuth flow fails (HTTP mode)
+### Tool says to run `notion auth`
 
-- Verify `PUBLIC_URL` matches the redirect URI configured in your Notion Public Integration.
-- Ensure `NOTION_OAUTH_CLIENT_ID` and `NOTION_OAUTH_CLIENT_SECRET` are correct.
-- Check that the redirect URI is `https://your-domain.com/callback`.
+- No Notion token is available to the server for your user. Set `NOTION_TOKEN`, or run `notion auth` (or `notion auth --user <namespace>` in HTTP `multi` mode) on the machine that runs the server. Check with `config(action="status")`.
 
 ### npx: old version or "command not found"
 
-- Verify Node.js >= 24.14.1: `node --version`.
-- Clear the npx cache or use `@latest` tag: `npx -y @n24q02m/better-notion-mcp@latest`.
+- Verify Node.js >= 24.21.0: `node --version`.
+- Clear the npx cache or use the `@latest` tag: `npx -y @n24q02m/notion@latest`.
 
-### comments.list returns 404
-
-- This is a known Notion API issue with OAuth tokens on API version `2025-09-03`. Use stdio mode with an integration token for full comment support.
+See the [troubleshooting guide](/servers/notion/troubleshooting/) for more.

@@ -12,15 +12,15 @@ Telegram access for AI agents in both Bot API and MTProto (user) modes -- messag
 
 ## Tools
 
-Four composite tools -- `message`, `chat`, `media`, and `contact` -- driven by an `action` parameter, plus the universal `config` and `help`; `config__open_relay` reopens the browser credential form. Every action and parameter is listed in the [tools reference](/servers/telegram/tools/).
+Four composite tools -- `message`, `chat`, `media`, and `contact` -- driven by an `action` parameter, plus the universal `config` (status and runtime settings) and `help`. Credentials are never set through a tool. Every action and parameter is listed in the [tools reference](/servers/telegram/tools/).
 
 ## Clients
 
-Defaults to a team-shared remote deployment (`remote-relay`) and also runs over stdio for single-user local use. Works with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web. See the [modes overview](/get-started/modes-overview/).
+Runs over stdio by default (single user) and can run as a self-hosted HTTP server with token or per-user (`multi`) auth. There is no hosted public instance. Works with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web for a self-hosted HTTP server. See the [modes overview](/get-started/modes-overview/).
 
 ## Configuration
 
-Bot mode needs a bot token (`TELEGRAM_BOT_TOKEN`); user mode authenticates an MTProto session through the browser relay form. Supply credentials via the relay form or environment variables, use placeholders in shared config, and never commit a real token. Full walkthrough in [setup](/servers/telegram/setup/).
+Bot mode needs a bot token (`TELEGRAM_BOT_TOKEN`). User mode signs in once from a terminal with `telegram auth --phone <+number>` (OTP and optional 2FA password are prompted there) and stores the MTProto session on disk. Credentials only come from environment variables or this local CLI -- there is no browser form. Use placeholders in shared config and never commit a real token. Full walkthrough in [setup](/servers/telegram/setup/).
 
 ## Next steps
 

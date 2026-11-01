@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """PreToolUse hook: hint when better-notion-mcp credentials are not configured.
 
-Non-blocking -- server handles unconfigured state internally via lazy relay
-trigger (returns setup instructions with relay URL on first tool call).
-Notion uses OAuth via claude.ai proxy in HTTP mode.
+Non-blocking hint only. A Notion integration token comes from the NOTION_TOKEN
+env var or from `notion auth` (stored in ~/.better-notion/config.json). In stdio
+mode the server refuses to start without a token and prints setup options on
+stderr; in HTTP mode the token is per user namespace (`notion auth --user <ns>`).
+There is no browser setup form.
 """
 
 import json
@@ -25,6 +27,13 @@ def _is_configured() -> bool:
     for k in CREDENTIAL_KEYS:
         if os.environ.get(k):
             return True
+    home = os.path.expanduser("~")
+    for p in (
+        home + "/.better-notion/config.json",
+        home + "/.config/mcp/config.enc",
+    ):
+        if os.path.exists(p):
+            return True
     return False
 
 
@@ -40,13 +49,15 @@ def main() -> None:
     if _is_configured():
         sys.exit(0)
 
-    # Non-blocking hint: let server handle unconfigured state
+    # Non-blocking hint: point at the real setup paths (the server itself does
+    # not open any setup form)
     print(
         json.dumps(
             {
                 "message": (
                     "better-notion-mcp: credentials not yet configured. "
-                    "The server will provide setup instructions."
+                    "Set NOTION_TOKEN in the plugin config or run "
+                    "`npx -y @n24q02m/notion auth`."
                 ),
             }
         )

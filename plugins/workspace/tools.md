@@ -169,19 +169,19 @@ Credential state and account management.
 | Action | Purpose | Key parameters |
 |---|---|---|
 | `status` | Credential state and the account being acted as | -- |
-| `setup_start` | Return the setup URL | `force` (restart setup) |
+| `setup_start` | Return setup instructions: run `workspace auth` on the host to start the Google consent flow, then retry the tool (stdio servers start this flow automatically on first run) | `force` (restart setup) |
 | `setup_reset` | Wipe saved credentials | -- |
 | `setup_complete` | Re-check state after consent | -- |
-| `account_add` | Return a URL that adds one more account once consent completes | -- |
+| `account_add` | Stdio: return a loopback URL that adds one more account once consent completes. HTTP: return the `workspace auth --user <namespace>` command to run on the host | -- |
 | `account_list` | Configured accounts and which is primary | -- |
 | `account_remove` | Forget one account | `account` (required) |
 | `account_set_default` | Make one account primary | `account` (required) |
-| `set` | Set a runtime setting | `key`, `value` |
-| `cache_clear` | Clear cached client state | -- |
+| `set` | No-op -- there are no mutable runtime settings | `key`, `value` |
+| `cache_clear` | No-op (nothing to clear) | -- |
 
 The first account authorized becomes the primary. Removing the primary promotes one of the remaining accounts; removing the last one puts the server back to `awaiting_setup`. Adding an account never changes which one is primary -- use `account_set_default` for that.
 
-In HTTP mode, `account_add` completes through the server's `/accounts/callback`, so the OAuth client has to be a Web application type with that redirect URI registered. See [setup](/servers/workspace/setup/).
+`account_add` picks its flow by transport. In stdio it starts a temporary loopback consent server and returns the URL to open. In HTTP mode consent is not served over the endpoint; it returns the `workspace auth --user <namespace>` command to run on the server host, and the OAuth client has to be a Web application type. See [setup](/servers/workspace/setup/).
 
 ## help
 

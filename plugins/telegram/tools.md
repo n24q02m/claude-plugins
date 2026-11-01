@@ -1,6 +1,6 @@
 # Telegram MCP -- Tools Reference
 
-better-telegram-mcp exposes Telegram (dual-mode: Bot API + MTProto) through 4 composite tools driven by an `action` parameter, plus `config` (credential setup), `help`, and `config__open_relay`.
+better-telegram-mcp exposes Telegram (dual-mode: Bot API + MTProto) through 4 composite tools driven by an `action` parameter, plus `config` (status and runtime settings) and `help`.
 
 ## message
 
@@ -57,16 +57,12 @@ Manage contacts -- list, search, add, and block/unblock users (user mode only).
 
 ## config
 
-Server configuration and runtime settings.
+Server status and runtime settings. Credentials are never set through a tool: they come from environment variables or the local `telegram auth` command (see [setup](/servers/telegram/setup/)).
 
 | Action | Purpose | Key parameters |
 |---|---|---|
-| `setup_status` | Show credential state | -- |
-| `setup_start` | Start credential relay setup | `key` (`force` bypasses an already-configured guard) |
-| `setup_reset` | Clear credential state | -- |
-| `setup_complete` | Re-resolve credential state | -- |
-| `status` | Show current config | -- |
-| `set` | Update a runtime setting (`message_limit`, `timeout`) | `key`, `value` (integer, >= 1) |
+| `status` | Show mode, `connected`, `authorized`, `pending_auth`, and the current config | -- |
+| `set` | Update a runtime setting (`message_limit`, `timeout`) | `message_limit` or `timeout` (integer, >= 1), or generic `key` + `value` |
 | `cache_clear` | Clear cached state | -- |
 
 ## help
@@ -76,7 +72,3 @@ Get full documentation for a topic.
 | Parameter | Values |
 |---|---|
 | `topic` | `telegram` \| `messages` \| `chats` \| `media` \| `contacts` \| `all` (default) |
-
-## config__open_relay
-
-Opens the relay configuration form in the user's browser. No parameters.

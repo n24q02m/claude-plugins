@@ -1,48 +1,36 @@
 # WET (Web Extended Toolkit) -- Overview
 
-Web search, content extraction, media discovery, and version-aware library-docs indexing -- packaged as one MCP server so an AI agent can research the open web, read pages and local files, and pull framework documentation without leaving the conversation.
+wet is an open-source, self-hosted MCP server for AI agents: web search, content extraction, and library documentation lookup. It runs as a single HTTP process on a machine you control and exposes five tools to any MCP client.
 
 ## What it does
 
-- **Search** the web through an ordered backend chain, academic sources, and auto-indexed library documentation with project-scoped version locking.
-- **Extract** clean content from URLs and local files (PDF/DOCX/PPTX/XLSX to Markdown), with batch, crawl, site-map, structured-extraction, page-interaction, and multi-step research-agent modes.
-- **Media**: discover and download images, video, and audio from a page.
-- Everything fetched from the open web is wrapped in an XPIA safety marker so the model treats the content as data, not instructions.
+- **Search** -- web search through a configurable backend chain (SearXNG, keyed providers, or credential-free DuckDuckGo/Startpage), academic search, and library documentation search with a local, version-aware docs index.
+- **Extract** -- clean content from URLs (single, batch, crawl, site map), local file conversion (PDF, DOCX, PPTX, XLSX, and more), LLM-backed structured extraction, page interaction, and change tracking between fetches.
+- **Media** -- list and download images, videos, and audio from a page.
+- **Config** -- inspect status, change a few runtime settings, clear the cache, re-index a library, and warm up local resources.
+
+Results from `search`, `extract`, and `media` carry an XPIA safety marker because they return externally fetched web content.
 
 ## Tools
 
-Three multiplexed capability tools -- `search`, `extract`, and `media`, each driven by an `action` parameter -- plus the two universal tools every server in this stack ships: `config` (status, runtime settings, credential setup) and `help` (full per-tool docs). In HTTP self-host mode, `config__open_relay` reopens the browser credential form. Every action and parameter is listed in the [tools reference](/servers/wet/tools/).
+Five tools: `search`, `extract`, `media`, `config`, `help`. See the [tools reference](/servers/wet/tools/).
 
-## Clients
+## Deployment
 
-Runs over stdio with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, and Windsurf. Self-host the HTTP build for claude.ai web compatibility and multi-user, per-user credential isolation. See the [modes overview](/get-started/modes-overview/).
+wet speaks **Streamable HTTP only** on a single `/mcp` endpoint. There is no stdio transport and no hosted public instance: you run one instance and point MCP clients at it.
+
+- **Local**: `uvx --python 3.13 --from wet-mcp wet server start` runs a loopback `no-auth` instance on `http://127.0.0.1:8000/mcp`.
+- **docker compose**: build from the source repo and publish on loopback with token auth.
+- **Your own host**: run the instance behind a TLS proxy you control and use `auth = "token"` or `"multi"`.
+
+Clients: Claude Code (with the plugin, or `claude mcp add --transport http`), Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web for a remote instance. The Claude Code plugin adds the wet skill and registers an HTTP MCP entry for your instance through `WET_URL` / `WET_TOKEN`.
 
 ## Configuration
 
-Local retrieval needs no provider credentials. For web search, configure `SEARCH_BACKENDS`: credential-free `duckduckgo` / `startpage`, keyed `tavily` / `brave` / `exa` / `kagi`, optional-key `firecrawl`, or `searxng` with a runnable local installation or an external `SEARXNG_URL`. Upstream challenges or empty results advance to the next backend, not to an invented successful result.
-`uvx` stdio web search needs a cloud/external search backend or Docker because
-local SearXNG cannot auto-start in the uvx tool environment. Content
-extraction and other non-SearXNG paths can run without search credentials.
-Optional capabilities are unlocked with your own keys and model chains:
-
-- `SEARCH_BACKENDS` / `SEARCH_BACKEND` -- ordered search providers:
-  `searxng`, `tavily`, `brave`, or `exa`.
-- `EMBEDDING_MODELS`, `RERANK_MODELS`, `LLM_MODELS` -- optional CSV model
-  chains for embedding, reranking, and LLM features; empty uses local defaults
-  where the selected runtime supports them.
-- Provider API keys (`JINA_AI_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`,
-  `COHERE_API_KEY`) and `GITHUB_TOKEN` for a higher docs-discovery rate limit.
-
-Use placeholders in shared config and never commit real keys. Full walkthrough in [setup](/servers/wet/setup/).
-
-For the managed Cloudflare route, use per-subject Minimax-free completion and
-paid Cohere retrieval through Cloudflare AI Gateway; see the
-[provider configuration reference](/reference/relay-flow/#managed-cloudflare-model-configuration).
-`DOCS_DB_BACKEND=cf-d1` disables redundant Google Drive sync and its OAuth setup
-flows. This does not remove public local stdio or SearXNG support.
+Auth, bind address, and provider settings live in the host-owned `~/.wet/config.toml` (create it with `wet config init`). Embedding, reranking, and LLM tasks use independent `[models.*]` cells over OpenAI-compatible HTTP; with no embed/rerank cell, wet falls back to local ONNX models. Search and browser backends are chosen with environment variables on the server host. MCP clients never see this file.
 
 ## Next steps
 
-- [Setup](/servers/wet/setup/) -- install and configure
-- [Tools reference](/servers/wet/tools/) -- every action and parameter
-- [Troubleshooting](/servers/wet/troubleshooting/)
+- [Setup](/servers/wet/setup/) -- start an instance and register it with a client
+- [Tools reference](/servers/wet/tools/) -- every tool and action
+- [Troubleshooting](/servers/wet/troubleshooting/) -- common problems

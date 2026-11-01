@@ -3,6 +3,8 @@ title: Shared services
 description: Common services exposed by mcp-core to consumer servers.
 ---
 
+> **Archived (2026-10-24).** `mcp-core` is superseded by [`hull`](https://github.com/n24q02m/hull) (PyPI `n24q02m-hull`, npm `@n24q02m/hull`). Every server in this stack now pins hull. The relay form, relay modes and `config__open_relay` described on this page were removed from all servers; credentials are supplied through environment variables, per-server config files or each server's `auth` CLI. This page is kept only as migration history.
+
 ## README
 
 # Shared Embedding Daemon (opt-in)

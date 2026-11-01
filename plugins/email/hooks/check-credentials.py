@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """PreToolUse hook: hint when better-email-mcp credentials are not configured.
 
-Non-blocking -- server handles unconfigured state internally via lazy relay
-trigger (returns setup instructions with relay URL on first tool call).
+Non-blocking -- the server handles the unconfigured state itself (its tools return
+setup instructions). There is no browser setup form; credentials come from env
+vars or from Outlook tokens saved by the local `email auth` command.
 """
 
 import json
@@ -39,8 +40,8 @@ def main() -> None:
     if _is_configured():
         sys.exit(0)
 
-    # Non-blocking hint: let server handle unconfigured state
-    # Server's lazy trigger will open relay and return setup instructions
+    # Non-blocking hint: let the server handle the unconfigured state and
+    # return setup instructions from its tools
     print(
         json.dumps(
             {

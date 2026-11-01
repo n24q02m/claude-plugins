@@ -3,6 +3,8 @@ title: Architecture
 description: How mcp-core is built and what it provides to consumer servers.
 ---
 
+> **Archived (2026-10-24).** `mcp-core` is superseded by [`hull`](https://github.com/n24q02m/hull) (PyPI `n24q02m-hull`, npm `@n24q02m/hull`). Every server in this stack now pins hull. The relay form, relay modes and `config__open_relay` described on this page were removed from all servers; credentials are supplied through environment variables, per-server config files or each server's `auth` CLI. This page is kept only as migration history.
+
 `mcp-core` is the foundation library every server in this stack consumes. It is **not a server** — you don't install or run mcp-core. Other servers depend on it via npm (`@n24q02m/mcp-core`) or PyPI (`mcp-core`).
 
 ## What it provides

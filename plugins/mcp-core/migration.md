@@ -3,6 +3,8 @@ title: Migration
 description: Migration history of mcp-core.
 ---
 
+> **Archived (2026-10-24).** `mcp-core` is superseded by [`hull`](https://github.com/n24q02m/hull) (PyPI `n24q02m-hull`, npm `@n24q02m/hull`). Every server in this stack now pins hull. The relay form, relay modes and `config__open_relay` described on this page were removed from all servers; credentials are supplied through environment variables, per-server config files or each server's `auth` CLI. This page is kept only as migration history.
+
 ## Migration to v1 (2026-04-30)
 
 # Migration Guide: mcp-core 1.12.0 — Multi-Mode (stdio + HTTP) Architecture

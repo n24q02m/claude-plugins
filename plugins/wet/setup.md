@@ -1,285 +1,232 @@
 # WET (Web Extended Toolkit) -- Manual Setup Guide
 
-## CLI-first (2026-09-13)
+wet is a self-hosted web search, extraction, and library-docs server. It speaks **Streamable HTTP only** on a single `/mcp` endpoint -- there is no stdio transport and no hosted public instance. You run one instance (locally or on a host you control) and point MCP clients at it.
 
-Repo is now `n24q02m/wet`. The CLI is the primary surface: `uvx wet --help` (subcommands: auth, config, docs, doctor, logout, relay, warmup). PyPI package stays `wet-mcp` — both `uvx wet` and legacy `uvx wet-mcp` commands work. MCP server = run `wet` with no subcommand (stdio passthrough).
+The repo is `n24q02m/wet`; the PyPI package is `wet-mcp` and ships the `wet` command (also installed as `wet-mcp`). `wet` is both the control plane and one thin client:
 
-
-> Plugin install uses stdio mode with local Fastretrieval retrieval. For web search, select credential-free `duckduckgo,startpage`, a keyed provider, optional-key Firecrawl, or a runnable local/external SearXNG backend through `SEARCH_BACKENDS`.
-> **2026-08-22 Update (v3.7.4+)**: Plugin install (Method 1) uses stdio mode. In a `uvx` tool environment, web search needs a configured cloud backend (`TAVILY_API_KEY`, `BRAVE_API_KEY`, or `EXA_API_KEY`) or an external `SEARXNG_URL`; local SearXNG auto-start is unavailable there. Use Method 2 (Docker stdio) for bundled local SearXNG.
-> The previous "Zero-Config Relay" auto-spawn pattern has been removed.
+- `wet server start|stop|status` -- run the HTTP server (detached by default, `--foreground` to block).
+- `wet config init|path|show|get|set` -- manage `~/.wet/config.toml`.
+- `wet token hash <token>` -- print the `scrypt$...` hash for `auth = "token"`.
+- `wet users path` -- locate the user store used by `auth = "multi"`.
+- `wet docs reindex <library>|import|reembed` -- maintain the docs store; no running server needed.
+- `wet search <query>` -- search through the running server.
+- `wet warmup` -- probe the configured providers.
 
 ## Method overview
 
-This plugin supports 3 install methods. Pick the one that matches your use case:
+| Method | What runs where | Best for |
+|---|---|---|
+| **1. Plugin + running instance** | Claude Code plugin (skill) connects to your instance via `WET_URL` | Claude Code users who want the plugin |
+| **2. Local server + `claude mcp add`** | `wet server start` on your machine | Any MCP client, no plugin |
+| **3. docker compose (token auth)** | Always-on container, published on loopback | One instance shared across sessions and clients |
+| **4. Remote host** | Your instance behind a TLS proxy at `https://<your-host>/mcp` | Multi-device, claude.ai web, team use |
 
-| Priority | Method | Transport | Best for |
-|---|---|---|---|
-| **1. Default** | Plugin install (`uvx`/`npx`) | stdio | Quick local start, single workstation, no OAuth/HTTP needed. |
-| **2. Fallback** | Docker stdio (`docker run -i --rm`) | stdio | Windows/macOS where native uvx/npx hits PATH or Python version issues. |
-| **3. Recommended** | Docker HTTP (`docker run -p 8080:8080`) | HTTP | Multi-device, OAuth/relay-form auth, team self-host, claude.ai web compatibility. |
+Every method needs a running instance -- Method 1 only changes how Claude Code connects to it.
 
-All MCP servers across this stack share this priority hierarchy. Note: 2 plugins (`better-godot-mcp` and `better-code-review-graph`) default to **stdio via plugin install** and do not offer a hosted remote-relay/OAuth mode. They do ship Docker images (`:stdio` and `:http` targets) and support HTTP transport for self-hosting (`MCP_TRANSPORT=http` / `--http`), so Methods 2 and 3 are available as advanced self-host paths -- they are just not the default.
-
-> **⚠️ Mutually exclusive — pick ONE per plugin**: If you choose Method 2 (Docker stdio override) OR Method 3 (HTTP), do NOT also `/plugin install` this plugin via marketplace. Both load simultaneously and create duplicate entries in `/mcp` dialog (plugin's stdio + your override). Plugin matching is by **endpoint** (URL or command string) per CC docs, not by name — and `npx`/`uvx` ≠ `docker` ≠ HTTP URL, so all three are distinct endpoints. Trade-off: choosing Method 2 or Method 3 means you lose this plugin's skills/agents/hooks/commands. For full plugin features, use Method 1 (default plugin install) with `userConfig` credentials prompted at install time.
+> **Pick one registration per client.** Claude Code matches MCP servers by **endpoint** (URL), not by name. If you install the plugin (Method 1) *and* `claude mcp add` an entry for the same instance, both load and `/mcp` shows duplicates. With the plugin installed, set `WET_URL` instead of adding a manual entry.
 
 ## Prerequisites
 
-- **Python 3.13** (3.14+ is NOT supported due to SearXNG incompatibility)
-- `uv` or `uvx` installed ([docs](https://docs.astral.sh/uv/getting-started/installation/))
-- Docker (optional, for containerized setup)
+- **Python 3.13** (3.14+ is not supported) and [`uv`](https://docs.astral.sh/uv/getting-started/installation/), for Methods 1, 2, and 4
+- Docker with Compose, for Method 3
 
-## Method 1: Plugin Install (stdio default)
+## Start an instance
 
-For Claude Code users, plugin marketplace install runs the server in **pure stdio mode**. Fastretrieval supplies local ONNX retrieval without provider keys. `uvx` can search with `SEARCH_BACKENDS=duckduckgo,startpage`, a configured cloud backend, or an external `SEARXNG_URL`; embedded SearXNG needs the prerequisites supplied by a suitable local/source-built Docker installation.
-For Claude Code users, the plugin approach is the simplest. Plugin install uses **stdio mode**. In a `uvx` tool environment, web search requires a cloud/external backend or Docker; content extraction and other non-SearXNG paths remain available without search credentials. Advanced features require optional API keys.
+### Dev: `uvx` (no-auth, loopback only)
 
-### Credential prompts at install
+```bash
+uvx --python 3.13 --from wet-mcp wet server start --foreground
+# MCP endpoint: http://127.0.0.1:8000/mcp
+```
 
-When you run `/plugin install`, Claude Code prompts you for the following credentials (declared in `userConfig` per CC docs). Sensitive values are stored in your system keychain and persist across `/plugin update`:
+Without `--foreground` the server detaches; check it with `wet server status` and stop it with `wet server stop`. With no config file the server binds `127.0.0.1:8000` with `auth = "no-auth"`. `no-auth` refuses any non-loopback bind, so this instance is localhost-only by construction. Override the bind with `--host` / `--port` or `WET_HOST` / `WET_PORT`. Several instances can run side by side on different ports.
 
-| Field | Required | Where to obtain |
+To write a real config to edit:
+
+```bash
+uvx --python 3.13 --from wet-mcp wet config init   # writes ~/.wet/config.toml; --force overwrites
+```
+
+> **Search under `uvx`.** A server running from a `uvx` tool environment cannot auto-start the embedded SearXNG. Without a backend that works there, `search`, `research`, `docs`, and `similar` return an error. Set `SEARCH_BACKENDS` to a keyed provider or to the credential-free `duckduckgo,startpage`, or point `SEARXNG_URL` at an external SearXNG (see "Search backends").
+
+### Always-on: docker compose
+
+Public container images are not published; build from source. In a clone of `n24q02m/wet`:
+
+```bash
+cp docker-config/config.example.toml docker-config/config.toml   # then edit, see "Instance config"
+docker compose up --build -d
+# MCP endpoint: http://127.0.0.1:8000/mcp   (change the host port with WET_PORT=9000)
+```
+
+`docker-compose.yml` publishes only on `127.0.0.1`, keeps state in the `wet-data` and `wet-home` volumes, and mounts `docker-config/config.toml` read-only. Inside the container the server binds `0.0.0.0`, so the config **must** use `auth = "token"` or `"multi"` -- `no-auth` refuses that bind.
+
+## Instance config (`~/.wet/config.toml`)
+
+All auth and provider settings live in this host-owned file. MCP clients never see it.
+
+### `[server]` -- bind and auth
+
+| Key | Meaning |
+|---|---|
+| `host`, `port` | Bind address. `WET_HOST` / `WET_PORT` override them. |
+| `auth` | `no-auth` (loopback only), `token` (one shared Bearer token), or `multi` (per-user tokens and namespaces via the users file) |
+| `token_hash` | `scrypt$...` hash of the shared token. There is no plaintext token field. |
+| `users_file` | User store for `auth = "multi"`; default `~/.wet/users.toml` (`wet users path` prints it) |
+| `rpm` | Optional rate limit for shared mode |
+
+| `auth` | Bind allowed | Who can read the data |
 |---|---|---|
-| `EMBEDDING_MODELS` | Optional | Explicit CSV embedding selection; managed route: `cohere/embed-v4.0` (paid) |
-| `RERANK_MODELS` | Optional | Explicit CSV rerank selection, such as `cohere/rerank-v4.0-fast` (paid); see the managed provider policy before calls |
-| `LLM_MODELS` | Optional | Explicit CSV completion selection; managed route: `openrouter/minimax/minimax-m3:free` only |
-| `EMBEDDING_API_BASE` | Optional | Custom embedding endpoint; managed Cohere gateway URL ends in `/cohere/v2/embed` |
-| `RERANK_API_BASE` | Optional | Custom rerank endpoint; managed Cohere gateway base ends in `/cohere` and the client appends `/v1/rerank` |
-| `LLM_API_BASE` | Optional | Provider-appropriate completion endpoint or CF AI Gateway base |
-| `JINA_AI_API_KEY` | Optional | Key for explicitly selected public Jina capabilities; not used by the managed Cloudflare route |
-| `GEMINI_API_KEY` | Optional | https://aistudio.google.com/apikey |
-| `OPENAI_API_KEY` | Optional | https://platform.openai.com/api-keys |
-| `OPENROUTER_API_KEY` | Optional | https://openrouter.ai/settings/keys |
-| `COHERE_API_KEY` | Optional | https://dashboard.cohere.com/api-keys |
-| `GITHUB_TOKEN` | Optional | https://github.com/settings/tokens (bumps GitHub rate limit 60->5000/hr for library docs discovery) |
+| `no-auth` (default) | loopback only | Only your OS user |
+| `token` | any | Anyone holding the shared token |
+| `multi` | any | Each token holder gets a separate namespace under `~/.wet/subs/<sub>/` |
 
-### Steps
+### Token setup (`auth = "token"`)
 
-1. Open Claude Code.
-2. Install the plugin (skip optional model/key prompts to keep local retrieval):
+```bash
+openssl rand -hex 32                                              # 1. mint a token
+uvx --python 3.13 --from wet-mcp wet token hash <token>           # 2. print the scrypt$ hash
+```
+
+3. Paste the printed `scrypt$...` value into `token_hash` and restart the server.
+4. Give clients the **plaintext** token; they send it as `Authorization: Bearer <token>`. Do not write the plaintext token into any file you commit.
+
+### `[models.*]` -- provider cells
+
+Each task has its own independent cell with `base_url`, `api_key`, and `model`, spoken over OpenAI-compatible HTTP:
+
+| Cell | Used for |
+|---|---|
+| `[models.embed]` | Embedding vectors for the docs index |
+| `[models.rerank]` | Cross-encoder reranking of docs results |
+| `[models.chat]` | LLM features: `expand`, `extract_structured`, `extract(action="agent")`, and the `similar` fallback |
+| `[models.jev_score]` | LLM-based scoring |
+
+- OpenRouter is pre-wired as the default `base_url`. Any OpenAI-compatible endpoint works, cloud or local, and the cells can be mixed. Choose the models yourself.
+- `api_key` may be left empty in the file and supplied by env instead: `HULL_EMBED_API_KEY`, `HULL_RERANK_API_KEY`, `HULL_CHAT_API_KEY`, `HULL_JEV_SCORE_API_KEY`. These are host-only and win over the file. `OPENROUTER_API_KEY` serves every cell that keeps the default OpenRouter `base_url`, and also the `openrouter` search backend.
+- With no `embed`/`rerank` key, wet falls back to local ONNX models (downloaded on first use). With no `[models.chat]` key, the LLM-backed features are off.
+
+### Changing the embedding model
+
+Vectors from one embedding model cannot be searched with another, and the server refuses to boot after the model changes. Start it once with `REINDEX_ON_MODEL_CHANGE=true` to rebuild, then run `wet docs reembed` for any entry still missing a vector.
+
+## Search backends
+
+`SEARCH_BACKENDS` is an ordered, comma-separated fallback chain read by the server:
+
+| Backend | Needs |
+|---|---|
+| `searxng` | Embedded SearXNG (auto-started outside `uvx`) or an external `SEARXNG_URL` |
+| `tavily` | `TAVILY_API_KEY` |
+| `brave` | `BRAVE_API_KEY` |
+| `exa` | `EXA_API_KEY` |
+| `kagi` | `KAGI_API_KEY` |
+| `openrouter` | `OPENROUTER_API_KEY` (plus `OPENROUTER_MODEL`, optionally `OPENROUTER_BASE_URL`, `OPENROUTER_SEARCH_ENGINE`) |
+| `firecrawl` | `FIRECRAWL_API_KEY` optional; keyless attempts are made when absent |
+| `duckduckgo`, `startpage` | Nothing; credential-free. Datacenter IPs may hit bot challenges, and the chain then advances to the next backend. |
+
+Every search response includes a `search_backend` trace: requested, attempted, selected, and a `fallback` state (`none`, `used`, `exhausted`, or `unavailable`).
+
+## Browser backends
+
+`BROWSER_BACKENDS` is an ordered list that selects how pages are rendered when extraction escalates: `native` (default when empty), `browserless` (`BROWSERLESS_URL`, `BROWSERLESS_TOKEN`), and `invisible` (`STEALTHFOX_BINARY`, optional `CAPSOLVER_API_KEY`). It does not route `extract(action="interact")`, which always uses native Patchright sessions.
+
+## Method 1: Claude Code plugin
+
+The plugin installs the wet skill and registers an HTTP MCP entry pointing at your instance.
+
+1. Start an instance (see above) and note its endpoint.
+2. Install the plugin:
    ```bash
    /plugin marketplace add n24q02m/claude-plugins
    /plugin install wet@n24q02m-plugins
    ```
-3. Restart Claude Code -- the server starts automatically when CC launches with the values injected.
+3. Answer the install prompts (stored by Claude Code; sensitive values go to the system keychain and persist across `/plugin update`):
 
-Local retrieval and extraction do not require provider keys. Web search still needs a runnable backend. Credential-free providers can be challenged or rate-limited by upstream sites; they do not guarantee the same availability as a keyed service.
-Without env vars: content extraction and local library-docs paths can run, but `uvx` stdio web search cannot auto-start local SearXNG. Set a cloud backend key or `SEARXNG_URL`, or use Method 2 for bundled SearXNG. With env vars: cloud embedding/reranking (faster), Gemini LLM analysis, and premium search providers.
+   | Field | Required | Value |
+   |---|---|---|
+   | `WET_URL` | Optional | Streamable HTTP endpoint of your instance, e.g. `http://127.0.0.1:8000/mcp` |
+   | `WET_TOKEN` | Optional | The plaintext token for `auth = "token"` / `"multi"`; leave empty for a loopback `no-auth` instance |
 
-> **Note**: This installs the full plugin (skills + agents + hooks + commands + stdio MCP server). If you'd rather use Method 2 (Docker stdio) or Method 3 (HTTP) below, DO NOT `/plugin install` this plugin — pick Method 2 or Method 3 instead. All three methods are mutually exclusive (see Method overview).
+   Without `WET_URL` the skill still installs, but the MCP entry has no endpoint and its tools do not connect.
+4. Restart Claude Code and check `/mcp`.
 
-## Method 2: Docker stdio (fallback)
-
-> **⚠️ Before adding the Docker stdio override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall wet@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's `npx`/`uvx` stdio + your `docker run` stdio) will load simultaneously since plugin matches by endpoint (command string), not by name.
->
-> **Trade-off accepted**: Choosing this method means you lose this plugin's skills/agents/hooks/commands. Use Method 1 instead if you want full plugin features.
-
-1. Public OCI publication is discontinued. Clone a release tag and build the
-   stdio target locally:
-   ```bash
-   git clone --branch <release-tag> --depth 1 https://github.com/n24q02m/wet.git
-   cd wet-mcp
-   docker build --target stdio -t wet-mcp:local .
-   ```
-
-2. Run with environment variables:
-   ```bash
-   docker run -i --rm \
-     --name mcp-wet \
-     -v wet-data:/data \
-     -e JINA_AI_API_KEY=your_key_here \
-     -e GEMINI_API_KEY=your_key_here \
-     wet-mcp:local
-   ```
-
-3. Or add to your MCP client config:
-   ```json
-   {
-     "mcpServers": {
-       "wet": {
-         "command": "docker",
-         "args": [
-           "run", "-i", "--rm",
-           "--name", "mcp-wet",
-           "-v", "wet-data:/data",
-           "-e", "JINA_AI_API_KEY",
-           "-e", "GEMINI_API_KEY",
-           "-e", "GITHUB_TOKEN",
-           "wet-mcp:local"
-         ]
-       }
-     }
-   }
-   ```
-
-## Why upgrade to HTTP mode?
-
-Stdio mode is the default and works for most personal/single-user scenarios. Consider switching to HTTP mode (Method 3 self-host) when you need:
-
-- **claude.ai web compatibility** -- HTTP transport is required to connect plugins to claude.ai web client (stdio only works with desktop clients)
-- **One server shared across N Claude Code sessions** -- single daemon serves all sessions instead of spawning a fresh stdio process per session (lower memory, shared cache)
-- **Optional non-CF GDrive OAuth** -- eligible local/self-hosted deployments can use the bundled public client; CF-hosted docs storage disables this redundant sync path.
-- **Multi-device credential sync** -- self-host the HTTP server once, log in from multiple machines without re-pasting API keys
-- **Multi-user team sharing** -- single self-hosted instance supports N users with per-JWT-sub credential isolation
-- **Always-on persistent process** -- ideal for webhooks, scheduled agents, or background automation
-
-## Method 3: Docker HTTP (recommended)
-
-> **⚠️ Before adding the HTTP override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall wet@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's stdio + your HTTP override) will load simultaneously since plugin matches by endpoint, not name.
->
-> **Trade-off accepted**: Choosing this method means you lose this plugin's skills/agents/hooks/commands. For example, the `wet-mcp:fact-check` skill will no longer be available. Use Method 1 instead if you want full plugin features.
-
-> **Switching transport vs. setting credentials**: The `userConfig` prompt only configures credentials for stdio mode (Method 1 / Option 1). To switch transport to HTTP, override `mcpServers` in your client settings per the snippets below -- this is a separate path from `userConfig` and is not driven by the install prompt.
-
-### Self-host with docker-compose
-
-HTTP mode runs as a persistent multi-user server with browser-based credential setup. Eligible non-CF hosts can use the bundled public Google Desktop client for the Drive device-code flow; no client credential needs to be copied into this guide. `DOCS_DB_BACKEND=cf-d1` disables redundant Drive sync, wizard/device-code setup, and auto-sync, even if stale sync settings remain.
-
-1. From the `wet-mcp` checkout, build the HTTP target and run it:
-   ```bash
-   docker build --target http -t wet-mcp-http:local .
-   docker run -d --name wet-mcp-http \
-     -p 8080:8080 \
-     -v wet-data:/data \
-     -e MCP_TRANSPORT=http \
-     -e PUBLIC_URL=https://wet.example.com \
-     -e MCP_DCR_SERVER_SECRET=your-random-secret \
-     wet-mcp-http:local
-   ```
-
-2. Configure your MCP client to connect to the HTTP endpoint:
-   ```json
-   {
-     "mcpServers": {
-       "wet": {
-         "url": "https://wet.example.com/mcp"
-       }
-     }
-   }
-   ```
-
-3. On first call, the client redirects to the relay form. Configure the current subject's model fields, provider API bases, matching keys, and explicit `SEARCH_BACKENDS` chain. For example, `tavily,duckduckgo,startpage` uses that subject's Tavily key before credential-free providers; choose only the providers the user authorized. Only eligible non-CF hosts with sync enabled offer the Google Drive device-code flow.
-
-Each user receives an isolated credential vault keyed by JWT sub. Hosted search chains and provider credentials come from that vault, not operator environment defaults; an empty subject configuration does not inherit another account's keys. No per-user OAuth registration needed.
-
-For the managed Cloudflare route, follow the [Minimax-free and paid Cohere
-configuration policy](/reference/relay-flow/#managed-cloudflare-model-configuration).
-Use `BROWSER_BACKENDS=cf-browser-rendering` for Cloudflare Browser Run extraction
-renderer escalation, with `CF_ACCOUNT_ID` and `CF_BROWSER_RENDERING_TOKEN`
-supplied by the operator. This does not offload `extract(action="interact")`:
-that action uses native Patchright browser sessions.
-Public local browser and SearXNG support remain available independently;
-they are not the managed personal Wet setup.
-
-### Edge auth: relay password
-
-Public HTTP deployments expose `<your-domain>/authorize` to URL discovery. To prevent random Internet users from accessing the relay form, mint a relay password:
+## Method 2: local server + `claude mcp add`
 
 ```bash
-openssl rand -hex 32
-# Save in your skret / .env as:
-MCP_RELAY_PASSWORD=<generated-32-byte-hex>
+uvx --python 3.13 --from wet-mcp wet server start
+claude mcp add --transport http wet http://127.0.0.1:8000/mcp
 ```
 
-Share this password out-of-band (Signal/email/SMS) with anyone you invite to use your server. They will see a login form when first opening `/authorize`; once logged in, the cookie persists 24 hours.
+For a token-auth instance, add `--header "Authorization: Bearer <token>"`. Other clients (Codex, Gemini CLI, Cursor, Windsurf) register the same URL in their MCP settings:
 
-**Single-user dev exception**: If `PUBLIC_URL=http://localhost:8080`, you can leave `MCP_RELAY_PASSWORD` empty to disable the gate. The server logs a warning if you skip the password with a non-localhost `PUBLIC_URL`.
+```json
+{
+  "mcpServers": {
+    "wet": {
+      "type": "http",
+      "url": "http://127.0.0.1:8000/mcp",
+      "headers": { "Authorization": "Bearer <token>" }
+    }
+  }
+}
+```
+
+Drop `headers` for a `no-auth` instance.
+
+## Method 3: docker compose
+
+Start the compose stack (see "Always-on" above), then register `http://127.0.0.1:8000/mcp` with the Bearer header -- through the plugin's `WET_URL` / `WET_TOKEN`, or with `claude mcp add` as in Method 2.
+
+## Method 4: remote host
+
+Run the instance on a reachable host with `auth = "token"` or `"multi"`, and front it with a TLS proxy of your choice (the server itself serves plain HTTP). Clients use `https://<your-host>/mcp`:
+
+```bash
+claude mcp add --transport http wet https://<your-host>/mcp --header "Authorization: Bearer <token>"
+```
+
+claude.ai web and other remote clients connect the same way.
+
+## Backup and migration
+
+Server state lives under `~/.wet/` (in the `wet-home` and `wet-data` volumes for compose): `config.toml`, the SQLite (WAL) docs index `docs.db`, the web cache, and downloads. The server has no embedded sync; back up or move the directory with `rclone` or any file tool while the server is stopped. `wet docs import` loads a Cloudflare D1 SQL export into `docs.db`.
+
+## Environment variables
+
+Most settings live in `config.toml`. The server host also reads:
+
+| Variable | Default | Description |
+|---|---|---|
+| `WET_HOST` / `WET_PORT` | from `[server]` | Override the bind address |
+| `HULL_EMBED_API_KEY` / `HULL_RERANK_API_KEY` / `HULL_CHAT_API_KEY` / `HULL_JEV_SCORE_API_KEY` | -- | `api_key` for the matching `[models.*]` cell |
+| `OPENROUTER_API_KEY` | -- | Default credential for OpenRouter cells and the `openrouter` search backend |
+| `SEARCH_BACKENDS` | -- | Ordered search fallback chain |
+| `TAVILY_API_KEY`, `BRAVE_API_KEY`, `EXA_API_KEY`, `KAGI_API_KEY`, `FIRECRAWL_API_KEY` | -- | Keys for the matching search backends |
+| `WET_AUTO_SEARXNG` | `true` | Auto-start embedded SearXNG (not possible under `uvx`) |
+| `SEARXNG_URL` | `http://localhost:41592` | External SearXNG instance |
+| `WET_SEARXNG_PORT` | `41592` | Port of the embedded SearXNG |
+| `SEARXNG_AUTH_USER` / `SEARXNG_AUTH_PASS` | -- | Basic auth for an external SearXNG |
+| `DISABLE_LOCAL_SEARCH` / `DISABLE_LOCAL_BROWSER` / `DISABLE_LOCAL_EMBED` / `DISABLE_LOCAL_RERANK` | `false` | Turn off the matching local resource |
+| `WET_SEARCH_BUDGET` | `0` | Per-provider attempt budget per process (`0` = unlimited) |
+| `BROWSER_BACKENDS` | -- (native) | Page renderer chain: `native`, `browserless`, `invisible` |
+| `BROWSERLESS_URL` / `BROWSERLESS_TOKEN` | -- | Browserless endpoint and token |
+| `STEALTHFOX_BINARY` / `CAPSOLVER_API_KEY` | -- | `invisible` backend binary and optional CAPTCHA solver key |
+| `RESPECT_ROBOTS_TXT` | `false` | Honor `robots.txt` when fetching |
+| `WET_CACHE` | `true` | Web cache for search, extract, and diff |
+| `CACHE_DIR` | `~/.wet` | Cache and state directory |
+| `DOCS_DB_PATH` | `~/.wet/docs.db` | Docs index location |
+| `DOWNLOAD_DIR` | `~/.wet/downloads` | Where `media(action="download")` may write |
+| `TOOL_TIMEOUT` | `120` | Per-call timeout in seconds |
+| `RERANK_ENABLED` | `true` | Toggle reranking |
+| `RERANK_TOP_N` | `10` | Results kept after reranking |
+| `LOCAL_EMBEDDING_MODEL` / `LOCAL_RERANK_MODEL` | -- | Local ONNX model overrides |
+| `REINDEX_ON_MODEL_CHANGE` | `false` | One-shot vector rebuild after changing the embedding model |
+| `CONVERT_ALLOWED_DIRS` | -- | Comma-separated directories `extract(action="convert")` may read. Empty means the server's working directory and temp directory. |
+| `CONVERT_MAX_FILE_SIZE` | 100 MB | Largest file `convert` accepts |
+| `GITHUB_TOKEN` / `GH_TOKEN` | from `gh auth token` | Raises the GitHub rate limit for docs discovery (60 to 5000 requests per hour) |
+| `LOG_LEVEL` | `INFO` | Logging level |
 
 ## Troubleshooting
 
-### Server fails to start with Python 3.14+
-
-wet-mcp requires Python 3.13 due to SearXNG incompatibility. Always use `--python 3.13` with uvx:
-
-```bash
-uvx --python 3.13 wet-mcp
-```
-
-### First run takes a long time
-
-The resources downloaded depend on the selected runtime and backends. Local
-embedding/reranker models and a native browser may need initial downloads.
-`uvx` does not auto-install a runnable embedded SearXNG service; select a
-credential-free/cloud backend or an external `SEARXNG_URL` instead.
-
-Use the warmup command to pre-download: `config(action="warmup")`
-
-### SearXNG port conflict
-
-If port 41592 is in use, change it:
-
-```bash
-export WET_SEARXNG_PORT=41593
-```
-
-### Docker volume permissions
-
-If you encounter permission errors with the Docker volume:
-
-```bash
-docker run -i --rm -v wet-data:/data --user $(id -u):$(id -g) wet-mcp:local
-```
-
-### Embedding model download fails
-
-If local model download fails behind a proxy, fix artifact access or explicitly configure a supported cloud embedding model, matching key, and API base. Provider credentials alone are not proof that the intended route is active; obtain spending authorization before paid calls.
-
-## Environment Variable Reference
-
-Local stdio needs no provider API keys; HTTP, cloud providers, and optional backends have their own requirements. See the [agent setup reference](/servers/wet/setup-with-agent/#environment-variables) for the complete table.
-
-### Key Variables
-
-| Variable | Default | Description |
-|:---------|:--------|:------------|
-| `JINA_AI_API_KEY` | -- | Jina AI: search + extraction + embedding + reranking |
-| `GEMINI_API_KEY` | -- | Gemini: LLM + embedding (free tier) |
-| `GOOGLE_VERTEX_EXPRESS_API_KEY` | -- | Vertex AI Express: Gemini via API key, no Service Account. Get it at https://cloud.google.com/vertex-ai/generative-ai/docs/start/express-mode/overview |
-| `OPENAI_API_KEY` | -- | OpenAI: LLM + embedding |
-| `OPENROUTER_API_KEY` | -- | Key for explicitly selected OpenRouter models |
-| `ANTHROPIC_API_KEY` | -- | Anthropic: LLM dispatch for content-selector inference |
-| `XAI_API_KEY` | -- | xAI/Grok: LLM dispatch for content-selector inference |
-| `COHERE_API_KEY` | -- | Cohere: embedding + reranking |
-| `WEB_CORE_LLM_MODEL` | auto-detect | Override the LLM model used for content-selector inference |
-| `EMBEDDING_MODELS` | empty | Ordered CSV embedding model chain (`provider/model,...`); empty resolves Fastretrieval's local ONNX model manifest |
-| `RERANK_MODELS` | empty | Ordered CSV rerank model chain (`provider/model,...`); empty resolves Fastretrieval's local ONNX cross-encoder manifest |
-| `LLM_MODELS` | empty | Ordered CSV LLM model chain (`provider/model,...`); empty leaves optional LLM features disabled |
-| `EMBEDDING_API_BASE` | -- | Custom embedding endpoint; managed Cohere gateway URL ends in `/cohere/v2/embed` |
-| `RERANK_API_BASE` | -- | Custom rerank endpoint; managed Cohere gateway base ends in `/cohere` |
-| `LLM_API_BASE` | -- | Provider-appropriate completion endpoint or CF AI Gateway base |
-| `EMBEDDING_DIMS` | `0` (auto) | Embedding dimensions; custom local models may require `LOCAL_EMBEDDING_DIM` |
-| `LOCAL_EMBEDDING_MODEL` | -- | Optional BYO local embedding model ID; empty uses Fastretrieval's bundled model manifest |
-| `LOCAL_EMBEDDING_DIM` | `0` | Required for a BYO local embedding when its model manifest does not provide dimensions |
-| `LOCAL_EMBEDDING_POOLING` | `MEAN` | Pooling for a BYO local embedding (`MEAN`, `CLS`, `LAST_TOKEN`, or `DISABLED`) |
-| `LOCAL_EMBEDDING_NORMALIZE` | `true` | Normalize BYO local embedding outputs |
-| `LOCAL_RERANK_MODEL` | -- | Optional BYO local reranker model ID; empty uses Fastretrieval's bundled model manifest |
-| `LOCAL_RERANK_MODEL_FILE` | `onnx/model.onnx` | ONNX file path for a BYO local reranker |
-| `BRAVE_API_KEY` | -- | Brave Search API key (premium search) |
-| `TAVILY_API_KEY` | -- | Tavily search API key |
-| `EXA_API_KEY` | -- | Exa search API key |
-| `KAGI_API_KEY` | -- | Required for the `kagi` search backend |
-| `FIRECRAWL_API_KEY` | -- | Optional for `firecrawl`; absent means a keyless attempt, not guaranteed free service |
-| `GITHUB_TOKEN` | auto-detect | GitHub token for docs discovery |
-| `SEARCH_BACKENDS` | `searxng` | Ordered CSV chain: `searxng`, `tavily`, `brave`, `exa`, `kagi`, `firecrawl`, `duckduckgo`, `startpage` |
-| `WET_AUTO_SEARXNG` | `true` | Auto-start bundled SearXNG when the runtime includes its prerequisites; `uvx` plugin environments do not bundle them |
-| `DISABLE_LOCAL_SEARCH` | `false` | Skip the embedded local SearXNG fallback while retaining external or cloud search backends |
-| `BROWSER_BACKENDS` | empty -> `native` | Ordered CSV render chain: `native`, `browserless`, `cf-browser-rendering` |
-| `SYNC_ENABLED` | `true` | Enable sync on eligible non-CF hosts; `DOCS_DB_BACKEND=cf-d1` disables it |
-| `TAVILY_API_KEY` | -- | Tavily Search API key (cloud search) |
-| `EXA_API_KEY` | -- | Exa Search API key (cloud search) |
-| `GITHUB_TOKEN` | auto-detect | GitHub token for docs discovery |
-| `WET_AUTO_SEARXNG` | `true` | Auto-start embedded SearXNG when the runtime can launch it; `uvx` stdio uses Docker or an external backend instead |
-| `SYNC_ENABLED` | `true` | Enable Google Drive sync |
-| `LOG_LEVEL` | `INFO` | Logging level |
-
-### Backend Selection
-
-- **Embedding, reranking, and LLM**: use the ordered `EMBEDDING_MODELS`, `RERANK_MODELS`, and `LLM_MODELS` chains; provider keys are inferred from each `provider/model` prefix.
-- **Local model overrides**: use `LOCAL_EMBEDDING_MODEL` / `LOCAL_RERANK_MODEL`; built-in IDs resolve through Fastretrieval's model manifest, while custom embedding IDs require the matching local metadata variables above.
-- **Legacy aliases**: `EMBEDDING_BACKEND`, `EMBEDDING_MODEL`, `RERANK_BACKEND`, and `RERANK_MODEL` are deprecated and honored for one release; migrate to the plural model chains.
-- **Browser rendering**: `BROWSER_BACKENDS` escalates extraction renderers in listed order; an empty chain uses the local `native` browser. It does not select the browser used by `extract(action="interact")`.
-- **Search**: `SEARCH_BACKENDS` tries providers in order on error or empty results. Hosted requests read the current subject's explicit chain and keys from the relay vault; only single-user stdio uses process settings. `duckduckgo` and `startpage` are credential-free and `uvx`-safe; keyed providers and an external `SEARXNG_URL` also work. Embedded SearXNG requires a suitable local/source-built runtime.
-- **Embedding**: Jina AI > Gemini > OpenAI > Cohere > local ONNX model
-- **Reranking**: Jina AI > Cohere > local ONNX model
-- **LLM**: Gemini > OpenAI > Disabled
-- **Search**: configured `SEARCH_BACKENDS` chain (`searxng`, `tavily`, `brave`, `exa`); local SearXNG is available in source/Docker runs, while `uvx` stdio requires a cloud key or external `SEARXNG_URL`
+See the [troubleshooting page](/servers/wet/troubleshooting/).

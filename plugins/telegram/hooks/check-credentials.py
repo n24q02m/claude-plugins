@@ -2,7 +2,8 @@
 """PreToolUse hook: block when better-telegram-mcp credentials are not configured.
 
 Blocking -- Telegram tools cannot function without credentials.
-Allows config and help tools through so the user can initiate setup.
+Allows config and help tools through. Credentials come from env vars or the local
+`telegram auth` command; there is no browser setup form.
 """
 
 import json
@@ -47,8 +48,9 @@ def main() -> None:
                     "reason": (
                         "better-telegram-mcp credentials not configured. "
                         "Set TELEGRAM_PHONE (user mode) or TELEGRAM_BOT_TOKEN (bot mode) "
-                        "in your MCP server environment, "
-                        "or use the config tool with action='status' for setup instructions."
+                        "in your MCP server environment. "
+                        "For user mode, first run `telegram auth --phone <+number>` "
+                        "in a terminal, then restart the server."
                     ),
                 }
             )

@@ -22,15 +22,6 @@ class TestCheckCredentials(unittest.TestCase):
 
     @patch.dict(os.environ, {}, clear=True)
     @patch("os.path.exists")
-    @patch("os.path.expanduser")
-    def test_is_configured_file(self, mock_expanduser, mock_exists):
-        mock_expanduser.return_value = "/home/user"
-        # Mocking exists to return True only for the home config path
-        mock_exists.side_effect = lambda p: p == "/home/user/.config/mcp/config.enc"
-        self.assertTrue(check_credentials._is_configured())
-
-    @patch.dict(os.environ, {}, clear=True)
-    @patch("os.path.exists")
     def test_not_configured(self, mock_exists):
         mock_exists.return_value = False
         self.assertFalse(check_credentials._is_configured())

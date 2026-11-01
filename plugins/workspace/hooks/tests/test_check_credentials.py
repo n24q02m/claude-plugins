@@ -35,6 +35,35 @@ class TestCheckCredentials(unittest.TestCase):
 
     @patch.dict(os.environ, {}, clear=True)
     @patch("os.path.exists")
+    @patch("os.path.expanduser")
+    def test_is_configured_account_store(self, mock_expanduser, mock_exists):
+        # An account added via consent / `workspace auth` lives in ~/.better-workspace/config.json
+        mock_expanduser.return_value = "/home/user"
+        store = os.path.join("/home/user", ".better-workspace", "config.json")
+        mock_exists.side_effect = lambda p: p == store
+        self.assertTrue(check_credentials._is_configured())
+
+    @patch.dict(os.environ, {}, clear=True)
+    @patch("os.path.exists")
+    @patch("os.path.expanduser")
+    def test_is_configured_legacy_account_store(self, mock_expanduser, mock_exists):
+        # Releases before the slug change wrote to ~/.better-workspace-mcp/ (hull still reads it)
+        mock_expanduser.return_value = "/home/user"
+        store = os.path.join("/home/user", ".better-workspace-mcp", "config.json")
+        mock_exists.side_effect = lambda p: p == store
+        self.assertTrue(check_credentials._is_configured())
+
+    @patch.dict(os.environ, {}, clear=True)
+    @patch("os.path.exists")
+    @patch("os.path.expanduser")
+    def test_other_files_in_store_dir_do_not_count(self, mock_expanduser, mock_exists):
+        mock_expanduser.return_value = "/home/user"
+        other = os.path.join("/home/user", ".better-workspace", "unrelated.json")
+        mock_exists.side_effect = lambda p: p == other
+        self.assertFalse(check_credentials._is_configured())
+
+    @patch.dict(os.environ, {}, clear=True)
+    @patch("os.path.exists")
     def test_not_configured(self, mock_exists):
         mock_exists.return_value = False
         self.assertFalse(check_credentials._is_configured())
@@ -70,6 +99,9 @@ class TestCheckCredentials(unittest.TestCase):
         self.assertIn(
             "better-workspace-mcp: credentials not yet configured", output["message"]
         )
+        self.assertIn("GOOGLE_OAUTH_CLIENT_ID", output["message"])
+        self.assertNotIn("relay", output["message"].lower())
+        self.assertNotIn("/authorize", output["message"])
 
     @patch.dict(
         os.environ, {"GOOGLE_OAUTH_CLIENT_ID": "some-client-id"}, clear=True
