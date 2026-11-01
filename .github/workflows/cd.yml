@@ -220,12 +220,26 @@ jobs:
 
   deploy-docs:
     name: Deploy Docs
-    # workflow_dispatch: manual redeploy (dispatch-only CD); the shared dispatch form requires the
-    # repo/tag inputs used by sync -- pick any valid pair, they are ignored here.
-    # repository_dispatch(tools-docs-sync): fired by n24q02m/tools-docs CD after
-    # its own Pages deploy, so tools-docs pushes redeploy the hub with fresh
-    # inlined docs (sync-tools-docs.mjs reads tools-docs at build time).
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'repository_dispatch' && github.event.action == 'tools-docs-sync')
+    # CD is dispatch-only, so docs are no longer redeployed by a push to main.
+    # Instead this job runs after `sync` on the dispatch events that run it:
+    #   workflow_dispatch / repository_dispatch(plugin-sync): sync pushes the
+    #     plugin files to main, then docs are rebuilt from that new main (the
+    #     checkout below pins ref: main, not the SHA the event started on).
+    #   repository_dispatch(tools-docs-sync): fired by n24q02m/tools-docs CD
+    #     after its own Pages deploy, so the hub is redeployed with fresh
+    #     inlined docs (sync-tools-docs.mjs reads tools-docs at build time);
+    #     `sync` is skipped for this event.
+    # The shared dispatch form requires the repo/tag inputs used by sync for
+    # workflow_dispatch -- they feed sync and are ignored here.
+    # always() is required because a skipped `needs` job would otherwise skip
+    # this one; a failed sync still blocks the deploy.
+    needs: sync
+    if: >-
+      always()
+      && (needs.sync.result == 'success' || needs.sync.result == 'skipped')
+      && (github.event_name == 'workflow_dispatch'
+      || (github.event_name == 'repository_dispatch'
+      && contains(fromJSON('["plugin-sync","tools-docs-sync"]'), github.event.action)))
     permissions:
       contents: read
       deployments: write
@@ -237,6 +251,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
 
       - name: Checkout tools-docs
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
