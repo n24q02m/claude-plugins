@@ -1,6 +1,7 @@
 name: CD
 
 on:
+  # ci-policy: allow trigger reason: plugin-sync is fired by the MCP source repos' release CD and tools-docs-sync by tools-docs CD (explicit API dispatch, never push/PR/schedule)
   repository_dispatch:
     types: [plugin-sync, tools-docs-sync]
   workflow_dispatch:
@@ -34,6 +35,7 @@ on:
 permissions:
   contents: write
 
+# ci-policy: allow concurrency reason: serialize plugin syncs, never cancel one mid-push
 concurrency:
   group: plugin-sync
   cancel-in-progress: false
@@ -46,6 +48,7 @@ jobs:
     # payload and must not enter the plugin sync path.
     if: (github.event_name == 'repository_dispatch' && github.event.action == 'plugin-sync') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
