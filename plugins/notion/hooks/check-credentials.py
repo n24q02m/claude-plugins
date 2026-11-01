@@ -5,7 +5,7 @@ Non-blocking hint only. A Notion integration token comes from the NOTION_TOKEN
 env var or from `notion auth` (stored in ~/.better-notion/config.json). In stdio
 mode the server refuses to start without a token and prints setup options on
 stderr; in HTTP mode the token is per user namespace (`notion auth --user <ns>`).
-There is no browser setup form.
+There is no relay or browser setup form.
 """
 
 import json
@@ -13,10 +13,30 @@ import os
 import sys
 
 # Add plugins root to sys.path for shared utilities
+# Add plugins root to sys.path for shared utilities if in marketplace
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
-from mcp_common import read_mcp_hook_input
+try:
+    from mcp_common import read_mcp_hook_input
+except ImportError:
+    def read_mcp_hook_input() -> dict:
+        data = None
+        try:
+            data = json.loads(sys.stdin.read(64 * 1024))
+        except Exception:
+            pass
+        if not isinstance(data, dict):
+            print(
+                json.dumps(
+                    {
+                        "decision": "block",
+                        "reason": "Invalid input: payload must be a JSON dictionary",
+                    }
+                )
+            )
+            sys.exit(2)
+        return data
 
 SERVER_NAME = "better-notion-mcp"
 CREDENTIAL_KEYS = ["NOTION_TOKEN"]
@@ -31,12 +51,11 @@ def _is_configured() -> bool:
     for p in (
         home + "/.better-notion/config.json",
         home + "/.config/mcp/config.enc",
+        os.path.join(home, ".config", "mcp", "config.enc"),
     ):
         if os.path.exists(p):
             return True
     return False
-
-
 def main() -> None:
     data = read_mcp_hook_input()
 
@@ -49,8 +68,8 @@ def main() -> None:
     if _is_configured():
         sys.exit(0)
 
-    # Non-blocking hint: point at the real setup paths (the server itself does
-    # not open any setup form)
+    # Non-blocking hint: point at the real setup paths (the server itself does not
+    # open any setup form)
     print(
         json.dumps(
             {

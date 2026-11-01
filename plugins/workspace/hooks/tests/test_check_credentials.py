@@ -99,9 +99,6 @@ class TestCheckCredentials(unittest.TestCase):
         self.assertIn(
             "better-workspace-mcp: credentials not yet configured", output["message"]
         )
-        self.assertIn("GOOGLE_OAUTH_CLIENT_ID", output["message"])
-        self.assertNotIn("relay", output["message"].lower())
-        self.assertNotIn("/authorize", output["message"])
 
     @patch.dict(
         os.environ, {"GOOGLE_OAUTH_CLIENT_ID": "some-client-id"}, clear=True

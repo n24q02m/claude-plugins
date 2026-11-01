@@ -1,9 +1,9 @@
+import importlib.util
+import io
+import json
+import os
 import unittest
 from unittest.mock import patch
-import json
-import io
-import os
-import importlib.util
 
 # Load the hook module
 hook_path = os.path.abspath(
@@ -15,13 +15,21 @@ spec.loader.exec_module(check_credentials)
 
 
 class TestCheckCredentials(unittest.TestCase):
-
     @patch.dict(os.environ, {"TELEGRAM_PHONE": "123456789"}, clear=True)
     def test_is_configured_phone(self):
         self.assertTrue(check_credentials._is_configured())
 
     @patch.dict(os.environ, {"TELEGRAM_BOT_TOKEN": "token123"}, clear=True)
     def test_is_configured_bot(self):
+        self.assertTrue(check_credentials._is_configured())
+
+    @patch.dict(os.environ, {}, clear=True)
+    @patch("os.path.exists")
+    @patch("os.path.expanduser")
+    def test_is_configured_file(self, mock_expanduser, mock_exists):
+        mock_expanduser.return_value = "/home/user"
+        # Mocking exists to return True only for the home config path
+        mock_exists.side_effect = lambda p: p == "/home/user/.config/mcp/config.enc"
         self.assertTrue(check_credentials._is_configured())
 
     @patch.dict(os.environ, {}, clear=True)
