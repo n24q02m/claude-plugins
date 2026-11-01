@@ -9,7 +9,7 @@ Every server runs on a machine you control. A server offers `stdio`, `http`, or 
 
 | Server | stdio | http | HTTP auth modes | Default |
 |---|:-:|:-:|---|---|
-| `mcp-core` | — | — | — | (foundation library, not a server) |
+| `hull` | — | — | — | (foundation library, not a server) |
 | `wet` | — | yes | `no-auth`, `token`, `multi` | `http` (only transport) |
 | `mnemo` | — | yes | `no-auth`, `token`, `multi` | `http` (only transport) |
 | `crg` | yes | — | — | `stdio` |

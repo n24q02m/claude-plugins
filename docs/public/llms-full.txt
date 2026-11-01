@@ -7,11 +7,11 @@ Marketplace + source: https://github.com/n24q02m/claude-plugins
 
 ## What this is
 
-A curated stack of MCP servers for Claude Code, Codex, Gemini CLI, Cursor, and Windsurf — sharing one foundation library (`mcp-core`) and one plugin marketplace. Each server is published as a Claude Code plugin, an npm or PyPI package (per language), and a Docker image on GHCR. Setup takes one command.
+A curated stack of MCP servers for Claude Code, Codex, Gemini CLI, Cursor, and Windsurf — sharing one foundation library (`hull`) and one plugin marketplace. Each server is published as a Claude Code plugin, an npm or PyPI package (per language), and a Docker image on GHCR. Setup takes one command.
 
 ## Why this suite and not just any MCP server
 
-- **One foundation, every server**: every server reuses `mcp-core`'s transport, OAuth authorization server, lifecycle, and multi-user primitives. There is no bespoke auth code per server, so once you know how one server authenticates and configures, you know them all.
+- **One foundation, every active server**: every server reuses `hull`'s HTTP transport, token auth, encrypted credential storage, and CLI built-ins. There is no bespoke auth code per server, so once you know how one server authenticates and configures, you know them all.
 - **Multi-user by construction**: the HTTP `multi` auth mode maps each user's bearer token to its own credential namespace. Self-host once and share with a team; one user's keys never leak into another's request.
 - **Composite tools, not raw API mirrors**: each server exposes a small set of multiplexed tools (the "N+2" layout — a handful of tools that each take an `action` parameter, plus `config` and `help`). Tool lists are curated for AI-agent ergonomics: fewer round-trips, less prompt clutter.
 - **External content is marked**: servers that return content authored by third parties (web pages, Notion pages, emails, Telegram messages, Godot project files) wrap it with an untrusted-source marker so an agent treats it as data, not instructions — a defense against indirect prompt injection.
@@ -28,9 +28,9 @@ Every server runs on a machine you control; there is no hosted endpoint and no b
 
 ## Servers
 
-### mcp-core (foundation library)
-Shared transport (Streamable HTTP), OAuth 2.1 authorization server, lifecycle management, install automation, and per-user credential primitives. Every server depends on it. Not a runnable server itself — consumed as a library (npm `@n24q02m/mcp-core`, PyPI `n24q02m-mcp-core`).
-Docs: https://docs.n24q02m.com/servers/mcp-core/architecture/
+### hull (foundation library)
+Shared core of the stack. The Python dist `n24q02m-hull` (import packages `hull_core`, `hull_web`, `hull_embedding_daemon`) serves wet, mnemo, crg and telegram; the TypeScript package `@n24q02m/hull` (MCP Streamable HTTP transport, token-table HTTP auth with no-auth/token/multi modes, encrypted credential storage, CLI builder) serves notion, email and workspace. Both are released together at the same version. It has no OAuth authorization server or relay. Not a runnable server itself — consumed as a library. It replaces the archived `mcp-core` library.
+Source: https://github.com/n24q02m/hull
 
 ### wet-mcp
 Web search, content extraction, documentation indexing, and X/Twitter search. Search returns result listings; extract reads full page content from a URL; a docs workflow indexes and answers questions over a library's documentation; X search returns a synthesized answer with citations. Web and X content is returned marked as untrusted external content.

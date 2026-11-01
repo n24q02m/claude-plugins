@@ -48,7 +48,7 @@
 
 9 MCP servers and a portable Agent Chat coordination plugin for AI coding agents.
 
-**Full documentation: [docs.n24q02m.com](https://docs.n24q02m.com)** — setup and tool references for all 9 servers, Agent Chat coordination, the `mcp-core` foundation, and [Fastretrieval](https://docs.n24q02m.com/reference/fastretrieval/). Libraries and coordination plugins do not gain an MCP transport by appearing in the same documentation site.
+**Full documentation: [docs.n24q02m.com](https://docs.n24q02m.com)** — setup and tool references for all 9 servers, Agent Chat coordination, the `hull` foundation, and [Fastretrieval](https://docs.n24q02m.com/reference/fastretrieval/). Libraries and coordination plugins do not gain an MCP transport by appearing in the same documentation site.
 
 ## Install
 
@@ -63,12 +63,12 @@ Or browse all plugins: run `/plugin` and go to the **Discover** tab.
 
 | Plugin | Category | Description | Config (env / userConfig) |
 |--------|----------|-------------|----------|
-| **wet-mcp** | Research | Web search, content extraction, library docs, media download | All optional: `JINA_AI_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_VERTEX_EXPRESS_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY`, `GITHUB_TOKEN` |
-| **mnemo-mcp** | Productivity | Persistent AI memory across sessions | All optional: `JINA_AI_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_VERTEX_EXPRESS_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY` |
+| **wet-mcp** | Research | Web search, content extraction, library docs, media download | All optional: `OPENROUTER_API_KEY`, `SEARCH_BACKENDS`, `TAVILY_API_KEY`, `BRAVE_API_KEY`, `EXA_API_KEY`, `KAGI_API_KEY`, `FIRECRAWL_API_KEY`, `GITHUB_TOKEN` |
+| **mnemo-mcp** | Productivity | Persistent AI memory across sessions | All optional: `MNEMO_URL` (Streamable HTTP endpoint of a running mnemo), `MNEMO_TOKEN` (bearer token when that instance uses token or multi auth) |
 | **better-notion-mcp** | Productivity | Notion API — 11 composite tools, ~95% coverage | `NOTION_TOKEN` (required) |
 | **better-email-mcp** | Communication | Email IMAP/SMTP — multi-account | `EMAIL_CREDENTIALS` (required) |
 | **better-telegram-mcp** | Communication | Telegram dual-mode (Bot API + MTProto) — messages, chats, media | `TELEGRAM_BOT_TOKEN` (optional; required for bot mode) |
-| **better-code-review-graph** | Development | Knowledge graph for token-efficient code reviews | All optional: `JINA_AI_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_VERTEX_EXPRESS_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY` |
+| **better-code-review-graph** | Development | Knowledge graph for token-efficient code reviews | All optional: `EMBEDDING_MODELS`, `LOCAL_EMBEDDING_MODEL`, `LOCAL_RERANK_MODEL`, `LOCAL_EMBEDDING_DIM`, `LOCAL_EMBEDDING_MODEL_FILE`, `LOCAL_EMBEDDING_POOLING`, `LOCAL_EMBEDDING_NORMALIZE`, `HULL_EMBED_API_KEY`, `HULL_CHAT_API_KEY` |
 | **better-workspace-mcp** | Productivity | Google Workspace — 10 domains plus local time helpers, `config`, `help`, and multi-account OAuth | `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` (both required) |
 
 [Fastretrieval](https://docs.n24q02m.com/reference/fastretrieval/) is the retrieval library used by Wet, Mnemo, and CRG. Install it as a Python dependency, not as a marketplace plugin or MCP endpoint.

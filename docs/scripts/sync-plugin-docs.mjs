@@ -8,7 +8,7 @@
  * the generated copy).
  *
  * Also synthesizes an `index.md` landing page per server section so the
- * bare section root `mcp.n24q02m.com/servers/<name>/` renders a real page
+ * bare section root `docs.n24q02m.com/servers/<name>/` renders a real page
  * instead of 404ing (Starlight only routes directories that contain an
  * index file). The landing pulls its tagline from the plugin manifest and
  * links every sibling page in the section.
@@ -103,13 +103,12 @@ function displayName(pluginName, meta) {
   return meta.name || pluginName;
 }
 
-// mcp-core is a foundation library, not a runnable server — frame it that way
-// and skip the marketplace-install pointer (it has no end-user install flow).
+// mcp-core is an archived foundation library (superseded by hull), not a runnable
+// server — frame it that way and skip the marketplace-install pointer.
 const FOUNDATION = 'mcp-core';
 const FOUNDATION_DESCRIPTION =
-  'Foundation library for the n24q02m MCP stack — shared Streamable HTTP transport, ' +
-  'lifecycle management, and credential-storage primitives ' +
-  'consumed by every server. Not a runnable MCP server.';
+  'Archived foundation library (2026-10-24), superseded by hull (PyPI n24q02m-hull, npm @n24q02m/hull). ' +
+  'Pages are kept for migration history. Not a runnable MCP server.';
 const COORDINATION = '';
 const COORDINATION_DESCRIPTION =
   'Portable CLI/Skill coordination for peer agent sessions using shared Markdown and JSON files. ' +
@@ -212,10 +211,10 @@ function buildServersIndex(entries) {
   const lines = [
     '---',
     'title: Servers and coordination',
-    'description: MCP servers, portable coordination plugins, and the mcp-core foundation library.',
+    'description: MCP servers, portable coordination plugins, and the archived mcp-core foundation library.',
     '---',
     '',
-    'The stack shares one foundation library (`mcp-core`) and one plugin marketplace. Runnable MCP servers and portable coordination plugins remain distinct capabilities.',
+    'The stack shares one foundation library ([`hull`](https://github.com/n24q02m/hull); the earlier `mcp-core` is archived) and one plugin marketplace. Runnable MCP servers and portable coordination plugins remain distinct capabilities.',
     '',
     '## Servers',
     '',
