@@ -70,7 +70,7 @@ class TestVerifyDocsCurrent(unittest.TestCase):
 
     def test_foundation_without_mcpservers_skipped(self):
         # No mcpServers manifest + no docs -> not a runnable server, must pass.
-        self._make_plugin("mcp-core", mcp=False, docs={"architecture.md": "# arch"})
+        self._make_plugin("hull", mcp=False, docs={"architecture.md": "# arch"})
         # Success path returns normally (no sys.exit).
         verify_docs_current.verify_docs_current()
 
