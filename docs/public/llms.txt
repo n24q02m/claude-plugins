@@ -2,29 +2,29 @@
 
 > A curated suite of nine MCP servers on one foundation library — one transport, one setup command, and one multi-user auth model — so you run web search, memory, Notion, email, Telegram, code review, image generation, Google Workspace, and Godot without wiring up nine inconsistent servers.
 
-Each server ships as a Claude Code plugin, an npm or PyPI package, and a Docker image. Works with Claude Code, Codex, Gemini CLI, Cursor, and Windsurf. Self-host once and share with a team, or use the hosted endpoints. Every server reuses `mcp-core` for its transport, OAuth authorization server, lifecycle, and per-user credential scoping — no bespoke auth code per server.
+Each server ships as a Claude Code plugin, an npm or PyPI package, and a Docker image. Works with Claude Code, Codex, Gemini CLI, Cursor, and Windsurf. Self-host once and share with a team. Every server reuses `mcp-core` for its transport, OAuth authorization server, lifecycle, and per-user credential scoping — no bespoke auth code per server.
 
 ## Servers
 
-- [mcp-core (foundation)](https://mcp.n24q02m.com/servers/mcp-core/architecture/): Shared transport, OAuth authorization server, lifecycle, and multi-user primitives used by every server.
-- [wet-mcp](https://mcp.n24q02m.com/servers/wet-mcp/setup/): Web search, content extraction, documentation indexing, and X/Twitter search.
-- [mnemo-mcp](https://mcp.n24q02m.com/servers/mnemo-mcp/setup/): Persistent AI memory with hybrid search.
-- [better-code-review-graph](https://mcp.n24q02m.com/servers/better-code-review-graph/setup/): Knowledge graph for token-efficient code reviews.
-- [imagine-mcp](https://mcp.n24q02m.com/servers/imagine-mcp/setup/): Image and video understanding and generation across providers.
-- [better-telegram-mcp](https://mcp.n24q02m.com/servers/telegram/setup/): Telegram (Bot API + MTProto) for AI agents.
-- [better-notion-mcp](https://mcp.n24q02m.com/servers/notion/setup/): Markdown-first Notion API server.
-- [better-email-mcp](https://mcp.n24q02m.com/servers/email/setup/): Email (IMAP + SMTP) composite tools.
-- [better-godot-mcp](https://mcp.n24q02m.com/servers/better-godot-mcp/setup/): Godot Engine integration for AI agents.
-- [better-workspace-mcp](https://mcp.n24q02m.com/servers/workspace/setup/): Google Workspace — Docs, Drive, Calendar, Gmail, Sheets, Slides, Tasks, Chat, People, and Forms, across multiple accounts.
+- [mcp-core (foundation)](https://docs.n24q02m.com/servers/mcp-core/architecture/): Shared transport, OAuth authorization server, lifecycle, and multi-user primitives used by every server.
+- [wet-mcp](https://docs.n24q02m.com/servers/wet/setup/): Web search, content extraction, documentation indexing, and X/Twitter search.
+- [mnemo-mcp](https://docs.n24q02m.com/servers/mnemo/setup/): Persistent AI memory with hybrid search.
+- [better-code-review-graph](https://docs.n24q02m.com/servers/crg/setup/): Knowledge graph for token-efficient code reviews.
+- imagine-mcp (archived, no docs page): Image and video understanding and generation across providers.
+- [better-telegram-mcp](https://docs.n24q02m.com/servers/telegram/setup/): Telegram (Bot API + MTProto) for AI agents.
+- [better-notion-mcp](https://docs.n24q02m.com/servers/notion/setup/): Markdown-first Notion API server.
+- [better-email-mcp](https://docs.n24q02m.com/servers/email/setup/): Email (IMAP + SMTP) composite tools.
+- better-godot-mcp (archived, no docs page): Godot Engine integration for AI agents.
+- [better-workspace-mcp](https://docs.n24q02m.com/servers/workspace/setup/): Google Workspace — Docs, Drive, Calendar, Gmail, Sheets, Slides, Tasks, Chat, People, and Forms, across multiple accounts.
 
 ## Get started
 
-- [Install in Claude Code](https://mcp.n24q02m.com/get-started/install-claude-code/): One command to install any server.
-- [Plugin marketplace](https://mcp.n24q02m.com/get-started/plugin-marketplace/): Browse and install any server as a Claude Code plugin.
-- [Modes overview](https://mcp.n24q02m.com/get-started/modes-overview/): stdio or self-hosted HTTP, and the HTTP auth modes (no-auth, token, multi) — when to use each.
-- [Multi-user setup](https://mcp.n24q02m.com/get-started/multi-user/): Per-user credential storage scoped by bearer token and namespace.
+- [Install in Claude Code](https://docs.n24q02m.com/get-started/install-claude-code/): One command to install any server.
+- [Plugin marketplace](https://docs.n24q02m.com/get-started/plugin-marketplace/): Browse and install any server as a Claude Code plugin.
+- [Modes overview](https://docs.n24q02m.com/get-started/modes-overview/): stdio or self-hosted HTTP, and the HTTP auth modes (no-auth, token, multi) — when to use each.
+- [Multi-user setup](https://docs.n24q02m.com/get-started/multi-user/): Per-user credential storage scoped by bearer token and namespace.
 
 ## Reference
 
-- [Server comparison](https://mcp.n24q02m.com/reference/server-comparison/): Side-by-side comparison of every server.
-- [Tool-layout standard](https://mcp.n24q02m.com/reference/tool-layout-standard/): The N+2 multiplexed-tool convention every server follows.
+- [Server comparison](https://docs.n24q02m.com/reference/server-comparison/): Side-by-side comparison of every server.
+- [Tool-layout standard](https://docs.n24q02m.com/reference/tool-layout-standard/): The N+2 multiplexed-tool convention every server follows.
