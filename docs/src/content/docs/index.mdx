@@ -60,7 +60,7 @@ Standalone CLIs and release tooling, documented here too:
 ## Why these and not just any MCP server?
 
 - **One foundation, nine consumers**: every server reuses `mcp-core`'s transport, OAuth AS, lifecycle, and multi-user primitives. No bespoke auth code per server.
-- **Multi-user by construction**: `remote-relay` and `remote-oauth` modes scope credentials per-JWT-sub. Self-host once, share with a team.
+- **Multi-user when you need it**: HTTP `multi` auth gives every user their own bearer token and credential namespace. Self-host once, share with a team.
 - **Composite tools, not raw API mirrors**: each server's tool list is curated for AI-agent ergonomics — fewer round-trips, less prompt clutter.
 - **Production-grade releases**: signed Docker images, semantic-versioned packages, automated CI (CodeQL, secret scanning, push protection, Dependabot).
 
@@ -68,7 +68,7 @@ Standalone CLIs and release tooling, documented here too:
 
 <CardGrid>
   <LinkCard title="Plugin marketplace" href="/get-started/plugin-marketplace/" description="One command to install any server in Claude Code." />
-  <LinkCard title="Modes overview" href="/get-started/modes-overview/" description="stdio / local-relay / remote-relay / remote-oauth — when to use each." />
-  <LinkCard title="Multi-user setup" href="/get-started/multi-user/" description="Per-JWT-sub credential storage." />
+  <LinkCard title="Modes overview" href="/get-started/modes-overview/" description="stdio or self-hosted HTTP, and the HTTP auth modes — when to use each." />
+  <LinkCard title="Multi-user setup" href="/get-started/multi-user/" description="Per-namespace credential storage." />
   <LinkCard title="Reference" href="/reference/server-comparison/" description="Side-by-side comparison of all 9 servers + mcp-core." />
 </CardGrid>

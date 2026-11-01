@@ -22,7 +22,7 @@ Example response shape:
   "name": "wet-mcp",
   "tagline": "Web search + content extraction + docs indexing.",
   "version": "2.1.0",
-  "mode": "local-relay",
+  "transport": "http",
   "docs_url": "https://docs.n24q02m.com/servers/wet/",
   "tools": [
     { "name": "search", "description": "Find URLs by keyword." },
@@ -34,14 +34,14 @@ Example response shape:
 
 ### `config`
 
-Read-only access to server's current configuration: mode, public URL (remote modes), enabled features, credential presence (boolean only — never values). Used by AI agents to verify they're talking to the right deploy.
+Read-only access to server's current configuration: transport, auth mode, enabled features, credential presence (boolean only — never values). Used by AI agents to verify they're talking to the right deploy.
 
 Example:
 
 ```json
 {
-  "mode": "remote-relay",
-  "public_url": "https://wet-mcp.team.example",
+  "transport": "http",
+  "auth": "token",
   "features": ["search", "extract", "indexing"],
   "credentials_present": true
 }

@@ -38,3 +38,7 @@
 /skret/hub-screenshot.png https://raw.githubusercontent.com/n24q02m/skret/main/docs/public/hub-screenshot.png 302
 /skret/og-image.png https://raw.githubusercontent.com/n24q02m/skret/main/docs/public/og-image.png 302
 /skret/llms.txt https://raw.githubusercontent.com/n24q02m/skret/main/docs/public/llms.txt 302
+# Credential bootstrap is documented as "Credential setup"; the old page described
+# a browser-form flow that no longer exists. (Intentional mention of the retired slug.)
+/reference/relay-flow /reference/credential-setup/ 301
+/reference/relay-flow/ /reference/credential-setup/ 301

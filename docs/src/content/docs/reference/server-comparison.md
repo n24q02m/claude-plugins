@@ -3,18 +3,18 @@ title: Server comparison
 description: Side-by-side comparison of all 9 servers in the stack, plus the mcp-core foundation library.
 ---
 
-| Server | Tools | Default mode | Multi-user | Docker | Language | License |
+| Server | Tools | Default transport | Multi-user | Docker | Language | License |
 |---|---:|---|:-:|:-:|---|---|
 | `mcp-core` | — | (foundation lib) | — | — | TypeScript + Python | Apache-2.0 |
-| `wet` | 4 + 2 | `local-relay` | yes (relay) | GHCR | Python | Apache-2.0 |
-| `mnemo` | 5 + 2 | `local-relay` | yes (relay) | GHCR | Python | Apache-2.0 |
-| `crg` | 5 + 2 | `local-relay` | yes (relay) | GHCR | Python | Apache-2.0 |
-| `imagine-mcp` † | 4 + 2 | `local-relay` | yes (relay) | GHCR | Python | Apache-2.0 |
-| `telegram` | 6 + 2 | `remote-relay` | yes (relay+OAuth) | GHCR | Python | Apache-2.0 |
-| `notion` | 7 + 2 | `remote-oauth` | yes (relay+OAuth) | GHCR | TypeScript | Apache-2.0 |
-| `email` | 6 + 2 | `remote-relay` | yes (relay+OAuth) | GHCR | TypeScript | Apache-2.0 |
-| `better-godot-mcp` † | 19 + 2 | `stdio` | no | GHCR | TypeScript | Apache-2.0 |
-| `workspace` | 11 + 2 | `stdio` | yes (OAuth) | GHCR | TypeScript | Apache-2.0 |
+| `wet` | 4 + 2 | `http` | yes | GHCR | Python | Apache-2.0 |
+| `mnemo` | 5 + 2 | `http` | yes | GHCR | Python | Apache-2.0 |
+| `crg` | 5 + 2 | `stdio` | no | GHCR | Python | Apache-2.0 |
+| `imagine-mcp` † | 4 + 2 | (archived) | — | GHCR | Python | Apache-2.0 |
+| `telegram` | 6 + 2 | `stdio` (+ `http`) | yes | GHCR | Python | Apache-2.0 |
+| `notion` | 7 + 2 | `stdio` (+ `http`) | yes | GHCR | TypeScript | Apache-2.0 |
+| `email` | 6 + 2 | `stdio` (+ `http`) | no (single-user token) | GHCR | TypeScript | Apache-2.0 |
+| `better-godot-mcp` † | 19 + 2 | (archived) | — | GHCR | TypeScript | Apache-2.0 |
+| `workspace` | 11 + 2 | `stdio` (+ `http`) | yes | GHCR | TypeScript | Apache-2.0 |
 
 († archived — docs kept for reference, project no longer maintained.)
 
@@ -22,11 +22,13 @@ description: Side-by-side comparison of all 9 servers in the stack, plus the mcp
 
 ## At a glance
 
-- **Most servers default to `local-relay`** — single-user browser flow, simplest first-run UX.
-- **Notion / Email / Telegram default to remote** — team-shared deploy is the common scenario for these.
-- **Godot defaults to `stdio`** — no credentials needed, just a Godot-engine spawn.
-- **Workspace defaults to `stdio`** — you bring your own Google OAuth client, and the first run consents through a loopback redirect. Its HTTP mode is self-host only; there is no hosted instance.
-- **mcp-core is not a server** — it's the shared library every other server consumes (transport, OAuth AS, lifecycle, multi-user primitives).
+- **wet and mnemo are HTTP-only** — one local process holds the index and models and serves every client on the machine.
+- **crg is stdio-only** — it runs as a child of the client (or from the `crg` CLI).
+- **telegram, notion, email and workspace default to `stdio`** — HTTP is an opt-in, self-hosted transport with its own auth mode (`no-auth` on loopback, `token`, or `multi`). See the [mode matrix](/reference/mode-matrix/).
+- **email HTTP is single-user** — one shared token, no per-user credential store.
+- **workspace brings your own Google OAuth client** — the first run consents through a loopback redirect. Its HTTP mode is self-host only; there is no hosted instance.
+- **No server has a hosted endpoint** — everything runs on your machine or your own host.
+- **mcp-core is not a server** — it's the shared library every other server consumes (transport, lifecycle, multi-user primitives).
 
 ## Which to install first?
 

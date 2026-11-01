@@ -12,7 +12,7 @@ A curated stack of MCP servers for Claude Code, Codex, Gemini CLI, Cursor, and W
 ## Why this suite and not just any MCP server
 
 - **One foundation, every server**: every server reuses `mcp-core`'s transport, OAuth authorization server, lifecycle, and multi-user primitives. There is no bespoke auth code per server, so once you know how one server authenticates and configures, you know them all.
-- **Multi-user by construction**: remote-relay and remote-oauth modes scope credentials per user (by JWT subject). Self-host once and share with a team; one user's keys never leak into another's request.
+- **Multi-user by construction**: the HTTP `multi` auth mode maps each user's bearer token to its own credential namespace. Self-host once and share with a team; one user's keys never leak into another's request.
 - **Composite tools, not raw API mirrors**: each server exposes a small set of multiplexed tools (the "N+2" layout — a handful of tools that each take an `action` parameter, plus `config` and `help`). Tool lists are curated for AI-agent ergonomics: fewer round-trips, less prompt clutter.
 - **External content is marked**: servers that return content authored by third parties (web pages, Notion pages, emails, Telegram messages, Godot project files) wrap it with an untrusted-source marker so an agent treats it as data, not instructions — a defense against indirect prompt injection.
 - **Bring your own credentials**: bundled defaults get you started; supply your own API keys or OAuth clients to run fully under your own accounts.
@@ -20,10 +20,11 @@ A curated stack of MCP servers for Claude Code, Codex, Gemini CLI, Cursor, and W
 
 ## Setup modes
 
-- **stdio**: the client launches the server as a subprocess. Simplest; single-user; credentials from the environment.
-- **local-relay**: the server runs locally but serves a browser configuration form so you set credentials without editing environment variables.
-- **remote-relay**: the server runs as a hosted HTTP endpoint; credentials are configured per user through a browser form and stored server-side, scoped by user.
-- **remote-oauth**: hosted HTTP with full OAuth 2.1 authorization.
+Every server runs on a machine you control; there is no hosted endpoint and no browser credential form.
+
+- **stdio**: the client launches the server as a subprocess. Simplest; single-user; credentials from the environment or from the server's `auth` CLI.
+- **http**: you start the server (loopback by default) and the client connects to `/mcp`. Wet and Mnemo are HTTP-only; Telegram, Notion, Email and Workspace offer it next to stdio.
+- **HTTP auth modes**: `no-auth` (loopback only), `token` (one shared bearer token, stored as a hash), and `multi` (one token per user, each mapped to its own credential namespace by a users file).
 
 ## Servers
 

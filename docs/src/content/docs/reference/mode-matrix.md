@@ -1,51 +1,51 @@
 ---
 title: Mode matrix
-description: Which server supports which mode.
+description: Which server supports which transport and HTTP auth mode.
 ---
 
-Each server has a fixed set of supported modes. Pick based on your scenario; switching modes is supported but requires re-bootstrap of credentials.
+Every server runs on a machine you control. A server offers `stdio`, `http`, or both; over `http` it supports one or more auth modes (`no-auth`, `token`, `multi`). See the [modes overview](/get-started/modes-overview/) for what each means. There is no hosted endpoint and no browser credential form.
 
-## Server × mode
+## Server x mode
 
-| Server | stdio | local-relay | remote-relay | remote-oauth | Default |
-|---|:-:|:-:|:-:|:-:|---|
-| `mcp-core` | — | — | — | — | (foundation library, not a server) |
-| `wet` | yes | yes | yes | — | `local-relay` |
-| `mnemo` | yes | yes | yes | — | `local-relay` |
-| `crg` | yes | yes | yes | — | `local-relay` |
-| `imagine-mcp` | yes | yes | yes | — | `local-relay` |
-| `better-telegram-mcp` | yes | yes | yes | yes | `remote-relay` |
-| `better-notion-mcp` | yes | yes | yes | yes | `remote-oauth` |
-| `better-email-mcp` | yes | yes | yes | yes | `remote-relay` |
-| `better-godot-mcp` | yes | — | — | — | `stdio` |
-| `better-workspace-mcp` | yes | — | — | yes | `stdio` |
+| Server | stdio | http | HTTP auth modes | Default |
+|---|:-:|:-:|---|---|
+| `mcp-core` | — | — | — | (foundation library, not a server) |
+| `wet` | — | yes | `no-auth`, `token`, `multi` | `http` (only transport) |
+| `mnemo` | — | yes | `no-auth`, `token`, `multi` | `http` (only transport) |
+| `crg` | yes | — | — | `stdio` |
+| `telegram` | yes | yes | `no-auth`, `token`, `multi` | `stdio` |
+| `notion` | yes | yes | `multi` (default), `token`, `no-auth` | `stdio` |
+| `email` | yes | yes | `token` (single user), `no-auth` (loopback only) | `stdio` |
+| `workspace` | yes | yes | `multi` | `stdio` |
+| `imagine-mcp` †, `better-godot-mcp` † | — | — | — | archived; not covered by this matrix |
 
-## Mode definitions
+(† archived — docs kept for reference, project no longer maintained.)
+
+## Definitions
 
 ### stdio
 
-Server runs as a child of the MCP client over stdin/stdout. Credentials in client config (`mcp.json` `env` block). No daemon, no persistent storage. Simplest mode; no shared state.
+The server runs as a child of the MCP client over stdin/stdout. Credentials come from the client config (`mcp.json` `env` block) or from credentials saved earlier with the server's CLI. No separate process to manage.
 
-### local-relay
+### http
 
-Client spawns a local HTTP daemon. Daemon opens a browser at first run for credential entry. Credentials encrypted and persisted at `~/.config/<server>/config.enc`. Subsequent client runs reuse the daemon if alive.
+You start the server (`--http`, or `MCP_TRANSPORT=http`; Wet and Mnemo are always HTTP) and the client connects to `http://<host>:<port>/mcp`. It binds to loopback by default.
 
-### remote-relay
+### HTTP auth modes
 
-Same form/flow as `local-relay` but the HTTP server is your self-hosted deployment (e.g. Docker on a VM). Credentials scoped per JWT subject. One deploy serves N users.
+- `no-auth`: no token. Loopback bind only; a non-loopback host is refused at startup.
+- `token`: one shared bearer token. The server keeps only its hash.
+- `multi`: one bearer token per user, mapped to a credential namespace by a users file. See [Multi-user setup](/get-started/multi-user/).
 
-### remote-oauth
+## Default transport rationale
 
-Self-hosted server doubles as an OAuth 2.1 Authorization Server. Standard OAuth flow for client identity. User identity (sub) supplied by an upstream IdP (GitHub / Google). Credential storage still per-sub.
+`stdio` is the default wherever the server can run as a child process: no setup beyond credentials. Wet and Mnemo are HTTP-only because they hold a long-lived local index and models, so one process serves every client on the machine.
 
-## Default mode rationale
-
-The default is what the plugin manifest sets in `mcp.json` when installed via marketplace. Override per-install if needed. Most servers default to `local-relay` (single-user with browser flow). `better-godot-mcp` defaults to `stdio` (no credentials needed). Notion/Email/Telegram default to remote because team-shared deploy is the common deployment pattern.
-
-`better-workspace-mcp` defaults to `stdio` and skips the relay modes entirely: it has no credential paste form, because Google credentials are never pasted — the user consents on Google's own screen. In stdio that consent returns to a loopback address; in `remote-oauth` it returns to `/accounts/callback` on the deployment, which is why the two modes need different Google OAuth client types (Desktop vs Web application).
+`workspace` never takes pasted Google credentials: the user consents on Google's own screen. In `stdio` that consent returns to a loopback address; in `http` the operator runs `workspace auth --user <namespace>` on the host to consent for each namespace. The two paths use different Google OAuth client types (Desktop for `stdio`, Web application for `http`).
 
 ## Anti-patterns
 
-- Mixing modes for the same server install — pick one and stick with it. Switching modes invalidates persisted credentials.
-- Sharing `config.enc` across machines — `local-relay` storage is single-user. Use `remote-relay` if you need team access.
-- Self-hosting `remote-relay` without a JWT issuer — every request gets the same `sub` and credentials silently overlap.
+- Binding `no-auth` beyond loopback. The server refuses to start; use `token` or `multi` and a TLS reverse proxy instead.
+- Copying a server's data directory between machines. Saved credentials are encrypted with a machine key that stays on the original host.
+- Using `multi` with a single shared token. Give each person their own token and namespace, otherwise credentials overlap.
+- Passing credentials or tokens in a URL query string (`?token=xxx`). They leak through referer headers and access logs.

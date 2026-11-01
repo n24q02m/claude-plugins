@@ -1,95 +1,57 @@
 ---
 title: Multi-user pattern
-description: PUBLIC_URL + per-JWT-sub credential storage recipe.
+description: Users file + per-namespace credential storage recipe for HTTP multi auth.
 ---
 
-Multi-user is a deployment property of `remote-relay` and `remote-oauth` modes. One self-hosted server serves N users; each user's credentials are stored under a key derived from their JWT subject (`sub`).
+Multi-user is the HTTP `multi` auth mode. One self-hosted server serves several users; each user's credentials are stored in their own **namespace**, selected by the bearer token they send. Servers that support `multi` are listed in the [mode matrix](/reference/mode-matrix/).
 
 ## Required components
 
-1. **JWT issuer** — anything that produces signed JWTs your client can include in the `Authorization: Bearer <token>` header. Options:
-   - Your own OAuth/OIDC provider (Auth0, Authentik, Dex, Keycloak)
-   - The MCP server itself in `remote-oauth` mode (it doubles as an AS)
-   - GitHub Actions OIDC tokens (workflow-scoped, useful for CI)
+1. **A bearer token per user.** You mint them; the server does not issue tokens and runs no OAuth authorization server. Hash each token with the server's `token hash` command (the token is read from stdin or a prompt, never argv) and keep only the hash.
 
-2. **PUBLIC_URL env** — the externally-reachable URL of your deployment. Used by the relay form to construct `redirect_url`s and by `oauth-authorization-server` metadata.
+2. **A users file.** One entry per user: token hash, `enabled` flag, and the namespace they map to.
 
-3. **JWT public key** — passed via `JWT_PUBLIC_KEY_PEM` or `JWT_JWKS_URL` env. Server verifies every request's JWT against this.
+   ```toml
+   [users.alice]
+   token_hash = "scrypt$..."
+   enabled = true
+   namespace = "alice"
+   ```
 
-4. **Storage backend** — by default a SQLite file on disk. For HA, point `STORAGE_URL` to Postgres, Redis, or any backend listed in the mcp-core docs.
+   The file location comes from the server's config (`[server] users_file`) or its `*_USERS_FILE` environment variable. You edit it on the host and restart the server.
 
-## Storage key derivation
+3. **A reverse proxy for TLS** when clients are not on the same machine. The server binds to loopback by default and does not terminate TLS.
+
+## Storage layout
+
+Credentials are encrypted at rest and kept per namespace under the server's data directory (`~/.<server>/`):
 
 ```
-storage_key = "<server-name>:<sub>"
+~/.telegram/config.json                  # default namespace (stdio, no-auth, token)
+~/.telegram/subs/alice/config.json       # namespace "alice" (multi)
+~/.telegram/subs/bob/config.json         # namespace "bob"   (multi)
 ```
 
-Example:
+Different namespaces never read each other's files, and different servers keep separate data directories.
 
-```
-wet-mcp:n24q02m@example.com           -> bundle A
-wet-mcp:teammate@example.com          -> bundle B
-mnemo-mcp:n24q02m@example.com         -> bundle C
-```
+## What's in a stored entry
 
-Same `sub`, different servers → different bundles. Servers never read each others' bundles.
+An encrypted blob with the credential payload (AES-256-GCM). The key is a machine key in `~/.<server>/.secret` (owner-only permissions); for `workspace` over HTTP it is derived from the `CREDENTIAL_SECRET` environment variable, and the server refuses to start without it. Session files, where a server has them (Telegram), sit beside the entry with `600` permissions.
 
-## What's in a bundle
+## Operating a multi deployment
 
-Encrypted blob containing the credential payload submitted via the relay form. AES-256-GCM, key derived from `KEYRING_SECRET` (env-injected) + per-bundle nonce.
-
-Plus metadata (cleartext): created-at, last-rotated-at, expires-at, version. Used for cache invalidation when an underlying upstream rotates keys.
-
-## Deployment example
-
-Clone a reviewed Wet release tag into `./wet-mcp` next to this Compose file.
-Public OCI publication is discontinued, so Compose builds the HTTP target
-locally.
-
-```yaml
-# docker-compose.yml
-services:
-  wet-mcp:
-    build:
-      context: ./wet-mcp
-      target: http
-    image: wet-mcp-http:local
-    environment:
-      MCP_TRANSPORT: http
-      PUBLIC_URL: https://wet-mcp.team.example
-      JWT_JWKS_URL: https://auth.team.example/.well-known/jwks.json
-      KEYRING_SECRET_FILE: /run/secrets/wet_keyring
-    secrets:
-      - wet_keyring
-    volumes:
-      - wet-data:/var/lib/wet-mcp
-    restart: unless-stopped
-volumes:
-  wet-data:
-secrets:
-  wet_keyring:
-    file: ./secrets/wet_keyring.txt
-```
-
-## OAuth-AS mode (remote-oauth)
-
-Server exposes:
-
-- `GET /.well-known/oauth-authorization-server`
-- `POST /register` — Dynamic Client Registration (DCR) per RFC 7591
-- `GET /authorize` — same form as relay, plus OAuth code exchange wrapper
-- `POST /token` — exchange code for JWT
-
-Identity (the `sub`) is delegated to an upstream IdP — usually GitHub for OSS deploys. Server signs its own JWTs after delegated auth.
+- **Add a user**: mint a token, hash it, add an entry, restart. Set the user's credentials with the server's CLI (`<server> auth --user <namespace>`) or let the user call the `config` tool, as the server's setup page describes.
+- **Disable a user**: set `enabled = false` and restart. Their stored credentials remain until you delete the namespace or run `<server> logout --user <namespace>` where available.
+- **Offboard a user**: disable them, revoke the upstream credential (for example the bot token), then delete their namespace directory.
 
 ## Anti-patterns
 
-- Shared `config.enc` (single-user storage) in `remote-relay` mode → first user's creds get overwritten by second user's. Server MUST refuse to start if it can't verify per-sub storage is wired.
-- Passing creds in URL query string (`?token=xxx`) → leaks via referer headers + access logs.
-- Not rotating `KEYRING_SECRET` on team-member offboarding → ex-team-member can decrypt past bundles if they exfiltrated the secret.
+- Reusing one token for several users: every request lands in the same namespace and credentials overlap.
+- Passing tokens in the URL query string (`?token=xxx`): they leak via referer headers and access logs.
+- Exposing the port without TLS and without a token hash: use a reverse proxy, and never bind `no-auth` beyond loopback.
+- Leaving a departed user's token in the users file and relying on the upstream account being closed.
 
 ## Read more
 
 - [Modes overview](/get-started/modes-overview/)
-- [Relay flow](/reference/relay-flow/)
-- [`mcp-core` foundation](/servers/mcp-core/architecture/)
+- [Credential setup](/reference/credential-setup/)
