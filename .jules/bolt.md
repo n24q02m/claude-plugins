@@ -37,3 +37,7 @@ closed pull request.
 **Proposed:** in the same diff as the frontmatter change, a blank line added after the module docstring of `plugins/agent-chat-plugin/hooks/session_inbox.py`, and in #587 a re-wrap of two decorators in `plugins/better-workspace-mcp/hooks/tests/test_check_credentials.py`.
 **Why rejected:** neither file has anything to do with frontmatter parsing, and the second belongs to a different plugin entirely. Formatting churn in a mirrored tree is churn twice over: it cannot outlive the next sync, and it widens the diff a reviewer has to read to find the change the title describes.
 **Action:** Keep the diff to the files the title names. Formatting of mirrored files is settled by the source repository's own formatter.
+
+## 2024-11-01 - Deferred evaluating `_markdown_blob` in verify_docs_current
+**Learning:** `_markdown_blob` reads and concatenates every markdown file in a plugin directory. Previously, it was called for every evaluated plugin regardless of whether it actually specified a `userConfig`, meaning potentially significant unnecessary disk I/O when `user_config` was empty.
+**Action:** When a verification loop iterates over data (e.g. `user_config`), evaluate heavy operations like reading directories/files lazily *inside* an `if condition:` block to avoid paying the cost for operations that are ultimately never used.

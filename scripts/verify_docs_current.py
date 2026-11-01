@@ -144,14 +144,17 @@ def _verify_plugin(name: str, plugin_dir: str) -> list[str]:
             )
 
     # (2) Config-param coverage.
-    blob = _markdown_blob(plugin_dir)
     user_config = pdata.get("userConfig") or {}
-    for key in user_config:
-        if key not in blob:
-            errors.append(
-                f"{name}: userConfig key '{key}' is shipped in plugin.json but "
-                f"not documented in any plugins/{name}/*.md page"
-            )
+    if user_config:
+        # Performance: Read and concatenate all markdown files lazily only if the
+        # plugin actually declares user configuration parameters, bypassing unnecessary I/O.
+        blob = _markdown_blob(plugin_dir)
+        for key in user_config:
+            if key not in blob:
+                errors.append(
+                    f"{name}: userConfig key '{key}' is shipped in plugin.json but "
+                    f"not documented in any plugins/{name}/*.md page"
+                )
 
     return errors
 
