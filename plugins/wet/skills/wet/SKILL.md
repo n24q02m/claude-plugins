@@ -5,7 +5,7 @@ description: Use the wet CLI and its HTTP MCP server for web search, content ext
 
 # wet -- web search, extraction, and library docs
 
-wet is a self-hosted MCP server that speaks Streamable HTTP only (single `/mcp` endpoint, no stdio). The `wet` command is its control plane plus one thin client. This plugin provides the skill; register your instance's HTTP endpoint with `claude mcp add --transport http`.
+wet is a self-hosted MCP server that speaks Streamable HTTP only (single `/mcp` endpoint, no stdio). The `wet` command is its control plane plus one thin client. This plugin provides the skill and an HTTP MCP entry that connects to `WET_URL` (default `http://127.0.0.1:8000/mcp`, optional `WET_TOKEN`); start the instance with `wet server start` first.
 
 ## MCP tools
 

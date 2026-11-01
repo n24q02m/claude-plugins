@@ -16,14 +16,14 @@ The repo is `n24q02m/wet`; the PyPI package is `wet-mcp` and ships the `wet` com
 
 | Method | What runs where | Best for |
 |---|---|---|
-| **1. Plugin (skill) + manual registration** | Claude Code plugin installs the skill; you register your instance yourself | Claude Code users who want the skill |
+| **1. Plugin (skill + HTTP entry)** | Claude Code plugin installs the skill and an HTTP entry pointing at `WET_URL`; you start the instance yourself | Claude Code users who want the skill |
 | **2. Local server + `claude mcp add`** | `wet server start` on your machine | Any MCP client, no plugin |
 | **3. docker compose (token auth)** | Always-on container, published on loopback | One instance shared across sessions and clients |
 | **4. Remote host** | Your instance behind a TLS proxy at `https://<your-host>/mcp` | Multi-device, claude.ai web, team use |
 
 Every method needs a running instance.
 
-> **Pick one registration per client.** Claude Code matches MCP servers by **endpoint** (URL), not by name. The plugin's bundled stdio entry does not connect (see Method 1), so register your instance manually with `claude mcp add` and ignore the failed `plugin:wet:wet` entry.
+> **Pick one registration per client.** Claude Code matches MCP servers by **endpoint** (URL), not by name. If you use the plugin (Method 1), do not also run `claude mcp add` for the same URL.
 
 ## Prerequisites
 
@@ -133,15 +133,20 @@ Every search response includes a `search_backend` trace: requested, attempted, s
 
 ## Method 1: Claude Code plugin
 
-The plugin installs the wet skill. wet 3.20.0 is HTTP-only. The `wet-mcp` entry point on PyPI is the control-plane CLI: run bare, it prints its usage and exits 0, so the stdio entry bundled in the plugin manifest (`uvx --python 3.13 wet-mcp` with `MCP_TRANSPORT=stdio`) exits immediately and `/mcp` reports a failed connection. Until a renamed distribution is published and the plugin manifest is moved to an HTTP entry, use the plugin for the skill only and register your instance with `claude mcp add --transport http`.
+The plugin installs the wet skill and an HTTP MCP entry. wet 3.20.0 is HTTP-only: the `wet-mcp` entry point on PyPI is the control-plane CLI, so the plugin does not launch a server. It connects to an instance you started yourself. Two plugin settings:
 
-1. Start an instance (see above) and note its endpoint.
+| Setting | Default | Meaning |
+|---|---|---|
+| `WET_URL` | `http://127.0.0.1:8000/mcp` | Streamable HTTP endpoint of your instance. Change it if the instance uses another port or host. |
+| `WET_TOKEN` | empty | Bearer token for `auth = "token"` / `"multi"`; leave empty for a loopback `no-auth` instance. |
+
+1. Start an instance first (see above): `wet server start`. Without a running instance `/mcp` shows `plugin:wet:wet` as failed (connection refused).
 2. Install the plugin:
    ```bash
    /plugin marketplace add n24q02m/claude-plugins
    /plugin install wet@n24q02m-plugins
    ```
-3. Register your instance as in Method 2 (`claude mcp add --transport http wet <url>`), then restart Claude Code and check `/mcp`.
+3. Set `WET_URL` (and `WET_TOKEN` if needed) when Claude Code prompts for the plugin settings, then restart Claude Code and check `/mcp`.
 
 ## Method 2: local server + `claude mcp add`
 

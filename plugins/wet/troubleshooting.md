@@ -28,7 +28,7 @@ wet has no stdio mode: the client must reach a running HTTP instance. Check it:
 wet server status
 ```
 
-It reports the pid, the lock, and HTTP liveness for the configured port. If HTTP is down, run `wet server start` (or `--foreground` to see errors). Then check that the URL given to `claude mcp add` ends in `/mcp` and uses the same port as `[server].port` (default 8000). `wet search <query>` is a quick end-to-end check; it exits with code 2 and a hint when no server is running.
+It reports the pid, the lock, and HTTP liveness for the configured port. If HTTP is down, run `wet server start` (or `--foreground` to see errors). Then check that the URL (the plugin's `WET_URL` setting, or the one given to `claude mcp add`) ends in `/mcp` and uses the same port as `[server].port` (default 8000). `wet search <query>` is a quick end-to-end check; it exits with code 2 and a hint when no server is running.
 
 ## 401 Unauthorized
 
@@ -80,7 +80,7 @@ Docs discovery calls the GitHub API, limited to 60 requests per hour without a t
 
 ## Transport mismatch / duplicate entries in `/mcp`
 
-Claude Code matches MCP servers by **endpoint** (URL), not by name. Do not register the same instance twice with `claude mcp add`. The `plugin:wet:wet` entry shown as failed is the plugin's bundled stdio entry: wet 3.20.0 is HTTP-only and the `wet-mcp` entry point prints its CLI usage and exits, so it cannot connect. Use your manual HTTP entry and ignore it. See [setup](/servers/wet/setup/) for the full method matrix.
+Claude Code matches MCP servers by **endpoint** (URL), not by name. Do not register the same instance twice: if the plugin's `WET_URL` already points at it, skip `claude mcp add`. A failed `plugin:wet:wet` entry means nothing answers at `WET_URL`: wet 3.20.0 is HTTP-only and the plugin does not start a server, so run `wet server start` (or fix `WET_URL`/`WET_TOKEN`) and restart Claude Code. See [setup](/servers/wet/setup/) for the full method matrix.
 
 ## Filing a bug
 
