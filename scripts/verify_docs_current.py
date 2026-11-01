@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Verify per-server docs stay current with shipped plugin manifests (WS-E / E6).
 
-The prose docs on mcp.n24q02m.com are hand-maintained in ``plugins/<name>/*.md``
+The prose docs on docs.n24q02m.com are hand-maintained in ``plugins/<name>/*.md``
 (the plugin-sync CD job copies plugin.json / skills / hooks from source repos,
 never the ``.md`` files). That means a server can ship a new user-facing config
 param and the docs silently fall behind. This gate closes that loop.

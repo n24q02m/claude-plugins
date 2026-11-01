@@ -3,7 +3,7 @@ title: Multi-user pattern
 description: Users file + per-namespace credential storage recipe for HTTP multi auth.
 ---
 
-Multi-user is the HTTP `multi` auth mode. One self-hosted server serves several users; each user's credentials are stored in their own **namespace**, selected by the bearer token they send. Servers that support `multi` are listed in the [mode matrix](/reference/mode-matrix/).
+Multi-user is the HTTP `multi` auth mode. One self-hosted server serves several users; each user's credentials are stored in their own **namespace**, selected by the bearer token they send. Servers that support `multi` are listed in the [mode matrix](/reference/mode-matrix/). The token check, users file and per-user rate limit come from [`hull`](https://github.com/n24q02m/hull), so every server behaves the same way.
 
 ## Required components
 
@@ -16,7 +16,12 @@ Multi-user is the HTTP `multi` auth mode. One self-hosted server serves several 
    token_hash = "scrypt$..."
    enabled = true
    namespace = "alice"
+
+   [users.alice.limits]
+   rpm = 60            # optional per-minute cap, default unlimited
    ```
+
+   Servers that give users file access also read an optional `allowed_roots` list per user (default empty, which grants no paths).
 
    The file location comes from the server's config (`[server] users_file`) or its `*_USERS_FILE` environment variable. You edit it on the host and restart the server.
 

@@ -2,7 +2,7 @@
 /**
  * Sync the tools-docs site content (skret / better-semantic-release /
  * better-drive) into ./src/content/docs/tools/ before astro build, so
- * mcp.n24q02m.com serves the tools docs under /tools/ (G1 consolidation,
+ * docs.n24q02m.com serves the tools docs under /tools/ (G1 consolidation,
  * 2026-09-17).
  *
  * Source resolution order:

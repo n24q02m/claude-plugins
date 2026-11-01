@@ -32,7 +32,7 @@ Releases triggered manually via `workflow_dispatch` on `cd.yml`. Choose `beta` o
 ## Renaming a tool in a server
 
 `plugins/<repo>/tools.md` is the only place a tool name is written down for the
-public. The marketplace listing and `mcp.n24q02m.com/servers/<repo>/tools/` both
+public. The marketplace listing and `docs.n24q02m.com/servers/<repo>/tools/` both
 read it, and nothing generates it: `plugin.json` carries no tool list, and the
 sync described above never copies `.md` files. A rename in a server is therefore
 invisible here until somebody types it, and until they do, the docs name tools

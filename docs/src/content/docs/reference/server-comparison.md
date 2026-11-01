@@ -1,11 +1,11 @@
 ---
 title: Server comparison
-description: Side-by-side comparison of all 9 servers in the stack, plus the mcp-core foundation library.
+description: Side-by-side comparison of all 9 servers in the stack, plus the hull foundation library.
 ---
 
 | Server | Tools | Default transport | Multi-user | Docker | Language | License |
 |---|---:|---|:-:|:-:|---|---|
-| `mcp-core` | — | (foundation lib) | — | — | TypeScript + Python | Apache-2.0 |
+| `hull` | — | (foundation lib) | — | — | Python + TypeScript | Apache-2.0 |
 | `wet` | 4 + 2 | `http` | yes | GHCR | Python | Apache-2.0 |
 | `mnemo` | 5 + 2 | `http` | yes | GHCR | Python | Apache-2.0 |
 | `crg` | 5 + 2 | `stdio` | no | GHCR | Python | Apache-2.0 |
@@ -28,7 +28,7 @@ description: Side-by-side comparison of all 9 servers in the stack, plus the mcp
 - **email HTTP is single-user** — one shared token, no per-user credential store.
 - **workspace brings your own Google OAuth client** — the first run consents through a loopback redirect. Its HTTP mode is self-host only; there is no hosted instance.
 - **No server has a hosted endpoint** — everything runs on your machine or your own host.
-- **mcp-core is not a server** — it's the shared library every other server consumes (transport, lifecycle, multi-user primitives).
+- **hull is not a server** — it's the shared library every active server consumes (HTTP transport, token auth, encrypted credential storage, CLI built-ins). It replaces the archived `mcp-core`.
 
 ## Which to install first?
 
@@ -50,7 +50,7 @@ For specific workflows:
 
 ## Versioning
 
-Each server cuts independent releases (`vMAJOR.MINOR.PATCH`). All servers depend on `mcp-core` — major version bumps in `mcp-core` propagate as bumps to all consumers. See each server's CHANGELOG.
+Each server cuts independent releases (`vMAJOR.MINOR.PATCH`). Every active server pins a compatible `hull` range (PyPI `n24q02m-hull`, npm `@n24q02m/hull`), so a breaking `hull` release is adopted by each server in its own release. See each server's CHANGELOG.
 
 `workspace` is still pre-1.0: it publishes beta artifacts only (`0.1.0-beta.x` on npm, `:beta` on the registries), with no stable tag yet.
 

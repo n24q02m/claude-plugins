@@ -22,7 +22,7 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 ## What is this?
 
-A curated stack of MCP (Model Context Protocol) servers for Claude Code, Codex, Gemini CLI, Cursor, and Windsurf — sharing one foundation library (`mcp-core`) and one plugin marketplace (`n24q02m/claude-plugins`).
+A curated stack of MCP (Model Context Protocol) servers for Claude Code, Codex, Gemini CLI, Cursor, and Windsurf — sharing one foundation library ([`hull`](https://github.com/n24q02m/hull)) and one plugin marketplace (`n24q02m/claude-plugins`).
 
 Servers are available through the Claude Code marketplace and npm or PyPI packages. Container availability and authentication requirements vary by server; see its setup guide for the supported distribution.
 
@@ -43,7 +43,7 @@ Servers are available through the Claude Code marketplace and npm or PyPI packag
 These components support the stack without exposing their own MCP server:
 
 <CardGrid>
-  <LinkCard title="mcp-core (Foundation)" href="/servers/mcp-core/architecture/" description="Shared transport, OAuth AS, lifecycle, and credential primitives for server authors." />
+  <LinkCard title="hull (Foundation)" href="https://github.com/n24q02m/hull" description="Shared core: HTTP MCP transport, token auth (no-auth, token, multi), encrypted credential storage, and CLI. PyPI n24q02m-hull, npm @n24q02m/hull." />
   <LinkCard title="fastretrieval" href="/reference/fastretrieval/" description="Multi-model Python retrieval: embeddings, reranking, ONNX, and optional GGUF." />
 </CardGrid>
 
@@ -59,7 +59,7 @@ Standalone CLIs and release tooling, documented here too:
 
 ## Why these and not just any MCP server?
 
-- **One foundation, nine consumers**: every server reuses `mcp-core`'s transport, OAuth AS, lifecycle, and multi-user primitives. No bespoke auth code per server.
+- **One foundation, seven consumers**: every active server (wet, mnemo, crg, telegram, notion, email, workspace) reuses `hull`'s HTTP transport, token auth, encrypted credential storage, and CLI built-ins. No bespoke auth code per server.
 - **Multi-user when you need it**: HTTP `multi` auth gives every user their own bearer token and credential namespace. Self-host once, share with a team.
 - **Composite tools, not raw API mirrors**: each server's tool list is curated for AI-agent ergonomics — fewer round-trips, less prompt clutter.
 - **Production-grade releases**: signed Docker images, semantic-versioned packages, automated CI (CodeQL, secret scanning, push protection, Dependabot).
@@ -70,5 +70,5 @@ Standalone CLIs and release tooling, documented here too:
   <LinkCard title="Plugin marketplace" href="/get-started/plugin-marketplace/" description="One command to install any server in Claude Code." />
   <LinkCard title="Modes overview" href="/get-started/modes-overview/" description="stdio or self-hosted HTTP, and the HTTP auth modes — when to use each." />
   <LinkCard title="Multi-user setup" href="/get-started/multi-user/" description="Per-namespace credential storage." />
-  <LinkCard title="Reference" href="/reference/server-comparison/" description="Side-by-side comparison of all 9 servers + mcp-core." />
+  <LinkCard title="Reference" href="/reference/server-comparison/" description="Side-by-side comparison of all 9 servers + hull." />
 </CardGrid>
