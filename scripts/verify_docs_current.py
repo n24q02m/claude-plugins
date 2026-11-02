@@ -16,7 +16,7 @@ For every plugin that declares an ``mcpServers`` manifest, it checks:
 3. Distribution-policy coverage -- docs must not advertise discontinued public
    image coordinates.
 
-The foundation library (mcp-core) has no ``mcpServers`` manifest and is skipped
+The foundation library (hull) has no ``mcpServers`` manifest and is skipped
 by design -- it documents architecture, not an install/tool surface.
 
 Note: tool/action-level parity (``tools/list`` output vs ``tools.md``) is NOT
@@ -126,7 +126,7 @@ def _verify_plugin(name: str, plugin_dir: str) -> list[str]:
         with open(pjson, encoding="utf-8") as f:
             pdata = json.load(f)
     except FileNotFoundError:
-        # Not a runnable plugin (e.g. the mcp-core foundation library) -- skip.
+        # Not a runnable plugin (e.g. the hull foundation library) -- skip.
         return errors
     except (OSError, json.JSONDecodeError) as e:
         return [f"{name}: failed to parse plugin.json: {e}"]
