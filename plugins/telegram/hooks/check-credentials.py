@@ -9,11 +9,32 @@ import json
 import os
 import sys
 
-# Add plugins root to sys.path for shared utilities
+# Add plugins root to sys.path for shared utilities if running inside marketplace
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
-from mcp_common import read_mcp_hook_input
+try:
+    from mcp_common import read_mcp_hook_input
+except ImportError:
+
+    def read_mcp_hook_input() -> dict:
+        data = None
+        try:
+            data = json.loads(sys.stdin.read(64 * 1024))
+        except Exception:
+            pass
+        if not isinstance(data, dict):
+            print(
+                json.dumps(
+                    {
+                        "decision": "block",
+                        "reason": "Invalid input: payload must be a JSON dictionary",
+                    }
+                )
+            )
+            sys.exit(2)
+        return data
+
 
 SERVER_NAME = "better-telegram-mcp"
 # Either TELEGRAM_PHONE (user mode) or TELEGRAM_BOT_TOKEN (bot mode) is required.
@@ -27,6 +48,9 @@ def _is_configured() -> bool:
     for k in CREDENTIAL_KEYS:
         if os.environ.get(k):
             return True
+    config_file = os.path.expanduser("~") + "/.config/mcp/config.enc"
+    if os.path.exists(config_file):
+        return True
     return False
 
 

@@ -27,7 +27,6 @@ on:
           - better-email-mcp
           - workspace
           - better-workspace-mcp
-          - mcp-core
       tag:
         description: "Release tag (e.g., v2.18.1)"
         required: true
@@ -94,7 +93,7 @@ jobs:
           }
 
           case "$REPO" in
-            wet|wet-mcp|mnemo|mnemo-mcp|telegram|better-telegram-mcp|crg|better-code-review-graph|notion|better-notion-mcp|email|better-email-mcp|workspace|better-workspace-mcp|mcp-core)
+            wet|wet-mcp|mnemo|mnemo-mcp|telegram|better-telegram-mcp|crg|better-code-review-graph|notion|better-notion-mcp|email|better-email-mcp|workspace|better-workspace-mcp)
               ;;
             *)
               printf "::error::Invalid repo: %s\n" "$(sanitize "$REPO")"

@@ -11,15 +11,15 @@ IMAP/SMTP email for AI agents -- search, read, triage, and send across multiple 
 
 ## Tools
 
-Four action-driven tools -- `messages`, `folders`, `attachments`, and `config` -- plus `config__open_relay` and `help`; `config__open_relay` reopens the browser credential form. Every action and parameter is listed in the [tools reference](/servers/email/tools/).
+Four action-driven tools -- `messages`, `folders`, `attachments`, and `config` -- plus `help`. `config` reports credential state and how to fix it; there is no browser setup form. Every action and parameter is listed in the [tools reference](/servers/email/tools/).
 
 ## Clients
 
-Defaults to a team-shared remote deployment (`remote-relay`) and also runs over stdio for single-user local use. Works with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web. See the [modes overview](/get-started/modes-overview/).
+Runs over stdio by default (single user, credentials from environment variables) and can run as a single-user HTTP server for self-hosting. There is no hosted public instance. Works with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web for a self-hosted HTTP server.
 
 ## Configuration
 
-Needs IMAP/SMTP credentials for one or more accounts, supplied as `EMAIL_CREDENTIALS` via the browser relay form (or an environment variable for local use). Most providers require an app-specific password or OAuth token rather than your login password. Use placeholders in shared config and never commit real credentials. Full walkthrough in [setup](/servers/email/setup/).
+Needs IMAP/SMTP credentials for one or more accounts, supplied as `EMAIL_CREDENTIALS` (or `EMAIL_USER` + `EMAIL_APP_PASSWORD`) in the server environment. Most providers require an app-specific password rather than your login password. Outlook/Hotmail/Live accounts can instead sign in once with `email auth outlook <address>` (OAuth device code). Use placeholders in shared config and never commit real credentials. Full walkthrough in [setup](/servers/email/setup/).
 
 ## Next steps
 

@@ -1,6 +1,6 @@
 # Email MCP -- Troubleshooting
 
-Common issues specific to better-email-mcp. For daemon, lock-file, and general relay problems shared across the stack, see the [general troubleshooting guide](/get-started/troubleshooting/).
+Common issues specific to better-email-mcp. For problems shared across the stack, see the [general troubleshooting guide](/get-started/troubleshooting/).
 
 ## Installing a prerelease (beta) build
 
@@ -14,7 +14,7 @@ Replace `<X.Y.Z-beta.N>` with the exact beta version. Drop the `@<version>` suff
 
 ## Login / connection refused
 
-Most providers reject your normal account password for IMAP/SMTP. Use an **app-specific password** or OAuth token in `EMAIL_CREDENTIALS`. Double-check the IMAP and SMTP host and port for each account -- a wrong port is the most common cause of a connection timeout.
+Most providers reject your normal account password for IMAP/SMTP. Use an **app-specific password** in `EMAIL_CREDENTIALS`, or sign Outlook accounts in with `email auth outlook <address>`. Double-check the IMAP and SMTP host and port for each account -- a wrong port is the most common cause of a connection timeout.
 
 ## Folder not found on `move` / `archive`
 
@@ -30,8 +30,21 @@ The `messages` actions `new`, `reply`, and `forward` accept at most 10 attachmen
 
 ## Credentials or settings not saving
 
-- In the default remote-relay/HTTP mode, submit credentials through the relay form and verify with `config(action="status")`; reset with `config(action="setup_reset")` if it seems stuck. `cache_clear` also drops the cached OAuth token.
-- Under stdio there is no browser relay form -- `config__open_relay` returns `stdio_unsupported`. Provide `EMAIL_CREDENTIALS` as an environment variable or `userConfig` field.
+There is no browser setup form and no runtime credential editor: credentials are read from the server environment (or saved Outlook tokens) when the server starts.
+
+- Check the state with `config(action="status")`. `awaiting_setup` means no credentials were found; `config(action="setup_start")` returns the exact steps.
+- Set `EMAIL_CREDENTIALS` (or `EMAIL_USER` + `EMAIL_APP_PASSWORD`) in the plugin's `userConfig` or the client's `env` block, then restart the server; `config(action="setup_complete")` re-checks the state afterwards.
+- `config(action="setup_reset")` deletes saved config and returns to `awaiting_setup`; `cache_clear` also drops the cached OAuth token.
+- `config(action="set")` always returns `ok: false` -- email has no runtime settings to change.
+
+## Outlook sign-in
+
+Run `email auth outlook <address>` (for example `npx @n24q02m/email auth outlook <address>`), open the Microsoft URL it prints, and enter the code. Tokens are saved to `~/.better-email-mcp/tokens.json`; `email logout [<address>]` removes them. A work or school (Microsoft 365) mailbox also needs `OUTLOOK_TENANT` and `OUTLOOK_EXTRA_DOMAINS`, see [setup](/servers/email/setup/).
+
+## HTTP server refuses to start or returns 401
+
+- Bound to a non-loopback host (a container, or `HOST=0.0.0.0`), the server requires `EMAIL_MCP_TOKEN_HASH` and exits without it. Mint it with `printf '%s' "$TOKEN" | email token hash`.
+- A 401 means the client's `Authorization: Bearer <token>` does not match the stored hash. The client sends the raw token; only the hash is stored on the server.
 
 ## Transport mismatch / duplicate entries in `/mcp`
 

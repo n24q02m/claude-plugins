@@ -9,7 +9,7 @@
 
 set -euo pipefail
 
-DB_PATH="${WET_DOCS_DB_PATH:-$HOME/.wet/docs.db}"
+DB_PATH="${DOCS_DB_PATH:-$HOME/.wet/docs.db}"
 
 if [ ! -f "$DB_PATH" ]; then
     exit 0
@@ -35,8 +35,8 @@ STALE=$(
 
 if [ "$STALE" -gt 0 ]; then
     >&2 echo "wet: $STALE Tier 1 libraries are >7 days stale."
-    >&2 echo "Refresh suggestion:  config(action='docs_reindex', scope='tier1')"
-    >&2 echo "  or run:  uv run python scripts/build_tier1_index.py"
+    >&2 echo "Refresh suggestion:  config(action='docs_reindex', key='<library>')"
+    >&2 echo "  or run:  wet docs reindex <library>"
 fi
 
 exit 0

@@ -1,134 +1,103 @@
 # Better Code Review Graph -- Agent Setup Guide
 
-> Give this file to your AI agent to automatically set up better-code-review-graph.
-
-> **2026-05-02 Update**: Plugin install (Option 1) now uses pure stdio mode. API keys are optional env vars.
-> The previous "Zero-Config Relay" auto-spawn pattern has been removed.
-> If you relied on the relay form to enter API keys, please:
-> 1. Set the env var directly in plugin config (Option 1), OR
-> 2. Use HTTP self-host mode (advanced; out of scope of this guide).
+> Give this file to your AI agent to automatically set up better-code-review-graph (crg).
 
 ## Method overview
 
-This plugin **defaults to stdio via plugin install** (`uvx`). Its source tree
-also provides `stdio` and `http` Docker build targets, and HTTP transport is
-available for advanced self-hosting. It does not provide an owner-hosted
-remote-relay/OAuth endpoint: HTTP is operator-hosted and must retain access to
-the repository being indexed.
+crg is local-first. The plugin **defaults to stdio via plugin install** (`uvx`); the CLI and bundled skills are the primary surface and the MCP server is a secondary adapter. HTTP transport is opt-in and self-host only: you run the instance and authenticate clients with a Bearer token. There is no hosted endpoint, no OAuth flow, and no credential form.
 
-For comparison, the other 7 plugins in this stack (`better-notion-mcp`,
-`better-email-mcp`, `better-telegram-mcp`, `wet-mcp`, `mnemo-mcp`,
-`imagine-mcp`, `better-workspace-mcp`) document the same local install,
-Docker-stdio, and self-hosted HTTP choices in more detail.
-
-> **Mutually exclusive — pick one endpoint**: Do not stack `/plugin install`
-> with a user `mcpServers` override for a source-built Docker stdio or HTTP
-> endpoint. Both would load simultaneously, and the override would not include
-> this plugin's skills, hooks, or commands. Use the default plugin install for
-> the complete local-first experience.
+> **Mutually exclusive -- pick one endpoint**: Do not stack `/plugin install` with a user `mcpServers` override for a manual stdio or HTTP endpoint. Both would load simultaneously, and the override would not include this plugin's skills or hooks. Use the default plugin install for the complete local-first experience.
 
 ## Option 1: Claude Code Plugin (Recommended)
 
-Plugin marketplace install runs the server in **pure stdio mode** with optional API key env vars. No daemon-bridge, no auto-spawn, no relay form. Graph storage is local SQLite, and local embeddings are resolved through Fastretrieval's ONNX model registry -- no external graph database required.
+The plugin runs the server in **stdio mode**. Graph storage is local SQLite, and local embeddings are resolved through Fastretrieval's ONNX model registry -- no external graph database and no API key required.
 
-### Credential prompts at install
+### Install prompts
 
-When you run `/plugin install`, Claude Code prompts you for the following credentials (declared in `userConfig` per CC docs). Sensitive values are stored in your system keychain and persist across `/plugin update`:
+When you run `/plugin install`, Claude Code prompts for the following optional fields (declared in `userConfig`). Sensitive values are stored in your system keychain and persist across `/plugin update`. Skipping all of them keeps the local default.
 
-| Field | Required | Where to obtain |
+| Field | Required | Meaning |
 |---|---|---|
-| `JINA_AI_API_KEY` | Optional | https://jina.ai/api-key |
-| `GEMINI_API_KEY` | Optional | https://aistudio.google.com/apikey |
-| `OPENAI_API_KEY` | Optional | https://platform.openai.com/api-keys |
-| `COHERE_API_KEY` | Optional | https://dashboard.cohere.com/api-keys |
-| `EMBEDDING_MODELS` / `SUMMARY_MODELS` | Optional | Explicit cloud model selection; empty leaves local embeddings / disabled summaries |
-| `LOCAL_EMBEDDING_MODEL` and its metadata fields | Optional | Built-in Fastretrieval ID, manifest-backed artifact directory, or external model with explicit dimensions |
-| `LOCAL_RERANK_MODEL` | Optional | Fastretrieval `TextCrossEncoder` model ID; empty disables query reranking |
+| `EMBEDDING_MODELS` | Optional | CSV `provider/model,...`; the first entry is active, no runtime fallback. Empty = local embeddings |
+| `LOCAL_EMBEDDING_MODEL` | Optional | Built-in Fastretrieval ID, or a manifest-backed artifact directory |
+| `LOCAL_EMBEDDING_DIM` | Optional | Dimension for an external model ID without a manifest |
+| `LOCAL_EMBEDDING_MODEL_FILE` | Optional | ONNX file inside a manifest-backed artifact (default `onnx/model.onnx`) |
+| `LOCAL_EMBEDDING_POOLING` | Optional | `CLS`, `MEAN`, `LAST_TOKEN`, or `DISABLED` for an external ID without a manifest |
+| `LOCAL_EMBEDDING_NORMALIZE` | Optional | L2 normalization for an external ID without a manifest |
+| `LOCAL_RERANK_MODEL` | Optional | Fastretrieval `TextCrossEncoder` model ID; empty disables reranking |
+| `HULL_EMBED_API_KEY` | Optional (sensitive) | Key for the `[models.embed]` cell, only for a cloud `EMBEDDING_MODELS` entry |
+| `HULL_CHAT_API_KEY` | Optional (sensitive) | Key for the `[models.chat]` cell, only for LLM node summaries |
 
 ### Steps
 
 ```bash
-# Install from marketplace (includes skills: /refactor-check, /review-delta, /review-pr + hooks)
+# Install from marketplace (includes skills: impact-audit, onboard-repo, refactor-check, review-delta, review-pr, security-sweep + hooks)
 /plugin marketplace add n24q02m/claude-plugins
 /plugin install crg@n24q02m-plugins
 ```
 
-The plugin includes SessionStart and PostToolUse hooks that auto-build and auto-update the code graph.
-
-> The manifest prompts for model selection, local-model metadata, and the listed provider keys. API-base settings for managed HTTP are configured per subject in the relay; see the [managed provider policy](/reference/relay-flow/#managed-cloudflare-model-configuration) before any paid calls.
+The plugin includes SessionStart, UserPromptSubmit, and PostToolUse hooks. SessionStart reports whether a graph exists for the project, UserPromptSubmit warns when the graph is stale, and PostToolUse updates the graph incrementally after edits. Build the first graph with `graph(action="build")`.
 
 ## Environment Variables
 
-All environment variables are **optional**. The server works with Fastretrieval's local ONNX embedding registry with zero configuration.
+All environment variables are **optional**. The server works with Fastretrieval's local ONNX embedding registry with zero configuration. crg does not read vendor-specific key variables (`OPENAI_API_KEY`, `GEMINI_API_KEY`, `JINA_AI_API_KEY`, `COHERE_API_KEY`, and similar); keys go in the `[models.<task>]` cells of the instance config (`~/.crg/config.toml`, or `$CRG_CONFIG_DIR/config.toml`) or in the `HULL_*_API_KEY` variables below.
 
-### API Keys (Cloud Embedding Providers)
+### Model Keys
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `JINA_AI_API_KEY` | No | -- | Key for explicitly selected `jina_ai/` embedding models; not used by the managed Cloudflare route |
-| `GEMINI_API_KEY` | No | -- | Google Gemini key: embedding (free tier available). Also accepts `GOOGLE_API_KEY` |
-| `GOOGLE_VERTEX_EXPRESS_API_KEY` | No | -- | Vertex AI Express: Gemini via API key, no Service Account. Get it at https://cloud.google.com/vertex-ai/generative-ai/docs/start/express-mode/overview |
-| `OPENAI_API_KEY` | No | -- | OpenAI key: embedding |
-| `COHERE_API_KEY` | No | -- | Key for explicitly selected `cohere/` embeddings; Cohere calls are paid |
+| `HULL_EMBED_API_KEY` | No | -- | Host-injected key for the `[models.embed]` cell (OpenRouter pre-wired default); overrides the cell `api_key`. The model name still comes from `EMBEDDING_MODELS` |
+| `HULL_CHAT_API_KEY` | No | -- | Host-injected key for the `[models.chat]` cell; enables LLM node summaries when the cell model is set |
 
 ### Embedding Configuration
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `EMBEDDING_MODELS` | No | empty | CSV embedding model selection (`provider/model,...`); the current runtime selects the first entry, not a fallback chain |
+| `EMBEDDING_MODELS` | No | empty | CSV embedding model selection (`provider/model,...`); the first entry is active, later entries are not runtime fallbacks |
+| `DISABLE_LOCAL_EMBED` | No | unset | Skip the local ONNX download; embedding reports `unavailable` unless a cloud entry is configured |
 | `LOCAL_EMBEDDING_MODEL` | No | -- | Optional BYO local embedding model ID; empty uses Fastretrieval's bundled model manifest |
-| `LOCAL_RERANK_MODEL` | No | -- | Fastretrieval TextCrossEncoder model ID; empty = reranking disabled. |
 | `LOCAL_EMBEDDING_MODEL_FILE` | No | `onnx/model.onnx` | ONNX file path for a BYO local embedding |
-| `LOCAL_EMBEDDING_DIM` | No | `0` | Required for a BYO local embedding when its model manifest does not provide dimensions |
+| `LOCAL_EMBEDDING_DIM` | No | `0` | Required for a BYO local embedding when no manifest provides dimensions |
 | `LOCAL_EMBEDDING_POOLING` | No | `MEAN` | Pooling for a BYO local embedding (`MEAN`, `CLS`, `LAST_TOKEN`, or `DISABLED`) |
 | `LOCAL_EMBEDDING_NORMALIZE` | No | `true` | Normalize BYO local embedding outputs |
 | `LOCAL_RERANK_MODEL` | No | empty | Fastretrieval `TextCrossEncoder` model ID for query reranking; empty disables reranking |
-| `SUMMARY_MODELS` | No | empty | Ordered CSV summary model chain (`provider/model,...`); empty leaves summaries disabled |
 
-Legacy aliases: `EMBEDDING_BACKEND`, `EMBEDDING_MODEL`, and `SUMMARY_MODEL` are deprecated and honored for one release. Use `EMBEDDING_MODELS` and `SUMMARY_MODELS` instead.
+Legacy: `EMBEDDING_MODEL` is deprecated and honored for one release with a warning; `EMBEDDING_BACKEND` is ignored with a warning. Use `EMBEDDING_MODELS`. The old summary-model and base-URL variables are no longer read; the summary model comes from the `[models.chat]` cell, and an unconfigured cell makes `graph(action="summarize")` return `status: skipped`.
 
-CRG has no cloud rerank consumer: do not configure `RERANK_MODELS`,
-`RERANK_API_BASE`, or `LOCAL_RERANK_MODEL_FILE` for this server. A Cohere
-embedding selection does not enable Cohere reranking.
+crg has no cloud rerank consumer: do not configure `RERANK_MODELS` or `RERANK_API_BASE` for this server.
 
-Cohere `embed-v4.0` uses exactly 1024-dimensional stored vectors; other
-backends retain 768. Do not compensate for a mismatch by slicing or padding.
-Run `graph(action="embed")` to replace stale vectors after a model change.
+Cohere `embed-v4.0` uses exactly 1024-dimensional stored vectors; other backends keep 768. Do not compensate for a mismatch by slicing or padding. Run `graph(action="embed")` to replace stale vectors after a model change.
 
-After upgrading to the package-owned `.better-code-review-graph/` state
-directory, first run `graph(action="build", full_rebuild=true)`, then embed
-if semantic search is needed. Leave `.code-review-graph/`,
-`.code-review-graph.db`, and their SQLite sidecars untouched; inspect and
-reapply desired suppression rules explicitly. See the
-[migration reference](/servers/crg/setup/#graph-state-migration).
+Graph state lives in the repository's `.crg/` directory. Older `.better-code-review-graph/`, `.code-review-graph/`, and `.code-review-graph.db` state is not migrated or adopted and is left untouched. After upgrading from such a version, first run `graph(action="build", full_rebuild=true)`, then embed if semantic search is needed, and re-apply desired suppression rules explicitly. See the [graph state reference](/servers/crg/setup/#graph-state).
 
 ### HTTP Mode (Self-Host)
 
-| Variable | Required | Default | Description |
-|:---------|:---------|:--------|:------------|
-| `TRANSPORT_MODE` | No | `stdio` | Set to `http` to enable HTTP transport (multi-user). |
-| `PUBLIC_URL` | Yes (http) | -- | Server's public URL for relay form. |
-| `MCP_DCR_SERVER_SECRET` | Yes (http) | -- | HMAC secret for stateless Dynamic Client Registration. |
-| `MCP_PORT` | No | `8080` | Server port (http mode only). |
-
-### General
+Start an instance with `crg server start` (loopback, no-auth) or a container built from source (`docker compose up --build -d` in a clone of `n24q02m/crg`, token auth, `http://127.0.0.1:8772/mcp`). Auth and bind settings live in the instance `config.toml`, not in env vars. See [setup](/servers/crg/setup/#method-3-http-self-host).
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `LOG_LEVEL` | No | `INFO` | Logging level |
+| `MCP_TRANSPORT` | No | `stdio` | Set to `http` to run the HTTP transport (`TRANSPORT_MODE=http` also works, as does `--http`) |
+| `MCP_HOST` | No | from config | Bind host; overrides `[server] host` |
+| `MCP_PORT` | No | from config | Bind port; overrides `[server] port` |
+| `CRG_CONFIG_DIR` | No | `~/.crg` | Directory holding the instance `config.toml` |
+| `CRG_DATA_DIR` | No | `~/.crg` | Per-user data directory for multi-user graphs |
 
 ## Authentication
 
-### Stdio Mode (Env Vars)
+### Stdio Mode
 
-Set API keys directly via env vars (or leave unset for Fastretrieval's local ONNX registry). No relay form, no browser flow.
+No authentication. The server runs as your OS user against local checkouts. Optional model keys come from `HULL_*_API_KEY` env vars or the `[models.<task>]` cells in `config.toml`.
+
+### HTTP Mode
+
+Set `[server] auth` in `config.toml`: `no-auth` (loopback only), `token` (one shared Bearer token), or `multi` (per-user tokens via `users.toml`). For `token`, mint a token, run `crg token hash <token>`, paste the `scrypt$...` output into `token_hash`, and give clients the plaintext token as `Authorization: Bearer <token>`.
 
 ## Verification
 
 After setup, verify the server is working by building the graph:
 
 ```
-graph(action="build", repo_path="/path/to/your/repo")
+graph(action="build", repo_root="/path/to/your/repo")
 ```
 
 Expected: returns a JSON summary with node counts, edge counts, and supported languages found.
@@ -136,5 +105,5 @@ Expected: returns a JSON summary with node counts, edge counts, and supported la
 Then try a search:
 
 ```
-query(action="search", query="main function", repo_path="/path/to/your/repo")
+query(action="search", search_query="main function", repo_root="/path/to/your/repo")
 ```

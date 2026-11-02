@@ -2,7 +2,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "mcp__plugin_better-workspace-mcp_better-workspace-mcp__",
+        "matcher": "mcp__plugin_workspace_workspace__",
         "hooks": [
           {
             "type": "command",

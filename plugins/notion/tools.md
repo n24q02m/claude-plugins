@@ -9,7 +9,7 @@ Page CRUD for individual pages and database rows. Wrapped as external content.
 | Action | Purpose | Key parameters |
 |---|---|---|
 | `create` | Create a new page | `parent_id`, `title` (required); `content`, `properties`, `icon`, `cover` |
-| `get` | Get a page as markdown | `page_id` (required) |
+| `get` | Get a page as markdown (long pages are truncated; the result reports `content_truncated` and `next_cursor`) | `page_id` (required); `content_limit` (1-100), `content_cursor` |
 | `get_property` | Get one property's value | `page_id`, `property_id` (required) |
 | `update` | Update a page | `page_id` (required); `title`, `content`, `append_content`, `properties`, `icon`, `cover`, `archived`, `replace` (default `false` = append, not overwrite) |
 | `move` | Move a page to a new parent | `page_id`, `parent_id` (required) |
@@ -102,11 +102,12 @@ Manage server configuration and credential state. Not wrapped as external conten
 
 | Action | Purpose | Key parameters |
 |---|---|---|
-| `status` | Show credential state, token presence, setup URL, token source | -- |
-| `setup_start` | Start credential relay setup | `force` |
-| `setup_reset` | Clear saved credential state | -- |
-| `setup_complete` | Re-resolve credential state | -- |
-| `set` | No-op -- Notion has no mutable runtime settings | `key`, `value` |
+| `status` | Show credential state (`configured` or `awaiting_setup`), `has_token`, and `token_source` (`environment`, `config`, or null) | -- |
+| `setup_status` | Same credential-state check, as used by the setup flow | -- |
+| `setup_start` | Return setup instructions: run `notion auth` on the server host to store a Notion integration token (`--user <namespace>` for multi-user HTTP) | -- |
+| `setup_reset` | Clear the stored token (refuses without `force`); a token from `NOTION_TOKEN` is not affected | `force` (required `true`) |
+| `setup_complete` | Re-resolve credential state after a token was stored | -- |
+| `set` | Reports that Notion has no mutable runtime settings | `key`, `value` |
 | `cache_clear` | No-op (nothing to clear) | -- |
 
 ## help

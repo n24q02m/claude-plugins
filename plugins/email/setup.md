@@ -1,10 +1,6 @@
 # Email MCP -- Manual Setup Guide
 
-> **2026-05-02 Update (v&lt;auto&gt;+)**: Plugin install (Method 1) uses stdio mode with `EMAIL_PROVIDER` + `EMAIL_USER` + `EMAIL_APP_PASSWORD` env vars.
-> The previous "Zero-Config Relay" auto-spawn pattern has been removed.
-> If you relied on the relay form, please:
-> 1. Set env vars in plugin config (Method 1), OR
-> 2. Switch to HTTP mode (Method 3 (Docker HTTP — Self-host)) for browser-based setup.
+email runs as a local stdio server by default and as a single-user HTTP server for self-hosting. There is no hosted public instance, no browser setup form, and no OAuth authorization server: credentials come from environment variables, or from Outlook tokens saved by the local `email auth` command.
 
 ## Method overview
 
@@ -12,27 +8,26 @@ This plugin supports 3 install methods. Pick the one that matches your use case:
 
 | Priority | Method | Transport | Best for |
 |---|---|---|---|
-| **1. Default** | Plugin install (`uvx`/`npx`) | stdio | Quick local start, single workstation, no OAuth/HTTP needed. |
-| **2. Fallback** | Docker stdio (`docker run -i --rm`) | stdio | Windows/macOS where native uvx/npx hits PATH or Python version issues. |
-| **3. Recommended** | Docker HTTP (`docker run -p 8080:8080`) | HTTP | Multi-device, OAuth/relay-form auth, team self-host, claude.ai web compatibility. |
+| **1. Default** | Plugin install (`uvx`/`npx`) | stdio | Quick local start, single workstation, no HTTP needed. |
+| **2. Fallback** | Docker stdio (`docker run -i --rm`) | stdio | Windows/macOS where native uvx/npx hits PATH or version issues. |
+| **3. Self-host** | Docker HTTP (`docker run -p 8080:8080`) | HTTP | One always-on server shared across devices and sessions, claude.ai web compatibility. |
 
-All MCP servers across this stack share this priority hierarchy. Note: 2 plugins (`better-godot-mcp` and `better-code-review-graph`) default to **stdio via plugin install** and do not offer a hosted remote-relay/OAuth mode. They do ship Docker images (`:stdio` and `:http` targets) and support HTTP transport for self-hosting (`MCP_TRANSPORT=http` / `--http`), so Methods 2 and 3 are available as advanced self-host paths -- they are just not the default.
-
-> **⚠️ Mutually exclusive — pick ONE per plugin**: If you choose Method 2 (Docker stdio override) OR Method 3 (HTTP), do NOT also `/plugin install` this plugin via marketplace. Both load simultaneously and create duplicate entries in `/mcp` dialog (plugin's stdio + your override). Plugin matching is by **endpoint** (URL or command string) per CC docs, not by name — and `npx`/`uvx` ≠ `docker` ≠ HTTP URL, so all three are distinct endpoints. Trade-off: choosing Method 2 or Method 3 means you lose this plugin's skills/agents/hooks/commands. For full plugin features, use Method 1 (default plugin install) with `userConfig` credentials prompted at install time.
+> **Mutually exclusive -- pick ONE per plugin**: If you choose Method 2 (Docker stdio override) OR Method 3 (HTTP), do NOT also `/plugin install` this plugin via marketplace. Both load simultaneously and create duplicate entries in `/mcp` dialog (plugin's stdio + your override). Plugin matching is by **endpoint** (URL or command string) per CC docs, not by name -- and `npx`/`uvx` != `docker` != HTTP URL, so all three are distinct endpoints. Trade-off: choosing Method 2 or Method 3 means you lose this plugin's skills/agents/hooks/commands. For full plugin features, use Method 1 (default plugin install) with `userConfig` credentials prompted at install time.
 
 ## Prerequisites
 
-- **Node.js** >= 24.14.1
-- An email account with App Password enabled (Gmail, Yahoo, iCloud) or an Outlook/Hotmail/Live account (HTTP mode uses OAuth2 with bundled public client)
+- **Node.js** >= 24.21.0 (Method 1 and the `email auth` command)
+- Docker (Methods 2 and 3)
+- An email account with an App Password enabled (Gmail, Yahoo, iCloud, Zoho), or an Outlook/Hotmail/Live account (App Password, or the OAuth device-code sign-in with the bundled public client)
 
 ### Create App Passwords
 
 App Passwords are required for App-Password providers (NOT your regular password):
 
-- **Gmail**: Enable 2FA at https://myaccount.google.com/security, then create an App Password at https://myaccount.google.com/apppasswords (Settings → Security → 2-Step Verification → App passwords)
+- **Gmail**: Enable 2FA at https://myaccount.google.com/security, then create an App Password at https://myaccount.google.com/apppasswords (Settings -> Security -> 2-Step Verification -> App passwords)
 - **Yahoo**: Enable 2FA, then go to https://login.yahoo.com/account/security/app-passwords
-- **iCloud / Me.com**: Go to https://appleid.apple.com → Sign-In and Security → App-Specific Passwords
-- **Outlook / Hotmail / Live**: Stdio mode also accepts an Outlook App Password (Account Settings → Security → Advanced security options → App passwords). HTTP mode uses delegated OAuth2 with a bundled public client — no App Password needed.
+- **iCloud / Me.com**: Go to https://appleid.apple.com -> Sign-In and Security -> App-Specific Passwords
+- **Outlook / Hotmail / Live**: Either an App Password (Account Settings -> Security -> Advanced security options -> App passwords), or no password at all: run `email auth outlook <address>` once (see "Outlook sign-in" below).
 
 ## Method 1: Claude Code Plugin (Recommended)
 
@@ -57,202 +52,183 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
    ```
 4. Restart Claude Code -- the plugin auto-loads with your credentials injected.
 
-> **Note**: This installs the full plugin (skills + agents + hooks + commands + stdio MCP server). If you'd rather use Method 2 (Docker stdio) or Method 3 (HTTP) below, DO NOT `/plugin install` this plugin — pick Method 2 or Method 3 instead. All three methods are mutually exclusive (see Method overview).
+> **Note**: This installs the full plugin (skills + agents + hooks + commands + stdio MCP server). If you'd rather use Method 2 (Docker stdio) or Method 3 (HTTP) below, DO NOT `/plugin install` this plugin -- pick Method 2 or Method 3 instead. All three methods are mutually exclusive (see Method overview).
 
 ## Method 2: Docker stdio (fallback)
 
-> **⚠️ Before adding the Docker stdio override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall better-email-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's `npx`/`uvx` stdio + your `docker run` stdio) will load simultaneously since plugin matches by endpoint (command string), not by name.
+> **Before adding the Docker stdio override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall better-email-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's `npx`/`uvx` stdio + your `docker run` stdio) will load simultaneously since plugin matches by endpoint (command string), not by name.
 >
 > **Trade-off accepted**: Choosing this method means you lose this plugin's skills/agents/hooks/commands. Use Method 1 instead if you want full plugin features.
 
-1. Pull the image:
+1. Pull the image (Docker Hub `n24q02m/email`, also on GHCR as `ghcr.io/n24q02m/email`):
    ```bash
-   docker pull n24q02m/better-email-mcp:latest
+   docker pull n24q02m/email:latest
    ```
 
-2. Add to your MCP client config:
+2. Add to your MCP client config. The image defaults to HTTP, so `MCP_TRANSPORT=stdio` is required:
    ```json
    {
      "mcpServers": {
-       "better-email-mcp": {
-         "command": "docker",
-         "args": [
-           "run", "-i", "--rm",
-           "-e", "EMAIL_PROVIDER",
-           "-e", "EMAIL_USER",
-           "-e", "EMAIL_APP_PASSWORD",
-           "n24q02m/better-email-mcp:latest"
-         ]
-       }
-     }
-   }
-   ```
-
-3. Set env vars in your shell profile:
-   ```bash
-   export EMAIL_PROVIDER="gmail"
-   export EMAIL_USER="you@gmail.com"
-   export EMAIL_APP_PASSWORD="abcd efgh ijkl mnop"
-   ```
-
-## For multiple accounts
-
-1. Add to your MCP client config:
-   ```json
-   {
-     "mcpServers": {
-       "better-email-mcp": {
+       "email": {
          "command": "docker",
          "args": [
            "run", "-i", "--rm",
            "-e", "EMAIL_CREDENTIALS",
            "-e", "MCP_TRANSPORT=stdio",
-           "n24q02m/better-email-mcp:latest"
+           "n24q02m/email:latest"
          ]
        }
      }
    }
    ```
 
-2. Set env vars in your shell profile. `EMAIL_CREDENTIALS` is **comma-separated
-   between accounts** and **colon-separated within** each account
-   (`email:password`, plus an optional `:imap_host:imap_port` for custom
-   domains; Outlook/Hotmail accounts need only the email — OAuth runs
-   automatically):
+3. Set the credentials in your shell profile. `EMAIL_CREDENTIALS` is **comma-separated between accounts** and **colon-separated within** each account (`email:password`, plus an optional `:imap_host:imap_port` for custom domains):
    ```bash
    export EMAIL_CREDENTIALS="user1@gmail.com:app_password1,user2@custom.com:password2:imap.custom.com"
    ```
 
-## Why upgrade to HTTP mode?
+## Method 3: Docker HTTP (self-host)
 
-Stdio mode is the default and works for single-user local development. Consider switching to **HTTP mode** when you need any of:
-
-- **claude.ai web compatibility** — connect the server directly from claude.ai without a local CLI
-- **1 server shared across N Claude Code sessions** — no per-session daemon proliferation
-- **Browser-based OAuth flow for Outlook** — bundled Outlook OAuth client; no Azure app registration needed
-- **Multi-device credential sync** — credentials persist server-side; new devices just point to the URL
-- **Multi-user / team sharing** — per-JWT-sub credential isolation; one deployment serves the team
-- **Always-on persistent process** — required for webhooks, scheduled inbox scans, or long-running agents
-
-## Method 3: Docker HTTP (recommended)
-
-> **⚠️ Before adding the HTTP override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall better-email-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's stdio + your HTTP override) will load simultaneously since plugin matches by endpoint, not name.
+> **Before adding the HTTP override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall better-email-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's stdio + your HTTP override) will load simultaneously since plugin matches by endpoint, not name.
 >
 > **Trade-off accepted**: Choosing this method means you lose this plugin's skills/agents/hooks/commands. For example, the `better-email-mcp:inbox-review` skill will no longer be available. Use Method 1 instead if you want full plugin features.
 
-> **Switching transport vs. setting credentials**: The `userConfig` prompt only configures credentials for stdio mode (Method 1 / Option 1). To switch transport to HTTP, override `mcpServers` in your client settings per the snippets below -- this is a separate path from `userConfig` and is not driven by the install prompt.
+> **Switching transport vs. setting credentials**: The `userConfig` prompt only configures credentials for stdio mode (Method 1). To switch transport to HTTP, override `mcpServers` in your client settings per the snippets below -- this is a separate path from `userConfig` and is not driven by the install prompt.
 
-### Self-host with docker
+### Why HTTP?
 
-Single multi-user mode (relay form for App-Password providers + bundled Outlook OAuth):
+Stdio mode is the default and works for single-user local use. Switch to HTTP when you need any of:
+
+- **claude.ai web compatibility** -- claude.ai connects to HTTP MCP servers; stdio is desktop/CLI only.
+- **One server shared across N Claude Code sessions** -- no per-session process.
+- **Always-on persistent process** -- the mail accounts and saved Outlook tokens live on the server.
+
+HTTP mode is **single-user**: one shared Bearer token protects the endpoint, and every client that holds the token sees the same accounts. There is no per-user credential store.
+
+### Mint the Bearer token hash
+
+The server stores only a scrypt hash of the token. The token is read from stdin, never from argv:
 
 ```bash
-# HOST=0.0.0.0 binds all interfaces so the host can reach the container;
-# PORT pins the listen port (without it the server picks a random OS-assigned one).
+printf '%s' "$TOKEN" | npx @n24q02m/email token hash
+# prints scrypt$...  -> use as EMAIL_MCP_TOKEN_HASH
+```
+
+`EMAIL_MCP_TOKEN_HASH` is required whenever the server binds a non-loopback address (every container does). Without it the server runs unauthenticated only on loopback and refuses to bind anything else.
+
+### Run with docker
+
+```bash
+export EMAIL_MCP_TOKEN_HASH='scrypt$...'
+export EMAIL_CREDENTIALS='you@gmail.com:app-password'
 docker run -p 8080:8080 \
   -e PORT=8080 \
-  -e HOST=0.0.0.0 \
-  -e PUBLIC_URL=https://your-domain.com \
-  n24q02m/better-email-mcp:latest
+  -e EMAIL_MCP_TOKEN_HASH \
+  -e EMAIL_CREDENTIALS \
+  -e HOME=/data \
+  -v email-data:/data \
+  n24q02m/email:latest
 ```
 
-Optional environment overrides:
-- `CREDENTIAL_SECRET` — encryption key for the per-user credential store. Optional: if unset, a 32-byte secret is auto-generated and persisted to a 0600 file. Set it (e.g. `$(openssl rand -hex 32)`) to keep per-user stores decryptable across container restarts.
-- `MCP_AUTH_DISABLE=1` — skip Bearer JWT verification (only for deploys behind an external auth gateway).
-- `OUTLOOK_CLIENT_ID` — override the bundled Azure public client (rarely needed; the bundled `d56f8c71-9f7c-43f4-9934-be29cb6e77b0` works out of the box)
-- `OUTLOOK_EMAIL` — workaround for Microsoft device-code responses missing the email field; sets the token persistence key (`tokens/<email>.json`)
+`-v email-data:/data` keeps saved Outlook tokens (`/data/.better-email-mcp/`) across restarts. The repository also ships `docker-compose.http.yml`, which builds the HTTP image and publishes it on `127.0.0.1:8082` only. To serve other machines, put your own TLS reverse proxy in front of it.
 
-### Edge auth: relay password
+### Point clients at the server
 
-Public HTTP deployments expose `<your-domain>/authorize` to URL discovery. To prevent random Internet users from accessing the relay form, mint a relay password:
+Clients send the raw token as `Authorization: Bearer <token>` to `https://<your-host>/mcp`:
 
-```bash
-openssl rand -hex 32
-# Save in your skret / .env as:
-MCP_RELAY_PASSWORD=<generated-32-byte-hex>
-```
-
-Share this password out-of-band (Signal/email/SMS) with anyone you invite to use your server. They will see a login form when first opening `/authorize`; once logged in, the cookie persists 24 hours.
-
-**Single-user dev exception**: If `PUBLIC_URL=http://localhost:8080`, you can leave `MCP_RELAY_PASSWORD` empty to disable the gate. The server logs a warning if you skip the password with a non-localhost `PUBLIC_URL`.
-
-Point clients to your server URL:
 ```json
 {
   "mcpServers": {
-    "better-email-mcp": {
+    "email": {
       "type": "http",
-      "url": "https://your-domain.com/mcp"
+      "url": "https://<your-host>/mcp",
+      "headers": { "Authorization": "Bearer <your-token>" }
     }
   }
 }
 ```
 
-On first call the server initiates the **OAuth flow**. Outlook/Hotmail/Live accounts get a Microsoft device-code link (powered by the bundled public Outlook OAuth client `d56f8c71-9f7c-43f4-9934-be29cb6e77b0` — Thunderbird-pattern public client per Google/Microsoft installed-app convention; no user-side Azure app registration needed). Gmail / Yahoo / iCloud / custom IMAP accounts use the relay paste form. The server runs in single multi-user mode: per-JWT-sub credential isolation, OAuth 2.1 + Dynamic Client Registration.
+Keep the token in your client's secret store or environment, not in a committed file.
 
-## Credential Setup (Stdio mode)
+## Outlook sign-in
 
-### Single Account (preferred — provider auto-detected from `EMAIL_PROVIDER`)
+Outlook, Hotmail, and Live accounts can use OAuth2 device code instead of an App Password. Run this once on the machine that runs the server (inside the container for Method 3):
 
 ```bash
-EMAIL_PROVIDER=gmail
+npx @n24q02m/email auth outlook you@outlook.com
+```
+
+1. The CLI prints a device code and a Microsoft login URL.
+2. Open the URL in a browser and enter the code.
+3. Sign in and authorize the app.
+4. Tokens are saved to `~/.better-email-mcp/tokens.json` (mode 0600 on POSIX). Sign out with `email logout [<address>]`.
+
+The bundled public Azure client (`d56f8c71-9f7c-43f4-9934-be29cb6e77b0`, Thunderbird pattern) needs no Azure app registration of your own. Pass `--client-id=<id>` or set `OUTLOOK_CLIENT_ID` to use your own.
+
+A Microsoft 365 work or school mailbox, including one on your own domain, signs in through Entra ID and cannot use an App Password. Set `OUTLOOK_TENANT=common` (or a tenant GUID / verified domain) and `OUTLOOK_EXTRA_DOMAINS=company.com`.
+
+## Credential setup
+
+Credential resolution order at startup: environment variables, then a legacy `config.enc` (read-only), then saved Outlook tokens. If none is found the server is in state `awaiting_setup`; a stdio server with no credentials prints an error to stderr and exits with code 1, and `config(action="setup_start")` returns the steps.
+
+### Single account
+
+```bash
 EMAIL_USER=you@gmail.com
 EMAIL_APP_PASSWORD=abcd efgh ijkl mnop
 ```
 
-`EMAIL_PROVIDER` accepts: `gmail`, `outlook`, `yahoo`, `icloud`, `zoho`, `custom`.
+`EMAIL_USER` + `EMAIL_APP_PASSWORD` are merged into `EMAIL_CREDENTIALS` at boot. The provider is detected from the email domain.
 
-### Multiple Accounts (legacy `EMAIL_CREDENTIALS` format)
+### Multiple accounts
 
 ```bash
 EMAIL_CREDENTIALS=user1@gmail.com:pass1,user2@outlook.com:pass2,user3@yahoo.com:pass3
 ```
 
-### Custom IMAP Host
+### Custom IMAP host
 
-For providers not auto-detected:
+For providers not auto-detected, append the host (and optionally the port):
 
 ```bash
+# Custom hostname (default port 993, implicit TLS)
 EMAIL_CREDENTIALS=user@custom.com:password:imap.custom.com
-```
 
-or with the typed form (single account only):
+# Custom hostname with a custom port (a non-993 port is plaintext/STARTTLS)
+EMAIL_CREDENTIALS=user@custom.com:password:imap.custom.com:1993
 
-```bash
-EMAIL_PROVIDER=custom
-EMAIL_USER=user@custom.com
-EMAIL_APP_PASSWORD=password
-EMAIL_IMAP_HOST=imap.custom.com
+# Local IMAP proxy -- "localhost" is accepted as a host
+EMAIL_CREDENTIALS=user@custom.com:password:localhost:1993
 ```
 
 ## Environment Variable Reference
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
-| `EMAIL_PROVIDER` | Yes (stdio, single-account) | -- | Provider key: `gmail`, `outlook`, `yahoo`, `icloud`, `zoho`, `custom`. |
-| `EMAIL_USER` | Yes (stdio, single-account) | -- | Email address. |
-| `EMAIL_APP_PASSWORD` | Yes (stdio, single-account) | -- | App password (Gmail/Yahoo/iCloud) or Outlook App Password. |
-| `EMAIL_IMAP_HOST` | No (custom only) | -- | Custom IMAP hostname when `EMAIL_PROVIDER=custom`. |
-| `EMAIL_CREDENTIALS` | Alternative (multi-account) | -- | Legacy format `user@gmail.com:app-password` (comma-separated for multi-account; `user@custom.com:pass:imap.custom.com` for custom IMAP). |
-| `PUBLIC_URL` | Yes (http) | -- | Server's public URL for OAuth redirects. |
-| `CREDENTIAL_SECRET` | No (http) | auto-generated | Encryption key for the per-user credential store. If unset, a 32-byte secret is auto-generated and persisted to a 0600 file; set it to keep stores decryptable across restarts. |
-| `MCP_AUTH_DISABLE` | No (http) | -- | Set to `1` to skip Bearer JWT verification (for deploys behind an external auth gateway). |
-| `PORT` | No | `0` (OS-assigned) | Server port (http mode). |
-| `HOST` | No | -- | Bind address (http mode); set `0.0.0.0` to expose the container. |
-| `OUTLOOK_CLIENT_ID` | No | `d56f8c71-9f7c-43f4-9934-be29cb6e77b0` (bundled public client) | Override the bundled Azure AD public client for self-hosted Outlook OAuth2. |
-| `OUTLOOK_EMAIL` | No | -- | Workaround when Microsoft device-code response omits the email field — sets token persistence key. |
+| `EMAIL_CREDENTIALS` | Yes (unless using the alternatives) | -- | `email:app-password` per account, comma-separated for multiple accounts. Optional custom IMAP host/port: `email:password:imap_host:imap_port`. |
+| `EMAIL_USER` | Alternative (single account) | -- | Email address; used with `EMAIL_APP_PASSWORD`. |
+| `EMAIL_APP_PASSWORD` | Alternative (single account) | -- | App password (Gmail/Yahoo/iCloud) or Outlook App Password; used with `EMAIL_USER`. |
+| `MCP_TRANSPORT` | No | `stdio` (npx), `http` (Docker image) | Set to `http` (or pass `--http`) to run the HTTP server. `TRANSPORT_MODE` is an accepted alias. |
+| `EMAIL_MCP_TOKEN_HASH` | HTTP, non-loopback | -- | scrypt hash of the shared Bearer token, from `email token hash`. |
+| `PORT` | No | `0` (OS-assigned) | HTTP port; set explicitly (for example `8080`) to bind a fixed port. |
+| `HOST` | No | `0.0.0.0` | HTTP bind address. |
+| `OUTLOOK_CLIENT_ID` | No | bundled public client | Override the Azure AD public client for Outlook OAuth2. |
+| `OUTLOOK_EMAIL` | No | -- | Workaround when the Microsoft device-code response omits the email field. |
+| `OUTLOOK_TENANT` | No | `consumers` (stdio/CLI), `common` (HTTP device-code) | Directory to sign in against; set `common` or a tenant GUID for a work/school mailbox. |
+| `OUTLOOK_SCOPES` | No | IMAP + SMTP + `offline_access` | Space-separated scope list; narrow it for a read-only deployment. |
+| `OUTLOOK_EXTRA_DOMAINS` | No | -- | Comma-separated extra domains routed to OAuth instead of a password. |
 
 ## Supported Providers
 
-| Provider | Stdio Auth | HTTP Auth | Save-to-Sent |
-|:---------|:-----------|:----------|:-------------|
-| Gmail | App Password | Relay paste form | Auto (skipped — Gmail saves sent mail) |
-| Yahoo | App Password | Relay paste form | Auto (skipped) |
-| iCloud / Me.com | App-Specific Password | Relay paste form | Auto (skipped) |
-| Outlook / Hotmail / Live | App Password | OAuth2 Device Code (bundled public client) | IMAP APPEND |
-| Zoho | App Password | Relay paste form | IMAP APPEND |
-| ProtonMail | ProtonMail Bridge | Relay paste form | IMAP APPEND |
-| Custom IMAP | `EMAIL_IMAP_HOST` or `email:pass:imap.host` | Relay paste form | IMAP APPEND |
+| Provider | Auth | Save-to-Sent |
+|:---------|:-----|:-------------|
+| Gmail | App Password | Auto (skipped -- Gmail saves sent mail) |
+| Yahoo | App Password | Auto (skipped) |
+| iCloud / Me.com | App-Specific Password | Auto (skipped) |
+| Outlook / Hotmail / Live | App Password, or OAuth2 device code via `email auth` | IMAP APPEND |
+| Zoho | App Password | IMAP APPEND |
+| ProtonMail | ProtonMail Bridge | IMAP APPEND |
+| Custom IMAP | `email:pass:imap.host[:port]` in `EMAIL_CREDENTIALS` | IMAP APPEND |
 
 ## Troubleshooting
 
@@ -260,22 +236,18 @@ EMAIL_IMAP_HOST=imap.custom.com
 
 - Ensure you created an **App Password**, not using your regular Google password.
 - Verify 2-Step Verification is enabled on your Google account.
-- The App Password format is 16 characters (often shown as 4 groups of 4 with spaces — both with and without spaces work).
+- The App Password format is 16 characters (often shown as 4 groups of 4 with spaces -- both with and without spaces work).
 
 ### "Authentication failed" for Yahoo
 
 - Create an App Password at https://login.yahoo.com/account/security/app-passwords
 - Yahoo App Passwords bypass "Allow apps that use less secure sign in" settings.
 
-### Outlook in stdio mode
+### Outlook sign-in does not start
 
-- Stdio mode requires an Outlook **App Password** (Account Settings → Security → Advanced security options → App passwords). The OAuth2 device-code flow is HTTP-mode-only.
-- For OAuth2 (no App Password), switch to HTTP mode (Method 3 Docker HTTP (Self-host)).
-
-### Outlook OAuth not starting (HTTP mode)
-
-- The first call from a new JWT sub triggers the device-code flow. Watch the client for a Microsoft login URL.
-- The bundled public client `d56f8c71-9f7c-43f4-9934-be29cb6e77b0` (Thunderbird-pattern) works out of the box; you only need `OUTLOOK_CLIENT_ID` if you want a custom Azure app.
+- Run `email auth outlook <address>` and watch the terminal for the Microsoft login URL and code; the server itself never prompts.
+- The bundled public client works out of the box; you only need `OUTLOOK_CLIENT_ID` for a custom Azure app.
+- For a work/school mailbox set `OUTLOOK_TENANT` and `OUTLOOK_EXTRA_DOMAINS`.
 
 ### "IMAP connection timeout"
 
@@ -287,4 +259,3 @@ EMAIL_IMAP_HOST=imap.custom.com
 
 - Ensure comma separation with no spaces: `user1@gmail.com:pass1,user2@yahoo.com:pass2`
 - Each account must have valid credentials independently.
-- For multi-account in stdio mode you must use `EMAIL_CREDENTIALS` (the typed `EMAIL_PROVIDER` + `EMAIL_USER` + `EMAIL_APP_PASSWORD` form is single-account).
