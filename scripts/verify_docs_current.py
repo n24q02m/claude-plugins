@@ -117,8 +117,8 @@ def _verify_distribution_claims() -> list[str]:
     return errors
 
 
-def _verify_plugin(name: str, plugin_dir: str) -> list[str]:
-    """Return a list of drift errors for a single plugin (empty = OK)."""
+def _verify_plugin(name: str, plugin_dir: str) -> tuple[list[str], bool]:
+    """Return a list of drift errors for a single plugin (empty = OK) and a boolean indicating if it was checked."""
     errors: list[str] = []
 
     pjson = os.path.join(plugin_dir, ".claude-plugin", "plugin.json")
@@ -127,13 +127,13 @@ def _verify_plugin(name: str, plugin_dir: str) -> list[str]:
             pdata = json.load(f)
     except FileNotFoundError:
         # Not a runnable plugin (e.g. the hull foundation library) -- skip.
-        return errors
+        return errors, False
     except (OSError, json.JSONDecodeError) as e:
-        return [f"{name}: failed to parse plugin.json: {e}"]
+        return [f"{name}: failed to parse plugin.json: {e}"], False
 
     # Only servers with an mcpServers manifest have an install/tool surface.
     if not pdata.get("mcpServers"):
-        return errors
+        return errors, False
 
     # (1) Doc-set completeness.
     for doc in REQUIRED_DOCS:
@@ -153,7 +153,7 @@ def _verify_plugin(name: str, plugin_dir: str) -> list[str]:
                 f"not documented in any plugins/{name}/*.md page"
             )
 
-    return errors
+    return errors, True
 
 
 def verify_docs_current() -> None:
@@ -167,16 +167,13 @@ def verify_docs_current() -> None:
         for entry in sorted(entries, key=lambda e: e.name):
             if not entry.is_dir():
                 continue
-            plugin_errors = _verify_plugin(entry.name, entry.path)
-            # A plugin with an mcpServers manifest was actually verified.
-            pjson = os.path.join(entry.path, ".claude-plugin", "plugin.json")
-            if os.path.isfile(pjson):
-                try:
-                    with open(pjson, encoding="utf-8") as f:
-                        if json.load(f).get("mcpServers"):
-                            checked += 1
-                except (OSError, json.JSONDecodeError):
-                    pass
+            # Optimization: Unpack the checked flag directly from _verify_plugin
+            # instead of re-reading and re-parsing plugin.json to check for an
+            # mcpServers manifest a second time, avoiding redundant file I/O
+            # and JSON decoding overhead.
+            plugin_errors, was_checked = _verify_plugin(entry.name, entry.path)
+            if was_checked:
+                checked += 1
             errors.extend(plugin_errors)
     errors.extend(_verify_distribution_claims())
 
