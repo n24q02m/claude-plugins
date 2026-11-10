@@ -77,7 +77,7 @@ Four n24q02m projects share this documentation site without getting a marketplac
 
 | Project | Kind | Why it is not a marketplace plugin |
 |---|---|---|
-| [hull](https://github.com/n24q02m/hull) | Foundation library — PyPI `n24q02m-hull`, npm `@n24q02m/hull` | The shared HTTP transport, token auth, credential store and CLI core that wet, mnemo and crg depend on; it has no server of its own to launch and reaches you as a dependency of those three. |
+| [hull](https://github.com/n24q02m/hull) | Foundation library — PyPI `n24q02m-hull`, npm `@n24q02m/hull` | The shared HTTP transport, token auth, credential store and CLI core that every active server above depends on; it has no server of its own to launch and reaches you as a dependency. |
 | [Fastretrieval](https://docs.n24q02m.com/reference/fastretrieval/) | Library — PyPI `fastretrieval` | The embedding and rerank runtime wet, mnemo and crg call in-process; its only executable is `fastretrieval-server`, an `/embed` + `/rerank` HTTP service, not an MCP endpoint. |
 | [sillstone](https://github.com/n24q02m/sillstone) | Rust library suite, published with the `sillstone` CLI | Media, hashing and array crates you link into a Rust project; the CLI flattens the same facade, but the project ships no MCP server. |
 | [skret](https://github.com/n24q02m/skret) | CLI — Go binary | You install the binary to inject secrets into a command, CI job or container; `skret-mcp` is a subcommand that serves one project over stdio MCP, not a plugin directory, and the tool is chosen per machine rather than per chat client. |
