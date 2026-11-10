@@ -169,14 +169,14 @@ jobs:
             printf "Synced hooks/\n"
           fi
 
-          # Sync commands (non-MCP plugins, e.g. agent-chat-plugin; no-op otherwise)
+          # Sync commands (non-MCP plugins; no-op otherwise)
           if [ -d "source/commands" ] && (shopt -s nullglob; set -- source/commands/*; [ $# -gt 0 ]); then
             rm -rf "$PLUGIN_DIR/commands"
             cp -r "source/commands" "$PLUGIN_DIR/commands"
             printf "Synced commands/\n"
           fi
 
-          # Sync top-level runtime entrypoint (non-MCP plugins, e.g. agent-chat-plugin; no-op otherwise)
+          # Sync top-level runtime entrypoint (non-MCP plugins; no-op otherwise)
           if [ -f "source/chat.py" ]; then
             cp "source/chat.py" "$PLUGIN_DIR/chat.py"
             printf "Synced chat.py\n"

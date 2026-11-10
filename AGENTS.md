@@ -78,16 +78,16 @@ pushes to `main`, weekly, and on demand.
 
 Two things to know before changing it:
 
-- Not every server can be read from a public runner. `wet`, `mnemo`,
-  `better-godot-mcp` and `crg` answer `tools/list` with no
-  credentials at all. Others exit at startup unless a credential is present; for
-  those the checker retries once with an obviously fake value, which is enough
-  when the server only checks that something is set (`notion`). A
-  server that *validates* its credential on startup — `telegram`
-  reaches the Bot API and dies — cannot be read here at all. That case is
-  reported as a warning, never a silent pass, and its drift check belongs in
-  that server's own CI, which has real credentials. Real credentials are never
-  needed here and must never be added to this repo's CI.
+- Not every server can be read from a public runner. `crg` answers `tools/list`
+  with no credentials at all, and `wet` and `mnemo` ship an `http` endpoint
+  instead of a command, so for those two only the static half runs. Others exit
+  at startup unless a credential is present; for those the checker retries once
+  with an obviously fake value, which is enough when the server only checks that
+  something is set (`notion`). A server that *validates* its credential on
+  startup — `telegram` reaches the Bot API and dies — cannot be read here at
+  all. That case is reported as a warning, never a silent pass, and its drift
+  check belongs in that server's own CI, which has real credentials. Real
+  credentials are never needed here and must never be added to this repo's CI.
 - `--declared-only` runs the same comparison's static half with no network, which
   is enough to check that a `tools.md` edit is still parseable.
 

@@ -1,6 +1,6 @@
 # n24q02m Claude Plugins
 
-**Claude Code plugin marketplace for the n24q02m MCP servers -- install web search, memory, Notion, email, Telegram, Godot, code review, and image/video tools in one command.**
+**Claude Code plugin marketplace for the n24q02m MCP servers -- install web search, memory, Notion, email, Telegram, code review, and Google Workspace tools in one command.**
 
 [![CI](https://github.com/n24q02m/claude-plugins/actions/workflows/ci.yml/badge.svg)](https://github.com/n24q02m/claude-plugins/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
@@ -46,9 +46,9 @@
 
 
 
-9 MCP servers and a portable Agent Chat coordination plugin for AI coding agents.
+7 MCP servers for AI coding agents, from one marketplace.
 
-**Full documentation: [docs.n24q02m.com](https://docs.n24q02m.com)** — setup and tool references for all 9 servers, Agent Chat coordination, the `hull` foundation, and [Fastretrieval](https://docs.n24q02m.com/reference/fastretrieval/). Libraries and coordination plugins do not gain an MCP transport by appearing in the same documentation site.
+**Full documentation: [docs.n24q02m.com](https://docs.n24q02m.com)** — setup and tool references for all 7 servers, the `hull` foundation, and [Fastretrieval](https://docs.n24q02m.com/reference/fastretrieval/). Libraries and CLIs do not gain an MCP transport by appearing in the same documentation site.
 
 ## Install
 
@@ -71,7 +71,18 @@ Or browse all plugins: run `/plugin` and go to the **Discover** tab.
 | **crg** | Development | Knowledge graph for token-efficient code reviews | All optional: `EMBEDDING_MODELS`, `LOCAL_EMBEDDING_MODEL`, `LOCAL_RERANK_MODEL`, `LOCAL_EMBEDDING_DIM`, `LOCAL_EMBEDDING_MODEL_FILE`, `LOCAL_EMBEDDING_POOLING`, `LOCAL_EMBEDDING_NORMALIZE`, `HULL_EMBED_API_KEY`, `HULL_CHAT_API_KEY` |
 | **workspace** | Productivity | Google Workspace — 10 domains plus local time helpers, `config`, `help`, and multi-account OAuth | `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` (both required) |
 
-[Fastretrieval](https://docs.n24q02m.com/reference/fastretrieval/) is the retrieval library used by Wet, Mnemo, and CRG. Install it as a Python dependency, not as a marketplace plugin or MCP endpoint.
+### Not marketplace plugins
+
+Four n24q02m projects share this documentation site without getting a marketplace entry. The test is the plugin layout: the project itself ships `.claude-plugin/plugin.json` plus a `skills/` or `hooks/` tree over an MCP server entrypoint, which is what `plugin-sync` copies from. None of the four does, so an entry here would be a copy with no upstream to sync from.
+
+| Project | Kind | Why it is not a marketplace plugin |
+|---|---|---|
+| [hull](https://github.com/n24q02m/hull) | Foundation library — PyPI `n24q02m-hull`, npm `@n24q02m/hull` | The shared HTTP transport, token auth, credential store and CLI core that wet, mnemo and crg depend on; it has no server of its own to launch and reaches you as a dependency of those three. |
+| [Fastretrieval](https://docs.n24q02m.com/reference/fastretrieval/) | Library — PyPI `fastretrieval` | The embedding and rerank runtime wet, mnemo and crg call in-process; its only executable is `fastretrieval-server`, an `/embed` + `/rerank` HTTP service, not an MCP endpoint. |
+| [sillstone](https://github.com/n24q02m/sillstone) | Rust library suite, published with the `sillstone` CLI | Media, hashing and array crates you link into a Rust project; the CLI flattens the same facade, but the project ships no MCP server. |
+| [skret](https://github.com/n24q02m/skret) | CLI — Go binary | You install the binary to inject secrets into a command, CI job or container; `skret-mcp` is a subcommand that serves one project over stdio MCP, not a plugin directory, and the tool is chosen per machine rather than per chat client. |
+
+Install each the way its project documents it: `pip install n24q02m-hull`, `pip install fastretrieval`, a `sillstone-*` crate (or `cargo install sillstone-cli` for the `sillstone` binary), or the skret install script. Adding `.claude-plugin/` to one of them is what would make it a marketplace entry — the entry does not create the capability.
 
 ## Configuration
 

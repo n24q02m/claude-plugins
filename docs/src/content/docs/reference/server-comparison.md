@@ -1,6 +1,6 @@
 ---
 title: Server comparison
-description: Side-by-side comparison of all 9 servers in the stack, plus the hull foundation library.
+description: Side-by-side comparison of the 7 active servers in the stack, the hull foundation library, and the two archived entries kept for reference.
 ---
 
 | Server | Tools | Default transport | Multi-user | Docker | Language | License |
@@ -42,17 +42,15 @@ For specific workflows:
 
 - Coding in unfamiliar repo → `crg`
 - Drafting docs/blog → `notion`
-- Image / video tasks → `imagine-mcp`
 - Telegram bot work → `telegram`
 - Email triage → `email`
-- Godot game dev → `better-godot-mcp`
 - Google Docs / Drive / Calendar / Gmail → `workspace`
 
 ## Versioning
 
 Each server cuts independent releases (`vMAJOR.MINOR.PATCH`). Every active server pins a compatible `hull` range (PyPI `n24q02m-hull`, npm `@n24q02m/hull`), so a breaking `hull` release is adopted by each server in its own release. See each server's CHANGELOG.
 
-`workspace` is still pre-1.0: it publishes beta artifacts only (`0.1.0-beta.x` on npm, `:beta` on the registries), with no stable tag yet.
+`workspace` is still pre-1.0 (npm `@n24q02m/workspace` currently `0.6.0`, with a `beta` dist-tag alongside `latest`), so expect breaking changes before 1.0.
 
 ## License
 
