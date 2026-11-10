@@ -51,7 +51,7 @@ Discover and download media files (images, videos, audio) from web pages. Wrappe
 | `list` | Scan a page and return media URLs with metadata | `url` (required), `media_type` (`images`\|`videos`\|`audio`\|`files`\|`all`), `max_items` (default 10) |
 | `download` | Download media files to local storage | `media_urls` (required), `output_dir` (must resolve within the configured download directory, default `~/.wet/downloads`) |
 
-Vision/audio/video analysis of downloaded media lives in imagine-mcp's `understand` tool, not here.
+This server lists and downloads media; vision/audio/video analysis of it is out of scope.
 
 ## config
 
