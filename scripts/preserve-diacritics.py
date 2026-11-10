@@ -6,7 +6,7 @@ Blocks commits that replace:
   2. Vietnamese diacritics with bare vowels (NFD-strip or transliteration).
   3. Emoji characters removed or replaced with ASCII labels.
 
-Rationale: Jules/Sentinel style AI PRs frequently "normalize" non-ASCII text, which
+Rationale: automated AI PRs frequently "normalize" non-ASCII text, which
 silently damages Vietnamese content + typography. Rule: feedback_vietnamese_diacritics.
 
 Pure additions of diacritics / Unicode punctuation (progress) always PASS.
