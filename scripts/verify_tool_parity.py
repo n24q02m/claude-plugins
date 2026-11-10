@@ -17,13 +17,13 @@ it launches the exact command shipped in ``plugin.json``'s ``mcpServers`` entry
 over stdio, performs the MCP ``initialize`` handshake, calls ``tools/list``,
 and compares that name set against the names declared in ``tools.md``.
 
-Declared names are read from the two conventions already used across the nine
+Declared names are read from the two conventions already used across the seven
 ``tools.md`` pages:
 
 1. An ``## <tool_name>`` H2 heading (wet, mnemo, notion, email, telegram, crg,
-   imagine, workspace).
+   workspace).
 2. The first column of a markdown table whose header column is ``Tool``
-   (godot's single overview table, mnemo's single-purpose tool table).
+   (mnemo's single-purpose tool table).
 
 Headings that are prose ("Single-purpose memory tools") are ignored because
 they do not look like a tool identifier.
@@ -88,8 +88,8 @@ BACKTICK_RE = re.compile(r"^`([^`]+)`")
 HEADING_RE = re.compile(r"^##\s+(.+?)\s*$")
 SEPARATOR_RE = re.compile(r":?-{2,}:?")
 
-# Five of the nine servers refuse to start in stdio mode with no credentials at
-# all (notion, email, telegram, imagine, workspace) -- they print a setup notice
+# Four of the seven servers refuse to start in stdio mode with no credentials at
+# all (notion, email, telegram, workspace) -- they print a setup notice
 # and exit before any client can call tools/list. Their gate checks that a value
 # is *present*, not that it works, so an obviously fake value is enough to reach
 # the tool registry. Nothing is ever sent upstream: the probe stops at

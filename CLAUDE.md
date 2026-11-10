@@ -15,9 +15,7 @@ Claude Code plugin marketplace and registry for n24q02m plugins.
 - notion
 - telegram
 - email
-- better-godot-mcp
 - crg
-- imagine-mcp
 - workspace
 
 ## Conventions

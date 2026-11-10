@@ -1,6 +1,6 @@
 # MCP n24q02m — Full reference for LLMs
 
-> A curated suite of nine MCP (Model Context Protocol) servers on one foundation library — one transport, one setup command, and one multi-user auth model — so you run web search, memory, Notion, email, Telegram, code review, image generation, Google Workspace, and Godot without wiring up nine inconsistent servers.
+> A curated suite of seven MCP (Model Context Protocol) servers on one foundation library — one transport, one setup command, and one multi-user auth model — so you run web search, memory, Notion, email, Telegram, code review, and Google Workspace without wiring up seven inconsistent servers.
 
 Site: https://docs.n24q02m.com
 Marketplace + source: https://github.com/n24q02m/claude-plugins
@@ -14,7 +14,7 @@ A curated stack of MCP servers for Claude Code, Codex, Gemini CLI, Cursor, and W
 - **One foundation, every active server**: every server reuses `hull`'s HTTP transport, token auth, encrypted credential storage, and CLI built-ins. There is no bespoke auth code per server, so once you know how one server authenticates and configures, you know them all.
 - **Multi-user by construction**: the HTTP `multi` auth mode maps each user's bearer token to its own credential namespace. Self-host once and share with a team; one user's keys never leak into another's request.
 - **Composite tools, not raw API mirrors**: each server exposes a small set of multiplexed tools (the "N+2" layout — a handful of tools that each take an `action` parameter, plus `config` and `help`). Tool lists are curated for AI-agent ergonomics: fewer round-trips, less prompt clutter.
-- **External content is marked**: servers that return content authored by third parties (web pages, Notion pages, emails, Telegram messages, Godot project files) wrap it with an untrusted-source marker so an agent treats it as data, not instructions — a defense against indirect prompt injection.
+- **External content is marked**: servers that return content authored by third parties (web pages, Notion pages, emails, Telegram messages) wrap it with an untrusted-source marker so an agent treats it as data, not instructions — a defense against indirect prompt injection.
 - **Bring your own credentials**: bundled defaults get you started; supply your own API keys or OAuth clients to run fully under your own accounts.
 - **Production-grade releases**: signed Docker images, semantic-versioned packages, automated CI (static analysis, secret scanning, push protection, dependency updates).
 
@@ -45,7 +45,7 @@ Builds a knowledge graph of a codebase so code reviews are token-efficient — q
 Docs: https://docs.n24q02m.com/servers/crg/setup/
 
 ### imagine-mcp
-Image and video understanding and generation across providers.
+Archived — not installable, no marketplace entry. Was image and video understanding and generation across providers.
 Docs: none (archived project).
 
 ### telegram
@@ -61,7 +61,7 @@ Email over IMAP and SMTP with composite tools for reading, searching, and sendin
 Docs: https://docs.n24q02m.com/servers/email/setup/
 
 ### better-godot-mcp
-Godot Engine integration for AI agents. Project file content is returned marked as untrusted external content.
+Archived — not installable, no marketplace entry. Was Godot Engine integration for AI agents; project file content was returned marked as untrusted external content.
 Docs: none (archived project).
 
 ### workspace

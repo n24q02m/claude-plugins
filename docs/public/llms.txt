@@ -1,6 +1,6 @@
 # MCP n24q02m
 
-> A curated suite of nine MCP servers on one foundation library — one transport, one setup command, and one multi-user auth model — so you run web search, memory, Notion, email, Telegram, code review, image generation, Google Workspace, and Godot without wiring up nine inconsistent servers.
+> A curated suite of seven MCP servers on one foundation library — one transport, one setup command, and one multi-user auth model — so you run web search, memory, Notion, email, Telegram, code review, and Google Workspace without wiring up seven inconsistent servers.
 
 Each server ships as a Claude Code plugin, an npm or PyPI package, and a Docker image. Works with Claude Code, Codex, Gemini CLI, Cursor, and Windsurf. Self-host once and share with a team. Every active server reuses `hull` for its HTTP transport, token auth (no-auth, token, multi), encrypted per-namespace credential storage, and CLI built-ins — no bespoke auth code per server.
 

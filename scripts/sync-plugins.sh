@@ -72,13 +72,6 @@ sync_plugins() {
     sync_dir "hooks"
     sync_dir "commands"
 
-    # Sync top-level runtime entrypoint (non-MCP plugins, e.g. agent-chat-plugin)
-    sync_file "chat.py"
-    if [ "$repo" = "agent-chat-plugin" ]; then
-      sync_dir "agent_chat"
-      sync_dir "schemas"
-    fi
-
     printf "%s\n" "OK $repo"
   done
 
