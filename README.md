@@ -181,9 +181,9 @@ Add to any MCP client's `settings.json`:
 
 ## Deployment
 
-The docs site ([docs.n24q02m.com](https://docs.n24q02m.com)) lives in this repo (`docs/`, Astro). It is built and deployed to the Cloudflare Pages project `mcp-n24q02m` by the `deploy-docs` job in [`cd.yml`](.github/workflows/cd.yml), which runs only on `workflow_dispatch` or `repository_dispatch` (`plugin-sync`, `tools-docs-sync`); a push to `main` does not deploy. The old host `mcp.n24q02m.com` redirects (301) to `docs.n24q02m.com`. Pages under `docs/src/content/docs/servers/` are generated at build time by `docs/scripts/sync-plugin-docs.mjs` from the `plugins/<name>/*.md` sources — edit those source files, never the generated tree, and do not deploy the site manually with `wrangler`.
+The docs site ([docs.n24q02m.com](https://docs.n24q02m.com)) is served by the consolidated portal in [`n24q02m/tools-docs`](https://github.com/n24q02m/tools-docs) (Cloudflare Pages project `tools-n24q02m`); legacy paths such as `docs.n24q02m.com/plugins/**` and `docs.n24q02m.com/skret/**` are the portal routes. This repo no longer builds or deploys a docs site: the old Pages project and its `deploy-docs` job in [`cd.yml`](.github/workflows/cd.yml) are retired. The `docs/` Astro tree stays because CI still runs its generator and tests (`docs/scripts/sync-plugin-docs.mjs`, exercised by `node --test docs/scripts/test-sync-plugin-docs.mjs` in [`ci.yml`](.github/workflows/ci.yml)); it is not published here.
 
-Plugin assets are synced separately: when a server repo cuts a release, [`cd.yml`](.github/workflows/cd.yml) (`plugin-sync`) copies that release tag's `plugin.json`, skills, hooks, and commands into `plugins/<name>/` on `main`, and the docs site redeploys after each `plugin-sync` run, on a manual `workflow_dispatch`, or on a `tools-docs-sync` dispatch from `tools-docs`.
+Plugin assets are synced separately: when a server repo cuts a release, [`cd.yml`](.github/workflows/cd.yml) (`plugin-sync`) copies that release tag's `plugin.json`, skills, hooks, and commands into `plugins/<name>/` on `main`. Nothing in this repo redeploys a docs site after that sync.
 
 ## Contributing
 
