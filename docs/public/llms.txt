@@ -11,11 +11,11 @@ Each server ships as a Claude Code plugin, an npm or PyPI package, and a Docker 
 - [mnemo](https://docs.n24q02m.com/servers/mnemo/setup/): Persistent AI memory with hybrid search.
 - [crg](https://docs.n24q02m.com/servers/crg/setup/): Knowledge graph for token-efficient code reviews.
 - imagine-mcp (archived, no docs page): Image and video understanding and generation across providers.
-- [better-telegram-mcp](https://docs.n24q02m.com/servers/telegram/setup/): Telegram (Bot API + MTProto) for AI agents.
-- [better-notion-mcp](https://docs.n24q02m.com/servers/notion/setup/): Markdown-first Notion API server.
-- [better-email-mcp](https://docs.n24q02m.com/servers/email/setup/): Email (IMAP + SMTP) composite tools.
+- [telegram](https://docs.n24q02m.com/servers/telegram/setup/): Telegram (Bot API + MTProto) for AI agents.
+- [notion](https://docs.n24q02m.com/servers/notion/setup/): Markdown-first Notion API server.
+- [email](https://docs.n24q02m.com/servers/email/setup/): Email (IMAP + SMTP) composite tools.
 - better-godot-mcp (archived, no docs page): Godot Engine integration for AI agents.
-- [better-workspace-mcp](https://docs.n24q02m.com/servers/workspace/setup/): Google Workspace — Docs, Drive, Calendar, Gmail, Sheets, Slides, Tasks, Chat, People, and Forms, across multiple accounts.
+- [workspace](https://docs.n24q02m.com/servers/workspace/setup/): Google Workspace — Docs, Drive, Calendar, Gmail, Sheets, Slides, Tasks, Chat, People, and Forms, across multiple accounts.
 
 ## Get started
 

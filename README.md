@@ -65,11 +65,11 @@ Or browse all plugins: run `/plugin` and go to the **Discover** tab.
 |--------|----------|-------------|----------|
 | **wet** | Research | Web search, content extraction, library docs, media download | All optional: `OPENROUTER_API_KEY`, `SEARCH_BACKENDS`, `TAVILY_API_KEY`, `BRAVE_API_KEY`, `EXA_API_KEY`, `KAGI_API_KEY`, `FIRECRAWL_API_KEY`, `GITHUB_TOKEN` |
 | **mnemo** | Productivity | Persistent AI memory across sessions | All optional: `MNEMO_URL` (Streamable HTTP endpoint of a running mnemo), `MNEMO_TOKEN` (bearer token when that instance uses token or multi auth) |
-| **better-notion-mcp** | Productivity | Notion API — 11 composite tools, ~95% coverage | `NOTION_TOKEN` (required) |
-| **better-email-mcp** | Communication | Email IMAP/SMTP — multi-account | `EMAIL_CREDENTIALS` (required) |
-| **better-telegram-mcp** | Communication | Telegram dual-mode (Bot API + MTProto) — messages, chats, media | `TELEGRAM_BOT_TOKEN` (optional; required for bot mode) |
+| **notion** | Productivity | Notion API — 11 composite tools, ~95% coverage | `NOTION_TOKEN` (required) |
+| **email** | Communication | Email IMAP/SMTP — multi-account | `EMAIL_CREDENTIALS` (required) |
+| **telegram** | Communication | Telegram dual-mode (Bot API + MTProto) — messages, chats, media | `TELEGRAM_BOT_TOKEN` (optional; required for bot mode) |
 | **crg** | Development | Knowledge graph for token-efficient code reviews | All optional: `EMBEDDING_MODELS`, `LOCAL_EMBEDDING_MODEL`, `LOCAL_RERANK_MODEL`, `LOCAL_EMBEDDING_DIM`, `LOCAL_EMBEDDING_MODEL_FILE`, `LOCAL_EMBEDDING_POOLING`, `LOCAL_EMBEDDING_NORMALIZE`, `HULL_EMBED_API_KEY`, `HULL_CHAT_API_KEY` |
-| **better-workspace-mcp** | Productivity | Google Workspace — 10 domains plus local time helpers, `config`, `help`, and multi-account OAuth | `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` (both required) |
+| **workspace** | Productivity | Google Workspace — 10 domains plus local time helpers, `config`, `help`, and multi-account OAuth | `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` (both required) |
 
 [Fastretrieval](https://docs.n24q02m.com/reference/fastretrieval/) is the retrieval library used by Wet, Mnemo, and CRG. Install it as a Python dependency, not as a marketplace plugin or MCP endpoint.
 
@@ -77,7 +77,7 @@ Or browse all plugins: run `/plugin` and go to the **Discover** tab.
 
 When you run `/plugin install`, Claude Code prompts for that plugin's credentials (declared in each plugin's `userConfig`) and stores sensitive values in your system keychain. You can also set them via the `env` block in `~/.claude/settings.local.json`, or `export` them in your shell profile.
 
-`better-notion-mcp`, `better-email-mcp`, and `better-workspace-mcp` require credentials for their upstream APIs. `better-telegram-mcp` needs a bot token only for bot mode. Wet, Mnemo, and CRG preserve local Fastretrieval-based retrieval without provider API keys. Wet web search additionally needs a runnable backend: credential-free DuckDuckGo/Startpage, an external SearXNG endpoint, a configured cloud provider, or a local installation that can run SearXNG.
+`notion`, `email`, and `workspace` require credentials for their upstream APIs. `telegram` needs a bot token only for bot mode. Wet, Mnemo, and CRG preserve local Fastretrieval-based retrieval without provider API keys. Wet web search additionally needs a runnable backend: credential-free DuckDuckGo/Startpage, an external SearXNG endpoint, a configured cloud provider, or a local installation that can run SearXNG.
 
 ### Cloud providers (wet-mcp, mnemo-mcp, better-code-review-graph)
 
@@ -141,9 +141,9 @@ Most plugins ship skills, invoked in Claude Code as `<plugin>:<skill>`:
 |--------|--------|
 | wet | `fact-check`, `compare`, `research-topic`, `lock-project-stack` |
 | mnemo | `session-handoff`, `knowledge-audit`, `recall-context`, `memory-commit`, `passport-bootstrap` |
-| better-notion-mcp | `organize-database`, `bulk-update` |
-| better-email-mcp | `inbox-review`, `follow-up` |
-| better-telegram-mcp | `setup-bot`, `channel-post` |
+| notion | `organize-database`, `bulk-update` |
+| email | `inbox-review`, `follow-up` |
+| telegram | `setup-bot`, `channel-post` |
 | crg | `review-pr`, `review-delta`, `refactor-check` |
 
 ## Other MCP Clients
@@ -155,15 +155,15 @@ Each plugin works with any MCP client. Run directly:
 ```bash
 uvx --python 3.13 wet-mcp
 uvx --python 3.13 mnemo-mcp
-uvx --python 3.13 better-telegram-mcp
+uvx --python 3.13 n24q02m-telegram
 uvx --python 3.13 better-code-review-graph
 ```
 
 **TypeScript plugins** (npx / bunx / docker):
 
 ```bash
-npx -y @n24q02m/better-notion-mcp
-npx -y @n24q02m/better-email-mcp
+npx -y @n24q02m/notion
+npx -y @n24q02m/email
 ```
 
 Add to any MCP client's `settings.json`:

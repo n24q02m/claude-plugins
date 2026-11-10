@@ -23,19 +23,19 @@
       "category": "productivity"
     },
     {
-      "name": "better-notion-mcp",
+      "name": "notion",
       "source": "./plugins/notion",
       "description": "Markdown-first Notion for AI agents — pages, databases, blocks & comments in one call",
       "category": "productivity"
     },
     {
-      "name": "better-email-mcp",
+      "name": "email",
       "source": "./plugins/email",
       "description": "Email IMAP/SMTP — multi-account management",
       "category": "communication"
     },
     {
-      "name": "better-telegram-mcp",
+      "name": "telegram",
       "source": "./plugins/telegram",
       "description": "Telegram dual-mode (Bot API + MTProto) — messages, chats, media, contacts",
       "category": "communication"
@@ -47,7 +47,7 @@
       "category": "development"
     },
     {
-      "name": "better-workspace-mcp",
+      "name": "workspace",
       "source": "./plugins/workspace",
       "description": "Google Workspace — Docs, Drive, Calendar, Gmail, Sheets, Slides, Tasks, Chat, People, Forms + multi-account",
       "category": "productivity"
