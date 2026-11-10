@@ -82,8 +82,8 @@ Two things to know before changing it:
   `better-godot-mcp` and `crg` answer `tools/list` with no
   credentials at all. Others exit at startup unless a credential is present; for
   those the checker retries once with an obviously fake value, which is enough
-  when the server only checks that something is set (`better-notion-mcp`). A
-  server that *validates* its credential on startup — `better-telegram-mcp`
+  when the server only checks that something is set (`notion`). A
+  server that *validates* its credential on startup — `telegram`
   reaches the Bot API and dies — cannot be read here at all. That case is
   reported as a warning, never a silent pass, and its drift check belongs in
   that server's own CI, which has real credentials. Real credentials are never

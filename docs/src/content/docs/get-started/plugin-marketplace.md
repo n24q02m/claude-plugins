@@ -16,7 +16,7 @@ The `n24q02m/claude-plugins` repo is a Claude Code plugin marketplace. Adding it
 ```sh
 /plugin install wet@n24q02m-plugins
 /plugin install mnemo@n24q02m-plugins
-/plugin install better-notion-mcp@n24q02m-plugins
+/plugin install notion@n24q02m-plugins
 # ... etc
 ```
 
