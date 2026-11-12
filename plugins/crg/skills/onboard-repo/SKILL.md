@@ -8,7 +8,7 @@ argument-hint: "[repo path] [area of interest]"
 
 Take a codebase you have never seen and turn it into a queryable graph, then read the graph to produce an orientation map. Use this on first contact with a repository, before answering questions about it or changing anything in it.
 
-**Scope:** this skill builds and reads a knowledge graph. It does not modify source files, CI configuration, or project conventions. The only files it creates are the graph database under `.crg/` (already self-ignored) and, when you choose to add one, a `.code-review-graphignore`.
+**Scope:** this skill builds and reads a knowledge graph. It does not modify source files, CI configuration, or project conventions. The only files it creates are the graph database under `.code-review-graph/` (already self-ignored) and, when you choose to add one, a `.code-review-graphignore`.
 
 **Command surface:** run the local CLI through the coding harness shell. Examples
 use the installed `crg` command; from a source checkout,

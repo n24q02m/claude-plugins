@@ -1,7 +1,7 @@
 {
   "name": "crg",
   "description": "Knowledge graph for token-efficient code reviews -- semantic search and call-graph resolution across your codebase.",
-  "version": "3.31.0",
+  "version": "3.32.0",
   "userConfig": {
     "EMBEDDING_MODELS": {
       "type": "string",
@@ -71,7 +71,7 @@
       "args": [
         "--python",
         "3.13",
-        "better-code-review-graph"
+        "n24q02m-crg"
       ],
       "env": {
         "MCP_TRANSPORT": "stdio",

@@ -35,7 +35,7 @@ prefix it with `uv run`. No MCP mapping is required.
    - use `crg query query --pattern callees_of --target "<node>" --repo-root "<path>"` to confirm what the function actually invokes when the match is ambiguous.
 
 7. **Triage the residue into suppressions.** For rules that are structurally inapplicable to this codebase, or findings confirmed as false positives:
-   - `crg security suppress --rule-id "<rule_id>" --repo-root "<path>"` -- persists to `.crg/security-suppressions.json`
+   - `crg security suppress --rule-id "<rule_id>" --repo-root "<path>"` -- persists to `.code-review-graph/security-suppressions.json`
    - add `--remove` to reverse a suppression
    - Suppression is per rule, not per finding, so suppressing a rule hides every current and future match. Record the justification in the report; a suppressed rule that later becomes relevant is a silent regression.
 
