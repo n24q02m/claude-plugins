@@ -1,6 +1,6 @@
 {
   "name": "workspace",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Google Workspace MCP server — Docs/Drive/Calendar/Gmail/Sheets/Slides/Tasks/Chat/People/Forms + multi-account",
   "userConfig": {
     "GOOGLE_OAUTH_CLIENT_ID": {

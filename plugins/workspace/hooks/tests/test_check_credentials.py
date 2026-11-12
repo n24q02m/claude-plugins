@@ -37,7 +37,18 @@ class TestCheckCredentials(unittest.TestCase):
     @patch("os.path.exists")
     @patch("os.path.expanduser")
     def test_is_configured_account_store(self, mock_expanduser, mock_exists):
-        # An account added via consent / `workspace auth` lives in ~/.better-workspace/config.json
+        # An account added via consent / `workspace auth` lives in ~/.workspace/config.json
+        mock_expanduser.return_value = "/home/user"
+        store = os.path.join("/home/user", ".workspace", "config.json")
+        mock_exists.side_effect = lambda p: p == store
+        self.assertTrue(check_credentials._is_configured())
+
+    @patch.dict(os.environ, {}, clear=True)
+    @patch("os.path.exists")
+    @patch("os.path.expanduser")
+    def test_is_configured_pre_rename_account_store(self, mock_expanduser, mock_exists):
+        # A store from before the data-dir rename is copied forward on startup; the
+        # hook still accepts it so an install that has not restarted yet is not nagged.
         mock_expanduser.return_value = "/home/user"
         store = os.path.join("/home/user", ".better-workspace", "config.json")
         mock_exists.side_effect = lambda p: p == store
@@ -58,7 +69,7 @@ class TestCheckCredentials(unittest.TestCase):
     @patch("os.path.expanduser")
     def test_other_files_in_store_dir_do_not_count(self, mock_expanduser, mock_exists):
         mock_expanduser.return_value = "/home/user"
-        other = os.path.join("/home/user", ".better-workspace", "unrelated.json")
+        other = os.path.join("/home/user", ".workspace", "unrelated.json")
         mock_exists.side_effect = lambda p: p == other
         self.assertFalse(check_credentials._is_configured())
 

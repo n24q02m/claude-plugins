@@ -7,11 +7,12 @@ Google delegated OAuth means there is no static API token: the env vars below
 are the OAuth *client*, not the user's credentials.
 
 A Google account added through the consent flow or `workspace auth` is stored by
-hull's PerPluginStore as an encrypted blob in ~/.better-workspace/config.json
-(slug STORE_PLUGIN in src/constants.ts:7; path layout in hull
-build/storage/data-dir.js and backends.js). Earlier releases wrote to
-~/.better-workspace-mcp/, which hull still reads as a fallback (src/constants.ts:4-6).
-The hook only checks that the file exists; it never reads or decrypts it.
+hull's PerPluginStore as an encrypted blob in ~/.workspace/config.json (slug
+STORE_PLUGIN in src/constants.ts; path layout in hull build/storage/data-dir.js and
+backends.js). A store written by an earlier release under ~/.better-workspace/ is
+copied forward on startup (src/data-dir-migration.ts), and ~/.better-workspace-mcp/
+from even earlier releases is still read as a fallback. The hook checks every one of
+those paths, and only checks that the file exists; it never reads or decrypts it.
 """
 
 import json
@@ -46,8 +47,8 @@ except ImportError:
 
 SERVER_NAME = "better-workspace-mcp"
 CREDENTIAL_KEYS = ["GOOGLE_OAUTH_CLIENT_ID"]
-# Per-user account store: current directory first, then the pre-rename directory.
-STORE_DIRS = (".better-workspace", ".better-workspace-mcp")
+# Per-user account store: current directory first, then the two pre-rename layouts.
+STORE_DIRS = (".workspace", ".better-workspace", ".better-workspace-mcp")
 EXEMPT_SUFFIXES = ("__setup", "__help", "__config", "__time")
 
 
