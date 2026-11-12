@@ -19,7 +19,7 @@ Five tools: `search`, `extract`, `media`, `config`, `help`. See the [tools refer
 
 wet speaks **Streamable HTTP only** on a single `/mcp` endpoint. There is no stdio transport and no hosted public instance: you run one instance and point MCP clients at it.
 
-- **Local**: `uvx --python 3.13 --from wet-mcp wet server start` runs a loopback `no-auth` instance on `http://127.0.0.1:8000/mcp`.
+- **Local**: `uvx --python 3.13 --from n24q02m-wet wet server start` runs a loopback `no-auth` instance on `http://127.0.0.1:8000/mcp`.
 - **docker compose**: build from the source repo and publish on loopback with token auth.
 - **Your own host**: run the instance behind a TLS proxy you control and use `auth = "token"` or `"multi"`.
 

@@ -5,7 +5,7 @@ Give this file to your AI agent so it can set up wet for you. wet is a self-host
 ## Step 1: Check for a running instance
 
 ```bash
-uvx --python 3.13 --from wet-mcp wet server status
+uvx --python 3.13 --from n24q02m-wet wet server status
 ```
 
 It reports the pid, the lock, and whether HTTP is up on the configured port (default 8000). If HTTP is up, note the endpoint (`http://127.0.0.1:8000/mcp` for the default port) and skip to Step 3.
@@ -17,7 +17,7 @@ Python 3.13 is required (3.14+ is not supported).
 **Local, no-auth (loopback only):**
 
 ```bash
-uvx --python 3.13 --from wet-mcp wet server start
+uvx --python 3.13 --from n24q02m-wet wet server start
 ```
 
 This detaches and binds `127.0.0.1:8000` with `auth = "no-auth"`, which refuses any non-loopback bind. Use `--foreground` to keep it attached. Because a `uvx` server cannot auto-start local SearXNG, set a search backend on the host before starting, for example `SEARCH_BACKENDS=duckduckgo,startpage` (credential-free), or a keyed provider such as `tavily` with `TAVILY_API_KEY`.
@@ -25,7 +25,7 @@ This detaches and binds `127.0.0.1:8000` with `auth = "no-auth"`, which refuses 
 **Always-on, token auth (docker compose):**
 
 1. In a clone of `n24q02m/wet`, run `cp docker-config/config.example.toml docker-config/config.toml`.
-2. Mint a token and hash it: `openssl rand -hex 32`, then `uvx --python 3.13 --from wet-mcp wet token hash <token>`.
+2. Mint a token and hash it: `openssl rand -hex 32`, then `uvx --python 3.13 --from n24q02m-wet wet token hash <token>`.
 3. Put only the printed `scrypt$...` value in `token_hash` in `docker-config/config.toml`. Never write the plaintext token into a file that could be committed; hand it to the user or the client config only.
 4. Run `docker compose up --build -d`. The endpoint is `http://127.0.0.1:8000/mcp` (change the host port with `WET_PORT`).
 

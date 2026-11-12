@@ -2,7 +2,7 @@
 
 wet is a self-hosted web search, extraction, and library-docs server. It speaks **Streamable HTTP only** on a single `/mcp` endpoint -- there is no stdio transport and no hosted public instance. You run one instance (locally or on a host you control) and point MCP clients at it.
 
-The repo is `n24q02m/wet`; the PyPI package is `wet-mcp` and ships the `wet` command (also installed as `wet-mcp`). `wet` is both the control plane and one thin client:
+The repo is `n24q02m/wet`; the PyPI package is `n24q02m-wet` and ships the `wet` command (also installed as `n24q02m-wet`; `wet-mcp` is the frozen pre-rename stub). `wet` is both the control plane and one thin client:
 
 - `wet server start|stop|status` -- run the HTTP server (detached by default, `--foreground` to block).
 - `wet config init|path|show|get|set` -- manage `~/.wet/config.toml`.
@@ -35,7 +35,7 @@ Every method needs a running instance.
 ### Dev: `uvx` (no-auth, loopback only)
 
 ```bash
-uvx --python 3.13 --from wet-mcp wet server start --foreground
+uvx --python 3.13 --from n24q02m-wet wet server start --foreground
 # MCP endpoint: http://127.0.0.1:8000/mcp
 ```
 
@@ -44,7 +44,7 @@ Without `--foreground` the server detaches; check it with `wet server status` an
 To write a real config to edit:
 
 ```bash
-uvx --python 3.13 --from wet-mcp wet config init   # writes ~/.wet/config.toml; --force overwrites
+uvx --python 3.13 --from n24q02m-wet wet config init   # writes ~/.wet/config.toml; --force overwrites
 ```
 
 > **Search under `uvx`.** A server running from a `uvx` tool environment cannot auto-start the embedded SearXNG. Without a backend that works there, `search`, `research`, `docs`, and `similar` return an error. Set `SEARCH_BACKENDS` to a keyed provider or to the credential-free `duckduckgo,startpage`, or point `SEARXNG_URL` at an external SearXNG (see "Search backends").
@@ -85,7 +85,7 @@ All auth and provider settings live in this host-owned file. MCP clients never s
 
 ```bash
 openssl rand -hex 32                                              # 1. mint a token
-uvx --python 3.13 --from wet-mcp wet token hash <token>           # 2. print the scrypt$ hash
+uvx --python 3.13 --from n24q02m-wet wet token hash <token>           # 2. print the scrypt$ hash
 ```
 
 3. Paste the printed `scrypt$...` value into `token_hash` and restart the server.
@@ -151,7 +151,7 @@ The plugin installs the wet skill and an HTTP MCP entry. wet 3.20.0 is HTTP-only
 ## Method 2: local server + `claude mcp add`
 
 ```bash
-uvx --python 3.13 --from wet-mcp wet server start
+uvx --python 3.13 --from n24q02m-wet wet server start
 claude mcp add --transport http wet http://127.0.0.1:8000/mcp
 ```
 
