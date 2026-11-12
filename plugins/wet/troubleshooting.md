@@ -7,7 +7,7 @@ Common issues specific to wet. For problems shared across the stack, see the [ge
 New features often ship as a beta before the stable release. `uvx`/`pip` will not pick a prerelease unless you pin the exact version:
 
 ```sh
-uvx --python 3.13 --from wet-mcp==<X.Y.0bN> wet server start
+uvx --python 3.13 --from n24q02m-wet==<X.Y.0bN> wet server start
 ```
 
 Replace `<X.Y.0bN>` with the exact beta version (for example, the value shown on the package's release history). Drop the version pin to return to the latest stable.
@@ -17,7 +17,7 @@ Replace `<X.Y.0bN>` with the exact beta version (for example, the value shown on
 wet requires **Python 3.13**. Always pin the interpreter:
 
 ```sh
-uvx --python 3.13 --from wet-mcp wet server start
+uvx --python 3.13 --from n24q02m-wet wet server start
 ```
 
 ## Connection refused / no tools in `/mcp`

@@ -7,7 +7,7 @@ Common issues specific to better-code-review-graph (crg). For problems shared ac
 New features often ship as a beta before the stable release. `uvx`/`pip` will not pick a prerelease unless you pin the exact version:
 
 ```sh
-uvx better-code-review-graph@<X.Y.0bN>
+uvx n24q02m-crg@<X.Y.0bN>
 ```
 
 Replace `<X.Y.0bN>` with the exact beta version. Drop the `@<version>` suffix to return to the latest stable.

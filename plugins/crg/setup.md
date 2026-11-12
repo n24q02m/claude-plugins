@@ -1,6 +1,6 @@
 # Better Code Review Graph -- Manual Setup Guide
 
-crg is a local-first code knowledge graph. The repo is `n24q02m/crg`. Its primary surface is the `crg` CLI plus the bundled skills; the MCP server is a secondary adapter over the same graph code. The plugin installs from the PyPI package `better-code-review-graph`, which ships both the `crg` command and the legacy `better-code-review-graph` command.
+crg is a local-first code knowledge graph. The repo is `n24q02m/crg`. Its primary surface is the `crg` CLI plus the bundled skills; the MCP server is a secondary adapter over the same graph code. The plugin installs from the PyPI package `n24q02m-crg`, which ships both the `crg` command and the `n24q02m-crg` alias (`better-code-review-graph` is the frozen pre-rename stub).
 
 `crg --help` lists the subcommands `config`, `db`, `graph`, `query`, `review`, `security`, `server`, and `token`. Run bare `crg` (no subcommand) to start the MCP server over stdio.
 
@@ -9,7 +9,7 @@ crg is a local-first code knowledge graph. The repo is `n24q02m/crg`. Its primar
 | Method | What runs where | Best for |
 |---|---|---|
 | **1. Plugin install (default)** | Claude Code plugin runs the server over stdio via `uvx`, plus skills and hooks | Claude Code users |
-| **2. Manual stdio** | `uvx --python 3.13 better-code-review-graph` registered in any MCP client | Any stdio MCP client, no plugin |
+| **2. Manual stdio** | `uvx --python 3.13 n24q02m-crg` registered in any MCP client | Any stdio MCP client, no plugin |
 | **3. HTTP self-host** | One instance you run (`crg server start`, or a container built from source), Bearer-token auth | Always-on instance shared across sessions and clients |
 
 There is no hosted endpoint. HTTP is self-host only, and the server must have filesystem access to the repositories it indexes.
@@ -57,7 +57,7 @@ When you run `/plugin install`, Claude Code prompts for the following optional f
 ## Method 2: Manual stdio
 
 ```bash
-claude mcp add crg -- uvx --python 3.13 better-code-review-graph
+claude mcp add crg -- uvx --python 3.13 n24q02m-crg
 ```
 
 Pass optional settings (see the reference below) in the client's `env` block. For other clients, register the same command under the client's stdio MCP configuration.
@@ -69,7 +69,7 @@ Use this when you want one always-on instance. The server speaks Streamable HTTP
 ### Dev: no-auth, loopback only
 
 ```bash
-uvx --python 3.13 --from better-code-review-graph crg server start
+uvx --python 3.13 --from n24q02m-crg crg server start
 # MCP endpoint: http://127.0.0.1:8000/mcp
 ```
 

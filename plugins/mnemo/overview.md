@@ -14,7 +14,7 @@ Eleven single-purpose memory tools (the primary interface), the deprecated `memo
 
 ## Deployment
 
-mnemo is self-hosted and speaks Streamable HTTP only, on a single `/mcp` endpoint. Run an instance locally with `uvx --from mnemo-mcp mnemo-mcp` (loopback, no auth), as an always-on docker compose stack, or on a host of your own behind TLS with token or per-user (`multi`) auth. Any MCP client that supports HTTP servers connects to it -- Claude Code (with or without the plugin), Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web for a remote instance.
+mnemo is self-hosted and speaks Streamable HTTP only, on a single `/mcp` endpoint. Run an instance locally with `uvx --from n24q02m-mnemo n24q02m-mnemo` (loopback, no auth), as an always-on docker compose stack, or on a host of your own behind TLS with token or per-user (`multi`) auth. Any MCP client that supports HTTP servers connects to it -- Claude Code (with or without the plugin), Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web for a remote instance.
 
 All state is one SQLite database under `~/.mnemo/`; back it up or move it with any file tool, or use `export_memories` / `import_memories`.
 

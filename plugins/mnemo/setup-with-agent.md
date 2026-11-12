@@ -1,6 +1,6 @@
 # Mnemo MCP -- Agent Setup Guide
 
-> Give this file to your AI agent to set up mnemo-mcp.
+> Give this file to your AI agent to set up n24q02m-mnemo.
 
 mnemo is a self-hosted memory server that speaks **Streamable HTTP only** on a single `/mcp` endpoint. There is no stdio transport and no hosted public instance: the agent starts (or finds) an instance, then registers its endpoint with the client. Full reference: the [manual setup guide](/servers/mnemo/setup/).
 
@@ -15,7 +15,7 @@ Requires Python 3.13 and `uv`.
 **Local, single user (no-auth, loopback only):**
 
 ```bash
-uvx --from mnemo-mcp mnemo-mcp
+uvx --from n24q02m-mnemo n24q02m-mnemo
 # endpoint: http://127.0.0.1:8000/mcp
 ```
 
