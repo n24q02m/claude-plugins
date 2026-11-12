@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""PreToolUse hook: hint when better-notion-mcp credentials are not configured.
+"""PreToolUse hook: hint when notion credentials are not configured.
 
 Non-blocking hint only. A Notion integration token comes from the NOTION_TOKEN
-env var or from `notion auth` (stored in ~/.better-notion/config.json). In stdio
-mode the server refuses to start without a token and prints setup options on
-stderr; in HTTP mode the token is per user namespace (`notion auth --user <ns>`).
-There is no relay or browser setup form.
+env var or from `notion auth` (stored in ~/.notion/config.json). In stdio mode the
+server refuses to start without a token and prints setup options on stderr; in
+HTTP mode the token is per user namespace (`notion auth --user <ns>`). A store an
+earlier release wrote under ~/.better-notion/ is copied forward on startup
+(src/data-dir-migration.ts); it and ~/.better-notion-mcp/ are still accepted here
+so an install that has not restarted yet is not nagged. There is no relay or
+browser setup form.
 """
 
 import json
@@ -38,7 +41,6 @@ except ImportError:
             sys.exit(2)
         return data
 
-SERVER_NAME = "better-notion-mcp"
 CREDENTIAL_KEYS = ["NOTION_TOKEN"]
 EXEMPT_SUFFIXES = ("__setup", "__help", "__config")
 
@@ -48,14 +50,21 @@ def _is_configured() -> bool:
         if os.environ.get(k):
             return True
     home = os.path.expanduser("~")
+    # `~/.notion/` is the current store. `~/.better-notion/` and
+    # `~/.better-notion-mcp/` are pre-rename layouts kept as read-only accept
+    # paths so an install that has not restarted yet is not nagged.
     for p in (
+        home + "/.notion/config.json",
         home + "/.better-notion/config.json",
+        home + "/.better-notion-mcp/config.json",
         home + "/.config/mcp/config.enc",
         os.path.join(home, ".config", "mcp", "config.enc"),
     ):
         if os.path.exists(p):
             return True
     return False
+
+
 def main() -> None:
     data = read_mcp_hook_input()
 
@@ -74,7 +83,7 @@ def main() -> None:
         json.dumps(
             {
                 "message": (
-                    "better-notion-mcp: credentials not yet configured. "
+                    "notion: credentials not yet configured. "
                     "Set NOTION_TOKEN in the plugin config or run "
                     "`npx -y @n24q02m/notion auth`."
                 ),
