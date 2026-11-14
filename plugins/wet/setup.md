@@ -133,7 +133,7 @@ Every search response includes a `search_backend` trace: requested, attempted, s
 
 ## Method 1: Claude Code plugin
 
-The plugin installs the wet skill and an HTTP MCP entry. wet 3.20.0 is HTTP-only: the `wet-mcp` entry point on PyPI is the control-plane CLI, so the plugin does not launch a server. It connects to an instance you started yourself. Two plugin settings:
+The plugin installs the wet skill and an HTTP MCP entry. wet 3.20.0 is HTTP-only: the `wet` command from `n24q02m-wet` is the control-plane CLI, so the plugin does not launch a server. It connects to an instance you started yourself. Two plugin settings:
 
 | Setting | Default | Meaning |
 |---|---|---|

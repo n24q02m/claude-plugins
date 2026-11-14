@@ -1,6 +1,6 @@
 # Better Code Review Graph -- Tools Reference
 
-better-code-review-graph (crg) builds a knowledge graph of a codebase and exposes it through 5 tools driven by an `action` parameter (`graph`, `query`, `review`, `security`, `config`), plus `help`. The same actions are available from the local `crg` CLI, which prints JSON. None of these tools wrap results as external/untrusted content.
+crg builds a knowledge graph of a codebase and exposes it through 5 tools driven by an `action` parameter (`graph`, `query`, `review`, `security`, `config`), plus `help`. The same actions are available from the local `crg` CLI, which prints JSON. None of these tools wrap results as external/untrusted content.
 
 ## graph
 

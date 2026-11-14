@@ -1,6 +1,6 @@
 # Mnemo MCP -- Tools Reference
 
-mnemo-mcp exposes persistent AI memory through 13 tools: 11 single-purpose memory tools (the recommended interface), the deprecated `memory` dispatcher that mirrors them and adds the entity-graph and point-in-time actions, and `config` for server status and runtime settings. No tool wraps results as external/untrusted content -- memory entries are user-authored, not fetched from the open web.
+mnemo exposes persistent AI memory through 13 tools: 11 single-purpose memory tools (the recommended interface), the deprecated `memory` dispatcher that mirrors them and adds the entity-graph and point-in-time actions, and `config` for server status and runtime settings. No tool wraps results as external/untrusted content -- memory entries are user-authored, not fetched from the open web.
 
 Every `limit` parameter is clamped to 1-100.
 

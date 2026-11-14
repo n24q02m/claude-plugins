@@ -83,9 +83,9 @@ MNEMO_AUTH_TOKEN=<token> uvx --from n24q02m-mnemo n24q02m-mnemo token-hash   # 2
 ```
 
 3. Paste the printed `scrypt$...` value into `token_hash` and restart the server.
-4. Give clients the **plaintext** token; they send it as `Authorization: Bearer <token>`. In a source checkout, `uv run mnemo-mcp token-hash` works the same way.
+4. Give clients the **plaintext** token; they send it as `Authorization: Bearer <token>`. In a source checkout, `uv run n24q02m-mnemo token-hash` works the same way.
 
-`mnemo-mcp token-verify <token> <scrypt$...>` checks a token against a stored hash.
+`n24q02m-mnemo token-verify <token> <scrypt$...>` checks a token against a stored hash.
 
 ### `[models.*]` -- provider cells
 
@@ -177,7 +177,7 @@ Most settings live in `config.toml`. The server also reads:
 | Variable | Default | Description |
 |---|---|---|
 | `MNEMO_HOST` / `MNEMO_PORT` | from `[server]` | Override the bind address |
-| `MNEMO_AUTH_TOKEN` | -- | Token read by `mnemo-mcp token-hash` |
+| `MNEMO_AUTH_TOKEN` | -- | Token read by `n24q02m-mnemo token-hash` |
 | `HULL_EMBED_API_KEY` / `HULL_RERANK_API_KEY` / `HULL_CHAT_API_KEY` / `HULL_JEV_SCORE_API_KEY` | -- | `api_key` for the matching `[models.*]` cell |
 | `DB_PATH` / `MNEMO_DB_PATH` | `~/.mnemo/memories.db` | Database location |
 | `REINDEX_ON_MODEL_CHANGE` | `false` | One-shot vector rebuild after changing the embedding model |

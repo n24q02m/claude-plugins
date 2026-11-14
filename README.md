@@ -90,7 +90,7 @@ When you run `/plugin install`, Claude Code prompts for that plugin's credential
 
 `notion`, `email`, and `workspace` require credentials for their upstream APIs. `telegram` needs a bot token only for bot mode. Wet, Mnemo, and CRG preserve local Fastretrieval-based retrieval without provider API keys. Wet web search additionally needs a runnable backend: credential-free DuckDuckGo/Startpage, an external SearXNG endpoint, a configured cloud provider, or a local installation that can run SearXNG.
 
-### Cloud providers (wet-mcp, mnemo-mcp, better-code-review-graph)
+### Cloud providers (wet, mnemo, crg)
 
 Cloud model selection is separate from installing a plugin and is configured on
 the machine that runs the server, in `~/.<server>/config.toml`. Do not infer a
@@ -164,10 +164,10 @@ Each plugin works with any MCP client. Run directly:
 **Python plugins** (uvx / pipx / docker):
 
 ```bash
-uvx --python 3.13 wet-mcp
-uvx --python 3.13 mnemo-mcp
+uvx --python 3.13 --from n24q02m-wet wet server start   # HTTP only: http://127.0.0.1:8000/mcp
+uvx --python 3.13 n24q02m-mnemo                         # HTTP only: http://127.0.0.1:8000/mcp
 uvx --python 3.13 n24q02m-telegram
-uvx --python 3.13 better-code-review-graph
+uvx --python 3.13 n24q02m-crg
 ```
 
 **TypeScript plugins** (npx / bunx / docker):
@@ -177,14 +177,18 @@ npx -y @n24q02m/notion
 npx -y @n24q02m/email
 ```
 
-Add to any MCP client's `settings.json`:
+Add to any MCP client's `settings.json` (stdio servers by command, HTTP-only servers such as wet and mnemo by URL):
 
 ```json
 {
   "mcpServers": {
-    "wet": {
+    "crg": {
       "command": "uvx",
-      "args": ["--python", "3.13", "wet-mcp"]
+      "args": ["--python", "3.13", "n24q02m-crg"]
+    },
+    "wet": {
+      "type": "http",
+      "url": "http://127.0.0.1:8000/mcp"
     }
   }
 }
