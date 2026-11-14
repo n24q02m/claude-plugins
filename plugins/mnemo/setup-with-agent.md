@@ -6,7 +6,7 @@ mnemo is a self-hosted memory server that speaks **Streamable HTTP only** on a s
 
 ## Step 1: Check for a running instance
 
-Ask the user whether a mnemo instance already runs (a compose stack, a remote host, or a local `mnemo-mcp` process) and for its endpoint and token. If one exists, skip to Step 3.
+Ask the user whether a mnemo instance already runs (a compose stack, a remote host, or a local `n24q02m-mnemo` process) and for its endpoint and token. If one exists, skip to Step 3.
 
 ## Step 2: Start an instance
 
@@ -26,7 +26,7 @@ uvx --from n24q02m-mnemo n24q02m-mnemo
 ```bash
 cp mnemo-config/config.example.toml mnemo-config/config.toml
 python -c "import secrets; print(secrets.token_urlsafe(32))"            # mint a token
-MNEMO_AUTH_TOKEN=<token> uv run mnemo-mcp token-hash                     # print its scrypt$ hash
+MNEMO_AUTH_TOKEN=<token> uv run n24q02m-mnemo token-hash                     # print its scrypt$ hash
 # edit mnemo-config/config.toml: [server] auth = "token", token_hash = "<scrypt$ hash>"
 docker compose -f docker-compose.http.yml up --build -d
 # endpoint: http://127.0.0.1:8771/mcp

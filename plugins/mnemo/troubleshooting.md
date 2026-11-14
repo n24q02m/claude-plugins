@@ -1,13 +1,13 @@
 # Mnemo MCP -- Troubleshooting
 
-Common issues specific to mnemo-mcp. For problems shared across the stack, see the [general troubleshooting guide](/get-started/troubleshooting/).
+Common issues specific to mnemo. For problems shared across the stack, see the [general troubleshooting guide](/get-started/troubleshooting/).
 
 ## Installing a prerelease (beta) build
 
 New features often ship as a beta before the stable release. `uvx`/`pip` will not pick a prerelease unless you pin the exact version:
 
 ```sh
-uvx --from mnemo-mcp@<X.Y.0bN> mnemo-mcp
+uvx n24q02m-mnemo@<X.Y.0bN>
 ```
 
 Replace `<X.Y.0bN>` with the exact beta version. Drop the `@<version>` suffix to return to the latest stable.
@@ -25,8 +25,8 @@ mnemo has no stdio transport: a client can only reach a running instance.
 The Bearer token the client sends does not match the instance's `token_hash`.
 
 - The client sends the **plaintext** token (`MNEMO_TOKEN` for the plugin, or `Authorization: Bearer <token>`); `config.toml` stores only the `scrypt$...` hash.
-- Check a token against the stored hash: `mnemo-mcp token-verify <token> <scrypt$...>`.
-- To replace a lost token, mint a new one, run `MNEMO_AUTH_TOKEN=<token> mnemo-mcp token-hash`, paste the hash into `token_hash`, and restart the server.
+- Check a token against the stored hash: `n24q02m-mnemo token-verify <token> <scrypt$...>`.
+- To replace a lost token, mint a new one, run `MNEMO_AUTH_TOKEN=<token> n24q02m-mnemo token-hash`, paste the hash into `token_hash`, and restart the server.
 
 ## Server refuses to start on a non-loopback address
 
@@ -40,7 +40,7 @@ With no `[models.embed]` cell, the server downloads a local embedding model (~57
 config(action="warmup")
 ```
 
-or, before starting the server, `mnemo-mcp warmup`.
+or, before starting the server, `n24q02m-mnemo warmup`.
 
 ## Search returns nothing
 

@@ -1,6 +1,6 @@
 # Better Code Review Graph -- Agent Setup Guide
 
-> Give this file to your AI agent to automatically set up better-code-review-graph (crg).
+> Give this file to your AI agent to automatically set up crg.
 
 ## Method overview
 

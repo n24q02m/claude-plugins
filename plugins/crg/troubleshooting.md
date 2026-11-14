@@ -1,6 +1,6 @@
 # Better Code Review Graph -- Troubleshooting
 
-Common issues specific to better-code-review-graph (crg). For problems shared across the stack, see the [general troubleshooting guide](/get-started/troubleshooting/).
+Common issues specific to crg. For problems shared across the stack, see the [general troubleshooting guide](/get-started/troubleshooting/).
 
 ## Installing a prerelease (beta) build
 
