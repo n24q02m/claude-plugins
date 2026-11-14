@@ -1,5 +1,5 @@
 {
-  "name": "Main Branch Rules",
+  "name": "Main Ruleset",
   "target": "branch",
   "source_type": "Repository",
   "source": "n24q02m/claude-plugins",
@@ -9,42 +9,67 @@
       "actor_id": 5,
       "actor_type": "RepositoryRole",
       "bypass_mode": "always"
+    },
+    {
+      "actor_id": 2740,
+      "actor_type": "Integration",
+      "bypass_mode": "pull_request"
+    },
+    {
+      "actor_id": 3200052,
+      "actor_type": "Integration",
+      "bypass_mode": "always"
     }
   ],
   "conditions": {
     "ref_name": {
       "exclude": [],
-      "include": ["~DEFAULT_BRANCH"]
+      "include": [
+        "~DEFAULT_BRANCH"
+      ]
     }
   },
   "rules": [
-    { "type": "deletion" },
-    { "type": "non_fast_forward" },
-    { "type": "required_linear_history" },
-    { "type": "update" },
+    {
+      "type": "deletion"
+    },
+    {
+      "type": "non_fast_forward"
+    },
+    {
+      "type": "required_linear_history"
+    },
     {
       "type": "pull_request",
       "parameters": {
-        "required_approving_review_count": 1,
-        "dismiss_stale_reviews_on_push": true,
-        "require_code_owner_review": true,
-        "require_last_push_approval": true,
-        "required_review_thread_resolution": true,
-        "allowed_merge_methods": ["squash"]
+        "required_approving_review_count": 0,
+        "dismiss_stale_reviews_on_push": false,
+        "required_reviewers": [],
+        "require_code_owner_review": false,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": false,
+        "require_extra_approval_for_unattributed_changes": true,
+        "allowed_merge_methods": [
+          "merge",
+          "squash",
+          "rebase"
+        ]
       }
     },
     {
-      "type": "code_quality",
-      "parameters": { "severity": "errors" }
+      "type": "update"
     },
     {
-      "type": "code_scanning",
+      "type": "required_status_checks",
       "parameters": {
-        "code_scanning_tools": [
+        "strict_required_status_checks_policy": false,
+        "do_not_enforce_on_create": false,
+        "required_status_checks": [
           {
-            "tool": "CodeQL",
-            "security_alerts_threshold": "high_or_higher",
-            "alerts_threshold": "errors"
+            "context": "Validate Marketplace"
+          },
+          {
+            "context": "Verify tool names"
           }
         ]
       }
