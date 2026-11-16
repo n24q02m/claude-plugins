@@ -1,0 +1,22 @@
+[run]
+branch = True
+source =
+    scripts
+    plugins
+omit =
+    */test_*.py
+    */tests/*
+    # Mirrored from the source repositories by scripts/sync-plugins.sh.
+    # The source repository runs their tests and owns their coverage; this
+    # repository still runs any mirrored tests to catch a broken copy.
+    plugins/*/hooks/*
+    plugins/*/skills/*
+    plugins/*/commands/*
+
+[report]
+# Report a file no test imports as 0% even in a directory without __init__.py.
+include_namespace_packages = True
+show_missing = True
+# Ratchet floor, raise only: 85.34% on Windows and 86% on CI Linux when this
+# gate landed. The repository target is 95% (CONTRIBUTING.md).
+fail_under = 85
