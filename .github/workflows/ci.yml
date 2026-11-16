@@ -25,7 +25,10 @@ concurrency:
 jobs:
   validate:
     name: Validate Marketplace
-    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    if: >-
+      github.event_name == 'pull_request'
+      || github.event_name == 'push'
+      || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

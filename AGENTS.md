@@ -41,10 +41,11 @@ the server no longer answers to.
 ### Who starts the update
 
 The server repo, not this one. Every server already notifies this repo on
-release (`repository_dispatch: plugin-sync`), and the session that renames a
-tool opens the companion `tools.md` pull request here. This repo does not scrape
-server repos for prose — it verifies what it was handed, and sweeps weekly so a
-rename that nobody reported still surfaces.
+release (a `workflow_dispatch` of `cd.yml` with its `repo` and `tag`), and the
+session that renames a tool opens the companion `tools.md` pull request here.
+This repo does not scrape server repos for prose — it verifies what it was
+handed, and a `workflow_dispatch` of `ci.yml` (`plugins: all`) re-checks every
+server so a rename that nobody reported still surfaces.
 
 ### When it has to land
 
