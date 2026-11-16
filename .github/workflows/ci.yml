@@ -31,6 +31,10 @@ jobs:
       || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      # The Codecov upload authenticates with this job's OIDC token.
+      id-token: write
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
@@ -67,11 +71,16 @@ jobs:
           --with-requirements scripts/requirements-test.txt
           pytest --cov --cov-report=term --cov-report=xml
 
+      # Codecov rejects a tokenless upload for main, and no static upload token is
+      # stored, so the upload authenticates with OIDC and fails the job when Codecov
+      # refuses it. Pull requests skip it: a fork pull request gets no OIDC token.
       - name: Upload coverage to Codecov
-        if: github.event_name == 'push'
+        if: github.event_name != 'pull_request'
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           files: coverage.xml
+          use_oidc: true
+          fail_ci_if_error: true
 
       - name: Verify plugin docs classification and sync
         run: node --test docs/scripts/test-sync-plugin-docs.mjs
