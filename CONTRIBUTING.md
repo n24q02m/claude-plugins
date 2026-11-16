@@ -26,6 +26,7 @@ From the repository root, run the relevant source checks:
 python scripts/validate_marketplace.py
 python scripts/verify_docs_current.py
 python scripts/verify_tool_parity.py --all --declared-only
+uv run --no-project --python 3.13 --with-requirements scripts/requirements-test.txt pytest --cov
 node --test docs/scripts/test-sync-plugin-docs.mjs
 ```
 
