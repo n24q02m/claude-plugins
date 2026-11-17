@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Unit tests for validate_marketplace script."""
 
+import contextlib
+import io
 import unittest
 import os
 import json
+import runpy
 import shutil
 import tempfile
 from unittest.mock import patch
@@ -184,6 +187,96 @@ class TestValidateMarketplace(unittest.TestCase):
                 "::error ::Failed to load marketplace.json: Read error"
             )
             mock_exit.assert_called()
+
+    def _run(self):
+        """Run the validator; return (exit code or None, printed lines)."""
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            try:
+                validate_marketplace.validate_marketplace()
+                code = None
+            except SystemExit as exc:
+                code = exc.code
+        return code, out.getvalue().splitlines()
+
+    def _write_marketplace(self):
+        with open(self.marketplace_path, "w") as f:
+            json.dump(self.valid_marketplace, f)
+
+    def test_valid_optional_files_pass(self):
+        """A versioned gemini-extension.json and well-formed skills add no error;
+        stray files and folders without SKILL.md under skills/ are ignored."""
+        plugin = "plugins/test-plugin"
+        with open(os.path.join(plugin, "gemini-extension.json"), "w") as f:
+            json.dump({"version": "1.0.0"}, f)
+        os.makedirs(os.path.join(plugin, "skills", "good-skill"))
+        with open(os.path.join(plugin, "skills", "good-skill", "SKILL.md"), "w") as f:
+            f.write("---\nname: good-skill\ndescription: a skill long enough to pass\n---\n")
+        os.makedirs(os.path.join(plugin, "skills", "assets-only"))
+        with open(os.path.join(plugin, "skills", "README.txt"), "w") as f:
+            f.write("not a skill")
+
+        code, lines = self._run()
+
+        self.assertIsNone(code)
+        self.assertEqual(lines, ["All 1 plugins validated successfully"])
+
+    def test_unparseable_plugin_json_is_reported(self):
+        with open(self.plugin_json_path, "w") as f:
+            f.write("{not json")
+
+        code, lines = self._run()
+
+        self.assertEqual(code, 1)
+        self.assertTrue(
+            any("test-plugin: Failed to parse" in line for line in lines), lines
+        )
+
+    def test_unreadable_skill_file_is_reported(self):
+        skill_dir = "plugins/test-plugin/skills/test-skill"
+        os.makedirs(skill_dir)
+        with open(os.path.join(skill_dir, "SKILL.md"), "wb") as f:
+            f.write(b"---\n\xff\xfe not utf-8\n")
+
+        code, lines = self._run()
+
+        self.assertEqual(code, 1)
+        self.assertTrue(
+            any("skills/test-skill: Failed to read SKILL.md" in line for line in lines),
+            lines,
+        )
+
+    def test_plugin_without_name_is_reported_as_unknown(self):
+        errors = validate_marketplace._validate_plugin(
+            {"source": "./plugins/absent"}, os.getcwd()
+        )
+        self.assertEqual(len(errors), 1)
+        self.assertTrue(errors[0].startswith("Unknown: missing"), errors)
+
+    def test_missing_plugins_field_is_reported(self):
+        del self.valid_marketplace["plugins"]
+        self._write_marketplace()
+
+        code, lines = self._run()
+
+        self.assertEqual(code, 1)
+        self.assertIn("::error ::marketplace.json: Missing field: plugins", lines)
+
+    def test_empty_plugin_list_is_reported(self):
+        self.valid_marketplace["plugins"] = []
+        self._write_marketplace()
+
+        code, lines = self._run()
+
+        self.assertEqual(code, 1)
+        self.assertIn("::error ::marketplace.json: No plugins defined", lines)
+
+    def test_runs_as_a_script(self):
+        script = os.path.join(os.path.dirname(validate_marketplace.__file__), "validate_marketplace.py")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            runpy.run_path(script, run_name="__main__")
+        self.assertIn("All 1 plugins validated successfully", out.getvalue())
 
 
 if __name__ == "__main__":

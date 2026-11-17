@@ -10,7 +10,9 @@ import contextlib
 import io
 import json
 import os
+import runpy
 import shutil
+import subprocess
 import sys
 import tempfile
 import time
@@ -477,6 +479,390 @@ class TestMain(unittest.TestCase):
         self.assertEqual(rc, 0)
         lines = [line for line in buf.getvalue().splitlines() if line.endswith(": ok")]
         self.assertEqual(lines, ["aaa: ok", "bbb: ok", "ccc: ok"])
+
+
+# A stand-in MCP server, launched for real over stdio by live_names(). The mode
+# (argv[1]) picks how it behaves; the remaining arguments are the tool names it
+# advertises.
+FAKE_SERVER = r'''
+import json
+import os
+import sys
+
+mode, tools = sys.argv[1], sys.argv[2:]
+
+
+def reply(message):
+    print(json.dumps(message), flush=True)
+
+
+print("fake server starting", file=sys.stderr, flush=True)
+if mode == "exit" or (mode == "gated" and not os.environ.get("API_KEY")):
+    print("API_KEY is not set; refusing to start", file=sys.stderr, flush=True)
+    sys.exit(3)
+if mode == "env":
+    tools = [
+        f"{key}={os.environ.get(key)}"
+        for key in ("HOME", "MCP_TRANSPORT", "UV_CACHE_DIR", "npm_config_cache")
+    ]
+
+while True:
+    line = sys.stdin.readline()
+    if not line:
+        break
+    request = json.loads(line)
+    if request.get("method") == "initialize":
+        if mode == "init-error":
+            reply({"jsonrpc": "2.0", "id": 1, "error": {"code": -32603, "message": "boom"}})
+            continue
+        if mode == "chatter":
+            while True:
+                print("still warming up", flush=True)
+        # Noise a real server may emit before answering: a blank line, a log
+        # line on stdout, and a notification that carries no id.
+        print("", flush=True)
+        print("listening on stdio", flush=True)
+        reply({"jsonrpc": "2.0", "method": "notifications/message", "params": {}})
+        reply({"jsonrpc": "2.0", "id": 1, "result": {"capabilities": {}}})
+    elif request.get("method") == "tools/list":
+        if mode == "list-error":
+            reply({"jsonrpc": "2.0", "id": 2, "error": {"code": -32601, "message": "nope"}})
+            continue
+        reply({"jsonrpc": "2.0", "id": 2, "result": {"tools": [{"name": t} for t in tools]}})
+'''
+
+
+class FakeServerTestCase(unittest.TestCase):
+    """A temp checkout whose plugin runs FAKE_SERVER with this interpreter."""
+
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.test_dir, ignore_errors=True)
+        old_cwd = os.getcwd()
+        os.chdir(self.test_dir)
+        self.addCleanup(os.chdir, old_cwd)
+        self.server = os.path.join(self.test_dir, "fake_server.py")
+        with open(self.server, "w", encoding="utf-8") as f:
+            f.write(FAKE_SERVER)
+        self.pdir = os.path.join("plugins", "srv")
+        os.makedirs(os.path.join(self.pdir, ".claude-plugin"))
+
+    def _manifest(self, mode, *tools, **entry):
+        server = {"command": sys.executable, "args": [self.server, mode, *tools]}
+        server.update(entry)
+        manifest = {"name": "srv", "mcpServers": {"srv": server}}
+        with open(
+            os.path.join(self.pdir, ".claude-plugin", "plugin.json"),
+            "w",
+            encoding="utf-8",
+        ) as f:
+            json.dump(manifest, f)
+
+    def _tools_md(self, body):
+        with open(os.path.join(self.pdir, "tools.md"), "w", encoding="utf-8") as f:
+            f.write(body)
+
+    def _main(self, *argv):
+        out = io.StringIO()
+        err = io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            rc = parity.main(list(argv))
+        return rc, out.getvalue().splitlines()
+
+
+class TestLiveProbe(FakeServerTestCase):
+    def test_reads_tool_names_past_startup_noise(self):
+        self._manifest("ok", "search", "config")
+        self.assertEqual(parity.live_names(self.pdir, timeout=60), {"search", "config"})
+
+    def test_server_exiting_early_reports_its_stderr(self):
+        self._manifest("exit")
+        with self.assertRaises(RuntimeError) as cm:
+            parity.live_names(self.pdir, timeout=60)
+        self.assertNotIsInstance(cm.exception, parity.ProbeTimeout)
+        message = str(cm.exception)
+        self.assertTrue(
+            message.startswith("server exited before tools/list (rc="), message
+        )
+        self.assertIn("API_KEY is not set; refusing to start", message)
+
+    def test_initialize_error_is_reported(self):
+        self._manifest("init-error")
+        with self.assertRaisesRegex(RuntimeError, "^initialize failed: .*boom"):
+            parity.live_names(self.pdir, timeout=60)
+
+    def test_tools_list_error_is_reported(self):
+        self._manifest("list-error")
+        with self.assertRaisesRegex(RuntimeError, "^tools/list failed: .*nope"):
+            parity.live_names(self.pdir, timeout=60)
+
+    def test_server_that_only_chatters_is_cut_off_at_the_timeout(self):
+        # The opposite of a silent server: one that keeps writing lines that
+        # are not the answer must hit the same bound.
+        self._manifest("chatter")
+        started = time.monotonic()
+        with self.assertRaises(parity.ProbeTimeout):
+            parity.live_names(self.pdir, timeout=2)
+        self.assertLess(time.monotonic() - started, 60)
+
+    def test_server_gets_an_isolated_profile_and_the_real_caches(self):
+        self._manifest("env")
+        with mock.patch.dict(os.environ):
+            os.environ.pop("UV_CACHE_DIR", None)
+            os.environ.pop("npm_config_cache", None)
+            names = parity.live_names(self.pdir, timeout=60)
+            uv_cache = parity._default_uv_cache()
+            npm_cache = parity._default_npm_cache()
+
+        env = dict(name.split("=", 1) for name in names)
+        self.assertNotEqual(env["HOME"], os.path.expanduser("~"))
+        self.assertTrue(
+            os.path.basename(env["HOME"]).startswith("tool-parity-"), env["HOME"]
+        )
+        self.assertEqual(env["MCP_TRANSPORT"], "stdio")
+        self.assertEqual(env["UV_CACHE_DIR"], str(uv_cache))
+        self.assertEqual(env["npm_config_cache"], str(npm_cache))
+
+    def test_a_preset_uv_cache_is_kept(self):
+        self._manifest("env")
+        preset = os.path.join(self.test_dir, "uv-cache")
+        with mock.patch.dict(os.environ, {"UV_CACHE_DIR": preset}):
+            names = parity.live_names(self.pdir, timeout=60)
+        self.assertIn(f"UV_CACHE_DIR={preset}", names)
+
+    def test_plugin_without_mcp_server_has_no_live_names(self):
+        with open(
+            os.path.join(self.pdir, ".claude-plugin", "plugin.json"),
+            "w",
+            encoding="utf-8",
+        ) as f:
+            json.dump({"name": "srv"}, f)
+        self.assertEqual(parity.live_names(self.pdir, timeout=60), set())
+
+
+class TestEndToEnd(FakeServerTestCase):
+    def test_matching_server_passes(self):
+        self._manifest("ok", "search", "config")
+        self._tools_md("# Tools\n\n## search\n\n## config\n")
+
+        rc, lines = self._main("srv", "--timeout", "60")
+
+        self.assertEqual(rc, 0)
+        self.assertEqual(
+            lines,
+            [
+                "srv: 2 tool name(s) match tools.md",
+                "",
+                "Tool names in tools.md match the shipped servers.",
+            ],
+        )
+
+    def test_renamed_tool_fails_the_run(self):
+        self._manifest("ok", "search", "settings")
+        self._tools_md("## search\n\n## config\n")
+
+        rc, lines = self._main("srv", "--timeout", "60")
+
+        self.assertEqual(rc, 1)
+        self.assertIn(
+            "::error ::srv: server exposes tool 'settings' but plugins/srv/tools.md "
+            "does not document it (rename landed in the server, not here)",
+            lines,
+        )
+        self.assertIn(
+            "::error ::srv: plugins/srv/tools.md documents tool 'config' but the "
+            "server does not expose it (stale name left behind after a rename)",
+            lines,
+        )
+
+    def test_credential_gated_server_is_read_with_placeholders(self):
+        self._manifest(
+            "gated", "search", env={"API_KEY": "${user_config.API_KEY}"}
+        )
+        with open(
+            os.path.join(self.pdir, ".claude-plugin", "plugin.json"), encoding="utf-8"
+        ) as f:
+            manifest = json.load(f)
+        manifest["userConfig"] = {"API_KEY": {"type": "string", "sensitive": True}}
+        with open(
+            os.path.join(self.pdir, ".claude-plugin", "plugin.json"),
+            "w",
+            encoding="utf-8",
+        ) as f:
+            json.dump(manifest, f)
+        self._tools_md("## search\n")
+
+        with mock.patch.dict(os.environ):
+            os.environ.pop("API_KEY", None)
+            errors, warnings, output = parity.verify_plugin("srv", False, 60)
+
+        self.assertEqual((errors, warnings), ([], []))
+        self.assertEqual(
+            output,
+            ["srv: 1 tool name(s) match tools.md (started with placeholder credentials)"],
+        )
+
+    def test_server_with_no_tools_is_not_compared(self):
+        self._manifest("ok")
+        self._tools_md("## search\n")
+        self.assertEqual(parity.verify_plugin("srv", False, 60), ([], [], []))
+
+    def test_unparseable_manifest_is_an_error(self):
+        with open(
+            os.path.join(self.pdir, ".claude-plugin", "plugin.json"),
+            "w",
+            encoding="utf-8",
+        ) as f:
+            f.write("{not json")
+        self._tools_md("## search\n")
+
+        errors, warnings, output = parity.verify_plugin("srv", True, 60)
+
+        self.assertEqual(len(errors), 1)
+        self.assertTrue(
+            errors[0].startswith("srv: invalid MCP server manifest: "), errors
+        )
+
+    def test_all_discovers_plugin_directories(self):
+        self._manifest("ok", "search")
+        self._tools_md("## search\n")
+        with open(os.path.join("plugins", "README.md"), "w", encoding="utf-8") as f:
+            f.write("not a plugin")
+        os.makedirs(os.path.join("plugins", "docs-only"))
+
+        rc, lines = self._main("--all", "--declared-only")
+
+        self.assertEqual(rc, 0)
+        self.assertEqual(lines[0], "srv: declares 1 tool(s): search")
+
+    def test_missing_plugins_dir_fails(self):
+        shutil.rmtree("plugins")
+        rc, lines = self._main("srv")
+        self.assertEqual(rc, 1)
+        self.assertEqual(lines, ["::error ::plugins dir not found: plugins"])
+
+    def test_runs_as_a_script(self):
+        self._manifest("ok", "search")
+        self._tools_md("## search\n")
+        script = os.path.join(
+            os.path.dirname(os.path.abspath(parity.__file__)), "verify_tool_parity.py"
+        )
+        out = io.StringIO()
+        with mock.patch.object(sys, "argv", [script, "--all", "--declared-only"]):
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(
+                io.StringIO()
+            ):
+                with self.assertRaises(SystemExit) as cm:
+                    runpy.run_path(script, run_name="__main__")
+        self.assertEqual(cm.exception.code, 0)
+        self.assertIn("srv: declares 1 tool(s): search", out.getvalue())
+
+
+class TestDeclaredTableRows(unittest.TestCase):
+    def test_non_tool_rows_in_a_tool_table_are_skipped(self):
+        lines = [
+            "| Tool | Purpose |",
+            "|------|---------|",
+            "| `search` | find things |",
+            "| see the section below | prose, not a tool |",
+        ]
+        self.assertEqual(parity.declared_names(lines), {"search"})
+
+
+class TestVersionPinning(unittest.TestCase):
+    def test_version_needs_a_package_argument(self):
+        test_dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, test_dir, ignore_errors=True)
+        os.makedirs(os.path.join(test_dir, ".claude-plugin"))
+        with open(
+            os.path.join(test_dir, ".claude-plugin", "plugin.json"),
+            "w",
+            encoding="utf-8",
+        ) as f:
+            json.dump(
+                {"mcpServers": {"srv": {"command": "npx", "args": ["--yes"]}}}, f
+            )
+        with self.assertRaisesRegex(ValueError, "no package argument"):
+            parity.server_spec(test_dir, version="1.2.3")
+
+
+class TestPackageCaches(unittest.TestCase):
+    """Where uvx/npx keep their caches before HOME is redirected, per OS."""
+
+    def test_windows_layout(self):
+        env = {"LOCALAPPDATA": os.path.join("L", "AppData"), "APPDATA": "R"}
+        with mock.patch.object(parity.os, "name", "nt"):
+            with mock.patch.dict(os.environ, env):
+                uv_cache = parity._default_uv_cache()
+                npm_cache = parity._default_npm_cache()
+            with mock.patch.dict(os.environ):
+                os.environ.pop("LOCALAPPDATA", None)
+                os.environ.pop("APPDATA", None)
+                missing = (parity._default_uv_cache(), parity._default_npm_cache())
+        self.assertEqual(uv_cache, os.path.join("L", "AppData", "uv", "cache"))
+        self.assertEqual(npm_cache, os.path.join("R", "npm-cache"))
+        self.assertEqual(missing, (None, None))
+
+    def test_posix_layout(self):
+        home = os.path.expanduser("~")
+        with mock.patch.object(parity.os, "name", "posix"):
+            with mock.patch.dict(os.environ, {"XDG_CACHE_HOME": "xdg"}):
+                xdg_uv = parity._default_uv_cache()
+            with mock.patch.dict(os.environ):
+                os.environ.pop("XDG_CACHE_HOME", None)
+                default_uv = parity._default_uv_cache()
+                npm_cache = parity._default_npm_cache()
+        self.assertEqual(xdg_uv, os.path.join("xdg", "uv"))
+        self.assertEqual(default_uv, os.path.join(home, ".cache", "uv"))
+        self.assertEqual(npm_cache, os.path.join(home, ".npm"))
+
+
+class TestKillTree(unittest.TestCase):
+    def _spawn(self, code):
+        # Own process group on POSIX: _kill_tree kills the whole group, which
+        # must never be the test runner's.
+        return subprocess.Popen(
+            [sys.executable, "-c", code], start_new_session=(os.name != "nt")
+        )
+
+    def test_exited_process_is_left_alone(self):
+        proc = self._spawn("pass")
+        proc.wait(timeout=60)
+        parity._kill_tree(proc)
+        self.assertEqual(proc.returncode, 0)
+
+    def test_running_process_is_killed(self):
+        proc = self._spawn("import time; time.sleep(120)")
+        self.addCleanup(proc.wait, 30)
+        parity._kill_tree(proc)
+        self.assertNotEqual(proc.wait(timeout=30), 0)
+
+    def test_vanished_process_group_still_kills_the_process(self):
+        # The group can be gone by the time it is looked up (the server
+        # exited between poll() and getpgid()); the process itself is then
+        # still killed.
+        proc = self._spawn("import time; time.sleep(120)")
+        self.addCleanup(proc.wait, 30)
+        with mock.patch.object(parity.os, "name", "posix"), mock.patch.object(
+            parity.os, "getpgid", side_effect=ProcessLookupError, create=True
+        ), mock.patch.object(parity.os, "killpg", create=True) as killpg:
+            parity._kill_tree(proc)
+        killpg.assert_not_called()
+        self.assertNotEqual(proc.wait(timeout=30), 0)
+
+
+class TestCheckOne(unittest.TestCase):
+    def test_missing_plugin_directory_is_an_error(self):
+        test_dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, test_dir, ignore_errors=True)
+        old_cwd = os.getcwd()
+        os.chdir(test_dir)
+        self.addCleanup(os.chdir, old_cwd)
+        with contextlib.redirect_stderr(io.StringIO()) as err:
+            result = parity._check_one("absent", True, 60, None)
+        self.assertEqual(result, (["absent: no such plugin directory"], [], []))
+        self.assertIn("[parity] start absent", err.getvalue())
+        self.assertIn("[parity] done  absent", err.getvalue())
 
 
 if __name__ == "__main__":
