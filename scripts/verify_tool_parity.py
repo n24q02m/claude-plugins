@@ -74,7 +74,9 @@ from utils import sanitize_log
 PLUGINS_DIR = "plugins"
 
 # A tool identifier as used across this stack: lowercase snake_case, optionally
-# with the ``__`` namespace separator (e.g. ``config__open_relay``).
+# with the ``__`` namespace separator (e.g. ``group__action``). No server in the
+# stack names a tool that way today; the form is still accepted so such a tool
+# is compared like any other.
 TOOL_NAME_RE = re.compile(r"^[a-z][a-z0-9]*(?:_{1,2}[a-z0-9]+)*$")
 
 # plugin.json env values are templates the client fills in

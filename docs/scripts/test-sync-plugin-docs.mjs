@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -25,4 +25,21 @@ test('sync classifies mcp-core as foundation and active servers in /servers/ ind
   assert.ok(existsSync(join(generatedRoot, 'wet', 'index.md')));
   assert.ok(existsSync(join(generatedRoot, 'mnemo', 'index.md')));
   assert.ok(existsSync(join(generatedRoot, 'crg', 'index.md')));
+});
+
+test('mcp-core is reduced to one archive notice that points to hull', () => {
+  execFileSync(process.execPath, [syncScript], { cwd: docsRoot, stdio: 'pipe' });
+
+  const section = join(generatedRoot, 'mcp-core');
+  assert.deepEqual(readdirSync(section).sort(), ['index.md', 'overview.md']);
+
+  const overview = readFileSync(join(section, 'overview.md'), 'utf8');
+  assert.match(overview, /\(https:\/\/github\.com\/n24q02m\/hull\)/);
+  assert.match(overview, /\(https:\/\/github\.com\/n24q02m\/mcp-core\)/);
+
+  const landing = readFileSync(join(section, 'index.md'), 'utf8');
+  assert.doesNotMatch(landing, /kept for migration history/);
+  for (const text of [overview, landing]) {
+    assert.doesNotMatch(text, /relay/i);
+  }
 });

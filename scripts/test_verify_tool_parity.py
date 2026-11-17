@@ -22,8 +22,10 @@ import verify_tool_parity as parity
 
 class TestDeclaredNames(unittest.TestCase):
     def test_h2_headings_are_tool_names(self):
-        md = "# Title\n\n## search\n\ntext\n\n## config__open_relay\n"
-        self.assertEqual(parity.declared_names(md.splitlines()), {"search", "config__open_relay"})
+        # ``__`` separates a namespace inside one tool name; the heading is
+        # kept whole, not split into two names or dropped as prose.
+        md = "# Title\n\n## search\n\ntext\n\n## group__action\n"
+        self.assertEqual(parity.declared_names(md.splitlines()), {"search", "group__action"})
 
     def test_prose_headings_are_ignored(self):
         md = "## Single-purpose memory tools\n\n## memory\n"
