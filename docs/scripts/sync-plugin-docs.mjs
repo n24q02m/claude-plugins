@@ -40,11 +40,6 @@ const PLUGIN_FILES = [
   'tools.md',
   'modes.md',
   'troubleshooting.md',
-  // mcp-core specific (Foundation library, no setup flow):
-  'architecture.md',
-  'trust-model.md',
-  'migration.md',
-  'shared-services.md',
 ];
 
 const REPO_RAW_BASE = 'https://github.com/n24q02m/claude-plugins/edit/main/plugins';
@@ -99,7 +94,7 @@ function displayName(pluginName, meta) {
 const FOUNDATION = 'mcp-core';
 const FOUNDATION_DESCRIPTION =
   'Archived foundation library (2026-10-24), superseded by hull (PyPI n24q02m-hull, npm @n24q02m/hull). ' +
-  'Pages are kept for migration history. Not a runnable MCP server.';
+  'Not a runnable MCP server.';
 const COORDINATION = '';
 const COORDINATION_DESCRIPTION =
   'Portable CLI/Skill coordination for peer agent sessions using shared Markdown and JSON files. ' +
