@@ -345,7 +345,13 @@ def live_names(
         env["XDG_CACHE_HOME"] = os.path.join(home, ".cache")
         if uv_cache and not env.get("UV_CACHE_DIR"):
             env["UV_CACHE_DIR"] = uv_cache
-        if npm_cache and not env.get("npm_config_cache"):
+        # npm reads npm_config_* keys case-insensitively, and on Windows
+        # os.environ hands every key over upper-cased, so a preset cache may be
+        # spelled NPM_CONFIG_CACHE. Adding the default beside it would give npm
+        # two cache settings, and the one that comes last wins.
+        if npm_cache and not any(
+            value for key, value in env.items() if key.lower() == "npm_config_cache"
+        ):
             env["npm_config_cache"] = npm_cache
 
         proc = subprocess.Popen(

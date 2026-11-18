@@ -632,6 +632,28 @@ class TestLiveProbe(FakeServerTestCase):
             names = parity.live_names(self.pdir, timeout=60)
         self.assertIn(f"UV_CACHE_DIR={preset}", names)
 
+    def test_a_preset_npm_cache_is_kept_whatever_its_case(self):
+        # npm reads npm_config_* keys case-insensitively and the last one wins,
+        # and on Windows os.environ hands every key over upper-cased. A preset
+        # spelled either way must stay the only npm cache the server sees.
+        self._manifest("env")
+        preset = os.path.join(self.test_dir, "npm-cache")
+        for spelling in ("NPM_CONFIG_CACHE", "npm_config_cache"):
+            with self.subTest(spelling=spelling), mock.patch.dict(os.environ):
+                for key in [k for k in os.environ if k.lower() == "npm_config_cache"]:
+                    del os.environ[key]
+                os.environ[spelling] = preset
+                with mock.patch.object(
+                    parity.subprocess, "Popen", wraps=subprocess.Popen
+                ) as popen:
+                    parity.live_names(self.pdir, timeout=60)
+                # The first launch is the server; a later one may be taskkill.
+                env = popen.call_args_list[0].kwargs["env"]
+                self.assertEqual(
+                    [v for k, v in env.items() if k.lower() == "npm_config_cache"],
+                    [preset],
+                )
+
     def test_plugin_without_mcp_server_has_no_live_names(self):
         with open(
             os.path.join(self.pdir, ".claude-plugin", "plugin.json"),
