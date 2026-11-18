@@ -12,7 +12,7 @@ This plugin supports 3 install methods. Pick the one that matches your use case:
 |---|---|---|---|
 | **1. Default** | Plugin install (`uvx`/`npx`) | stdio | Quick local start, single workstation, no HTTP needed. |
 | **2. Fallback** | Docker stdio (`docker run -i --rm`) | stdio | Windows/macOS where native uvx/npx hits PATH or version issues. |
-| **3. Self-host** | Docker HTTP (`docker run -p 8080:8080`) | HTTP | One always-on server shared across devices and sessions, claude.ai web compatibility. |
+| **3. Self-host** | Docker HTTP (`docker run -p 8080:8080`) | HTTP | One always-on server shared across devices and sessions, claude.ai web as a custom connector (conditions below). |
 
 > **Mutually exclusive -- pick ONE per plugin**: If you choose Method 2 (Docker stdio override) OR Method 3 (HTTP), do NOT also `/plugin install` this plugin via marketplace. Both load simultaneously and create duplicate entries in `/mcp` dialog (plugin's stdio + your override). Plugin matching is by **endpoint** (URL or command string) per CC docs, not by name -- and `npx`/`uvx` != `docker` != HTTP URL, so all three are distinct endpoints. Trade-off: choosing Method 2 or Method 3 means you lose this plugin's skills/agents/hooks/commands. For full plugin features, use Method 1 (default plugin install) with `userConfig` credentials prompted at install time.
 
@@ -75,7 +75,7 @@ Set `EMAIL_CREDENTIALS` in your shell profile or pass it inline.
 
 Switch to HTTP when you need any of:
 
-- **claude.ai web compatibility** -- claude.ai connects to HTTP MCP servers; stdio is desktop/CLI only.
+- **claude.ai web** -- claude.ai uses a remote server that you add as a custom connector by its HTTPS URL. claude.ai reaches that URL from Anthropic's infrastructure, so it must be reachable over the public internet; a loopback or private-network address is not. To send the bearer token, choose **No sign-in** and add a request header `Authorization` with the value `Bearer <your-token>`. Request-header authentication is in beta and available to a limited set of organizations: if the connector dialog has no **Request headers** section, claude.ai cannot send the token, so it cannot use this server. See [Add a connector that isn't in the directory](https://claude.com/docs/connectors/custom/add-unlisted).
 - **One server shared across N Claude Code sessions** -- no per-session process.
 - **Always-on persistent process** -- the mail accounts and saved Outlook tokens live on the server.
 

@@ -12,7 +12,7 @@ This plugin supports 3 install methods. Pick the one that matches your use case:
 |---|---|---|---|
 | **1. Default** | Plugin install (`npx`) | stdio | Quick local start, single workstation. |
 | **2. Fallback** | Docker stdio (`docker run -i --rm`) | stdio | Windows/macOS where native `npx` hits PATH or Node version issues. |
-| **3. Self-host** | Docker HTTP (`docker run -p 8080:8080`) | HTTP | Multi-device, team self-host, claude.ai web compatibility. |
+| **3. Self-host** | Docker HTTP (`docker run -p 8080:8080`) | HTTP | Multi-device, team self-host, claude.ai web as a custom connector (conditions below). |
 
 There is no endpoint hosted by the author; HTTP examples configure your own deployment.
 
@@ -88,7 +88,7 @@ Set `NOTION_TOKEN` in your shell profile or pass it inline.
 
 > **Switching transport vs. setting credentials**: the `userConfig` prompt only configures `NOTION_TOKEN` for stdio mode (Option 1). To switch transport to HTTP, override `mcpServers` in your client settings per the snippets below -- a separate path from `userConfig`, not driven by the install prompt.
 
-Stdio is enough for single-user local setups. Choose HTTP for claude.ai web compatibility, one server shared across many sessions, multi-device access, or a team where each user has their own bearer token.
+Stdio is enough for single-user local setups. Choose HTTP for one server shared across many sessions, multi-device access, a team where each user has their own bearer token, or claude.ai web. claude.ai uses a remote server that you add as a custom connector by its HTTPS URL. claude.ai reaches that URL from Anthropic's infrastructure, so it must be reachable over the public internet; a loopback or private-network address is not. To send the bearer token, choose **No sign-in** and add a request header `Authorization` with the value `Bearer <your-token>`. Request-header authentication is in beta and available to a limited set of organizations: if the connector dialog has no **Request headers** section, claude.ai cannot send the token, so it cannot use this server. See [Add a connector that isn't in the directory](https://claude.com/docs/connectors/custom/add-unlisted).
 
 HTTP is enabled with `--http`, `MCP_TRANSPORT=http`, or `TRANSPORT_MODE=http`. Clients authenticate with a bearer token, chosen by `MCP_AUTH_MODE`:
 

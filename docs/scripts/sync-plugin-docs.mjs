@@ -93,7 +93,7 @@ function displayName(pluginName, meta) {
 // server — frame it that way and skip the marketplace-install pointer.
 const FOUNDATION = 'mcp-core';
 const FOUNDATION_DESCRIPTION =
-  'Archived foundation library (2026-10-24), superseded by hull (PyPI n24q02m-hull, npm @n24q02m/hull). ' +
+  'Archived foundation library (2026-10-31), superseded by hull (PyPI n24q02m-hull, npm @n24q02m/hull). ' +
   'Not a runnable MCP server.';
 const COORDINATION = '';
 const COORDINATION_DESCRIPTION =

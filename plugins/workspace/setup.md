@@ -10,7 +10,7 @@ This plugin supports 3 install methods. Pick the one that matches your use case:
 |---|---|---|---|
 | **1. Default** | Plugin install (`npx`) | stdio | Quick local start, single workstation, your own Google OAuth client. |
 | **2. Fallback** | Docker stdio (`docker run -i --rm`) | stdio | Windows/macOS where native `npx` hits PATH or Node version issues. |
-| **3. Self-host** | Docker HTTP (`docker run -p 8080:8080`) | HTTP | Multi-user, multi-device, team deploy, claude.ai web compatibility. |
+| **3. Self-host** | Docker HTTP (`docker run -p 8080:8080`) | HTTP | Multi-user, multi-device, team deploy, claude.ai web as a custom connector (conditions below). |
 
 > **Warning -- mutually exclusive, pick ONE**: If you choose Method 2 or Method 3, do NOT also `/plugin install` this plugin via marketplace. Both load simultaneously and create duplicate entries in the `/mcp` dialog. Plugin matching is by **endpoint** (URL or command string), not by name -- and `npx` is not `docker` is not an HTTP URL, so all three are distinct endpoints. Trade-off: choosing Method 2 or Method 3 means you lose this plugin's hooks. For full plugin features, use Method 1.
 
@@ -119,7 +119,7 @@ The corresponding GHCR image is `ghcr.io/n24q02m/workspace:<version>`; select th
 Stdio mode is the default and works for single-user local development. Consider HTTP when you need any of:
 
 - **Multi-user / team sharing** -- each user is mapped by a bearer token to a namespace, and each namespace keeps its Google credentials in its own bucket, so one deployment serves several people without them sharing an account
-- **claude.ai web compatibility** -- connect the server directly from claude.ai without a local CLI
+- **claude.ai web** -- claude.ai uses a remote server that you add as a custom connector by its HTTPS URL. claude.ai reaches that URL from Anthropic's infrastructure, so it must be reachable over the public internet; a loopback or private-network address is not. To send the bearer token, choose **No sign-in** and add a request header `Authorization` with the value `Bearer <your-token>`. Request-header authentication is in beta and available to a limited set of organizations: if the connector dialog has no **Request headers** section, claude.ai cannot send the token, so it cannot use this server. See [Add a connector that isn't in the directory](https://claude.com/docs/connectors/custom/add-unlisted). Each user's Google account is still added on the server host with `workspace auth --user <namespace>`; Google consent is not served over HTTP.
 - **1 server shared across N Claude Code sessions** -- no per-session process proliferation
 - **Multi-device access** -- credentials persist server-side; new devices just point at the URL with their bearer token
 
