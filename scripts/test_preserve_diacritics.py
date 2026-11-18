@@ -37,6 +37,9 @@ def _assert(cond: bool, label: str) -> None:
     else:
         print(f"  FAIL: {label}")
         _failures.append(label)
+        # pytest (the CI runner) only fails a test that raises; recording the
+        # label alone would let a broken check pass there.
+        raise AssertionError(label)
 
 
 def test_case_1_em_dash_to_dashdash() -> None:
@@ -235,6 +238,60 @@ def test_case_15_run_git_unicode_decode_error() -> None:
         _assert(res == "valid \ufffd invalid", "uses replace for invalid utf-8")
 
 
+def test_case_16_diacritic_strip_with_small_edit_flagged() -> None:
+    print("Case 16: stripping diacritics while editing a word should FAIL")
+    old = "Ti\u1ebfng Vi\u1ec7t r\u1ea5t \u0111\u1eb9p"
+    new = "Tieng Viet rat dep lam"
+    v = check_pair(old, new)
+    _assert(
+        [r for r, _, _ in v] == ["vietnamese-diacritic-strip"],
+        "detects a strip hidden behind an extra word",
+    )
+
+
+def test_case_17_single_diacritic_lost_with_edit_passes() -> None:
+    print("Case 17: one diacritic lost in an edited line should PASS")
+    old = "Vi\u1ec7t Nam"
+    new = "Viet Nam!"
+    v = check_pair(old, new)
+    _assert(len(v) == 0, "one lost diacritic in an edit is not flagged")
+
+
+def test_case_18_diacritics_gone_in_full_rewrite_passes() -> None:
+    print("Case 18: replacing Vietnamese with unrelated text should PASS")
+    old = "Ti\u1ebfng Vi\u1ec7t r\u1ea5t \u0111\u1eb9p"
+    new = "Completely different English sentence here"
+    v = check_pair(old, new)
+    _assert(len(v) == 0, "full rewrite of a Vietnamese line not flagged")
+
+
+def test_case_19_emoji_kept_passes() -> None:
+    print("Case 19: editing text around a kept emoji should PASS")
+    old = "Deploy \U0001f680 done"
+    new = "Deploy \U0001f680 finished"
+    v = check_pair(old, new)
+    _assert(len(v) == 0, "kept emoji not flagged")
+
+
+def test_case_20_emoji_gone_in_full_rewrite_passes() -> None:
+    print("Case 20: replacing an emoji line with unrelated text should PASS")
+    old = "Deploy complete \U0001f680"
+    new = "Nothing to see here at all, totally new"
+    v = check_pair(old, new)
+    _assert(len(v) == 0, "full rewrite of an emoji line not flagged")
+
+
+def test_case_21_similar_edge_cases() -> None:
+    print("Case 21: _similar on empty and unrelated strings")
+    _assert(similar("", ""), "two empty strings are similar")
+    _assert(not similar("abc", ""), "text vs empty is not similar")
+    _assert(not similar("", "abc"), "empty vs text is not similar")
+    _assert(
+        not similar("abcdefgh", "zyxwvuts"),
+        "same length, no characters in order: not similar",
+    )
+
+
 def main() -> int:
     tests = [
         test_case_1_em_dash_to_dashdash,
@@ -255,9 +312,18 @@ def main() -> int:
         test_case_13_run_git_success,
         test_case_14_run_git_with_pathspecs,
         test_case_15_run_git_unicode_decode_error,
+        test_case_16_diacritic_strip_with_small_edit_flagged,
+        test_case_17_single_diacritic_lost_with_edit_passes,
+        test_case_18_diacritics_gone_in_full_rewrite_passes,
+        test_case_19_emoji_kept_passes,
+        test_case_20_emoji_gone_in_full_rewrite_passes,
+        test_case_21_similar_edge_cases,
     ]
     for t in tests:
-        t()
+        try:
+            t()
+        except AssertionError:
+            pass  # already recorded in _failures; keep running the rest
     print()
     if _failures:
         print(f"FAILED: {len(_failures)} test(s)")

@@ -1,4 +1,10 @@
+import contextlib
+import io
 import json
+import os
+import runpy
+import shutil
+import tempfile
 import unittest
 import urllib.error
 from unittest.mock import MagicMock, patch
@@ -601,6 +607,179 @@ class TestCheckVersionFreshness(unittest.TestCase):
         status, tag = check_version_freshness.get_latest_tag_api("org/repo")
         self.assertEqual(status, "error")
         self.assertEqual(tag, "unexpected")
+
+    @patch("check_version_freshness._opener.open")
+    def test_get_latest_tag_api_http_error_other_than_404(self, mock_urlopen):
+        """Only 404 means "no release"; a rate limit or auth failure is an error."""
+        mock_urlopen.side_effect = urllib.error.HTTPError(
+            "url", 403, "Forbidden", {}, None
+        )
+
+        status, tag = check_version_freshness.get_latest_tag_api("org/repo")
+        self.assertEqual(status, "error")
+        self.assertEqual(tag, "HTTP Error 403: Forbidden")
+
+    def test_no_auth_redirect_handler_passes_through_declined_redirect(self):
+        """A redirect the base handler declines (returns None) stays declined."""
+        req = urllib.request.Request(
+            "https://api.github.com/test", headers={"Authorization": "token secret"}
+        )
+        handler = check_version_freshness.NoAuthRedirectHandler()
+        with patch(
+            "urllib.request.HTTPRedirectHandler.redirect_request", return_value=None
+        ):
+            redirected_req = handler.redirect_request(
+                req, MagicMock(), 302, "Found", MagicMock(), "https://example.com/"
+            )
+        self.assertIsNone(redirected_req)
+
+    # ------------------------------------------------------------------
+    # GraphQL batch fetch: when it must stay out of the way
+    # ------------------------------------------------------------------
+
+    def _graphql_response(self, payload):
+        response = MagicMock()
+        response.read.return_value = json.dumps(payload).encode()
+        response.__enter__.return_value = response
+        return response
+
+    @patch("check_version_freshness._opener.open")
+    def test_graphql_is_skipped_without_a_token(self, mock_urlopen):
+        with patch.dict("os.environ"):
+            os.environ.pop("GITHUB_TOKEN", None)
+            os.environ.pop("GH_TOKEN", None)
+            check_version_freshness._fetch_latest_tags_graphql("owner", ["repo-a"])
+
+        mock_urlopen.assert_not_called()
+        self.assertEqual(check_version_freshness._latest_tag_cache, {})
+
+    @patch.dict("os.environ", {"GITHUB_TOKEN": "secret-token"}, clear=False)
+    @patch("check_version_freshness._opener.open")
+    def test_graphql_is_skipped_when_every_repo_is_cached(self, mock_urlopen):
+        check_version_freshness._latest_tag_cache["owner/repo-a"] = ("ok", "1.0.0")
+
+        check_version_freshness._fetch_latest_tags_graphql("owner", ["repo-a"])
+
+        mock_urlopen.assert_not_called()
+
+    @patch.dict("os.environ", {"GITHUB_TOKEN": "secret-token"}, clear=False)
+    @patch("check_version_freshness._opener.open")
+    def test_graphql_error_payload_leaves_cache_for_rest(self, mock_urlopen):
+        mock_urlopen.return_value = self._graphql_response(
+            {"errors": [{"message": "rate limited"}]}
+        )
+
+        check_version_freshness._fetch_latest_tags_graphql("owner", ["repo-a"])
+
+        self.assertEqual(check_version_freshness._latest_tag_cache, {})
+
+    @patch.dict("os.environ", {"GITHUB_TOKEN": "secret-token"}, clear=False)
+    @patch("check_version_freshness._opener.open")
+    def test_graphql_repo_without_release_and_unknown_repo(self, mock_urlopen):
+        """A repo with no release is cached as such; a repo GraphQL could not
+        resolve (null) is left for the REST fallback to decide."""
+        mock_urlopen.return_value = self._graphql_response(
+            {"data": {"repo_repo_a": {"latestRelease": None}, "repo_repo_b": None}}
+        )
+
+        check_version_freshness._fetch_latest_tags_graphql(
+            "owner", ["repo-a", "repo-b"]
+        )
+
+        self.assertEqual(
+            check_version_freshness._latest_tag_cache,
+            {"owner/repo-a": ("no-release", None)},
+        )
+
+    @patch.dict("os.environ", {"GITHUB_TOKEN": "secret-token"}, clear=False)
+    @patch("check_version_freshness._opener.open")
+    def test_graphql_failure_is_logged_and_left_for_rest(self, mock_urlopen):
+        mock_urlopen.side_effect = urllib.error.URLError("connection reset")
+
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            check_version_freshness._fetch_latest_tags_graphql("owner", ["repo-a"])
+
+        self.assertEqual(
+            out.getvalue(),
+            "::debug ::GraphQL batch fetch failed: <urlopen error connection reset>\n",
+        )
+        self.assertEqual(check_version_freshness._latest_tag_cache, {})
+
+    # ------------------------------------------------------------------
+    # Marketplace version from the plugin's own manifests (real files)
+    # ------------------------------------------------------------------
+
+    def _plugin_dir(self):
+        root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        return root
+
+    def test_marketplace_version_from_unparseable_plugin_json(self):
+        source = self._plugin_dir()
+        os.makedirs(os.path.join(source, ".claude-plugin"))
+        with open(os.path.join(source, ".claude-plugin", "plugin.json"), "w") as f:
+            f.write("{not json")
+        # A valid fallback must not mask a broken primary manifest.
+        with open(os.path.join(source, "gemini-extension.json"), "w") as f:
+            json.dump({"version": "9.9.9"}, f)
+
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            version = check_version_freshness._get_marketplace_version(source)
+
+        self.assertEqual(version, "unknown")
+        self.assertTrue(out.getvalue().startswith("::warning ::Failed to parse "))
+        self.assertIn("plugin.json", out.getvalue())
+
+    def test_marketplace_version_from_unparseable_gemini_extension(self):
+        source = self._plugin_dir()
+        with open(os.path.join(source, "gemini-extension.json"), "w") as f:
+            f.write("{not json")
+
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            version = check_version_freshness._get_marketplace_version(source)
+
+        self.assertEqual(version, "unknown")
+        self.assertTrue(out.getvalue().startswith("::warning ::Failed to parse "))
+        self.assertIn("gemini-extension.json", out.getvalue())
+
+    def test_check_plugin_non_string_source(self):
+        result = check_version_freshness.check_plugin(
+            {"name": "valid-plugin", "source": ["./plugins/valid-plugin"]}, "n24q02m"
+        )
+        self.assertEqual(
+            result,
+            {
+                "status": "error",
+                "name": "valid-plugin",
+                "marketplace_ver": "unknown",
+                "error": "invalid source type",
+            },
+        )
+
+    # run_path builds a fresh module with its own opener, so patch the class.
+    @patch("urllib.request.OpenerDirector.open")
+    def test_runs_as_a_script(self, mock_urlopen):
+        """Run outside a marketplace checkout, the script exits non-zero
+        before making any request."""
+        cwd = self._plugin_dir()
+        old_cwd = os.getcwd()
+        os.chdir(cwd)
+        self.addCleanup(os.chdir, old_cwd)
+        script = os.path.join(
+            os.path.dirname(os.path.abspath(check_version_freshness.__file__)),
+            "check_version_freshness.py",
+        )
+
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), self.assertRaises(SystemExit) as cm:
+            runpy.run_path(script, run_name="__main__")
+
+        self.assertEqual(cm.exception.code, 1)
+        self.assertIn("::error ::Failed to load marketplace.json", out.getvalue())
+        mock_urlopen.assert_not_called()
 
 
 if __name__ == "__main__":

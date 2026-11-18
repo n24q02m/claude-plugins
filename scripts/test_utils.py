@@ -1,7 +1,7 @@
 import unittest
 import os
 import tempfile
-from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path
+from utils import sanitize_log, PLUGIN_NAME_PATTERN, get_safe_path, _is_within
 
 
 class TestUtils(unittest.TestCase):
@@ -124,6 +124,11 @@ class TestUtils(unittest.TestCase):
             # Lexically it resolves to base/outside (if base/link/.. is simplified)
             with self.assertRaisesRegex(ValueError, "Path traversal detected"):
                 get_safe_path(base, "link/../outside/secret.txt")
+
+    def test_is_within_is_false_when_paths_cannot_be_compared(self):
+        """Paths with no common root (another drive, or absolute vs relative)
+        are not contained in each other; commonpath raises for them."""
+        self.assertFalse(_is_within(os.path.abspath(os.sep), "relative"))
 
 
 if __name__ == "__main__":

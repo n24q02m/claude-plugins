@@ -175,6 +175,49 @@ class TestYieldDiffPairs(unittest.TestCase):
             results = list(yield_diff_pairs(files))
             self.assertEqual(results, [("file55.txt", 1, "old", "new")])
 
+    def test_lines_before_any_file_header_are_dropped(self):
+        # A hunk with no file to attribute it to cannot be reported, so its
+        # pairs must not leak into the next file's results.
+        with patch.object(_MOD, "_run_git") as mock_git:
+            mock_git.return_value = (
+                "@@ -1 +1 @@\n"
+                "-orphan old\n"
+                "+orphan new\n"
+                " orphan context\n"
+                "diff --git file1.txt file1.txt\n"
+                "--- file1.txt\n"
+                "+++ file1.txt\n"
+                "@@ -2 +2 @@\n"
+                "-old\n"
+                "+new\n"
+            )
+            results = list(yield_diff_pairs(["file1.txt"]))
+            self.assertEqual(results, [("file1.txt", 2, "old", "new")])
+
+    def test_unparsed_hunk_header_still_yields_its_pairs(self):
+        # A combined-diff header (``@@@``) does not match the unified-diff
+        # pattern; its pairs are still checked, at the last known position.
+        with patch.object(_MOD, "_run_git") as mock_git:
+            mock_git.return_value = (
+                "diff --git file1.txt file1.txt\n"
+                "--- file1.txt\n"
+                "+++ file1.txt\n"
+                "@@ -3 +3 @@\n"
+                "-old1\n"
+                "+new1\n"
+                "@@@ -7 -7 +7 @@@\n"
+                "-old2\n"
+                "+new2\n"
+            )
+            results = list(yield_diff_pairs(["file1.txt"]))
+            self.assertEqual(
+                results,
+                [
+                    ("file1.txt", 3, "old1", "new1"),
+                    ("file1.txt", 3, "old2", "new2"),
+                ],
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
