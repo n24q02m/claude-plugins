@@ -1,5 +1,5 @@
 # Test runner for the Python checks under scripts/ and plugins/.
 # CI and `mise run test` install exactly these pins; Renovate keeps them current.
-pytest==9.1.1
+pytest==9.2.0
 pytest-cov==7.1.0
-coverage==7.16.1
+coverage==7.17.3
