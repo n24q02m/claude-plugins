@@ -15,7 +15,7 @@ Four action-driven tools -- `messages`, `folders`, `attachments`, and `config` -
 
 ## Clients
 
-Runs over stdio by default (single user, credentials from environment variables) and can run as a single-user HTTP server for self-hosting. There is no hosted public instance. Works with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web for a self-hosted HTTP server.
+Runs over stdio by default (single user, credentials from environment variables) and can run as a single-user HTTP server for self-hosting. There is no hosted public instance. Works with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web as a custom connector for a self-hosted HTTP server hosted on the internet, when your organization has request-header authentication (beta; see [setup](/servers/email/setup/)).
 
 ## Configuration
 

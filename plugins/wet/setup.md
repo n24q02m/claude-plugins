@@ -2,7 +2,7 @@
 
 wet is a self-hosted web search, extraction, and library-docs server. It speaks **Streamable HTTP only** on a single `/mcp` endpoint -- there is no stdio transport and no hosted public instance. You run one instance (locally or on a host you control) and point MCP clients at it.
 
-The repo is `n24q02m/wet`; the PyPI package is `n24q02m-wet` and ships the `wet` command (also installed as `n24q02m-wet`; `wet-mcp` is the frozen pre-rename stub). `wet` is both the control plane and one thin client:
+The repo is `n24q02m/wet`; the PyPI package is `n24q02m-wet` and ships the `wet` command (also installed as `n24q02m-wet`, and as `wet-mcp`, a legacy alias for `uvx wet-mcp` configs; the separate `wet-mcp` PyPI package is a transitional stub that installs `n24q02m-wet`). `wet` is both the control plane and one thin client:
 
 - `wet server start|stop|status` -- run the HTTP server (detached by default, `--foreground` to block).
 - `wet config init|path|show|get|set` -- manage `~/.wet/config.toml`.
@@ -19,7 +19,7 @@ The repo is `n24q02m/wet`; the PyPI package is `n24q02m-wet` and ships the `wet`
 | **1. Plugin (skill + HTTP entry)** | Claude Code plugin installs the skill and an HTTP entry pointing at `WET_URL`; you start the instance yourself | Claude Code users who want the skill |
 | **2. Local server + `claude mcp add`** | `wet server start` on your machine | Any MCP client, no plugin |
 | **3. docker compose (token auth)** | Always-on container, published on loopback | One instance shared across sessions and clients |
-| **4. Remote host** | Your instance behind a TLS proxy at `https://<your-host>/mcp` | Multi-device, claude.ai web, team use |
+| **4. Remote host** | Your instance behind a TLS proxy at `https://<your-host>/mcp` | Multi-device, claude.ai web (conditions below), team use |
 
 Every method needs a running instance.
 
@@ -183,7 +183,7 @@ Run the instance on a reachable host with `auth = "token"` or `"multi"`, and fro
 claude mcp add --transport http wet https://<your-host>/mcp --header "Authorization: Bearer <token>"
 ```
 
-claude.ai web and other remote clients connect the same way.
+Other remote clients connect the same way. claude.ai web adds the instance as a custom connector by its HTTPS URL. A connector added by URL is meant for a server hosted on the internet; for a server inside a private network, claude.ai needs an MCP tunnel, a research preview available to Claude Enterprise organizations by request (see [MCP tunnels](https://claude.com/docs/connectors/mcp-tunnels/overview)). To send the bearer token, choose **No sign-in** and add a request header `Authorization` with the value `Bearer <your-token>`. Request-header authentication is in beta and available to a limited set of organizations: if the connector dialog has no **Request headers** section, claude.ai cannot send the token, so it cannot use this server. See [Add a connector that isn't in the directory](https://claude.com/docs/connectors/custom/add-unlisted).
 
 ## Backup and migration
 

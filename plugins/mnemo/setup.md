@@ -2,10 +2,10 @@
 
 mnemo is a self-hosted memory server. It speaks **Streamable HTTP only** on a single `/mcp` endpoint -- there is no stdio transport and no hosted public instance. You run one instance (locally or on a host you control) and point MCP clients at it.
 
-The repo is `n24q02m/mnemo`; the PyPI package is `n24q02m-mnemo` and ships the server (also installed as `n24q02m-mnemo`; `mnemo-mcp` is the frozen pre-rename stub) plus the `mnemo` memory CLI:
+The repo is `n24q02m/mnemo`; the PyPI package is `n24q02m-mnemo` (the separate `mnemo-mcp` PyPI package is a transitional stub that installs it). It ships the server plus the `mnemo` memory CLI:
 
-- `n24q02m-mnemo` (or the `mnemo-mcp` stub) -- a bare invocation starts the HTTP server; the subcommands `config-init`, `warmup`, `token-hash`, and `token-verify` run one operator action and exit.
-- `mnemo` -- a CLI over the memory database (`capture`, `recall`, `reflect`, `fetch`, `standing-*`, each taking `--db <path>`). It never starts a server.
+- `n24q02m-mnemo` (also installed as `mnemo-mcp`, a legacy alias for `uvx mnemo-mcp` configs) -- a bare invocation starts the HTTP server; the subcommands `config-init`, `config` (`init`, `path`, `show`, `get`, `set`), `warmup`, `token-hash`, and `token-verify` run one operator action and exit.
+- `mnemo` (also installed as `mnemo-pilot`) -- a CLI over the memory database (`capture`, `recall`, `reflect`, `fetch`, `standing-*`, each taking `--db <path>`). It never starts a server.
 
 ## Method overview
 
@@ -14,7 +14,7 @@ The repo is `n24q02m/mnemo`; the PyPI package is `n24q02m-mnemo` and ships the s
 | **1. Plugin + running instance** | Claude Code plugin (skills + hooks) connects to your instance via `MNEMO_URL` | Claude Code users who want the skills and hooks |
 | **2. Local server + `claude mcp add`** | `uvx --from n24q02m-mnemo n24q02m-mnemo` on your machine | Any MCP client, no plugin |
 | **3. docker compose (token auth)** | Always-on container, published on loopback | One instance shared across sessions and clients |
-| **4. Remote host** | Your instance behind a TLS proxy at `https://<your-host>/mcp` | Multi-device, claude.ai web, team use |
+| **4. Remote host** | Your instance behind a TLS proxy at `https://<your-host>/mcp` | Multi-device, claude.ai web (conditions below), team use |
 
 Every method needs a running instance -- Method 1 only changes how Claude Code connects to it.
 
@@ -164,7 +164,7 @@ Run the instance on a reachable host with `auth = "token"` or `"multi"`, and fro
 claude mcp add --transport http mnemo https://<your-host>/mcp --header "Authorization: Bearer <token>"
 ```
 
-claude.ai web and other remote clients connect the same way.
+Other remote clients connect the same way. claude.ai web adds the instance as a custom connector by its HTTPS URL. A connector added by URL is meant for a server hosted on the internet; for a server inside a private network, claude.ai needs an MCP tunnel, a research preview available to Claude Enterprise organizations by request (see [MCP tunnels](https://claude.com/docs/connectors/mcp-tunnels/overview)). To send the bearer token, choose **No sign-in** and add a request header `Authorization` with the value `Bearer <your-token>`. Request-header authentication is in beta and available to a limited set of organizations: if the connector dialog has no **Request headers** section, claude.ai cannot send the token, so it cannot use this server. See [Add a connector that isn't in the directory](https://claude.com/docs/connectors/custom/add-unlisted).
 
 ## Backup and migration
 
