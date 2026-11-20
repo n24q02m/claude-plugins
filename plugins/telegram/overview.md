@@ -16,7 +16,7 @@ Four composite tools -- `message`, `chat`, `media`, and `contact` -- driven by a
 
 ## Clients
 
-Runs over stdio by default (single user) and can run as a self-hosted HTTP server with token or per-user (`multi`) auth. There is no hosted public instance. Works with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web as a custom connector for a self-hosted HTTP server that is reachable over the public internet, when your organization has request-header authentication (beta; see [setup](/servers/telegram/setup/)). See the [modes overview](/get-started/modes-overview/).
+Runs over stdio by default (single user) and can run as a self-hosted HTTP server with token or per-user (`multi`) auth. There is no hosted public instance. Works with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web as a custom connector for a self-hosted HTTP server hosted on the internet, when your organization has request-header authentication (beta; see [setup](/servers/telegram/setup/)). See the [modes overview](/get-started/modes-overview/).
 
 ## Configuration
 
