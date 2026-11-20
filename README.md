@@ -74,16 +74,15 @@ Or browse all plugins: run `/plugin` and go to the **Discover** tab.
 
 ### Not marketplace plugins
 
-Four n24q02m projects share this documentation site without getting a marketplace entry. The test is the plugin layout: the project itself ships `.claude-plugin/plugin.json` plus a `skills/` or `hooks/` tree over an MCP server entrypoint, which is what `plugin-sync` copies from. None of the four does, so an entry here would be a copy with no upstream to sync from.
+Three n24q02m projects share this documentation site without getting a marketplace entry. The test is the plugin layout: the project itself ships `.claude-plugin/plugin.json` plus a `skills/` or `hooks/` tree over an MCP server entrypoint, which is what `plugin-sync` copies from. None of the three does, so an entry here would be a copy with no upstream to sync from.
 
 | Project | Kind | Why it is not a marketplace plugin |
 |---|---|---|
 | [hull](https://github.com/n24q02m/hull) | Foundation library — PyPI `n24q02m-hull`, npm `@n24q02m/hull` | The shared HTTP transport, token auth, credential store and CLI core that every active server above depends on; it has no server of its own to launch and reaches you as a dependency. |
 | [Fastretrieval](https://docs.n24q02m.com/reference/fastretrieval/) | Library — PyPI `fastretrieval` | The embedding and rerank runtime wet, mnemo and crg call in-process; its only executable is `fastretrieval-server`, an `/embed` + `/rerank` HTTP service, not an MCP endpoint. |
-| [sillstone](https://github.com/n24q02m/sillstone) | Rust library suite, published with the `sillstone` CLI | Media, hashing and array crates you link into a Rust project; the CLI flattens the same facade, but the project ships no MCP server. |
 | [skret](https://github.com/n24q02m/skret) | CLI — Go binary | You install the binary to inject secrets into a command, CI job or container; `skret-mcp` is a second binary built from the same release that serves one project over stdio MCP, not a plugin directory, and the tool is chosen per machine rather than per chat client. |
 
-Install each the way its project documents it: `pip install n24q02m-hull`, `pip install fastretrieval`, a `sillstone-*` crate (or `cargo install sillstone-cli` for the `sillstone` binary), or the skret install script. Adding `.claude-plugin/` to one of them is what would make it a marketplace entry — the entry does not create the capability.
+Install each the way its project documents it: `pip install n24q02m-hull`, `pip install fastretrieval`, or the skret install script. Adding `.claude-plugin/` to one of them is what would make it a marketplace entry — the entry does not create the capability.
 
 ## Configuration
 
