@@ -10,7 +10,7 @@ New features often ship as a beta before the stable release. `uvx`/`pip` will no
 uvx --python 3.13 --from n24q02m-wet==<X.Y.ZbN> wet server start
 ```
 
-Replace `<X.Y.ZbN>` with the exact beta version (for example, the value shown on the package's release history). Drop the version pin to return to the latest stable.
+Replace `<X.Y.ZbN>` with the exact beta version (for example, the value shown on the package's release history). Replace `==<X.Y.ZbN>` with `@latest` to return to the latest stable release. Without a version, `uvx` does not check for a newer release and keeps using a version it already cached.
 
 ## Server fails to start on Python 3.14+
 

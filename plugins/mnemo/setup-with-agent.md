@@ -15,7 +15,7 @@ Requires Python 3.13 and `uv`.
 **Local, single user (no-auth, loopback only):**
 
 ```bash
-uvx --from n24q02m-mnemo n24q02m-mnemo
+uvx --python 3.13 --from n24q02m-mnemo n24q02m-mnemo
 # endpoint: http://127.0.0.1:8000/mcp
 ```
 
