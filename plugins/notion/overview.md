@@ -20,7 +20,7 @@ Defaults to `stdio` for single-user local use, and also runs as a self-hosted HT
 
 ## Configuration
 
-Needs a Notion integration token (`NOTION_TOKEN`, starts with `ntn_`). Supply it through the plugin's `NOTION_TOKEN` field or an environment variable, or store it once with `notion auth` (saved under `~/.better-notion/`). In HTTP `multi` mode each user gets their own token, stored with `notion auth --user <namespace>` on the server host. The integration must be shared with each page or database you want the agent to reach. Use a placeholder in shared config and never commit a real token. Full walkthrough in [setup](/servers/notion/setup/).
+Needs a Notion integration token (`NOTION_TOKEN`, starts with `ntn_`). Supply it through the plugin's `NOTION_TOKEN` field or an environment variable, or store it once with `notion auth` (saved under `~/.notion/`). In HTTP `multi` mode each user gets their own token, stored with `notion auth --user <namespace>` on the server host. The integration must be shared with each page or database you want the agent to reach. Use a placeholder in shared config and never commit a real token. Full walkthrough in [setup](/servers/notion/setup/).
 
 ## Next steps
 

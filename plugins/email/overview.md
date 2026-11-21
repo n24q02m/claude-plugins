@@ -15,11 +15,11 @@ Four action-driven tools -- `messages`, `folders`, `attachments`, and `config` -
 
 ## Clients
 
-Runs over stdio by default (single user, credentials from environment variables) and can run as a single-user HTTP server for self-hosting. There is no hosted public instance. Works with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web as a custom connector for a self-hosted HTTP server hosted on the internet, when your organization has request-header authentication (beta; see [setup](/servers/email/setup/)).
+Runs over stdio by default (single user, credentials from an accounts file or environment variables) and can run as a self-hosted HTTP server: one principal behind a shared bearer token, or several users with separate mailboxes (`MCP_AUTH_MODE=multi`). There is no hosted public instance. Works with any MCP client -- Claude Code, Codex, OpenCode, Gemini CLI, Cursor, Windsurf, and claude.ai web as a custom connector for a self-hosted HTTP server hosted on the internet, when your organization has request-header authentication (beta; see [setup](/servers/email/setup/)).
 
 ## Configuration
 
-Needs IMAP/SMTP credentials for one or more accounts, supplied as `EMAIL_CREDENTIALS` (or `EMAIL_USER` + `EMAIL_APP_PASSWORD`) in the server environment. Most providers require an app-specific password rather than your login password. Outlook/Hotmail/Live accounts can instead sign in once with `email auth outlook <address>` (OAuth device code). Use placeholders in shared config and never commit real credentials. Full walkthrough in [setup](/servers/email/setup/).
+Needs IMAP/SMTP credentials for one or more accounts, supplied in an accounts file (`EMAIL_ACCOUNTS_FILE`, default `~/.email/accounts.toml`) or as `EMAIL_CREDENTIALS` (or `EMAIL_USER` + `EMAIL_APP_PASSWORD`) in the server environment. Most providers require an app-specific password rather than your login password. Outlook/Hotmail/Live accounts can instead sign in once with `email auth outlook <address>` (OAuth device code). Use placeholders in shared config and never commit real credentials. Full walkthrough in [setup](/servers/email/setup/).
 
 ## Next steps
 

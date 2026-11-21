@@ -7,10 +7,10 @@ Common issues specific to wet. For problems shared across the stack, see the [ge
 New features often ship as a beta before the stable release. `uvx`/`pip` will not pick a prerelease unless you pin the exact version:
 
 ```sh
-uvx --python 3.13 --from n24q02m-wet==<X.Y.0bN> wet server start
+uvx --python 3.13 --from n24q02m-wet==<X.Y.ZbN> wet server start
 ```
 
-Replace `<X.Y.0bN>` with the exact beta version (for example, the value shown on the package's release history). Drop the version pin to return to the latest stable.
+Replace `<X.Y.ZbN>` with the exact beta version (for example, the value shown on the package's release history). Drop the version pin to return to the latest stable.
 
 ## Server fails to start on Python 3.14+
 
@@ -32,7 +32,7 @@ It reports the pid, the lock, and HTTP liveness for the configured port. If HTTP
 
 ## 401 Unauthorized
 
-The server stores only `token_hash`; clients must send the **plaintext** token as `Authorization: Bearer <token>`. A `scrypt$...` hash in the client config is wrong. Regenerate the hash with `wet token hash <token>` if you are unsure which token the server holds.
+The server stores only `token_hash`; clients must send the **plaintext** token as `Authorization: Bearer <token>`. A `scrypt$...` hash in the client config is wrong. Regenerate the hash with `wet token hash` (it reads the token from stdin or a hidden prompt, never from the command line) if you are unsure which token the server holds.
 
 ## Server refuses to bind (no-auth)
 
@@ -50,13 +50,13 @@ or `config(action="warmup")` from a connected client.
 
 ## Search returns an error or no results
 
-- Under `uvx`, local SearXNG cannot auto-start. If no backend that can run there is configured, `search`, `research`, `docs`, and `similar` return an error. Set `SEARCH_BACKENDS` on the server host to a keyed provider or to `duckduckgo,startpage`, or point `SEARXNG_URL` at an external SearXNG.
+- Under `uvx`, a local SearXNG cannot start. If `SEARCH_BACKENDS` contains no backend that can run there (for example only `searxng` without an external `SEARXNG_URL`, or keyed providers without their keys), `search`, `research`, `docs`, and `similar` return an error. Unset `SEARCH_BACKENDS` on the server host to use the default `tavily,duckduckgo` chain, add `duckduckgo`/`startpage` or a keyed provider with its key, or point `SEARXNG_URL` at an external SearXNG.
 - Read the `search_backend` trace in the response: it shows which backends were requested and attempted and whether the chain fell back or was exhausted.
 - `duckduckgo` and `startpage` can hit bot challenges from datacenter IPs; the chain advances to the next backend.
 
 ## SearXNG port conflict
 
-If the embedded SearXNG port 41592 is already in use, move it on the server host:
+This applies only if you opted into a local SearXNG with `WET_AUTO_SEARXNG=true` (off by default). If its port 41592 is already in use, move it on the server host:
 
 ```sh
 export WET_SEARXNG_PORT=<alternate-port>
@@ -68,7 +68,7 @@ Changing the `[models.embed]` model makes existing vectors unusable, and the ser
 
 ## LLM-backed features return an error or are disabled
 
-`expand`, `extract_structured`, `extract(action="agent")`, and the `similar` fallback need a working `[models.chat]` cell. Set its `api_key` in `~/.wet/config.toml` or through `HULL_CHAT_API_KEY` (or `OPENROUTER_API_KEY` for the default OpenRouter `base_url`) on the server host, then restart.
+`expand`, `extract_structured`, and `extract(action="agent")` need a working `[models.chat]` cell; without one, `similar` falls back to the page title for its keywords. Set its `api_key` in `~/.wet/config.toml` or through `HULL_CHAT_API_KEY` (or `OPENROUTER_API_KEY` for the default OpenRouter `base_url`) on the server host, then restart.
 
 ## `convert` rejects a path
 
@@ -80,7 +80,7 @@ Docs discovery calls the GitHub API, limited to 60 requests per hour without a t
 
 ## Transport mismatch / duplicate entries in `/mcp`
 
-Claude Code matches MCP servers by **endpoint** (URL), not by name. Do not register the same instance twice: if the plugin's `WET_URL` already points at it, skip `claude mcp add`. A failed `plugin:wet:wet` entry means nothing answers at `WET_URL`: wet 3.20.0 is HTTP-only and the plugin does not start a server, so run `wet server start` (or fix `WET_URL`/`WET_TOKEN`) and restart Claude Code. See [setup](/servers/wet/setup/) for the full method matrix.
+Claude Code matches MCP servers by **endpoint** (URL), not by name. Do not register the same instance twice: if the plugin's `WET_URL` already points at it, skip `claude mcp add`. A failed `plugin:wet:wet` entry means nothing answers at `WET_URL`: wet is HTTP-only and the plugin does not start a server, so run `wet server start` (or fix `WET_URL`/`WET_TOKEN`) and restart Claude Code. See [setup](/servers/wet/setup/) for the full method matrix.
 
 ## Filing a bug
 

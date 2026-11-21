@@ -1,6 +1,8 @@
 # Telegram MCP -- Tools Reference
 
-better-telegram-mcp exposes Telegram (dual-mode: Bot API + MTProto) through 4 composite tools driven by an `action` parameter, plus `config` (status and runtime settings) and `help`.
+telegram exposes Telegram (dual-mode: Bot API + MTProto) through 4 composite tools driven by an `action` parameter, plus `config` (status and runtime settings) and `help`.
+
+Every tool is also a one-shot CLI command, `telegram <tool> <action> [flags]`, that calls the same handler (`--json` prints the result as JSON). The `config` tool is `telegram settings` on the CLI, because `config` is the operator command for the saved credentials.
 
 ## message
 
@@ -42,7 +44,7 @@ Send photos, files, voice, and video; download media from messages.
 | `send_photo` / `send_file` / `send_voice` / `send_video` | Send a media file to a chat | `chat_id`, `file_path_or_url` (required); `caption` |
 | `download` | Download media from a message | `chat_id`, `message_id` (required); `output_dir`, `file_id` |
 
-Note: `file_id` is required in bot mode -- the Bot API cannot look up a message's media by `(chat_id, message_id)`, so get `file_id` from a message the bot already received (`message` tool results include it) and pass it to `download`. In user mode `file_id` is optional (MTProto resolves media directly from `chat_id`/`message_id`).
+Note: `file_id` is required in bot mode -- the Bot API cannot look up a message's media by `(chat_id, message_id)`, and history is empty in bot mode, so get `file_id` from the message that `media(action="send_*")` or `message(action="forward")` returns (its `photo`, `document`, `voice` or `video` field) and pass it to `download`. In user mode `file_id` is ignored: MTProto always resolves the media from `chat_id`/`message_id`.
 
 ## contact
 
@@ -62,7 +64,7 @@ Server status and runtime settings. Credentials are never set through a tool: th
 | Action | Purpose | Key parameters |
 |---|---|---|
 | `status` | Show mode, `connected`, `authorized`, `pending_auth`, and the current config | -- |
-| `set` | Update a runtime setting (`message_limit`, `timeout`) | `message_limit` or `timeout` (integer, >= 1), or generic `key` + `value` |
+| `set` | Update a runtime setting (`message_limit`, `timeout`) | `message_limit` or `timeout` (integer), or generic `key` + `value` |
 | `cache_clear` | Clear cached state | -- |
 
 ## help

@@ -1,6 +1,6 @@
 # Better Code Review Graph -- Manual Setup Guide
 
-crg is a local-first code knowledge graph. The repo is `n24q02m/crg`. Its primary surface is the `crg` CLI plus the bundled skills; the MCP server is a secondary adapter over the same graph code. The plugin installs from the PyPI package `n24q02m-crg`, which ships both the `crg` command and the `n24q02m-crg` alias (`better-code-review-graph` is the frozen pre-rename stub).
+crg is a local-first code knowledge graph. The repo is `n24q02m/crg`. Its primary surface is the `crg` CLI plus the bundled skills; the MCP server is a secondary adapter over the same graph code. The plugin installs from the PyPI package `n24q02m-crg`, which installs the `n24q02m-crg`, `crg`, and `better-code-review-graph` commands (the last is a legacy command alias). All three run the same CLI. The PyPI package `better-code-review-graph` is the frozen pre-rename stub that installs `n24q02m-crg`.
 
 `crg --help` lists the subcommands `config`, `db`, `graph`, `query`, `review`, `security`, `server`, and `token`. Run bare `crg` (no subcommand) to start the MCP server over stdio.
 
@@ -85,20 +85,21 @@ docker compose up --build -d
 # MCP endpoint: http://127.0.0.1:8772/mcp   (change the host port with CRG_PORT=9000)
 ```
 
-The compose file builds the Dockerfile's `http` target, publishes only on `127.0.0.1`, keeps graph state in the `crg-data` volume, and mounts `docker-config/config.toml` read-only. Inside the container the server binds `0.0.0.0`, so the config **must** use `auth = "token"` or `"multi"`. For `auth = "multi"`, also mount `users.toml` (the commented line in the compose file).
+The compose file builds the Dockerfile's `http` target (image `crg:http`), publishes only on `127.0.0.1` (`127.0.0.1:${CRG_PORT:-8772}:8080`), and mounts `docker-config/config.toml` read-only. It pins `CRG_CONFIG_DIR=/data/config`, `CRG_DATA_DIR=/data`, and `CRG_CREDENTIALS_DB=/data/credentials.db`, so the server's writes under the data directory (multi-user graphs under `subs/`, runtime state, and the provider key pool) land in the `crg-data` volume. The compose file mounts no repository. Inside the container the server binds `0.0.0.0:8080`, so the config **must** use `auth = "token"` or `"multi"`. For `auth = "multi"`, also mount `users.toml` (the commented line in the compose file).
 
-To build the image without Compose: `docker build --target http .` (the `stdio` target also exists). The repository path inside the container is `/repo`.
+To build the image without Compose: `docker build --target http .` (the `stdio` target also exists).
 
 ### Instance config (`config.toml`)
 
-All auth and provider settings live in a host-owned file at `$CRG_CONFIG_DIR/config.toml`, default `~/.crg/config.toml`. MCP clients never see it. `crg config init` writes a starter file, `crg config path` prints its location, and `crg config show` prints it.
+All auth and provider settings live in a host-owned file at `$CRG_CONFIG_DIR/config.toml`, default `~/.crg/config.toml`. MCP clients never see it. `crg config init` writes a starter file (`--force` overwrites), `crg config path` prints its location, `crg config show` prints it (or the template when no file exists), and `crg config get <key>` / `crg config set <key> <value>` read or edit one key without echoing secret values.
 
 | `[server]` key | Meaning |
 |---|---|
-| `host`, `port` | Bind address |
-| `auth` | `no-auth` (loopback only), `token` (one shared Bearer token), or `multi` (per-user tokens and namespaces via `users.toml`) |
-| `token_hash` | `scrypt$...` hash of the shared token. There is no plaintext token field |
-| `rpm` | Optional rate limit |
+| `host`, `port` | Bind address (default `127.0.0.1`, `8000`). `MCP_HOST` / `MCP_PORT` override them |
+| `auth` | `no-auth` (default, loopback only), `token` (one shared Bearer token), or `multi` (per-user tokens and namespaces via `users.toml`) |
+| `token_hash` | `scrypt$...` hash of the shared token; required for `auth = "token"`. There is no plaintext token field |
+| `users_file` | User store for `auth = "multi"`; default `users.toml` in the config directory |
+| `rpm` | Optional rate limit (positive integer) |
 
 With `auth = "multi"`, each namespace gets its own graph at `<CRG_DATA_DIR>/subs/<namespace>/graph.db`.
 
@@ -111,6 +112,8 @@ crg token hash <token>                                          # 2. print the s
 
 3. Paste the printed `scrypt$...` value into `token_hash` and restart the server.
 4. Give clients the **plaintext** token; they send it as `Authorization: Bearer <token>`.
+
+The hull CLI ships in crg's dependency tree, so `printf '%s' "$TOKEN" | hull token hash` works for step 2 as well. It reads the token from stdin or a hidden prompt and refuses a token passed on the command line.
 
 ### Provider cells (`[models.<task>]`)
 
@@ -154,6 +157,7 @@ crg reads only the variables below. Vendor-specific key variables (`OPENAI_API_K
 | `HULL_CHAT_API_KEY` | No | -- | Host-injected key for the `[models.chat]` cell; enables LLM summaries when the cell model is set |
 | `CRG_CONFIG_DIR` | No | `~/.crg` | Directory holding the instance `config.toml` |
 | `CRG_DATA_DIR` | No | `~/.crg` | Per-user data directory for HTTP multi-user graphs |
+| `CRG_CREDENTIALS_DB` | No | `~/.hull/hull.db` | Provider key-pool database, shared with every hull surface |
 | `MCP_TRANSPORT` | No | `stdio` | Set to `http` to run the HTTP transport (`TRANSPORT_MODE=http` also works) |
 | `MCP_HOST` | No | from config | Bind host for HTTP mode; overrides `[server] host` |
 | `MCP_PORT` | No | from config | Bind port for HTTP mode; overrides `[server] port` |
@@ -166,7 +170,7 @@ Legacy aliases: `EMBEDDING_MODEL` is deprecated and honored for one release with
 - **Local**: an empty chain resolves Fastretrieval's local ONNX model registry (the first run downloads about 570 MB). Set `LOCAL_EMBEDDING_MODEL` only for a BYO local model.
 - **Custom local metadata**: a BYO model can use `LOCAL_EMBEDDING_MODEL_FILE`, `LOCAL_EMBEDDING_DIM`, `LOCAL_EMBEDDING_POOLING`, and `LOCAL_EMBEDDING_NORMALIZE`; manifest-backed models supply their own metadata. A directory without a manifest, or an unknown ID without a dimension, is rejected rather than replaced by the default model.
 
-Embeddings are tagged with the active provider/model identity. Cohere `embed-v4.0` stores exactly **1024 dimensions**; other backends keep 768-dimensional storage. crg does not slice or pad provider vectors. Run `graph(action="embed")` after changing models. Document embeddings use `search_document`; queries use `search_query`.
+Embeddings are tagged with the active provider/model identity. Cohere `embed-v4.0` and Voyage `voyage-4-lite` request and store exactly **1024 dimensions**; other backends keep 768-dimensional storage. crg does not slice or pad provider vectors. Run `graph(action="embed")` after changing models. For Cohere models, documents are embedded with `input_type=search_document` and queries with `search_query`; other backends send no `input_type`.
 
 Query reranking is local and opt-in through `LOCAL_RERANK_MODEL`. crg has no cloud reranking provider and does not read `RERANK_MODELS` or `RERANK_API_BASE`. When enabled, semantic search reranks a bounded candidate pool and returns a `rerank_score`; a reranker failure is reported as an error instead of silently falling back.
 
@@ -174,11 +178,11 @@ Node summaries use the `model` of the `[models.chat]` cell. If the cell is not c
 
 ### Graph state
 
-The graph database, security scan cache, and suppression list live in the repository's `.crg/` directory (graph at `.crg/graph.db`; the directory ignores itself). Older state under `.better-code-review-graph/`, `.code-review-graph/`, and `.code-review-graph.db` is not migrated or adopted and is left untouched. After upgrading from such a version, run `graph(action="build", full_rebuild=true)`, then `graph(action="embed")` if semantic search is needed, and re-apply any suppression rules explicitly.
+The graph database, security scan cache, and suppression list live in the repository's `.crg/` directory (graph at `.crg/graph.db`; the directory ignores itself; `crg db path` prints the path). Older state under `.better-code-review-graph/`, `.code-review-graph/`, and `.code-review-graph.db` is not migrated or adopted and is left untouched. After upgrading from such a version, run `graph(action="build", full_rebuild=true)`, then `graph(action="embed")` if semantic search is needed, and re-apply any suppression rules explicitly.
 
 ### Supported Languages
 
-Python, TypeScript, JavaScript, Go, Rust, Java, C#, Ruby, Kotlin, Swift, PHP, C/C++
+Python, TypeScript, JavaScript, Go, Rust, Java, C#, Ruby, Kotlin, Swift, PHP, C/C++, Solidity, Dart
 
 ### Ignore Files
 
@@ -211,13 +215,6 @@ graph(action="build", repo_root="/path/to/your/repo")
 
 ### Docker cannot access repo files
 
-Build from a reviewed release tag, then verify the volume mount. The repository path inside the container is `/repo`:
-
-```bash
-git clone --branch <release-tag> --depth 1 https://github.com/n24q02m/crg.git
-cd crg
-docker build --target stdio -t crg:stdio .
-docker run -i --rm -v "/absolute/path/to/repo:/repo:ro" crg:stdio
-```
+The compose stack mounts only the `crg-data` volume and the config file, not a repository. The server parses files under `repo_root` on its own filesystem, so a repository indexed from a container must be present inside it. In `no-auth` and `token` modes the graph is written to `<repo_root>/.crg/graph.db`, so that directory must also be writable; with `auth = "multi"` the graph goes to `<CRG_DATA_DIR>/subs/<namespace>/graph.db` instead.
 
 More in the [troubleshooting guide](/servers/crg/troubleshooting/).

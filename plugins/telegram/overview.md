@@ -16,11 +16,13 @@ Four composite tools -- `message`, `chat`, `media`, and `contact` -- driven by a
 
 ## Clients
 
-Runs over stdio by default (single user) and can run as a self-hosted HTTP server with token or per-user (`multi`) auth. There is no hosted public instance. Works with any MCP client -- Claude Code, Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web as a custom connector for a self-hosted HTTP server hosted on the internet, when your organization has request-header authentication (beta; see [setup](/servers/telegram/setup/)). See the [modes overview](/get-started/modes-overview/).
+Runs over stdio by default (single user) and can run as a self-hosted HTTP server with token or per-user (`multi`) auth. There is no hosted public instance. Works with any MCP client -- Claude Code (plugin or `claude mcp add`), Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web as a custom connector for a self-hosted HTTP server hosted on the internet, when your organization has request-header authentication (beta; see [setup](/servers/telegram/setup/)). See the [modes overview](/get-started/modes-overview/).
 
 ## Configuration
 
 Bot mode needs a bot token (`TELEGRAM_BOT_TOKEN`). User mode signs in once from a terminal with `telegram auth --phone <+number>` (OTP and optional 2FA password are prompted there) and stores the MTProto session on disk. Credentials only come from environment variables or this local CLI -- there is no browser form. Use placeholders in shared config and never commit a real token. Full walkthrough in [setup](/servers/telegram/setup/).
+
+The package is `n24q02m-telegram` (formerly `better-telegram-mcp`), and the legacy `better-telegram-mcp` command is kept as an alias of `telegram`. Local data moves once from `~/.better-telegram-mcp` to `~/.telegram` on first start.
 
 ## Next steps
 

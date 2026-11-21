@@ -8,15 +8,15 @@ Find information across the web, academic sources, or indexed library documentat
 
 | Action | Purpose | Key parameters |
 |---|---|---|
-| `search` | Web search through `SEARCH_BACKENDS` (SearXNG, keyed providers, optional-key Firecrawl, or credential-free DuckDuckGo/Startpage) | `query` (required), `categories` (`general`\|`images`\|`videos`\|`files`), `max_results` (default 10), `time_range` (`day`\|`week`\|`month`\|`year`), `language`, `region`, `include_domains` (max 5) / `exclude_domains` (max 10), `expand` (LLM query expansion), `enrich` (fetch real snippets) |
-| `research` | Academic/scientific search (Google Scholar, Semantic Scholar, arXiv, PubMed, CrossRef, BASE) | `query` (required), `max_results`, `time_range` |
+| `search` | Web search through the `SEARCH_BACKENDS` chain (default `tavily,duckduckgo`; keyed providers, optional-key Firecrawl/Keenable, credential-free DuckDuckGo/Startpage, or an opt-in `searxng`: an external `SEARXNG_URL`, or a local instance with `WET_AUTO_SEARXNG=true`) | `query` (required), `categories` (`general`\|`images`\|`videos`\|`files`), `max_results` (default 10), `time_range` (`day`\|`week`\|`month`\|`year`), `language`, `region` (2-letter country code), `include_domains` (max 5) / `exclude_domains` (max 10), `expand` (LLM query expansion), `enrich` (fetch real snippets), `refine` (re-query up to 2 times with LLM-rewritten terms when results are empty or low-relevance) |
+| `research` | Academic/scientific search through the configured `SEARCH_BACKENDS` chain with `categories=science` | `query` (required), `max_results`, `time_range`, `language`, `include_domains` / `exclude_domains` |
 | `docs` | Search library documentation, auto-indexing on first query | `library` (required), `query` (required), `language`, `version`, `limit` |
 | `docs_resolve` | Free-form library name -> ranked `library_id` list | `query` (library name, required), `limit` |
 | `docs_query` | Version-aware docs query honoring a project's locked library set + token cap | `library` (required), `query` (required), `version`, `topic`, `project_path`, `limit` |
 | `docs_lock_project` | Detect project manifests (pyproject/package.json/go.mod/Cargo.toml) and lock the library set for isolation (Cabinets) | `project_path` (required) |
 | `similar` | Find pages similar to a URL | `query` = full http(s) URL (required), `max_results` |
 
-Web search results are cached for one hour. Every response carries a `search_backend` trace (requested, attempted, selected, and a `fallback` state of `none`, `used`, `exhausted`, or `unavailable`). The web-search fallbacks used by `research`, `similar`, and docs discovery use the same configured backend chain. `docs_query` returns `status: "indexing_in_progress"` while a library is still being indexed in the background. `expand` and the `similar` fallback need a configured `[models.chat]` cell.
+Search and research results are cached for one hour; a `search` with `time_range` is cached for five minutes. Every response carries a `search_backend` trace (requested, attempted, selected, and a `fallback` state of `none`, `used`, `exhausted`, `unavailable`, or `parallel_fanout`). The web-search fallbacks used by `research`, `similar`, and docs discovery use the same configured backend chain. `docs_query` returns `status: "indexing_in_progress"` while a library is still being indexed in the background. `expand` needs a configured `[models.chat]` cell; `similar` uses it for keyword extraction and falls back to the page title without one.
 
 ## extract
 
@@ -59,11 +59,11 @@ Server configuration and management, not wrapped as external content. Auth, mode
 
 | Action | Purpose | Key parameters |
 |---|---|---|
-| `status` | Show auth mode, docs database stats, embedding/reranker backend, cache, and SearXNG state | -- |
+| `status` | Show auth mode and bind, docs database stats and indexing state, embedding/reranker backend, cache, runtime settings, and search metrics | -- |
 | `set` | Update a runtime setting (`log_level`, `tool_timeout`, `wet_cache`, `wet_search_budget`) | `key`, `value` (required) |
 | `cache_clear` | Clear the web cache (in `multi` auth mode, only the caller's namespace) | -- |
 | `docs_reindex` | Force re-index of a library's docs | `key` = library name (required), for example `{"action": "docs_reindex", "key": "fastapi"}` |
-| `warmup` | Prepare enabled local search, browser, embedding, and rerank resources for the selected runtime | -- |
+| `warmup` | First-run setup (Playwright browsers; SearXNG install only when `WET_AUTO_SEARXNG` is on), then a cloud model probe; if no cloud cell is ready, downloads the local embedding model and, when reranking is enabled, the local reranker | -- |
 
 ## help
 

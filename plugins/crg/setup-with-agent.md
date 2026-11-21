@@ -66,13 +66,13 @@ Legacy: `EMBEDDING_MODEL` is deprecated and honored for one release with a warni
 
 crg has no cloud rerank consumer: do not configure `RERANK_MODELS` or `RERANK_API_BASE` for this server.
 
-Cohere `embed-v4.0` uses exactly 1024-dimensional stored vectors; other backends keep 768. Do not compensate for a mismatch by slicing or padding. Run `graph(action="embed")` to replace stale vectors after a model change.
+Cohere `embed-v4.0` and Voyage `voyage-4-lite` use exactly 1024-dimensional stored vectors; other backends keep 768. Do not compensate for a mismatch by slicing or padding. Run `graph(action="embed")` to replace stale vectors after a model change.
 
 Graph state lives in the repository's `.crg/` directory. Older `.better-code-review-graph/`, `.code-review-graph/`, and `.code-review-graph.db` state is not migrated or adopted and is left untouched. After upgrading from such a version, first run `graph(action="build", full_rebuild=true)`, then embed if semantic search is needed, and re-apply desired suppression rules explicitly. See the [graph state reference](/servers/crg/setup/#graph-state).
 
 ### HTTP Mode (Self-Host)
 
-Start an instance with `crg server start` (loopback, no-auth) or a container built from source (`docker compose up --build -d` in a clone of `n24q02m/crg`, token auth, `http://127.0.0.1:8772/mcp`). Auth and bind settings live in the instance `config.toml`, not in env vars. See [setup](/servers/crg/setup/#method-3-http-self-host).
+Start an instance with `crg server start` (loopback, no-auth) or a container built from source (`docker compose up --build -d` in a clone of `n24q02m/crg`, token auth, `http://127.0.0.1:8772/mcp`). Auth is set in the instance `config.toml`; the bind comes from `[server] host`/`port` unless `MCP_HOST`/`MCP_PORT` override it. See [setup](/servers/crg/setup/#method-3-http-self-host).
 
 | Variable | Required | Default | Description |
 |:---------|:---------|:--------|:------------|
@@ -81,6 +81,7 @@ Start an instance with `crg server start` (loopback, no-auth) or a container bui
 | `MCP_PORT` | No | from config | Bind port; overrides `[server] port` |
 | `CRG_CONFIG_DIR` | No | `~/.crg` | Directory holding the instance `config.toml` |
 | `CRG_DATA_DIR` | No | `~/.crg` | Per-user data directory for multi-user graphs |
+| `CRG_CREDENTIALS_DB` | No | `~/.hull/hull.db` | Provider key-pool database, shared with every hull surface |
 
 ## Authentication
 
@@ -100,7 +101,7 @@ After setup, verify the server is working by building the graph:
 graph(action="build", repo_root="/path/to/your/repo")
 ```
 
-Expected: returns a JSON summary with node counts, edge counts, and supported languages found.
+Expected: `status: "ok"` with a `build_type`, a `summary` string, and `total_nodes` / `total_edges` counts. `graph(action="stats")` lists the languages found.
 
 Then try a search:
 

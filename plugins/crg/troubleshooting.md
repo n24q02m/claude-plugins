@@ -7,10 +7,10 @@ Common issues specific to crg. For problems shared across the stack, see the [ge
 New features often ship as a beta before the stable release. `uvx`/`pip` will not pick a prerelease unless you pin the exact version:
 
 ```sh
-uvx n24q02m-crg@<X.Y.0bN>
+uvx --python 3.13 n24q02m-crg@<X.Y.ZbN>
 ```
 
-Replace `<X.Y.0bN>` with the exact beta version. Drop the `@<version>` suffix to return to the latest stable.
+Replace `<X.Y.ZbN>` with the exact beta version. Drop the `@<version>` suffix to return to the latest stable.
 
 ## Query or review returns nothing
 
@@ -30,11 +30,11 @@ Cloud embeddings need an explicit `EMBEDDING_MODELS` entry **and** a `[models.em
 
 Node summaries need a configured `[models.chat]` cell (key in `config.toml` or `HULL_CHAT_API_KEY`). Without one, `graph(action="summarize")` returns `status: skipped` with `reason: no_provider_configured`. There is no local-summary fallback.
 
-For Cohere `embed-v4.0`, stored and returned vectors must be exactly 1024 dimensions. Re-run `graph(action="embed")` for an old 768-wide index instead of slicing or padding results. If the graph disappeared after an upgrade, rebuild it with `graph(action="build", full_rebuild=true)` in the `.crg/` state directory, then embed. Older `.better-code-review-graph/` and `.code-review-graph/` state is not automatically adopted or removed.
+For Cohere `embed-v4.0` and Voyage `voyage-4-lite`, stored and returned vectors must be exactly 1024 dimensions. Re-run `graph(action="embed")` for an old 768-wide index instead of slicing or padding results. If the graph disappeared after an upgrade, rebuild it with `graph(action="build", full_rebuild=true)` in the `.crg/` state directory, then embed. Older `.better-code-review-graph/` and `.code-review-graph/` state is not automatically adopted or removed.
 
 ## Security scan finds nothing / wrong engine
 
-`security(action="scan")` defaults to the `heuristic` engine. For deeper rules, pass `engine="semgrep"` (Semgrep must be installed). Use `security(action="rule_list")` to see active rules and `suppress` to mute a noisy one.
+`security(action="scan")` defaults to the `heuristic` engine. For deeper rules, pass `engine="semgrep"`, which needs the `semgrep` CLI on `PATH` (`uv tool install semgrep`; Semgrep is not a crg dependency); without it the scan returns an error naming the engine. Use `security(action="rule_list")` to see active rules and `suppress` to mute a noisy one.
 
 ## Model keys or settings not applying
 
@@ -46,7 +46,7 @@ For Cohere `embed-v4.0`, stored and returned vectors must be exactly 1024 dimens
 ## HTTP instance: connection refused, 401, or refuses to start
 
 - The server exposes `/mcp`. Check the instance is up: `crg server start` defaults to `http://127.0.0.1:8000/mcp`, the compose stack to `http://127.0.0.1:8772/mcp`.
-- A 401 means the Bearer token the client sends does not match `token_hash` in `config.toml`. Clients send the plaintext token; the file stores only the `scrypt$...` hash. To replace a lost token, mint a new one, run `crg token hash <token>`, paste the hash into `token_hash`, and restart.
+- A 401 means the Bearer token the client sends does not match `token_hash` in `config.toml`. Clients send the plaintext token; the file stores only the `scrypt$...` hash. To replace a lost token, mint a new one, run `crg token hash <token>` (or `printf '%s' "$TOKEN" | hull token hash`), paste the hash into `token_hash`, and restart.
 - `auth = "no-auth"` only binds loopback. In the compose container, which binds `0.0.0.0`, set `auth = "token"` or `"multi"`.
 
 ## Transport mismatch / duplicate entries in `/mcp`

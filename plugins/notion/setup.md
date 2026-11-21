@@ -1,6 +1,6 @@
 # Notion MCP -- Manual Setup Guide
 
-> The Notion server authenticates with a **Notion integration token** (`ntn_...`). There is no browser setup form and no OAuth flow: the token comes from the `NOTION_TOKEN` environment variable or from `notion auth`, which stores it under `~/.better-notion/`.
+> The Notion server authenticates with a **Notion integration token** (`ntn_...`). There is no browser setup form and no OAuth flow: the token comes from the `NOTION_TOKEN` environment variable or from `notion auth`, which stores it under `~/.notion/`.
 
 ## Method overview
 
@@ -18,7 +18,7 @@ There is no endpoint hosted by the author. For HTTP you run the server yourself 
 
 ## Prerequisites
 
-- **Node.js** >= 24.21.0 (Method 1) or Docker (Methods 2 and 3)
+- **Node.js** >= 24.22.3 (Method 1) or Docker (Methods 2 and 3)
 - A **Notion account** with access to create integrations
 
 ## Method 1: Claude Code Plugin (Recommended)
@@ -44,7 +44,7 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 3. Install the plugin (Claude Code prompts for `NOTION_TOKEN` -- paste the secret you copied above):
    ```bash
    /plugin marketplace add n24q02m/claude-plugins
-   /plugin install better-notion-mcp@n24q02m-plugins
+   /plugin install notion@n24q02m-plugins
    ```
 4. Restart Claude Code. The plugin auto-loads with your token injected via `${user_config.NOTION_TOKEN}`.
 
@@ -75,11 +75,13 @@ If you would rather not keep the token in client config, store it once on the ma
 NOTION_TOKEN=<your-notion-token> npx -y @n24q02m/notion auth
 ```
 
-`notion auth` reads the token from `NOTION_TOKEN` or prompts for it (it is never taken from command-line arguments), checks it against Notion, and saves it to `~/.better-notion/config.json` with owner-only file permissions. Later runs pick it up without `NOTION_TOKEN` being set. If neither is present in stdio mode, the server exits with an error on stderr listing both options.
+`notion auth` reads the token from `NOTION_TOKEN` or prompts for it (it is never taken from command-line arguments), checks it against Notion, and saves it to `~/.notion/config.json` with owner-only file permissions, encrypted with the machine key in `~/.notion/.secret`. A store an earlier release wrote under `~/.better-notion/` is copied forward once at startup. Later runs pick it up without `NOTION_TOKEN` being set. If neither is present in stdio mode, the server exits with an error on stderr listing both options.
+
+notion 2.44.0 has a known issue here: its stdio server looks for a stored token only under the pre-rename `~/.better-notion/` store at startup, so a token saved by `notion auth` on that release is not found and stdio exits. On 2.44.0, keep `NOTION_TOKEN` set for stdio.
 
 ## Method 2: Docker stdio (fallback)
 
-> **Warning -- before adding the Docker stdio override below, ensure this plugin is NOT installed via marketplace**: run `/plugin uninstall better-notion-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (the plugin's `npx` stdio and your `docker run` stdio) load simultaneously, since plugins match by endpoint (command string), not by name.
+> **Warning -- before adding the Docker stdio override below, ensure this plugin is NOT installed via marketplace**: run `/plugin uninstall notion@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (the plugin's `npx` stdio and your `docker run` stdio) load simultaneously, since plugins match by endpoint (command string), not by name.
 >
 > **Trade-off accepted**: choosing this method means you lose this plugin's skills and hooks. Use Method 1 instead if you want full plugin features.
 
@@ -124,7 +126,7 @@ Stdio is the default and works fine for single-user local setups. Consider a sel
 
 ## Method 3: Docker HTTP (self-host)
 
-> **Warning -- before adding the HTTP override below, ensure this plugin is NOT installed via marketplace**: run `/plugin uninstall better-notion-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (the plugin's stdio and your HTTP override) load simultaneously, since plugins match by endpoint, not name.
+> **Warning -- before adding the HTTP override below, ensure this plugin is NOT installed via marketplace**: run `/plugin uninstall notion@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (the plugin's stdio and your HTTP override) load simultaneously, since plugins match by endpoint, not name.
 >
 > **Trade-off accepted**: choosing this method means you lose this plugin's skills and hooks. For example, the `organize-database` skill will no longer be available. Use Method 1 instead if you want full plugin features.
 
@@ -136,7 +138,7 @@ HTTP mode is turned on with `--http`, `MCP_TRANSPORT=http`, or `TRANSPORT_MODE=h
 |---|---|
 | `multi` (default) | Each user is listed in the users file (`MCP_USERS_FILE`, default `~/.hull/users.toml`) and gets their own bearer token and Notion token namespace. Store a user's Notion token with `notion auth --user <namespace>` on the server host. |
 | `token` | Every client shares one bearer token. Set `MCP_AUTH_TOKEN_HASH` to its `scrypt$...` hash, minted with the `token hash` subcommand. `MCP_RPM` optionally caps requests per minute. The Notion token is the default one (`NOTION_TOKEN` or `notion auth`). |
-| `no-auth` | No bearer check. Use only on a trusted local network or loopback. |
+| `no-auth` | No bearer check. Loopback binds only: the server refuses a non-loopback `HOST` in this mode. |
 
 ### Run the server
 
@@ -220,6 +222,7 @@ In `token` and `multi` modes the client must send `Authorization: Bearer <your-t
 | `MCP_RPM` | No (http, `token`) | -- | Optional per-minute request cap. |
 | `PORT` | No | `0` (OS-assigned) | Server port; set explicitly to bind a fixed port. |
 | `HOST` | No | `127.0.0.1` | Bind address (http mode); set `0.0.0.0` to expose the container. |
+| `NOTION_DATA_DIR` | No | home directory | Base directory of the credential store (`<dir>/.notion/`). A relative value must stay inside the home directory. In a container, `NOTION_DATA_DIR=/data` with a volume on `/data` keeps the store across restarts. |
 
 ## Troubleshooting
 
@@ -240,7 +243,7 @@ In `token` and `multi` modes the client must send `Authorization: Bearer <your-t
 
 ### npx: old version or "command not found"
 
-- Verify Node.js >= 24.21.0: `node --version`.
+- Verify Node.js >= 24.22.3: `node --version`.
 - Clear the npx cache or use the `@latest` tag: `npx -y @n24q02m/notion@latest`.
 
 See the [troubleshooting guide](/servers/notion/troubleshooting/) for more.

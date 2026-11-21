@@ -7,10 +7,10 @@ Common issues specific to mnemo. For problems shared across the stack, see the [
 New features often ship as a beta before the stable release. `uvx`/`pip` will not pick a prerelease unless you pin the exact version:
 
 ```sh
-uvx n24q02m-mnemo@<X.Y.0bN>
+uvx n24q02m-mnemo@<X.Y.ZbN>
 ```
 
-Replace `<X.Y.0bN>` with the exact beta version. Drop the `@<version>` suffix to return to the latest stable.
+Replace `<X.Y.ZbN>` with the exact beta version. Drop the `@<version>` suffix to return to the latest stable.
 
 ## Tools do not connect / connection refused
 

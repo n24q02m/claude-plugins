@@ -20,12 +20,12 @@ Python 3.13 is required (3.14+ is not supported).
 uvx --python 3.13 --from n24q02m-wet wet server start
 ```
 
-This detaches and binds `127.0.0.1:8000` with `auth = "no-auth"`, which refuses any non-loopback bind. Use `--foreground` to keep it attached. Because a `uvx` server cannot auto-start local SearXNG, set a search backend on the host before starting, for example `SEARCH_BACKENDS=duckduckgo,startpage` (credential-free), or a keyed provider such as `tavily` with `TAVILY_API_KEY`.
+This detaches and binds `127.0.0.1:8000` with `auth = "no-auth"`, which refuses any non-loopback bind. Use `--foreground` to keep it attached. Search works without configuration: the default `SEARCH_BACKENDS` chain is `tavily,duckduckgo`, Tavily is used only when `TAVILY_API_KEY` is set, and DuckDuckGo is credential-free. To change the chain, set `SEARCH_BACKENDS` on the host before starting.
 
 **Always-on, token auth (docker compose):**
 
 1. In a clone of `n24q02m/wet`, run `cp docker-config/config.example.toml docker-config/config.toml`.
-2. Mint a token and hash it: `openssl rand -hex 32`, then `uvx --python 3.13 --from n24q02m-wet wet token hash <token>`.
+2. Mint a token and hash it: `openssl rand -hex 32`, then pipe it on stdin to `uvx --python 3.13 --from n24q02m-wet wet token hash` (or run that command without a pipe and enter the token at the hidden prompt; it refuses a token passed as an argument).
 3. Put only the printed `scrypt$...` value in `token_hash` in `docker-config/config.toml`. Never write the plaintext token into a file that could be committed; hand it to the user or the client config only.
 4. Run `docker compose up --build -d`. The endpoint is `http://127.0.0.1:8000/mcp` (change the host port with `WET_PORT`).
 
@@ -40,7 +40,7 @@ This detaches and binds `127.0.0.1:8000` with `auth = "no-auth"`, which refuses 
 /plugin install wet@n24q02m-plugins
 ```
 
-The plugin installs the skill and an HTTP MCP entry that connects to `WET_URL` (default `http://127.0.0.1:8000/mcp`; set `WET_TOKEN` for a token-auth instance). wet 3.20.0 is HTTP-only, so the plugin never launches a server: complete Step 2 first, otherwise `/mcp` shows `plugin:wet:wet` as failed (connection refused). If the instance listens on another port, set `WET_URL` accordingly. Do not also register the same URL with `claude mcp add`.
+The plugin installs six skills, a SessionStart hook, and an HTTP MCP entry that connects to `WET_URL` (default `http://127.0.0.1:8000/mcp`; set `WET_TOKEN` for a token-auth instance). wet is HTTP-only, so the plugin never launches a server: complete Step 2 first, otherwise `/mcp` shows `plugin:wet:wet` as failed (connection refused). If the instance listens on another port, set `WET_URL` accordingly. Do not also register the same URL with `claude mcp add`.
 
 **Claude Code without the plugin:**
 
@@ -74,9 +74,9 @@ search(action="search", query="test query", max_results=3)
 config(action="status")
 ```
 
-`search` should return results with a `search_backend` trace; `config(action="status")` shows the auth mode, docs database, embed/rerank backend, cache, and SearXNG state.
+`search` should return results with a `search_backend` trace; `config(action="status")` shows the auth mode and bind, docs database, embedding and reranker backends, cache, runtime settings, and search metrics.
 
 ## Optional settings
 
-- `wet warmup` or `config(action="warmup")` pre-downloads enabled local resources so the first call is not slow.
+- `wet warmup` or `config(action="warmup")` runs first-run setup (Playwright browsers; SearXNG only with `WET_AUTO_SEARXNG=true`) and pre-downloads local models when no cloud model cell is ready, so the first call is not slow.
 - Search chain, browser backends, cache, and other server-host settings are environment variables on the host: see [Environment variables](/servers/wet/setup/#environment-variables).
