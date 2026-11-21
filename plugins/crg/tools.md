@@ -1,6 +1,6 @@
 # Better Code Review Graph -- Tools Reference
 
-crg builds a knowledge graph of a codebase and exposes it through 5 tools driven by an `action` parameter (`graph`, `query`, `review`, `security`, `config`), plus `help`. The same actions are available from the local `crg` CLI, which prints JSON. None of these tools wrap results as external/untrusted content.
+crg builds a knowledge graph of a codebase and exposes it through 5 tools driven by an `action` parameter (`graph`, `query`, `review`, `security`, `config`), plus `help`. The same actions are available from the local `crg` CLI, which prints JSON. Source code read from the reviewed repository is untrusted: `query(action="spot_check")` snippets and `review(action="context")` source snippets (with `include_source=true`) are wrapped in `<untrusted_code_content>` boundary tags plus a warning to treat the content as data, not instructions.
 
 ## graph
 
@@ -9,7 +9,7 @@ Build and manage the code knowledge graph.
 | Action | Purpose | Key parameters |
 |---|---|---|
 | `build` | Parse source and build the graph | `full_rebuild` (default `false`), `base` (default `HEAD~1`), `repo_root`, `roots` (federate additional repos) |
-| `update` | Incremental update (alias for `build` with `full_rebuild=false`) | Same as `build` |
+| `update` | Incremental update (alias for `build` with `full_rebuild=false`) | `base` (default `HEAD~1`), `repo_root` |
 | `stats` | Node/edge counts, languages, embedding status | -- |
 | `embed` | Compute vector embeddings for graph nodes | -- |
 | `export` | Export the graph | `format` (default `graphml`; also `json-ld`, `dot`, `cypher`, `crg`), `output_path` |
@@ -24,13 +24,15 @@ Query the graph for relationships, search, and impact analysis.
 
 | Action | Purpose | Key parameters |
 |---|---|---|
-| `query` | Predefined graph queries | `pattern`/`target` (required): `callers_of`\|`callees_of`\|`imports_of`\|`importers_of`\|`children_of`\|`tests_for`\|`inheritors_of`\|`file_summary` |
+| `query` | Predefined graph queries | `pattern`/`target` (required): `callers_of`\|`callees_of`\|`imports_of`\|`importers_of`\|`children_of`\|`tests_for`\|`inheritors_of`\|`file_summary`; `languages` (filters `tests_for`) |
 | `search` | Search nodes by name/keyword/vector | `search_query` (required), `kind`, `limit` (default 20) |
-| `impact` | Blast-radius analysis from changed files | `changed_files`, `max_depth` (default 2), `max_results` (default 500) |
-| `large_functions` | Find oversized functions | `min_lines` (default 50) |
+| `impact` | Blast-radius analysis from changed files | `changed_files` (or `base`, default `HEAD~1`), `max_depth` (default 2), `max_results` (default 500), `max_payload_bytes` (default 500000) |
+| `large_functions` | Find oversized functions | `min_lines` (default 50), `kind`, `file_path_pattern`, `limit` (default 20) |
 | `spot_check` | Random callsite snippets from the last `callers_of`/`callees_of`/`inheritors_of`/`importers_of` result | `n` (default 3), `context_lines` (default 2) |
 | `renamed_in_diff` | Symbols whose callsite line shifted vs a base ref | `base` (default `HEAD~1`) |
 | `diff` | Nodes added/removed/modified between two commits | `from_sha`, `to_sha` |
+
+`repo` scopes `query`, `search`, `impact`, `large_functions`, and `diff` to one federated `repo_id`; `as_of` (a commit SHA) returns rows valid at that commit for `query`, `search`, and `impact`.
 
 ## review
 
@@ -38,7 +40,7 @@ Generate token-efficient review context for code changes.
 
 | Action | Purpose | Key parameters |
 |---|---|---|
-| `context` (default) | Auto-detect changed files from git diff; return structural summary, impacted nodes, source snippets, review guidance | `changed_files` (auto-detected), `max_depth` (default 2), `include_source` (default `true`), `max_lines_per_file` (default 200) |
+| `context` (default) | Auto-detect changed files from git diff; return structural summary, impacted nodes, source snippets, review guidance | `changed_files` (auto-detected), `base` (default `HEAD~1`), `max_depth` (default 2), `include_source` (default `true`), `max_lines_per_file` (default 200), `languages` (scopes the untested-functions list) |
 | `delta` | Wrap `query`'s `diff` action into review buckets; with `show_line_shifts`, surface renamed/moved symbols | `from_sha`, `to_sha` (required), `show_line_shifts` (default `false`) |
 
 ## security
@@ -58,7 +60,7 @@ Server configuration, status, and model-cell setup state. Keys are host-owned: t
 
 | Action | Purpose | Key parameters |
 |---|---|---|
-| `status` | Show graph path, node/edge counts, backend, last-updated | -- |
+| `status` | Show version, graph path, embedding backend/model/dimensions, node/edge/file counts, languages, embedding count, last-updated | -- |
 | `set` | Update a runtime setting (`log_level` only) | `key`, `value` (required) |
 | `cache_clear` | Wipe all computed embeddings | -- |
 | `setup_status` | Show current state and which model cells are configured (`providers_configured`) | -- |

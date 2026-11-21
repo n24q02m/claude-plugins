@@ -4,7 +4,7 @@ wet is an open-source, self-hosted MCP server for AI agents: web search, content
 
 ## What it does
 
-- **Search** -- web search through a configurable backend chain (SearXNG, keyed providers, or credential-free DuckDuckGo/Startpage), academic search, and library documentation search with a local, version-aware docs index.
+- **Search** -- web search through a configurable backend chain (default `tavily,duckduckgo`; keyed providers, credential-free DuckDuckGo/Startpage, or an opt-in SearXNG), academic search, and library documentation search with a local, version-aware docs index.
 - **Extract** -- clean content from URLs (single, batch, crawl, site map), local file conversion (PDF, DOCX, PPTX, XLSX, and more), LLM-backed structured extraction, page interaction, and change tracking between fetches.
 - **Media** -- list and download images, videos, and audio from a page.
 - **Config** -- inspect status, change a few runtime settings, clear the cache, re-index a library, and warm up local resources.
@@ -23,7 +23,7 @@ wet speaks **Streamable HTTP only** on a single `/mcp` endpoint. There is no std
 - **docker compose**: build from the source repo and publish on loopback with token auth.
 - **Your own host**: run the instance behind a TLS proxy you control and use `auth = "token"` or `"multi"`.
 
-Clients: Claude Code (with the plugin, or `claude mcp add --transport http`), Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web as a custom connector for a remote instance hosted on the internet, when your organization has request-header authentication (beta; see [setup](/servers/wet/setup/)). The Claude Code plugin adds the wet skill and an HTTP MCP entry that connects to `WET_URL` (default `http://127.0.0.1:8000/mcp`); start the instance with `wet server start` first.
+Clients: Claude Code (with the plugin, or `claude mcp add --transport http`), Codex, Gemini CLI, Cursor, Windsurf, and claude.ai web as a custom connector for a remote instance hosted on the internet, when your organization has request-header authentication (beta; see [setup](/servers/wet/setup/)). The Claude Code plugin adds six skills, a SessionStart hook, and an HTTP MCP entry that connects to `WET_URL` (default `http://127.0.0.1:8000/mcp`); start the instance with `wet server start` first.
 
 ## Configuration
 

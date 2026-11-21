@@ -4,7 +4,7 @@ mnemo is a self-hosted memory server. It speaks **Streamable HTTP only** on a si
 
 The repo is `n24q02m/mnemo`; the PyPI package is `n24q02m-mnemo` (the separate `mnemo-mcp` PyPI package is a transitional stub that installs it). It ships the server plus the `mnemo` memory CLI:
 
-- `n24q02m-mnemo` (also installed as `mnemo-mcp`, a legacy alias for `uvx mnemo-mcp` configs) -- a bare invocation starts the HTTP server; the subcommands `config-init`, `config` (`init`, `path`, `show`, `get`, `set`), `warmup`, `token-hash`, and `token-verify` run one operator action and exit.
+- `n24q02m-mnemo` (also installed as `mnemo-mcp`, a legacy alias for `uvx mnemo-mcp` configs) -- a bare invocation starts the HTTP server; `token-hash`, `token-verify`, `warmup`, `config-init` and `config` run one operator action and exit. `config` covers `init`, `path`, `show`, `get <key>` and `set <key> <value>` on `~/.mnemo/config.toml`.
 - `mnemo` (also installed as `mnemo-pilot`) -- a CLI over the memory database (`capture`, `recall`, `reflect`, `fetch`, `standing-*`, each taking `--db <path>`). It never starts a server.
 
 ## Method overview

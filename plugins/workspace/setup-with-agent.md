@@ -1,6 +1,8 @@
 # Workspace MCP -- Agent Setup Guide
 
-> Give this file to your AI agent to set up better-workspace-mcp.
+> Give this file to your AI agent to set up the workspace MCP server.
+
+> **Archived (2026-09-13).** The workspace repository is no longer maintained; its README recommends the official Google Workspace APIs instead. Existing installations keep working but receive no updates or support.
 
 Google Workspace over MCP: 11 composite tools (`docs`, `drive`, `calendar`, `gmail`, `sheets`, `slides`, `tasks`, `chat`, `people`, `forms`, `time`) plus `config` and `help`. Choose artifacts from the [published releases](https://github.com/n24q02m/workspace/releases); replace `<version>` in Docker examples with a published image version. HTTP examples configure your own endpoint; there is no endpoint hosted by the author.
 
@@ -19,17 +21,17 @@ Collect `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET`.
 
 | Priority | Method | Transport | Best for |
 |---|---|---|---|
-| **1. Default** | Plugin install (`npx`) | stdio | Single workstation. |
-| **2. Fallback** | Docker stdio | stdio | `npx` PATH / Node version problems. |
-| **3. Self-host** | Docker HTTP | HTTP | Multi-user, multi-device, team. |
+| **1. Default** | Plugin install (`npx`) | stdio | One user on their own machine. |
+| **2. Fallback** | Docker stdio | stdio | Stdio from the image, after authorizing once outside Docker. |
+| **3. Self-host** | Docker HTTP | HTTP | Several users, one credential bucket per user namespace. |
 
-> **Mutually exclusive -- pick ONE.** Installing via marketplace *and* adding a Docker/HTTP override loads both, because plugins match by endpoint (command string or URL), not by name. Options 2 and 3 also lose the plugin's hooks.
+> **Mutually exclusive -- pick ONE.** Installing via marketplace *and* adding a Docker/HTTP override loads both, because plugins match by endpoint (command string or URL), not by name. Options 2 and 3 also lose the plugin's skills and hooks.
 
 ## Option 1: Claude Code plugin (recommended -- stdio + userConfig prompt)
 
 ```bash
 /plugin marketplace add n24q02m/claude-plugins
-/plugin install better-workspace-mcp@n24q02m-plugins
+/plugin install workspace@n24q02m-plugins
 ```
 
 Claude Code prompts for both values (declared in `userConfig`; sensitive ones go to the system keychain):
@@ -39,7 +41,7 @@ Claude Code prompts for both values (declared in `userConfig`; sensitive ones go
 | `GOOGLE_OAUTH_CLIENT_ID` | Required |
 | `GOOGLE_OAUTH_CLIENT_SECRET` | Required |
 
-Restart Claude Code. On the **first run** the server opens the Google consent screen; the user approves once and the refresh token is stored encrypted locally (`~/.better-workspace/config.json`).
+Restart Claude Code. On the **first run** the server prints `Google authorization required. Open <url> in a browser to continue.` on stderr and waits for the consent before it serves MCP; the user opens that URL on the same machine, approves once, and the refresh token is stored encrypted locally (`~/.workspace/config.json`).
 
 Equivalent manual config for any MCP client (Node >= 24.21.0):
 
@@ -73,7 +75,7 @@ Published images default to HTTP (the last Dockerfile stage) and there is no `:s
         "-e", "MCP_TRANSPORT=stdio",
         "-e", "GOOGLE_OAUTH_CLIENT_ID",
         "-e", "GOOGLE_OAUTH_CLIENT_SECRET",
-        "-v", "<your-home>/.better-workspace:/home/node/.better-workspace",
+        "-v", "<your-home>/.workspace:/home/node/.workspace",
         "n24q02m/workspace:<version>"
       ]
     }
@@ -81,7 +83,7 @@ Published images default to HTTP (the last Dockerfile stage) and there is no `:s
 }
 ```
 
-A container cannot complete the first-run consent (the browser is on the host, the consent server inside the container). Authorize once outside Docker via Option 1, then mount `~/.better-workspace` as above, or use Option 3.
+A container cannot complete the first-run consent (the browser is on the host, the consent server inside the container). Authorize once outside Docker via Option 1, then mount `~/.workspace` as above, or use Option 3.
 
 ## Option 3: Docker HTTP (self-host)
 
@@ -95,13 +97,13 @@ docker run -p 127.0.0.1:8087:8080 \
   -e CREDENTIAL_SECRET=<persistent-generated-secret> \
   -e WORKSPACE_USERS_FILE=/etc/workspace/users.toml \
   -v <your-users-file>:/etc/workspace/users.toml:ro \
-  -v workspace-data:/home/node/.better-workspace \
+  -v workspace-data:/home/node/.workspace \
   n24q02m/workspace:<version>
 ```
 
 The server repository also ships `docker-compose.yml` plus the overlay `docker-compose.http.yml`, which reads the Web client as `GOOGLE_OAUTH_WEB_CLIENT_ID` / `GOOGLE_OAUTH_WEB_CLIENT_SECRET` and publishes on host loopback only (`127.0.0.1:8087`).
 
-Each request must carry a bearer token listed in the users file (it maps each token to a user namespace; credentials are stored per namespace). Preserve `CREDENTIAL_SECRET` across restarts; HTTP startup fails without it. To expose the server beyond the host, put your own TLS reverse proxy in front.
+Each request must carry a bearer token that matches a `token_hash` in the users file (it maps each token to a user namespace; credentials are stored per namespace). Preserve `CREDENTIAL_SECRET` across restarts; HTTP startup fails without it. To expose the server beyond the host, put your own TLS reverse proxy in front.
 
 Consent is not served over HTTP. For each user, run on the server host:
 
@@ -109,31 +111,9 @@ Consent is not served over HTTP. For each user, run on the server host:
 workspace auth --user <namespace>
 ```
 
-### Claude Code (settings.json)
+It prints the Google consent URL on stderr and `Added <email>` once the consent completes (the flow expires after 10 minutes).
 
-```json
-{
-  "mcpServers": {
-    "workspace": {
-      "type": "http",
-      "url": "https://<your-host>/mcp",
-      "headers": { "Authorization": "Bearer <your-token>" }
-    }
-  }
-}
-```
-
-### Codex CLI (config.toml)
-
-```toml
-[mcp_servers.workspace]
-type = "http"
-url = "https://<your-host>/mcp"
-```
-
-The Codex block omits the bearer header; how to set it differs per client.
-
-### OpenCode (opencode.json)
+### Client config
 
 ```json
 {
@@ -155,7 +135,8 @@ The Codex block omits the bearer header; how to set it differs per client.
 | `GOOGLE_OAUTH_CLIENT_SECRET` | Yes | -- | Secret of the same client. |
 | `MCP_TRANSPORT` | No | `stdio` | `http` selects HTTP mode (`--http` / `TRANSPORT_MODE=http` equivalent). |
 | `CREDENTIAL_SECRET` | Yes (http) | -- | Persistent secret deriving per-user credential-encryption keys. Required at HTTP startup. |
-| `WORKSPACE_USERS_FILE` | Yes (http) | hull default location | Users file mapping each bearer token to a user namespace. |
+| `WORKSPACE_USERS_FILE` | No | `~/.hull/users.toml` (hull default) | Users file mapping each bearer token to a user namespace (http mode). The file must exist. |
+| `WORKSPACE_DATA_DIR` | No | home directory | Base directory for the credential store (`<dir>/.workspace/`); use an absolute path for a mounted volume. |
 | `PORT` | No | `0` (OS-assigned); `8080` in the image | Listen port (http). |
 | `HOST` | No | `127.0.0.1` | Bind address (http); `0.0.0.0` to expose the container. |
 
@@ -167,7 +148,7 @@ Every domain tool takes `account="<email>"`; omit it to use the primary. Manage 
 
 ## Verification
 
-`time` needs no Google account, so it verifies wiring independently of consent:
+`time` needs no Google account, so it checks the wiring without calling Google:
 
 ```
 Use the time tool with action "getCurrentTime".
@@ -181,4 +162,4 @@ Then:
 Use the config tool with action "status".
 ```
 
-Expected: `awaiting_setup` before the first consent, and the acting account's email afterwards.
+Expected: `configured` with the configured accounts and the primary one. Over HTTP, a namespace that has not consented yet reports `awaiting_setup`.

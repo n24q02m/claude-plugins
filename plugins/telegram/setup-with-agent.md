@@ -1,6 +1,6 @@
 # Telegram MCP -- Agent Setup Guide
 
-> Give this file to your AI agent to automatically set up better-telegram-mcp.
+> Give this file to your AI agent to automatically set up the telegram MCP server.
 
 telegram runs as a local stdio server by default and as a self-hosted HTTP server. There is no hosted public instance, no browser setup form, and no OAuth authorization server: credentials come from environment variables or from the local `telegram auth` command, and are configured on the machine that runs the server.
 
@@ -10,11 +10,11 @@ This plugin supports 3 install methods. Pick the one that matches your use case:
 
 | Priority | Method | Transport | Best for |
 |---|---|---|---|
-| **1. Default** | Plugin install (`uvx`/`npx`) | stdio | Quick local start, single workstation, bot mode with `TELEGRAM_BOT_TOKEN`. |
-| **2. Fallback** | Docker stdio (`docker run -i --rm`) | stdio | Windows/macOS where native uvx hits PATH or Python version issues. |
+| **1. Default** | Plugin install (`uvx`) | stdio | Quick local start, single workstation, bot mode with `TELEGRAM_BOT_TOKEN`. |
+| **2. Container** | Docker image `n24q02m/telegram` | HTTP | The Method 3 HTTP server, run from the published image. |
 | **3. Self-host** | `telegram --http` on a host you control | HTTP | One always-on server shared across devices and sessions, claude.ai web as a custom connector (conditions below), per-user tokens. |
 
-> **Mutually exclusive -- pick ONE per plugin**: If you choose Method 2 (Docker stdio override) OR Method 3 (HTTP), do NOT also `/plugin install` this plugin via marketplace. Both load simultaneously and create duplicate entries in `/mcp` dialog (plugin's stdio + your override). Plugin matching is by **endpoint** (URL or command string) per CC docs, not by name -- and `npx`/`uvx` != `docker` != HTTP URL, so all three are distinct endpoints. Trade-off: choosing Method 2 or Method 3 means you lose this plugin's skills/agents/hooks/commands. For full plugin features, use Method 1 (default plugin install) with `userConfig` credentials prompted at install time.
+> **Pick ONE registration per client.** Claude Code matches MCP servers by **endpoint** (command string or URL), not by name. Installing the plugin *and* adding a manual `mcpServers` entry (Docker or HTTP) loads both and creates duplicates. A manual entry also loses the plugin's skills and hooks. For the full feature set use Option 1.
 
 ## Option 1: Claude Code Plugin (Recommended, stdio Bot Mode)
 
@@ -29,45 +29,22 @@ When you run `/plugin install`, Claude Code prompts you for the following creden
 ### Steps
 
 ```bash
-# Install from marketplace (includes skills: /setup-bot, /channel-post)
+# Install from marketplace (includes skills: telegram:setup-bot, telegram:channel-post)
 /plugin marketplace add n24q02m/claude-plugins
-/plugin install better-telegram-mcp@n24q02m-plugins
+/plugin install telegram@n24q02m-plugins
 ```
 
 Paste your bot token when prompted. For user mode (read messages, browse chats), see "User mode" below.
 
-> **Note**: This installs the full plugin (skills + agents + hooks + commands + stdio MCP server). If you'd rather use Option 2 (Docker stdio) or Option 3 (HTTP) below, DO NOT `/plugin install` this plugin -- pick Option 2 or Option 3 instead. All three methods are mutually exclusive (see Method overview).
+> **Note**: This installs the full plugin (skills + hooks + stdio MCP server). If you'd rather use Option 2 (Docker) or Option 3 (HTTP) below, DO NOT `/plugin install` this plugin -- pick Option 2 or Option 3 instead. All three methods are mutually exclusive (see Method overview).
 
-## Option 2: Docker stdio (fallback)
+## Option 2: Docker (HTTP server)
 
-> **Before adding the Docker stdio override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall better-telegram-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's `npx`/`uvx` stdio + your `docker run` stdio) will load simultaneously since plugin matches by endpoint (command string), not by name.
+> **Before adding an `mcpServers` entry for the container, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall telegram@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries load simultaneously since plugin matches by endpoint, not name.
 >
-> **Trade-off accepted**: Choosing this method means you lose this plugin's skills/agents/hooks/commands. Use Option 1 instead if you want full plugin features.
+> **Trade-off accepted**: Choosing this method means you lose this plugin's skills and hooks. Use Option 1 instead if you want full plugin features.
 
-```bash
-docker run -i --rm \
-  -e TELEGRAM_BOT_TOKEN=your_bot_token \
-  n24q02m/telegram
-```
-
-Or as an MCP server config:
-
-```json
-{
-  "mcpServers": {
-    "telegram": {
-      "command": "docker",
-      "args": [
-        "run", "-i", "--rm",
-        "-e", "TELEGRAM_BOT_TOKEN",
-        "n24q02m/telegram"
-      ]
-    }
-  }
-}
-```
-
-> A container has no terminal for the interactive OTP prompt, so Docker stdio is for bot mode. For user mode, authorize with `telegram auth --phone` on a host and run the server there (Option 3).
+The published image (Docker Hub `n24q02m/telegram`, also on GHCR as `ghcr.io/n24q02m/telegram`) runs the HTTP server from Option 3, not a stdio server: its entrypoint is `python -m telegram --http --host 0.0.0.0 --port 8080`, and setting `MCP_TRANSPORT=stdio` does not change that. Because it binds a non-loopback address, the default `no-auth` mode exits with status 2. Mount a `config.toml` with `auth = "token"` or `"multi"` at `/home/appuser/.telegram/config.toml`; the file format and the client config are in Option 3. For stdio, use Option 1.
 
 ## User mode (MTProto)
 
@@ -79,16 +56,16 @@ uvx --python 3.13 --from n24q02m-telegram telegram auth --phone +15551234567
 
 1. Telegram sends an OTP to the **Telegram app** (not SMS); the user enters it at the prompt.
 2. If the account has 2FA, the user enters the password at the prompt. It is never stored in the environment.
-3. The Telethon session is stored on disk (`~/.telegram/`, mode 0600) and the credentials are saved encrypted.
+3. The Telethon session is stored as `~/.telegram/<session_name>.session` (mode 0600), and the credentials are saved to `~/.telegram/config.json`, encrypted with the machine key `~/.telegram/.secret`.
 4. Check with `telegram status`, then restart the server.
 
-Also set `TELEGRAM_PHONE` (the same number) in the server's environment: the plugin's PreToolUse hook only checks the `TELEGRAM_PHONE` and `TELEGRAM_BOT_TOKEN` environment variables. Environment variables take precedence over saved credentials. The bundled public Telegram API pair is used by default, so no my.telegram.org registration is needed.
+The PreToolUse hook shipped with telegram 4.25.0 does not read `~/.telegram/`. It lets `message`, `chat`, `media` and `contact` calls through only when `TELEGRAM_PHONE` or `TELEGRAM_BOT_TOKEN` is set in its environment or the legacy `~/.config/mcp/config.enc` file exists (`config` and `help` always pass), so also set `TELEGRAM_PHONE` to the same number. Environment variables take precedence over saved credentials. The bundled public Telegram API pair is used by default, so no my.telegram.org registration is needed.
 
 ## Option 3: HTTP (self-host)
 
-> **Before adding the HTTP override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall better-telegram-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's stdio + your HTTP override) will load simultaneously since plugin matches by endpoint, not name.
+> **Before adding the HTTP override below, ensure this plugin is NOT installed via marketplace**: Run `/plugin uninstall telegram@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (plugin's stdio + your HTTP override) will load simultaneously since plugin matches by endpoint, not name.
 >
-> **Trade-off accepted**: Choosing this method means you lose this plugin's skills/agents/hooks/commands. For example, the `better-telegram-mcp:setup-bot` skill will no longer be available. Use Option 1 instead if you want full plugin features.
+> **Trade-off accepted**: Choosing this method means you lose this plugin's skills and hooks. For example, the `telegram:setup-bot` skill will no longer be available. Use Option 1 instead if you want full plugin features.
 
 > **Switching transport vs. setting credentials**: The `userConfig` prompt only configures credentials for stdio mode (Option 1). To switch transport to HTTP, override `mcpServers` in your client settings per the snippets below -- this is a separate path from `userConfig` and is not driven by the install prompt.
 
@@ -113,8 +90,8 @@ host = "127.0.0.1"   # default; --host overrides
 port = 8000          # default; --port overrides
 auth = "token"       # "no-auth" | "token" | "multi"
 token_hash = "scrypt$..."
-# users_file = "users.toml"   # multi mode; defaults to ~/.telegram/users.toml
-# rpm = 60                    # optional per-client rate limit
+# users_file = "~/.telegram/users.toml"   # multi mode; this is the default
+# rpm = 60                    # optional request cap per minute, token mode only
 ```
 
 Authorize Telegram for the default credentials (`telegram auth --bot-token <token>` or `telegram auth --phone <+number>`), then start the server:
@@ -130,6 +107,8 @@ It serves MCP at `/mcp` and an unauthenticated `GET /health`. `no-auth` binds lo
 token_hash = "scrypt$..."
 enabled = true
 namespace = "alice"
+# [users.alice.limits]
+# rpm = 60            # optional request cap per minute for this user
 ```
 
 Edit `users.toml` on the host and restart the server; authorize each user's Telegram with `telegram auth --phone <+number> --user alice`. An invalid `config.toml` or `users.toml` prints one line and exits with status 2.
@@ -159,7 +138,7 @@ Keep the token in the client's secret store or environment, not in a committed f
 | `TELEGRAM_API_ID` / `TELEGRAM_API_HASH` | No | bundled public pair | Override the bundled Telegram API pair |
 | `USE_BUNDLED_TELEGRAM_CLIENT` | No | `true` | Set to `false` to require your own API pair |
 | `TELEGRAM_SESSION_NAME` | No | `default` | Telethon session file name |
-| `TELEGRAM_DATA_DIR` | No | `~/.telegram` | Session and credential directory |
+| `TELEGRAM_DATA_DIR` | No | `~/.telegram` | Telethon session directory (saved credentials stay in `~/.telegram/`) |
 | `MCP_TRANSPORT` | No | `stdio` | Set to `http` (or pass `--http`) to start the HTTP server; `TRANSPORT_MODE` is an alias |
 
 The bundled Telegram API pair is a public pair baked into the source. There is no `TELEGRAM_PASSWORD` variable.
@@ -174,7 +153,7 @@ The bundled Telegram API pair is a public pair baked into the source. There is n
 | List chats, Create groups/channels | -- | Y |
 | Get chat info, Manage members | Y | Y |
 | Send media (photo/file/voice/video) | Y | Y |
-| Download media | -- | Y |
+| Download media | Y (needs `file_id`) | Y |
 | Contacts (list/search/add/block) | -- | Y |
 
 ## Authentication
@@ -197,10 +176,10 @@ config(action="status")
 
 Expected: returns the mode (bot/user), connection and authorization state, and the current config.
 
-Then test sending a message:
+Then test sending a message to a chat the account can post to:
 
 ```
-message(action="send", chat_id="me", text="Hello from MCP!")
+message(action="send", chat_id="<chat_id>", text="Hello from MCP!")
 ```
 
 Note: In bot mode, the bot can only message users who have started a conversation with it.

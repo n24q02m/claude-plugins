@@ -50,7 +50,7 @@ For specific workflows:
 
 Each server cuts independent releases (`vMAJOR.MINOR.PATCH`). Every active server pins a compatible `hull` range (PyPI `n24q02m-hull`, npm `@n24q02m/hull`), so a breaking `hull` release is adopted by each server in its own release. See each server's CHANGELOG.
 
-`workspace` is still pre-1.0 (npm `@n24q02m/workspace` currently `0.6.0`, with a `beta` dist-tag alongside `latest`), so expect breaking changes before 1.0.
+`workspace` is still pre-1.0 (npm `@n24q02m/workspace` publishes a `beta` dist-tag alongside `latest`), so expect breaking changes before 1.0.
 
 ## License
 

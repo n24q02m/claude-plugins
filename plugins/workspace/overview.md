@@ -1,11 +1,13 @@
 # Workspace MCP -- Overview
 
+> **Archived (2026-09-13).** The workspace repository is no longer maintained; its README recommends the official Google Workspace APIs instead. Existing installations keep working but receive no updates or support.
+
 Google Workspace for AI agents -- ten Google API domains, local time helpers, and multi-account OAuth through composite tools. Sheets and People provide read-only access; write operations are available where the upstream API and tool action support them.
 
 ## What it does
 
 - **Docs**: read document text, create documents, insert and replace text, apply formatting, read pending suggestions.
-- **Drive**: search files, create and find folders, move, rename, trash, download, and read comments.
+- **Drive**: search files, create and find folders, move, rename, trash, download (stdio only), and read comments.
 - **Calendar**: list calendars and events, create, update, delete, respond to invites, and find free time.
 - **Gmail**: search, read, send, draft, modify labels on messages and threads, download attachments.
 - **Sheets**: read a sheet, a range, or its metadata (read-only).
@@ -29,7 +31,7 @@ There is no endpoint hosted by the author. For HTTP you run the server yourself,
 
 ## Configuration
 
-Needs a Google OAuth client you create yourself, supplied as `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` -- **Desktop app** type for stdio, **Web application** type for HTTP. The server ships no Google client of its own, so the consent screen and API quota belong to your project. In stdio mode the first run opens the Google consent screen once. In HTTP mode the server needs `CREDENTIAL_SECRET` (it derives each user's credential-encryption key) and `WORKSPACE_USERS_FILE`, and each user consents on the server host with `workspace auth --user <namespace>`; consent is never served over HTTP. Use placeholders in shared config and never commit real credentials. Full walkthrough in [setup](/servers/workspace/setup/).
+Needs a Google OAuth client you create yourself, supplied as `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` -- **Desktop app** type for stdio, **Web application** type for HTTP. The server ships no Google client of its own, so the consent screen and API quota belong to your project. In stdio mode the first run prints a Google consent URL on stderr, to open once on the same machine. In HTTP mode the server needs `CREDENTIAL_SECRET` (it derives each user's credential-encryption key) and a users file (`WORKSPACE_USERS_FILE`, default `~/.hull/users.toml`), and each user consents on the server host with `workspace auth --user <namespace>`; consent is never served over HTTP. Use placeholders in shared config and never commit real credentials. Full walkthrough in [setup](/servers/workspace/setup/).
 
 ## Distribution and license
 

@@ -1,16 +1,6 @@
 # Workspace MCP -- Troubleshooting
 
-Common issues specific to better-workspace-mcp. For problems shared across the stack, see the [general troubleshooting guide](/get-started/troubleshooting/).
-
-## Installing a prerelease (beta) build
-
-This server currently publishes **only** beta builds -- there is no stable tag yet. The npm `latest` and `beta` dist-tags both point at the newest beta, so `@latest` works today. To pin an exact build:
-
-```sh
-npx @n24q02m/workspace@<X.Y.Z-beta.N>
-```
-
-Once a stable release exists, `latest` will move to it and prereleases will need the explicit `@<X.Y.Z-beta.N>` pin again.
+Common issues specific to workspace. For problems shared across the stack, see the [general troubleshooting guide](/get-started/troubleshooting/).
 
 ## "Access blocked: This app is not verified"
 
@@ -18,17 +8,17 @@ Your OAuth consent screen is still unpublished. Add your Google account as a tes
 
 ## `redirect_uri_mismatch`
 
-Google binds redirect URIs to the OAuth client **type**. Stdio needs a **Desktop app** client, because consent returns to a loopback address. HTTP needs a **Web application** client; a Desktop client will fail there. Do not point one machine's stdio and HTTP deploys at the same client. If the type is right, check the Web client's authorized redirect URIs against the one named in Google's error page, matching scheme and path exactly.
+Google binds redirect URIs to the OAuth client **type**. Stdio needs a **Desktop app** client, because consent returns to a loopback address. HTTP needs a **Web application** client. Do not point one machine's stdio and HTTP deploys at the same client. If the type is right, check the Web client's authorized redirect URIs against the one named in Google's error page, matching scheme and path exactly.
 
-## The browser never opens on first run
+## No browser opens on first run
 
-Containers and headless hosts have no browser to open. Either authorize once via a plugin/`npx` install on a workstation and mount the resulting `~/.better-workspace` directory into the container (the stored refresh token is reused afterwards), or run HTTP mode and consent with `workspace auth --user <namespace>` on the server host. `MCP_NO_BROWSER=1` suppresses the launch attempt explicitly.
+The server never opens a browser itself. On the first stdio run it prints `Google authorization required. Open <url> in a browser to continue.` on stderr and waits for the consent before it serves MCP. Open that URL on the same machine, because the consent server listens on `127.0.0.1`. A container cannot complete this flow: authorize once via a plugin/`npx` install outside Docker and mount the resulting `~/.workspace` directory into the container (the stored refresh token is reused afterwards), or run HTTP mode and consent with `workspace auth --user <namespace>` on the server host.
 
 ## A Workspace API returns 403
 
 The API is most likely not enabled on your Cloud project -- enable it under APIs & Services > Library and retry.
 
-If the API *is* enabled, the scope set is the next suspect: scopes are requested at consent time, so an account authorized before a scope was added keeps the old set. Re-consent with `config(action="account_add")` for that account.
+If the API *is* enabled and the error reads `Request had insufficient authentication scopes`, the grant is the next suspect: Google never widens a token it has already issued, and a user may withhold individual restricted scopes at the consent screen. Re-authorize that account with `config(action="account_add")`, signing in as the same account; the record is replaced in place.
 
 ## Calls act on the wrong account
 
@@ -38,7 +28,7 @@ Naming an account that is not configured returns an error naming it -- the call 
 
 ## `config(action="status")` still says `awaiting_setup`
 
-The consent never completed. In stdio, re-run the flow with `config(action="setup_start", force=true)` or run `workspace auth` on the host. In HTTP, consent is not served over the endpoint: run `workspace auth --user <namespace>` on the server host for that user. If consent completed but the state did not move, call `config(action="setup_complete")` to re-check.
+The consent never completed. In stdio, restart the server (while no account is configured it starts the consent flow on startup) or run `workspace auth` on the host; `config(action="setup_start")` returns the same instruction. In HTTP, consent is not served over the endpoint: run `workspace auth --user <namespace>` on the server host for that user. If consent completed but the state did not move, call `config(action="setup_complete")` to re-check.
 
 ## Docker container starts in HTTP mode when you wanted stdio
 
@@ -46,15 +36,15 @@ Published images are built from the last Dockerfile stage, `http`, so `MCP_TRANS
 
 ## HTTP requests are rejected with 401
 
-In HTTP mode every request must carry `Authorization: Bearer <your-token>`, and the token must be listed in the users file (`WORKSPACE_USERS_FILE`). A 401 on the endpoint means the token is missing, wrong, or not in that file. Credentials for a user are isolated per namespace, so a valid token with no consent yet reports `awaiting_setup` instead; run `workspace auth --user <namespace>` on the host.
+In HTTP mode every request must carry `Authorization: Bearer <your-token>`, and the token must match a `token_hash` in the users file (`WORKSPACE_USERS_FILE`, default `~/.hull/users.toml`). A 401 on the endpoint means the header is missing or malformed, or the token matches no user in that file. A 403 means the matching user has `enabled = false`, and a 429 means the user is over their `rpm` limit. Credentials for a user are isolated per namespace, so a valid token with no consent yet reports `awaiting_setup` instead; run `workspace auth --user <namespace>` on the host.
 
 ## HTTP server refuses to start
 
-Startup fails when `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, or `CREDENTIAL_SECRET` is missing. Set all three, and keep `CREDENTIAL_SECRET` stable across restarts: changing it makes previously stored credentials unreadable.
+HTTP startup fails when `CREDENTIAL_SECRET` is missing, because each user's credential store derives its encryption key from it. Keep it stable across restarts: changing it makes previously stored credentials unreadable. Set the Web client pair (`GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`) as well; adding an account with `workspace auth --user` fails without it.
 
 ## Adding questions to a form does nothing
 
-`forms(action="create")` takes only a title. Questions are added afterwards with `forms(action="batchUpdate")`. Responses are read-only -- the Forms API cannot create one -- and listing or deleting forms goes through `drive`, not `forms`.
+`forms(action="create")` takes only a `title` (and an optional `documentTitle`). Questions are added afterwards with `forms(action="batchUpdate")`. Responses are read-only -- the Forms API cannot create one -- and listing or deleting forms goes through `drive`, not `forms`.
 
 ## Writing to a spreadsheet fails
 

@@ -1,6 +1,6 @@
 # Notion MCP -- Troubleshooting
 
-Common issues specific to better-notion-mcp. For problems shared across the stack, see the [general troubleshooting guide](/get-started/troubleshooting/).
+Common issues specific to notion. For problems shared across the stack, see the [general troubleshooting guide](/get-started/troubleshooting/).
 
 ## Installing a prerelease (beta) build
 
@@ -25,17 +25,25 @@ Notion allows roughly 3 requests/second per integration. The composite tools bat
 The server has no Notion token for your user. Provide one in either way:
 
 - Set `NOTION_TOKEN` (plugin `userConfig` field or environment variable), or
-- Run `npx -y @n24q02m/notion auth` on the machine that runs the server. It reads the token from `NOTION_TOKEN` or prompts for it, verifies it with Notion, and stores it under `~/.better-notion/`.
+- Run `npx -y @n24q02m/notion auth` on the machine that runs the server. It reads the token from `NOTION_TOKEN` or prompts for it, verifies it with Notion, and stores it under `~/.notion/`.
 
 In HTTP `multi` mode each user needs their own token: `notion auth --user <namespace>` on the server host. Then check with `config(action="status")`; it reports `state`, `has_token`, and `token_source` (`environment` or `config`).
 
-In stdio mode the server exits at startup with an error on stderr when neither a `NOTION_TOKEN` nor a stored token exists.
+In stdio mode the server exits at startup with an error on stderr when neither a `NOTION_TOKEN` nor a stored token exists. notion 2.44.0 has a known issue here: its stdio server looks for a stored token only under the pre-rename `~/.better-notion/` store at startup, so a token saved by `notion auth` on that release is not found and stdio exits. On 2.44.0, keep `NOTION_TOKEN` set for stdio.
 
 ## 401 from the HTTP endpoint
 
 A 401 on `/mcp` means the bearer token is missing or wrong, not that Notion rejected anything. Send `Authorization: Bearer <your-token>` and check it against the server's auth mode: in `multi` mode the token must belong to a user in `MCP_USERS_FILE`; in `token` mode it must match the token behind `MCP_AUTH_TOKEN_HASH`.
 
 A 401 inside a tool result (for example "Could not find integration") comes from Notion: the stored integration token is invalid or was revoked at https://www.notion.so/my-integrations.
+
+## HTTP server refuses to start
+
+- `MCP_AUTH_MODE=token` without `MCP_AUTH_TOKEN_HASH` (or with a hash the server rejects): mint the hash with `token hash` and pass the hash, never the raw token.
+- `Unknown MCP_AUTH_MODE`: the value must be `multi`, `token`, or `no-auth`.
+- `no-auth` with a non-loopback `HOST`: this mode is loopback-only; use `token` or `multi` to serve other hosts.
+- `DataDirEscapeError`: `NOTION_DATA_DIR` is relative and resolves outside the home directory. Use an absolute path to pick another directory.
+- Decryption fails after moving a volume: only `config.json` or only `.secret` was moved. Keep both under one base directory.
 
 ## Replacing a stored token
 

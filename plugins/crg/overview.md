@@ -21,7 +21,7 @@ crg is local-first. It defaults to `stdio` and runs against a local checkout, an
 
 The graph, heuristic security scan, and most queries work with no configuration. Optional cloud embeddings and LLM node summaries are unlocked through the host-owned instance config and a few environment variables:
 
-- `EMBEDDING_MODELS` -- optional CSV of embedding models; the first entry is active. Empty falls back to the bundled local model.
+- `EMBEDDING_MODELS` -- optional CSV of embedding models; the first entry is active. Empty uses the local Fastretrieval ONNX registry model.
 - `HULL_EMBED_API_KEY`, `HULL_CHAT_API_KEY` -- optional keys for the `[models.embed]` and `[models.chat]` provider cells. Node summaries need a configured chat cell; without one they are skipped.
 - `LOCAL_EMBEDDING_MODEL` and its metadata fields, `LOCAL_RERANK_MODEL` -- optional local embedding and reranking models.
 

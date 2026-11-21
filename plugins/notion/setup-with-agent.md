@@ -1,8 +1,8 @@
 # Notion MCP -- Agent Setup Guide
 
-> Give this file to your AI agent to automatically set up better-notion-mcp.
+> Give this file to your AI agent to automatically set up the notion MCP server.
 
-The server authenticates with a **Notion integration token** (`ntn_...`). There is no browser setup form and no OAuth flow. The token comes from the `NOTION_TOKEN` environment variable or from `notion auth`, which stores it under `~/.better-notion/`. The user must create the integration themselves; the agent cannot do that step.
+The server authenticates with a **Notion integration token** (`ntn_...`). There is no browser setup form and no OAuth flow. The token comes from the `NOTION_TOKEN` environment variable or from `notion auth`, which stores it under `~/.notion/`. The user must create the integration themselves; the agent cannot do that step.
 
 ## Method overview
 
@@ -40,7 +40,7 @@ When you run `/plugin install`, Claude Code prompts for the following credential
 2. Install the plugin (Claude Code prompts for `NOTION_TOKEN`):
    ```bash
    /plugin marketplace add n24q02m/claude-plugins
-   /plugin install better-notion-mcp@n24q02m-plugins
+   /plugin install notion@n24q02m-plugins
    ```
 3. Restart Claude Code -- the plugin auto-loads with your token.
 
@@ -54,11 +54,11 @@ To keep the token out of client config, store it once on the machine that runs t
 NOTION_TOKEN=<your-notion-token> npx -y @n24q02m/notion auth
 ```
 
-`notion auth` reads the token from `NOTION_TOKEN` or prompts for it (never from argv), verifies it with Notion, and saves it to `~/.better-notion/config.json`.
+`notion auth` reads the token from `NOTION_TOKEN` or prompts for it (never from argv), verifies it with Notion, and saves it to `~/.notion/config.json`. notion 2.44.0 has a known issue here: its stdio server looks for a stored token only under the pre-rename `~/.better-notion/` store at startup, so a token saved by `notion auth` on that release is not found and stdio exits. On 2.44.0, keep `NOTION_TOKEN` set for stdio.
 
 ## Option 2: Docker stdio (fallback)
 
-> **Warning -- before adding the Docker stdio override below, ensure this plugin is NOT installed via marketplace**: run `/plugin uninstall better-notion-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries load simultaneously since plugins match by endpoint (command string), not by name.
+> **Warning -- before adding the Docker stdio override below, ensure this plugin is NOT installed via marketplace**: run `/plugin uninstall notion@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries load simultaneously since plugins match by endpoint (command string), not by name.
 >
 > **Trade-off accepted**: choosing this method means you lose this plugin's skills and hooks. Use Option 1 if you want full plugin features.
 
@@ -82,7 +82,7 @@ Set `NOTION_TOKEN` in your shell profile or pass it inline.
 
 ## Option 3: Docker HTTP (self-host)
 
-> **Warning -- before adding the HTTP override below, ensure this plugin is NOT installed via marketplace**: run `/plugin uninstall better-notion-mcp@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries load simultaneously since plugins match by endpoint, not name.
+> **Warning -- before adding the HTTP override below, ensure this plugin is NOT installed via marketplace**: run `/plugin uninstall notion@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries load simultaneously since plugins match by endpoint, not name.
 >
 > **Trade-off accepted**: choosing this method means you lose this plugin's skills and hooks. For example, the `organize-database` skill will no longer be available. Use Option 1 if you want full plugin features.
 
@@ -94,7 +94,7 @@ HTTP is enabled with `--http`, `MCP_TRANSPORT=http`, or `TRANSPORT_MODE=http`. C
 
 - `multi` (default): each user is listed in `MCP_USERS_FILE` (default `~/.hull/users.toml`) and gets their own Notion token namespace; store it with `notion auth --user <namespace>` on the server host.
 - `token`: one shared bearer token; set `MCP_AUTH_TOKEN_HASH` to its `scrypt$...` hash (mint it with the `token hash` subcommand).
-- `no-auth`: no bearer check; trusted local use only.
+- `no-auth`: no bearer check; loopback binds only (the server refuses a non-loopback `HOST`).
 
 ```bash
 docker run -p 8080:8080 \
@@ -158,6 +158,7 @@ The client must send `Authorization: Bearer <your-token>` in `token` and `multi`
 | `MCP_RPM` | No (http, `token`) | -- | Optional per-minute request cap. |
 | `PORT` | No | `0` (OS-assigned) | Server port (http mode). |
 | `HOST` | No | `127.0.0.1` | Bind address (http mode); set `0.0.0.0` to expose the container. |
+| `NOTION_DATA_DIR` | No | home directory | Base directory of the credential store (`<dir>/.notion/`). A relative value must stay inside the home directory. In a container, `NOTION_DATA_DIR=/data` with a volume on `/data` keeps the store across restarts. |
 
 ## Authentication
 
@@ -176,7 +177,7 @@ After setup, verify the server is working:
 Use the workspace tool with action "info" to verify the server is connected to Notion.
 ```
 
-Expected: workspace name, ID, and bot user information.
+Expected: the integration's bot user (`id`, `name`, `type`, `owner`).
 
 To check credentials without calling Notion:
 
