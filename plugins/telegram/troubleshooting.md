@@ -10,7 +10,7 @@ New features often ship as a beta before the stable release. `uvx`/`pip` will no
 uvx --python 3.13 --from n24q02m-telegram==<X.Y.ZbN> telegram
 ```
 
-Replace `<X.Y.ZbN>` with the exact beta version. Drop the `==<version>` pin to return to the latest stable.
+Replace `<X.Y.ZbN>` with the exact beta version. Replace `==<X.Y.ZbN>` with `@latest` to return to the latest stable release. Without a version, `uvx` does not check for a newer release and keeps using a version it already cached.
 
 ## Bot mode vs user mode
 
