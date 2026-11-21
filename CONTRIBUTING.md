@@ -15,6 +15,13 @@ per-plugin prose in `plugins/<name>/*.md`; edit shared reference/get-started
 pages directly under `docs/src/content/docs/`. The ignored `servers/` content
 tree and `docs/dist/` are generated outputs, not authoring locations.
 
+The docs portal ([docs.n24q02m.com](https://docs.n24q02m.com), built from
+[`n24q02m/tools-docs`](https://github.com/n24q02m/tools-docs)) compiles the pages
+under `docs/src/content/docs/` and `plugins/<name>/*.md` from `main` at build time,
+so a change merged here is published by the portal's next deploy. The portal runs
+`docs/scripts/sync-plugin-docs.mjs` to render the server pages: keep that script's
+path and its output directory, `docs/src/content/docs/servers/`, stable.
+
 Plugin manifests, Skills, hooks, commands, and Agent Chat runtime assets are
 mirrored from the source repositories by `scripts/sync-plugins.sh` and the
 release-sync workflow. That asset sync does **not** copy per-plugin prose.

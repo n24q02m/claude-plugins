@@ -45,8 +45,6 @@ export default defineConfig({
             { label: 'telegram', items: [{ autogenerate: { directory: 'servers/telegram' } }] },
           ],
         },
-        { label: 'Tools', items: [{ autogenerate: { directory: 'tools' } }] },
-        { label: 'skret', items: [{ autogenerate: { directory: 'skret' } }] },
         { label: 'Reference', items: [{ autogenerate: { directory: 'reference' } }] },
       ],
     }),
