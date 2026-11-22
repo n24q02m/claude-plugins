@@ -54,7 +54,7 @@ To keep the token out of client config, store it once on the machine that runs t
 NOTION_TOKEN=<your-notion-token> npx -y @n24q02m/notion auth
 ```
 
-`notion auth` reads the token from `NOTION_TOKEN` or prompts for it (never from argv), verifies it with Notion, and saves it to `~/.notion/config.json`. notion 2.44.0 has a known issue here: its stdio server looks for a stored token only under the pre-rename `~/.better-notion/` store at startup, so a token saved by `notion auth` on that release is not found and stdio exits. On 2.44.0, keep `NOTION_TOKEN` set for stdio.
+`notion auth` reads the token from `NOTION_TOKEN` or prompts for it (never from argv), verifies it with Notion, and saves it to `~/.notion/config.json`.
 
 ## Option 2: Docker stdio (fallback)
 
@@ -158,7 +158,7 @@ The client must send `Authorization: Bearer <your-token>` in `token` and `multi`
 | `MCP_RPM` | No (http, `token`) | -- | Optional per-minute request cap. |
 | `PORT` | No | `0` (OS-assigned) | Server port (http mode). |
 | `HOST` | No | `127.0.0.1` | Bind address (http mode); set `0.0.0.0` to expose the container. |
-| `NOTION_DATA_DIR` | No | home directory | Base directory of the credential store (`<dir>/.notion/`). A relative value must stay inside the home directory. In a container, `NOTION_DATA_DIR=/data` with a volume on `/data` keeps the store across restarts. |
+| `NOTION_DATA_DIR` | No | home directory | Base directory of the credential store (`<dir>/.notion/`). A relative value must stay inside the home directory. In a container (image 2.45.0 or later), `NOTION_DATA_DIR=/data` with a volume on `/data` keeps the store across restarts. |
 
 ## Authentication
 

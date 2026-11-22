@@ -77,8 +77,6 @@ NOTION_TOKEN=<your-notion-token> npx -y @n24q02m/notion auth
 
 `notion auth` reads the token from `NOTION_TOKEN` or prompts for it (it is never taken from command-line arguments), checks it against Notion, and saves it to `~/.notion/config.json` with owner-only file permissions, encrypted with the machine key in `~/.notion/.secret`. A store an earlier release wrote under `~/.better-notion/` is copied forward once at startup. Later runs pick it up without `NOTION_TOKEN` being set. If neither is present in stdio mode, the server exits with an error on stderr listing both options.
 
-notion 2.44.0 has a known issue here: its stdio server looks for a stored token only under the pre-rename `~/.better-notion/` store at startup, so a token saved by `notion auth` on that release is not found and stdio exits. On 2.44.0, keep `NOTION_TOKEN` set for stdio.
-
 ## Method 2: Docker stdio (fallback)
 
 > **Warning -- before adding the Docker stdio override below, ensure this plugin is NOT installed via marketplace**: run `/plugin uninstall notion@n24q02m-plugins` first if you previously ran `/plugin install`. Otherwise both entries (the plugin's `npx` stdio and your `docker run` stdio) load simultaneously, since plugins match by endpoint (command string), not by name.
@@ -222,7 +220,7 @@ In `token` and `multi` modes the client must send `Authorization: Bearer <your-t
 | `MCP_RPM` | No (http, `token`) | -- | Optional per-minute request cap. |
 | `PORT` | No | `0` (OS-assigned) | Server port; set explicitly to bind a fixed port. |
 | `HOST` | No | `127.0.0.1` | Bind address (http mode); set `0.0.0.0` to expose the container. |
-| `NOTION_DATA_DIR` | No | home directory | Base directory of the credential store (`<dir>/.notion/`). A relative value must stay inside the home directory. In a container, `NOTION_DATA_DIR=/data` with a volume on `/data` keeps the store across restarts. |
+| `NOTION_DATA_DIR` | No | home directory | Base directory of the credential store (`<dir>/.notion/`). A relative value must stay inside the home directory. In a container (image 2.45.0 or later), `NOTION_DATA_DIR=/data` with a volume on `/data` keeps the store across restarts. |
 
 ## Troubleshooting
 

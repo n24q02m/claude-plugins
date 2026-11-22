@@ -29,7 +29,7 @@ The server has no Notion token for your user. Provide one in either way:
 
 In HTTP `multi` mode each user needs their own token: `notion auth --user <namespace>` on the server host. Then check with `config(action="status")`; it reports `state`, `has_token`, and `token_source` (`environment` or `config`).
 
-In stdio mode the server exits at startup with an error on stderr when neither a `NOTION_TOKEN` nor a stored token exists. notion 2.44.0 has a known issue here: its stdio server looks for a stored token only under the pre-rename `~/.better-notion/` store at startup, so a token saved by `notion auth` on that release is not found and stdio exits. On 2.44.0, keep `NOTION_TOKEN` set for stdio.
+In stdio mode the server exits at startup with an error on stderr when neither a `NOTION_TOKEN` nor a stored token exists.
 
 ## 401 from the HTTP endpoint
 
