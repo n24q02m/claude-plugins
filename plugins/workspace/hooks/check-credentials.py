@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""PreToolUse hook: hint when better-workspace-mcp credentials are not configured.
+"""PreToolUse hook: hint when workspace credentials are not configured.
 
-Non-blocking -- the server handles the unconfigured state itself (stdio opens
-the Google consent screen on first run; HTTP sends each user to /authorize).
+Non-blocking -- the server handles the unconfigured state itself (stdio prints
+a Google consent URL on first run; over HTTP a user's Google account is added on
+the host with `workspace auth --user <namespace>`).
 Google delegated OAuth means there is no static API token: the env vars below
 are the OAuth *client*, not the user's credentials.
 
@@ -45,7 +46,7 @@ except ImportError:
             sys.exit(2)
         return data
 
-SERVER_NAME = "better-workspace-mcp"
+SERVER_NAME = "workspace"
 CREDENTIAL_KEYS = ["GOOGLE_OAUTH_CLIENT_ID"]
 # Per-user account store: current directory first, then the two pre-rename layouts.
 STORE_DIRS = (".workspace", ".better-workspace", ".better-workspace-mcp")
@@ -82,7 +83,7 @@ def main() -> None:
         json.dumps(
             {
                 "message": (
-                    "better-workspace-mcp: credentials not yet configured. "
+                    f"{SERVER_NAME}: credentials not yet configured. "
                     "The server will provide setup instructions."
                 ),
             }

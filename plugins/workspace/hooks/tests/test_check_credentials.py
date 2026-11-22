@@ -107,8 +107,9 @@ class TestCheckCredentials(unittest.TestCase):
         mock_exit.assert_called_with(0)
         output = json.loads(mock_stdout.getvalue())
         self.assertIn("message", output)
-        self.assertIn(
-            "better-workspace-mcp: credentials not yet configured", output["message"]
+        self.assertTrue(
+            output["message"].startswith("workspace: credentials not yet configured"),
+            output["message"],
         )
 
     @patch.dict(
