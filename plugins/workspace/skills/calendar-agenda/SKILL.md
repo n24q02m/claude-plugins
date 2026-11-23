@@ -10,7 +10,7 @@ Systematic daily schedule review and briefing for Google Workspace calendar even
 
 ## Workflow
 
-1. **Fetch Events**: Call `calendar(action="list_events", timeMin="...", timeMax="...")` for the specified time window.
+1. **Fetch Events**: Call `calendar(action="listEvents", timeMin="...", timeMax="...")` for the specified time window.
 2. **Conflict Detection**: Check for overlapping time spans between confirmed events.
 3. **Attendee & Context Briefing**: For each meeting with external attendees or video links, highlight:
    - Meeting title and organizer
