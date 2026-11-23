@@ -89,11 +89,9 @@ function displayName(pluginName, meta) {
   return meta.name || pluginName;
 }
 
-// mcp-core is an archived foundation library (superseded by hull), not a runnable
-// server — frame it that way and skip the marketplace-install pointer.
-const FOUNDATION = 'mcp-core';
+const FOUNDATION = '';
 const FOUNDATION_DESCRIPTION =
-  'Archived foundation library (2026-10-31), superseded by hull (PyPI n24q02m-hull, npm @n24q02m/hull). ' +
+  'Shared foundation library hull (PyPI n24q02m-hull, npm @n24q02m/hull). ' +
   'Not a runnable MCP server.';
 const COORDINATION = '';
 const COORDINATION_DESCRIPTION =
