@@ -1,7 +1,7 @@
 {
   "name": "email",
   "description": "Email management via IMAP/SMTP — multi-account",
-  "version": "1.45.1",
+  "version": "1.46.0",
   "userConfig": {
     "EMAIL_CREDENTIALS": {
       "type": "string",
@@ -19,7 +19,10 @@
   "mcpServers": {
     "email": {
       "command": "npx",
-      "args": ["--yes", "@n24q02m/email@latest"],
+      "args": [
+        "--yes",
+        "@n24q02m/email@latest"
+      ],
       "env": {
         "MCP_TRANSPORT": "stdio",
         "EMAIL_CREDENTIALS": "${user_config.EMAIL_CREDENTIALS}"
