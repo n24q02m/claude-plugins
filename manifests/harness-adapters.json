@@ -4,7 +4,7 @@
       "product": {
         "id": "wet",
         "name": "wet",
-        "version": "3.23.0",
+        "version": "3.24.0",
         "source_ref": "plugins/wet"
       },
       "harness": "claude-code",
@@ -40,7 +40,7 @@
       "product": {
         "id": "wet",
         "name": "wet",
-        "version": "3.23.0",
+        "version": "3.24.0",
         "source_ref": "plugins/wet"
       },
       "harness": "codex-cli",
@@ -76,7 +76,7 @@
       "product": {
         "id": "wet",
         "name": "wet",
-        "version": "3.23.0",
+        "version": "3.24.0",
         "source_ref": "plugins/wet"
       },
       "harness": "opencode",
@@ -112,7 +112,7 @@
       "product": {
         "id": "wet",
         "name": "wet",
-        "version": "3.23.0",
+        "version": "3.24.0",
         "source_ref": "plugins/wet"
       },
       "harness": "cursor",
@@ -148,7 +148,7 @@
       "product": {
         "id": "wet",
         "name": "wet",
-        "version": "3.23.0",
+        "version": "3.24.0",
         "source_ref": "plugins/wet"
       },
       "harness": "github-copilot-vscode",
@@ -184,7 +184,7 @@
       "product": {
         "id": "wet",
         "name": "wet",
-        "version": "3.23.0",
+        "version": "3.24.0",
         "source_ref": "plugins/wet"
       },
       "harness": "gemini-cli",
