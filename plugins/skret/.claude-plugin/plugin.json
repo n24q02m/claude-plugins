@@ -1,7 +1,7 @@
 {
   "name": "skret",
   "description": "Cloud-provider secret manager CLI and MCP server for AWS SSM, GCP Secret Manager, Azure Key Vault, OCI Vault, and local YAML.",
-  "version": "1.41.0",
+  "version": "1.42.0",
   "author": {
     "name": "n24q02m",
     "url": "https://github.com/n24q02m"
