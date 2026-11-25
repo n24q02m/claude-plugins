@@ -430,7 +430,7 @@
       "product": {
         "id": "notion",
         "name": "notion",
-        "version": "2.45.1",
+        "version": "2.46.0",
         "source_ref": "plugins/notion"
       },
       "harness": "claude-code",
@@ -471,7 +471,7 @@
       "product": {
         "id": "notion",
         "name": "notion",
-        "version": "2.45.1",
+        "version": "2.46.0",
         "source_ref": "plugins/notion"
       },
       "harness": "codex-cli",
@@ -512,7 +512,7 @@
       "product": {
         "id": "notion",
         "name": "notion",
-        "version": "2.45.1",
+        "version": "2.46.0",
         "source_ref": "plugins/notion"
       },
       "harness": "opencode",
@@ -553,7 +553,7 @@
       "product": {
         "id": "notion",
         "name": "notion",
-        "version": "2.45.1",
+        "version": "2.46.0",
         "source_ref": "plugins/notion"
       },
       "harness": "cursor",
@@ -594,7 +594,7 @@
       "product": {
         "id": "notion",
         "name": "notion",
-        "version": "2.45.1",
+        "version": "2.46.0",
         "source_ref": "plugins/notion"
       },
       "harness": "github-copilot-vscode",
@@ -635,7 +635,7 @@
       "product": {
         "id": "notion",
         "name": "notion",
-        "version": "2.45.1",
+        "version": "2.46.0",
         "source_ref": "plugins/notion"
       },
       "harness": "gemini-cli",

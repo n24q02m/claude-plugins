@@ -1,7 +1,7 @@
 {
   "name": "notion",
   "description": "Markdown-first Notion API integration — 8 composite tools, ~95% coverage",
-  "version": "2.45.1",
+  "version": "2.46.0",
   "userConfig": {
     "NOTION_TOKEN": {
       "type": "string",
@@ -19,7 +19,10 @@
   "mcpServers": {
     "notion": {
       "command": "npx",
-      "args": ["--yes", "@n24q02m/notion@latest"],
+      "args": [
+        "--yes",
+        "@n24q02m/notion@latest"
+      ],
       "env": {
         "MCP_TRANSPORT": "stdio",
         "NOTION_TOKEN": "${user_config.NOTION_TOKEN}"
