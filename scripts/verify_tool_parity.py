@@ -114,6 +114,13 @@ class ProbeTimeout(RuntimeError):
     """
 
 
+class MissingCommand(RuntimeError):
+    """The local server command could not be found on PATH.
+
+    Retrying with placeholder credentials cannot conjure a missing binary.
+    """
+
+
 class RemoteEndpoint(Exception):
     """The ``mcpServers`` entry is a remote (``http``/``sse``) endpoint.
 
@@ -354,18 +361,21 @@ def live_names(
         ):
             env["npm_config_cache"] = npm_cache
 
-        proc = subprocess.Popen(
-            argv,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=env,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            bufsize=1,
-            start_new_session=(os.name != "nt"),
-        )
+        try:
+            proc = subprocess.Popen(
+                argv,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=env,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                bufsize=1,
+                start_new_session=(os.name != "nt"),
+            )
+        except FileNotFoundError as exc:
+            raise MissingCommand(f"command not found: {os.path.basename(argv[0])}") from exc
         stderr_tail: list[str] = []
 
         def drain_stderr() -> None:
@@ -536,6 +546,12 @@ def verify_plugin(
         return (
             [],
             [f"{name}: tool names NOT verified -- {exc}. ({PROBE_TIMEOUT_HINT})"],
+            [],
+        )
+    except MissingCommand as exc:
+        return (
+            [],
+            [f"{name}: tool names NOT verified -- {exc}."],
             [],
         )
     except (OSError, ValueError, RuntimeError, json.JSONDecodeError) as first_exc:

@@ -17,6 +17,7 @@ Claude Code plugin marketplace and registry for n24q02m plugins.
 - email
 - crg
 - workspace
+- skret
 
 ## Conventions
 

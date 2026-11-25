@@ -38,7 +38,7 @@ sync_dir() {
   fi
 }
 
-PLUGINS=(wet mnemo telegram crg notion email workspace)
+PLUGINS=(wet mnemo telegram crg notion email workspace skret)
 
 sync_plugins() {
   for repo in "${PLUGINS[@]}"; do

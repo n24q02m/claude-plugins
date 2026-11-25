@@ -1,0 +1,92 @@
+{
+  "mcpServers": {
+    "wet": {
+      "type": "http",
+      "url": "http://127.0.0.1:8000/mcp",
+      "headers": {
+        "Authorization": "Bearer ${WET_TOKEN}"
+      }
+    },
+    "mnemo": {
+      "type": "http",
+      "url": "${MNEMO_URL}",
+      "headers": {
+        "Authorization": "Bearer ${MNEMO_TOKEN}"
+      }
+    },
+    "notion": {
+      "command": "npx",
+      "args": [
+        "--yes",
+        "@n24q02m/notion@latest"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "NOTION_TOKEN": "${NOTION_TOKEN}"
+      }
+    },
+    "email": {
+      "command": "npx",
+      "args": [
+        "--yes",
+        "@n24q02m/email@latest"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "EMAIL_CREDENTIALS": "${EMAIL_CREDENTIALS}"
+      }
+    },
+    "telegram": {
+      "command": "uvx",
+      "args": [
+        "--python",
+        "3.13",
+        "n24q02m-telegram@latest"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "TELEGRAM_BOT_TOKEN": "${TELEGRAM_BOT_TOKEN}"
+      }
+    },
+    "crg": {
+      "command": "uvx",
+      "args": [
+        "--python",
+        "3.13",
+        "n24q02m-crg@latest"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "EMBEDDING_MODELS": "${EMBEDDING_MODELS}",
+        "LOCAL_EMBEDDING_MODEL": "${LOCAL_EMBEDDING_MODEL}",
+        "LOCAL_EMBEDDING_DIM": "${LOCAL_EMBEDDING_DIM}",
+        "LOCAL_RERANK_MODEL": "${LOCAL_RERANK_MODEL}",
+        "LOCAL_EMBEDDING_MODEL_FILE": "${LOCAL_EMBEDDING_MODEL_FILE}",
+        "LOCAL_EMBEDDING_POOLING": "${LOCAL_EMBEDDING_POOLING}",
+        "LOCAL_EMBEDDING_NORMALIZE": "${LOCAL_EMBEDDING_NORMALIZE}",
+        "HULL_EMBED_API_KEY": "${HULL_EMBED_API_KEY}",
+        "HULL_CHAT_API_KEY": "${HULL_CHAT_API_KEY}"
+      }
+    },
+    "workspace": {
+      "command": "npx",
+      "args": [
+        "--yes",
+        "@n24q02m/workspace@latest"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "GOOGLE_OAUTH_CLIENT_ID": "${GOOGLE_OAUTH_CLIENT_ID}",
+        "GOOGLE_OAUTH_CLIENT_SECRET": "${GOOGLE_OAUTH_CLIENT_SECRET}"
+      }
+    },
+    "skret": {
+      "command": "skret",
+      "args": [
+        "mcp",
+        "--transport",
+        "stdio"
+      ]
+    }
+  }
+}

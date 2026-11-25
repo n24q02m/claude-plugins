@@ -1,0 +1,98 @@
+{
+  "servers": {
+    "wet": {
+      "type": "http",
+      "url": "http://127.0.0.1:8000/mcp",
+      "headers": {
+        "Authorization": "Bearer ${env:WET_TOKEN}"
+      }
+    },
+    "mnemo": {
+      "type": "http",
+      "url": "${env:MNEMO_URL}",
+      "headers": {
+        "Authorization": "Bearer ${env:MNEMO_TOKEN}"
+      }
+    },
+    "notion": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "--yes",
+        "@n24q02m/notion@latest"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "NOTION_TOKEN": "${env:NOTION_TOKEN}"
+      }
+    },
+    "email": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "--yes",
+        "@n24q02m/email@latest"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "EMAIL_CREDENTIALS": "${env:EMAIL_CREDENTIALS}"
+      }
+    },
+    "telegram": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--python",
+        "3.13",
+        "n24q02m-telegram@latest"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "TELEGRAM_BOT_TOKEN": "${env:TELEGRAM_BOT_TOKEN}"
+      }
+    },
+    "crg": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--python",
+        "3.13",
+        "n24q02m-crg@latest"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "EMBEDDING_MODELS": "${env:EMBEDDING_MODELS}",
+        "LOCAL_EMBEDDING_MODEL": "${env:LOCAL_EMBEDDING_MODEL}",
+        "LOCAL_EMBEDDING_DIM": "${env:LOCAL_EMBEDDING_DIM}",
+        "LOCAL_RERANK_MODEL": "${env:LOCAL_RERANK_MODEL}",
+        "LOCAL_EMBEDDING_MODEL_FILE": "${env:LOCAL_EMBEDDING_MODEL_FILE}",
+        "LOCAL_EMBEDDING_POOLING": "${env:LOCAL_EMBEDDING_POOLING}",
+        "LOCAL_EMBEDDING_NORMALIZE": "${env:LOCAL_EMBEDDING_NORMALIZE}",
+        "HULL_EMBED_API_KEY": "${env:HULL_EMBED_API_KEY}",
+        "HULL_CHAT_API_KEY": "${env:HULL_CHAT_API_KEY}"
+      }
+    },
+    "workspace": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "--yes",
+        "@n24q02m/workspace@latest"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "GOOGLE_OAUTH_CLIENT_ID": "${env:GOOGLE_OAUTH_CLIENT_ID}",
+        "GOOGLE_OAUTH_CLIENT_SECRET": "${env:GOOGLE_OAUTH_CLIENT_SECRET}"
+      }
+    },
+    "skret": {
+      "type": "stdio",
+      "command": "skret",
+      "args": [
+        "mcp",
+        "--transport",
+        "stdio"
+      ]
+    }
+  }
+}

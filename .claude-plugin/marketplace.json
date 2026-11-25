@@ -51,6 +51,12 @@
       "source": "./plugins/workspace",
       "description": "Google Workspace — Docs, Drive, Calendar, Gmail, Sheets, Slides, Tasks, Chat, People, Forms + multi-account",
       "category": "productivity"
+    },
+    {
+      "name": "skret",
+      "source": "./plugins/skret",
+      "description": "Cloud-provider secret manager CLI and MCP server for AWS SSM, GCP Secret Manager, Azure Key Vault, OCI Vault, and local YAML",
+      "category": "security"
     }
   ]
 }

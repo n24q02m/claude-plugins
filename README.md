@@ -46,9 +46,9 @@
 
 
 
-7 MCP servers for AI coding agents, from one marketplace.
+8 MCP servers for AI coding agents, from one marketplace.
 
-**Full documentation: [docs.n24q02m.com](https://docs.n24q02m.com)** — setup and tool references for all 7 servers, the `hull` foundation, and [Fastretrieval](https://docs.n24q02m.com/reference/fastretrieval/). Libraries and CLIs do not gain an MCP transport by appearing in the same documentation site.
+**Full documentation: [docs.n24q02m.com](https://docs.n24q02m.com)** — setup and tool references for all 8 plugins, the `hull` foundation, and [Fastretrieval](https://docs.n24q02m.com/reference/fastretrieval/). Libraries do not gain an MCP transport by appearing in the same documentation site.
 
 ## Install
 
@@ -70,18 +70,18 @@ Or browse all plugins: run `/plugin` and go to the **Discover** tab.
 | **telegram** | Communication | Telegram dual-mode (Bot API + MTProto) — messages, chats, media | `TELEGRAM_BOT_TOKEN` (optional; required for bot mode) |
 | **crg** | Development | Knowledge graph for token-efficient code reviews | All optional: `EMBEDDING_MODELS`, `LOCAL_EMBEDDING_MODEL`, `LOCAL_RERANK_MODEL`, `LOCAL_EMBEDDING_DIM`, `LOCAL_EMBEDDING_MODEL_FILE`, `LOCAL_EMBEDDING_POOLING`, `LOCAL_EMBEDDING_NORMALIZE`, `HULL_EMBED_API_KEY`, `HULL_CHAT_API_KEY` |
 | **workspace** | Productivity | Google Workspace — 10 domains plus local time helpers, `config`, `help`, and multi-account OAuth | `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` (both required) |
+| **skret** | Security | Cloud-provider secret manager CLI and embedded MCP server (`skret mcp`) | None (`userConfig`-free; configured via `.skret.yaml` and cloud/OS keyring) |
 
 ### Not marketplace plugins
 
-Three n24q02m projects share this documentation site without getting a marketplace entry. The test is the plugin layout: the project itself ships `.claude-plugin/plugin.json` plus a `skills/` or `hooks/` tree over an MCP server entrypoint, which is what `plugin-sync` copies from. None of the three does, so an entry here would be a copy with no upstream to sync from.
+Two n24q02m projects share this documentation site without getting a marketplace entry. The test is the plugin layout: the project itself ships `.claude-plugin/plugin.json` plus a `skills/` or `hooks/` tree over an MCP server entrypoint, which is what `plugin-sync` copies from. Neither of the two does, so an entry here would be a copy with no upstream to sync from.
 
 | Project | Kind | Why it is not a marketplace plugin |
 |---|---|---|
 | [hull](https://github.com/n24q02m/hull) | Foundation library — PyPI `n24q02m-hull`, npm `@n24q02m/hull` | The shared HTTP transport, token auth, credential store and CLI core that every active server above depends on; it has no server of its own to launch and reaches you as a dependency. |
 | [Fastretrieval](https://docs.n24q02m.com/reference/fastretrieval/) | Library — PyPI `fastretrieval` | The embedding and rerank runtime wet, mnemo and crg call in-process; its only executable is `fastretrieval-server`, an `/embed` + `/rerank` HTTP service, not an MCP endpoint. |
-| [skret](https://github.com/n24q02m/skret) | CLI — Go binary | You install the binary to inject secrets into a command, CI job or container; `skret-mcp` is a second binary built from the same release that serves one project over stdio MCP, not a plugin directory, and the tool is chosen per machine rather than per chat client. |
 
-Install each the way its project documents it: `pip install n24q02m-hull`, `pip install fastretrieval`, or the skret install script. Adding `.claude-plugin/` to one of them is what would make it a marketplace entry — the entry does not create the capability.
+Install each the way its project documents it: `pip install n24q02m-hull` or `pip install fastretrieval`. Adding `.claude-plugin/` to one of them is what would make it a marketplace entry — the entry does not create the capability.
 
 ## Configuration
 

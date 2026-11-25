@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"import os; print('[skret] .skret.yaml detected — prefer skret run -- <cmd> or skret mcp tools instead of reading raw secret files.') if os.path.exists('.skret.yaml') else ''\""
+          }
+        ]
+      }
+    ]
+  }
+}
