@@ -1174,7 +1174,7 @@
       "product": {
         "id": "crg",
         "name": "crg",
-        "version": "3.34.0",
+        "version": "3.35.0",
         "source_ref": "plugins/crg"
       },
       "harness": "claude-code",
@@ -1248,7 +1248,7 @@
       "product": {
         "id": "crg",
         "name": "crg",
-        "version": "3.34.0",
+        "version": "3.35.0",
         "source_ref": "plugins/crg"
       },
       "harness": "codex-cli",
@@ -1322,7 +1322,7 @@
       "product": {
         "id": "crg",
         "name": "crg",
-        "version": "3.34.0",
+        "version": "3.35.0",
         "source_ref": "plugins/crg"
       },
       "harness": "opencode",
@@ -1396,7 +1396,7 @@
       "product": {
         "id": "crg",
         "name": "crg",
-        "version": "3.34.0",
+        "version": "3.35.0",
         "source_ref": "plugins/crg"
       },
       "harness": "cursor",
@@ -1470,7 +1470,7 @@
       "product": {
         "id": "crg",
         "name": "crg",
-        "version": "3.34.0",
+        "version": "3.35.0",
         "source_ref": "plugins/crg"
       },
       "harness": "github-copilot-vscode",
@@ -1544,7 +1544,7 @@
       "product": {
         "id": "crg",
         "name": "crg",
-        "version": "3.34.0",
+        "version": "3.35.0",
         "source_ref": "plugins/crg"
       },
       "harness": "gemini-cli",
