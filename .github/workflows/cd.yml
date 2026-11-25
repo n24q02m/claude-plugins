@@ -26,6 +26,7 @@ on:
           - better-email-mcp
           - workspace
           - better-workspace-mcp
+          - skret
       tag:
         description: "Release tag (e.g., v2.18.1)"
         required: true
@@ -88,7 +89,7 @@ jobs:
           }
 
           case "$REPO" in
-            wet|wet-mcp|mnemo|mnemo-mcp|telegram|better-telegram-mcp|crg|better-code-review-graph|notion|better-notion-mcp|email|better-email-mcp|workspace|better-workspace-mcp)
+            wet|wet-mcp|mnemo|mnemo-mcp|telegram|better-telegram-mcp|crg|better-code-review-graph|notion|better-notion-mcp|email|better-email-mcp|workspace|better-workspace-mcp|skret)
               ;;
             *)
               printf "::error::Invalid repo: %s\n" "$(sanitize "$REPO")"
@@ -139,7 +140,11 @@ jobs:
           # Sync plugin.json
           if [ -f "source/.claude-plugin/plugin.json" ]; then
             mkdir -p "$PLUGIN_DIR/.claude-plugin"
-            cp "source/.claude-plugin/plugin.json" "$PLUGIN_DIR/.claude-plugin/plugin.json"
+            if jq -e '.version' "source/.claude-plugin/plugin.json" >/dev/null 2>&1; then
+              jq --arg v "$VERSION" '.version = $v' "source/.claude-plugin/plugin.json" > "$PLUGIN_DIR/.claude-plugin/plugin.json"
+            else
+              cp "source/.claude-plugin/plugin.json" "$PLUGIN_DIR/.claude-plugin/plugin.json"
+            fi
             printf "Synced plugin.json\n"
           fi
 
@@ -176,6 +181,10 @@ jobs:
             cp "source/chat.py" "$PLUGIN_DIR/chat.py"
             printf "Synced chat.py\n"
           fi
+
+      - name: Regenerate IDE manifests
+        working-directory: marketplace
+        run: python3 scripts/generate_ide_manifests.py
 
 
 

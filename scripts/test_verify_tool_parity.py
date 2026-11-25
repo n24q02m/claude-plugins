@@ -85,6 +85,9 @@ class TestDeclaredNames(unittest.TestCase):
             with open(page, encoding="utf-8") as f:
                 names = parity.declared_names(line.rstrip("\r\n") for line in f)
             self.assertTrue(names, f"{entry}/tools.md declared no tool names")
+            if entry == "skret":
+                self.assertIn("skret_status", names, "skret/tools.md is missing `skret_status`")
+                continue
             self.assertIn("config", names, f"{entry}/tools.md is missing `config`")
             # `help` is a universal of the stdio servers built on the shared
             # core; HTTP-only servers (mnemo 2.20+) dropped it.
@@ -319,6 +322,20 @@ class TestVerifyPlugin(unittest.TestCase):
         self.assertEqual((errors, output), ([], []))
         self.assertEqual(len(warnings), 1)
         self.assertIn("timed out after 10s", warnings[0])
+        self.assertEqual(live.call_count, 1)
+
+    def test_missing_command_is_not_retried_with_placeholders(self):
+        # A missing local executable cannot be fixed by placeholder credentials.
+        self._write_tools_md("## search\n\n## config\n\n## help\n")
+        with mock.patch.object(
+            parity,
+            "live_names",
+            side_effect=parity.MissingCommand("command not found: srv-mcp"),
+        ) as live:
+            errors, warnings, output = parity.verify_plugin("srv", False, 10)
+        self.assertEqual((errors, output), ([], []))
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("command not found: srv-mcp", warnings[0])
         self.assertEqual(live.call_count, 1)
 
     def test_portable_non_mcp_tools_page_is_skipped(self):
@@ -662,6 +679,24 @@ class TestLiveProbe(FakeServerTestCase):
         ) as f:
             json.dump({"name": "srv"}, f)
         self.assertEqual(parity.live_names(self.pdir, timeout=60), set())
+
+    def test_missing_command_raises_missing_command(self):
+        with open(
+            os.path.join(self.pdir, ".claude-plugin", "plugin.json"),
+            "w",
+            encoding="utf-8",
+        ) as f:
+            json.dump(
+                {
+                    "name": "srv",
+                    "mcpServers": {
+                        "srv": {"command": "nonexistent-binary-xyz-parity"}
+                    },
+                },
+                f,
+            )
+        with self.assertRaises(parity.MissingCommand):
+            parity.live_names(self.pdir, timeout=10)
 
 
 class TestEndToEnd(FakeServerTestCase):

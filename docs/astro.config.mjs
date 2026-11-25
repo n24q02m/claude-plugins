@@ -39,6 +39,7 @@ export default defineConfig({
             { label: 'mnemo', items: [{ autogenerate: { directory: 'servers/mnemo' } }] },
             { label: 'crg', items: [{ autogenerate: { directory: 'servers/crg' } }] },
             { label: 'workspace', items: [{ autogenerate: { directory: 'servers/workspace' } }] },
+            { label: 'skret', items: [{ autogenerate: { directory: 'servers/skret' } }] },
             { label: 'notion', items: [{ autogenerate: { directory: 'servers/notion' } }] },
             { label: 'email', items: [{ autogenerate: { directory: 'servers/email' } }] },
             { label: 'telegram', items: [{ autogenerate: { directory: 'servers/telegram' } }] },

@@ -1,0 +1,2086 @@
+{
+  "adapters": [
+    {
+      "product": {
+        "id": "wet",
+        "name": "wet",
+        "version": "3.23.0",
+        "source_ref": "plugins/wet"
+      },
+      "harness": "claude-code",
+      "layer": "mcp-transport",
+      "transport": "streamable-http",
+      "docs": [
+        "plugins/wet/overview.md",
+        "https://github.com/n24q02m/wet"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "endpoint_ref": "mcp",
+      "env_interpolation": [
+        {
+          "name": "WET_TOKEN",
+          "source": "user-config"
+        },
+        {
+          "name": "WET_URL",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "wet",
+        "name": "wet",
+        "version": "3.23.0",
+        "source_ref": "plugins/wet"
+      },
+      "harness": "codex-cli",
+      "layer": "mcp-transport",
+      "transport": "streamable-http",
+      "docs": [
+        "plugins/wet/overview.md",
+        "https://github.com/n24q02m/wet"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "endpoint_ref": "mcp",
+      "env_interpolation": [
+        {
+          "name": "WET_TOKEN",
+          "source": "user-config"
+        },
+        {
+          "name": "WET_URL",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "wet",
+        "name": "wet",
+        "version": "3.23.0",
+        "source_ref": "plugins/wet"
+      },
+      "harness": "opencode",
+      "layer": "mcp-transport",
+      "transport": "streamable-http",
+      "docs": [
+        "plugins/wet/overview.md",
+        "https://github.com/n24q02m/wet"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "endpoint_ref": "mcp",
+      "env_interpolation": [
+        {
+          "name": "WET_TOKEN",
+          "source": "user-config"
+        },
+        {
+          "name": "WET_URL",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "wet",
+        "name": "wet",
+        "version": "3.23.0",
+        "source_ref": "plugins/wet"
+      },
+      "harness": "cursor",
+      "layer": "mcp-transport",
+      "transport": "streamable-http",
+      "docs": [
+        "plugins/wet/overview.md",
+        "https://github.com/n24q02m/wet"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "endpoint_ref": "mcp",
+      "env_interpolation": [
+        {
+          "name": "WET_TOKEN",
+          "source": "user-config"
+        },
+        {
+          "name": "WET_URL",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "wet",
+        "name": "wet",
+        "version": "3.23.0",
+        "source_ref": "plugins/wet"
+      },
+      "harness": "github-copilot-vscode",
+      "layer": "mcp-transport",
+      "transport": "streamable-http",
+      "docs": [
+        "plugins/wet/overview.md",
+        "https://github.com/n24q02m/wet"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "endpoint_ref": "mcp",
+      "env_interpolation": [
+        {
+          "name": "WET_TOKEN",
+          "source": "user-config"
+        },
+        {
+          "name": "WET_URL",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "wet",
+        "name": "wet",
+        "version": "3.23.0",
+        "source_ref": "plugins/wet"
+      },
+      "harness": "gemini-cli",
+      "layer": "mcp-transport",
+      "transport": "streamable-http",
+      "docs": [
+        "plugins/wet/overview.md",
+        "https://github.com/n24q02m/wet"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "endpoint_ref": "mcp",
+      "env_interpolation": [
+        {
+          "name": "WET_TOKEN",
+          "source": "user-config"
+        },
+        {
+          "name": "WET_URL",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "mnemo",
+        "name": "mnemo",
+        "version": "2.24.0",
+        "source_ref": "plugins/mnemo"
+      },
+      "harness": "claude-code",
+      "layer": "mcp-transport",
+      "transport": "streamable-http",
+      "docs": [
+        "plugins/mnemo/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "endpoint_ref": "mcp",
+      "env_interpolation": [
+        {
+          "name": "MNEMO_TOKEN",
+          "source": "user-config"
+        },
+        {
+          "name": "MNEMO_URL",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "mnemo",
+        "name": "mnemo",
+        "version": "2.24.0",
+        "source_ref": "plugins/mnemo"
+      },
+      "harness": "codex-cli",
+      "layer": "mcp-transport",
+      "transport": "streamable-http",
+      "docs": [
+        "plugins/mnemo/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "endpoint_ref": "mcp",
+      "env_interpolation": [
+        {
+          "name": "MNEMO_TOKEN",
+          "source": "user-config"
+        },
+        {
+          "name": "MNEMO_URL",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "mnemo",
+        "name": "mnemo",
+        "version": "2.24.0",
+        "source_ref": "plugins/mnemo"
+      },
+      "harness": "opencode",
+      "layer": "mcp-transport",
+      "transport": "streamable-http",
+      "docs": [
+        "plugins/mnemo/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "endpoint_ref": "mcp",
+      "env_interpolation": [
+        {
+          "name": "MNEMO_TOKEN",
+          "source": "user-config"
+        },
+        {
+          "name": "MNEMO_URL",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "mnemo",
+        "name": "mnemo",
+        "version": "2.24.0",
+        "source_ref": "plugins/mnemo"
+      },
+      "harness": "cursor",
+      "layer": "mcp-transport",
+      "transport": "streamable-http",
+      "docs": [
+        "plugins/mnemo/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "endpoint_ref": "mcp",
+      "env_interpolation": [
+        {
+          "name": "MNEMO_TOKEN",
+          "source": "user-config"
+        },
+        {
+          "name": "MNEMO_URL",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "mnemo",
+        "name": "mnemo",
+        "version": "2.24.0",
+        "source_ref": "plugins/mnemo"
+      },
+      "harness": "github-copilot-vscode",
+      "layer": "mcp-transport",
+      "transport": "streamable-http",
+      "docs": [
+        "plugins/mnemo/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "endpoint_ref": "mcp",
+      "env_interpolation": [
+        {
+          "name": "MNEMO_TOKEN",
+          "source": "user-config"
+        },
+        {
+          "name": "MNEMO_URL",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "mnemo",
+        "name": "mnemo",
+        "version": "2.24.0",
+        "source_ref": "plugins/mnemo"
+      },
+      "harness": "gemini-cli",
+      "layer": "mcp-transport",
+      "transport": "streamable-http",
+      "docs": [
+        "plugins/mnemo/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "endpoint_ref": "mcp",
+      "env_interpolation": [
+        {
+          "name": "MNEMO_TOKEN",
+          "source": "user-config"
+        },
+        {
+          "name": "MNEMO_URL",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "notion",
+        "name": "notion",
+        "version": "2.45.1",
+        "source_ref": "plugins/notion"
+      },
+      "harness": "claude-code",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/notion/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "npx",
+        "args": [
+          "--yes",
+          "@n24q02m/notion@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        },
+        {
+          "name": "NOTION_TOKEN",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "notion",
+        "name": "notion",
+        "version": "2.45.1",
+        "source_ref": "plugins/notion"
+      },
+      "harness": "codex-cli",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/notion/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "npx",
+        "args": [
+          "--yes",
+          "@n24q02m/notion@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        },
+        {
+          "name": "NOTION_TOKEN",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "notion",
+        "name": "notion",
+        "version": "2.45.1",
+        "source_ref": "plugins/notion"
+      },
+      "harness": "opencode",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/notion/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "npx",
+        "args": [
+          "--yes",
+          "@n24q02m/notion@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        },
+        {
+          "name": "NOTION_TOKEN",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "notion",
+        "name": "notion",
+        "version": "2.45.1",
+        "source_ref": "plugins/notion"
+      },
+      "harness": "cursor",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/notion/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "npx",
+        "args": [
+          "--yes",
+          "@n24q02m/notion@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        },
+        {
+          "name": "NOTION_TOKEN",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "notion",
+        "name": "notion",
+        "version": "2.45.1",
+        "source_ref": "plugins/notion"
+      },
+      "harness": "github-copilot-vscode",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/notion/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "npx",
+        "args": [
+          "--yes",
+          "@n24q02m/notion@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        },
+        {
+          "name": "NOTION_TOKEN",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "notion",
+        "name": "notion",
+        "version": "2.45.1",
+        "source_ref": "plugins/notion"
+      },
+      "harness": "gemini-cli",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/notion/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "npx",
+        "args": [
+          "--yes",
+          "@n24q02m/notion@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        },
+        {
+          "name": "NOTION_TOKEN",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "email",
+        "name": "email",
+        "version": "1.45.1",
+        "source_ref": "plugins/email"
+      },
+      "harness": "claude-code",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/email/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "npx",
+        "args": [
+          "--yes",
+          "@n24q02m/email@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "EMAIL_CREDENTIALS",
+          "source": "user-config"
+        },
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "email",
+        "name": "email",
+        "version": "1.45.1",
+        "source_ref": "plugins/email"
+      },
+      "harness": "codex-cli",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/email/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "npx",
+        "args": [
+          "--yes",
+          "@n24q02m/email@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "EMAIL_CREDENTIALS",
+          "source": "user-config"
+        },
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "email",
+        "name": "email",
+        "version": "1.45.1",
+        "source_ref": "plugins/email"
+      },
+      "harness": "opencode",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/email/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "npx",
+        "args": [
+          "--yes",
+          "@n24q02m/email@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "EMAIL_CREDENTIALS",
+          "source": "user-config"
+        },
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "email",
+        "name": "email",
+        "version": "1.45.1",
+        "source_ref": "plugins/email"
+      },
+      "harness": "cursor",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/email/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "npx",
+        "args": [
+          "--yes",
+          "@n24q02m/email@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "EMAIL_CREDENTIALS",
+          "source": "user-config"
+        },
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "email",
+        "name": "email",
+        "version": "1.45.1",
+        "source_ref": "plugins/email"
+      },
+      "harness": "github-copilot-vscode",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/email/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "npx",
+        "args": [
+          "--yes",
+          "@n24q02m/email@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "EMAIL_CREDENTIALS",
+          "source": "user-config"
+        },
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "email",
+        "name": "email",
+        "version": "1.45.1",
+        "source_ref": "plugins/email"
+      },
+      "harness": "gemini-cli",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/email/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "npx",
+        "args": [
+          "--yes",
+          "@n24q02m/email@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "EMAIL_CREDENTIALS",
+          "source": "user-config"
+        },
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "telegram",
+        "name": "telegram",
+        "version": "4.26.1",
+        "source_ref": "plugins/telegram"
+      },
+      "harness": "claude-code",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/telegram/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "uvx",
+        "args": [
+          "--python",
+          "3.13",
+          "n24q02m-telegram@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        },
+        {
+          "name": "TELEGRAM_BOT_TOKEN",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "telegram",
+        "name": "telegram",
+        "version": "4.26.1",
+        "source_ref": "plugins/telegram"
+      },
+      "harness": "codex-cli",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/telegram/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "uvx",
+        "args": [
+          "--python",
+          "3.13",
+          "n24q02m-telegram@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        },
+        {
+          "name": "TELEGRAM_BOT_TOKEN",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "telegram",
+        "name": "telegram",
+        "version": "4.26.1",
+        "source_ref": "plugins/telegram"
+      },
+      "harness": "opencode",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/telegram/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "uvx",
+        "args": [
+          "--python",
+          "3.13",
+          "n24q02m-telegram@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        },
+        {
+          "name": "TELEGRAM_BOT_TOKEN",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "telegram",
+        "name": "telegram",
+        "version": "4.26.1",
+        "source_ref": "plugins/telegram"
+      },
+      "harness": "cursor",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/telegram/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "uvx",
+        "args": [
+          "--python",
+          "3.13",
+          "n24q02m-telegram@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        },
+        {
+          "name": "TELEGRAM_BOT_TOKEN",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "telegram",
+        "name": "telegram",
+        "version": "4.26.1",
+        "source_ref": "plugins/telegram"
+      },
+      "harness": "github-copilot-vscode",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/telegram/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "uvx",
+        "args": [
+          "--python",
+          "3.13",
+          "n24q02m-telegram@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        },
+        {
+          "name": "TELEGRAM_BOT_TOKEN",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "telegram",
+        "name": "telegram",
+        "version": "4.26.1",
+        "source_ref": "plugins/telegram"
+      },
+      "harness": "gemini-cli",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/telegram/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "uvx",
+        "args": [
+          "--python",
+          "3.13",
+          "n24q02m-telegram@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        },
+        {
+          "name": "TELEGRAM_BOT_TOKEN",
+          "source": "user-config"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "crg",
+        "name": "crg",
+        "version": "3.34.0",
+        "source_ref": "plugins/crg"
+      },
+      "harness": "claude-code",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/crg/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "uvx",
+        "args": [
+          "--python",
+          "3.13",
+          "n24q02m-crg@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "EMBEDDING_MODELS",
+          "source": "user-config"
+        },
+        {
+          "name": "HULL_CHAT_API_KEY",
+          "source": "user-config"
+        },
+        {
+          "name": "HULL_EMBED_API_KEY",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_DIM",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_MODEL",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_MODEL_FILE",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_NORMALIZE",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_POOLING",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_RERANK_MODEL",
+          "source": "user-config"
+        },
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "crg",
+        "name": "crg",
+        "version": "3.34.0",
+        "source_ref": "plugins/crg"
+      },
+      "harness": "codex-cli",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/crg/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "uvx",
+        "args": [
+          "--python",
+          "3.13",
+          "n24q02m-crg@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "EMBEDDING_MODELS",
+          "source": "user-config"
+        },
+        {
+          "name": "HULL_CHAT_API_KEY",
+          "source": "user-config"
+        },
+        {
+          "name": "HULL_EMBED_API_KEY",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_DIM",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_MODEL",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_MODEL_FILE",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_NORMALIZE",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_POOLING",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_RERANK_MODEL",
+          "source": "user-config"
+        },
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "crg",
+        "name": "crg",
+        "version": "3.34.0",
+        "source_ref": "plugins/crg"
+      },
+      "harness": "opencode",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/crg/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "uvx",
+        "args": [
+          "--python",
+          "3.13",
+          "n24q02m-crg@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "EMBEDDING_MODELS",
+          "source": "user-config"
+        },
+        {
+          "name": "HULL_CHAT_API_KEY",
+          "source": "user-config"
+        },
+        {
+          "name": "HULL_EMBED_API_KEY",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_DIM",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_MODEL",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_MODEL_FILE",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_NORMALIZE",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_POOLING",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_RERANK_MODEL",
+          "source": "user-config"
+        },
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "crg",
+        "name": "crg",
+        "version": "3.34.0",
+        "source_ref": "plugins/crg"
+      },
+      "harness": "cursor",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/crg/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "uvx",
+        "args": [
+          "--python",
+          "3.13",
+          "n24q02m-crg@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "EMBEDDING_MODELS",
+          "source": "user-config"
+        },
+        {
+          "name": "HULL_CHAT_API_KEY",
+          "source": "user-config"
+        },
+        {
+          "name": "HULL_EMBED_API_KEY",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_DIM",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_MODEL",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_MODEL_FILE",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_NORMALIZE",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_POOLING",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_RERANK_MODEL",
+          "source": "user-config"
+        },
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "crg",
+        "name": "crg",
+        "version": "3.34.0",
+        "source_ref": "plugins/crg"
+      },
+      "harness": "github-copilot-vscode",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/crg/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "uvx",
+        "args": [
+          "--python",
+          "3.13",
+          "n24q02m-crg@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "EMBEDDING_MODELS",
+          "source": "user-config"
+        },
+        {
+          "name": "HULL_CHAT_API_KEY",
+          "source": "user-config"
+        },
+        {
+          "name": "HULL_EMBED_API_KEY",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_DIM",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_MODEL",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_MODEL_FILE",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_NORMALIZE",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_POOLING",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_RERANK_MODEL",
+          "source": "user-config"
+        },
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "crg",
+        "name": "crg",
+        "version": "3.34.0",
+        "source_ref": "plugins/crg"
+      },
+      "harness": "gemini-cli",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/crg/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "uvx",
+        "args": [
+          "--python",
+          "3.13",
+          "n24q02m-crg@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "EMBEDDING_MODELS",
+          "source": "user-config"
+        },
+        {
+          "name": "HULL_CHAT_API_KEY",
+          "source": "user-config"
+        },
+        {
+          "name": "HULL_EMBED_API_KEY",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_DIM",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_MODEL",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_MODEL_FILE",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_NORMALIZE",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_EMBEDDING_POOLING",
+          "source": "user-config"
+        },
+        {
+          "name": "LOCAL_RERANK_MODEL",
+          "source": "user-config"
+        },
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "workspace",
+        "name": "workspace",
+        "version": "0.9.1",
+        "source_ref": "plugins/workspace"
+      },
+      "harness": "claude-code",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/workspace/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "npx",
+        "args": [
+          "--yes",
+          "@n24q02m/workspace@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "GOOGLE_OAUTH_CLIENT_ID",
+          "source": "user-config"
+        },
+        {
+          "name": "GOOGLE_OAUTH_CLIENT_SECRET",
+          "source": "user-config"
+        },
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "workspace",
+        "name": "workspace",
+        "version": "0.9.1",
+        "source_ref": "plugins/workspace"
+      },
+      "harness": "codex-cli",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/workspace/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "npx",
+        "args": [
+          "--yes",
+          "@n24q02m/workspace@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "GOOGLE_OAUTH_CLIENT_ID",
+          "source": "user-config"
+        },
+        {
+          "name": "GOOGLE_OAUTH_CLIENT_SECRET",
+          "source": "user-config"
+        },
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "workspace",
+        "name": "workspace",
+        "version": "0.9.1",
+        "source_ref": "plugins/workspace"
+      },
+      "harness": "opencode",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/workspace/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "npx",
+        "args": [
+          "--yes",
+          "@n24q02m/workspace@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "GOOGLE_OAUTH_CLIENT_ID",
+          "source": "user-config"
+        },
+        {
+          "name": "GOOGLE_OAUTH_CLIENT_SECRET",
+          "source": "user-config"
+        },
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "workspace",
+        "name": "workspace",
+        "version": "0.9.1",
+        "source_ref": "plugins/workspace"
+      },
+      "harness": "cursor",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/workspace/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "npx",
+        "args": [
+          "--yes",
+          "@n24q02m/workspace@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "GOOGLE_OAUTH_CLIENT_ID",
+          "source": "user-config"
+        },
+        {
+          "name": "GOOGLE_OAUTH_CLIENT_SECRET",
+          "source": "user-config"
+        },
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "workspace",
+        "name": "workspace",
+        "version": "0.9.1",
+        "source_ref": "plugins/workspace"
+      },
+      "harness": "github-copilot-vscode",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/workspace/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "npx",
+        "args": [
+          "--yes",
+          "@n24q02m/workspace@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "GOOGLE_OAUTH_CLIENT_ID",
+          "source": "user-config"
+        },
+        {
+          "name": "GOOGLE_OAUTH_CLIENT_SECRET",
+          "source": "user-config"
+        },
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "workspace",
+        "name": "workspace",
+        "version": "0.9.1",
+        "source_ref": "plugins/workspace"
+      },
+      "harness": "gemini-cli",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/workspace/overview.md"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "npx",
+        "args": [
+          "--yes",
+          "@n24q02m/workspace@latest"
+        ]
+      },
+      "env_interpolation": [
+        {
+          "name": "GOOGLE_OAUTH_CLIENT_ID",
+          "source": "user-config"
+        },
+        {
+          "name": "GOOGLE_OAUTH_CLIENT_SECRET",
+          "source": "user-config"
+        },
+        {
+          "name": "MCP_TRANSPORT",
+          "source": "environment"
+        }
+      ]
+    },
+    {
+      "product": {
+        "id": "skret",
+        "name": "skret",
+        "version": "1.41.0",
+        "source_ref": "plugins/skret"
+      },
+      "harness": "claude-code",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/skret/overview.md",
+        "https://github.com/n24q02m/skret"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "skret",
+        "args": [
+          "mcp",
+          "--transport",
+          "stdio"
+        ]
+      }
+    },
+    {
+      "product": {
+        "id": "skret",
+        "name": "skret",
+        "version": "1.41.0",
+        "source_ref": "plugins/skret"
+      },
+      "harness": "codex-cli",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/skret/overview.md",
+        "https://github.com/n24q02m/skret"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "skret",
+        "args": [
+          "mcp",
+          "--transport",
+          "stdio"
+        ]
+      }
+    },
+    {
+      "product": {
+        "id": "skret",
+        "name": "skret",
+        "version": "1.41.0",
+        "source_ref": "plugins/skret"
+      },
+      "harness": "opencode",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/skret/overview.md",
+        "https://github.com/n24q02m/skret"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "skret",
+        "args": [
+          "mcp",
+          "--transport",
+          "stdio"
+        ]
+      }
+    },
+    {
+      "product": {
+        "id": "skret",
+        "name": "skret",
+        "version": "1.41.0",
+        "source_ref": "plugins/skret"
+      },
+      "harness": "cursor",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/skret/overview.md",
+        "https://github.com/n24q02m/skret"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "skret",
+        "args": [
+          "mcp",
+          "--transport",
+          "stdio"
+        ]
+      }
+    },
+    {
+      "product": {
+        "id": "skret",
+        "name": "skret",
+        "version": "1.41.0",
+        "source_ref": "plugins/skret"
+      },
+      "harness": "github-copilot-vscode",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/skret/overview.md",
+        "https://github.com/n24q02m/skret"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "skret",
+        "args": [
+          "mcp",
+          "--transport",
+          "stdio"
+        ]
+      }
+    },
+    {
+      "product": {
+        "id": "skret",
+        "name": "skret",
+        "version": "1.41.0",
+        "source_ref": "plugins/skret"
+      },
+      "harness": "gemini-cli",
+      "layer": "mcp-transport",
+      "transport": "stdio",
+      "docs": [
+        "plugins/skret/overview.md",
+        "https://github.com/n24q02m/skret"
+      ],
+      "verification": {
+        "capability_state": "SUPPORTED",
+        "installed_state": "UNVERIFIED",
+        "loaded_state": "UNVERIFIED",
+        "domain_verified_state": "UNVERIFIED",
+        "domain_call_evidence": {
+          "calls": [],
+          "reason": "Generated IDE adapter manifest only; runtime tool invocation was not executed."
+        }
+      },
+      "command": {
+        "program": "skret",
+        "args": [
+          "mcp",
+          "--transport",
+          "stdio"
+        ]
+      }
+    }
+  ]
+}

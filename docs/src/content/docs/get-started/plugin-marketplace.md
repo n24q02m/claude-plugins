@@ -3,7 +3,7 @@ title: Plugin marketplace
 description: Add the n24q02m marketplace to Claude Code and install any MCP server.
 ---
 
-The `n24q02m/claude-plugins` repo is a Claude Code plugin marketplace. Adding it once gives you `/plugin install` access to all 7 MCP servers + future additions.
+The `n24q02m/claude-plugins` repo is a Claude Code plugin marketplace. Adding it once gives you `/plugin install` access to all 8 plugins (`wet`, `mnemo`, `notion`, `email`, `telegram`, `crg`, `workspace`, `skret`).
 
 ## Add the marketplace
 

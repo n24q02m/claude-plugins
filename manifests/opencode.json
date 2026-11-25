@@ -1,0 +1,99 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "wet": {
+      "type": "remote",
+      "url": "http://127.0.0.1:8000/mcp",
+      "headers": {
+        "Authorization": "Bearer {env:WET_TOKEN}"
+      }
+    },
+    "mnemo": {
+      "type": "remote",
+      "url": "{env:MNEMO_URL}",
+      "headers": {
+        "Authorization": "Bearer {env:MNEMO_TOKEN}"
+      }
+    },
+    "notion": {
+      "type": "local",
+      "command": [
+        "npx",
+        "--yes",
+        "@n24q02m/notion@latest"
+      ],
+      "environment": {
+        "MCP_TRANSPORT": "stdio",
+        "NOTION_TOKEN": "{env:NOTION_TOKEN}"
+      }
+    },
+    "email": {
+      "type": "local",
+      "command": [
+        "npx",
+        "--yes",
+        "@n24q02m/email@latest"
+      ],
+      "environment": {
+        "MCP_TRANSPORT": "stdio",
+        "EMAIL_CREDENTIALS": "{env:EMAIL_CREDENTIALS}"
+      }
+    },
+    "telegram": {
+      "type": "local",
+      "command": [
+        "uvx",
+        "--python",
+        "3.13",
+        "n24q02m-telegram@latest"
+      ],
+      "environment": {
+        "MCP_TRANSPORT": "stdio",
+        "TELEGRAM_BOT_TOKEN": "{env:TELEGRAM_BOT_TOKEN}"
+      }
+    },
+    "crg": {
+      "type": "local",
+      "command": [
+        "uvx",
+        "--python",
+        "3.13",
+        "n24q02m-crg@latest"
+      ],
+      "environment": {
+        "MCP_TRANSPORT": "stdio",
+        "EMBEDDING_MODELS": "{env:EMBEDDING_MODELS}",
+        "LOCAL_EMBEDDING_MODEL": "{env:LOCAL_EMBEDDING_MODEL}",
+        "LOCAL_EMBEDDING_DIM": "{env:LOCAL_EMBEDDING_DIM}",
+        "LOCAL_RERANK_MODEL": "{env:LOCAL_RERANK_MODEL}",
+        "LOCAL_EMBEDDING_MODEL_FILE": "{env:LOCAL_EMBEDDING_MODEL_FILE}",
+        "LOCAL_EMBEDDING_POOLING": "{env:LOCAL_EMBEDDING_POOLING}",
+        "LOCAL_EMBEDDING_NORMALIZE": "{env:LOCAL_EMBEDDING_NORMALIZE}",
+        "HULL_EMBED_API_KEY": "{env:HULL_EMBED_API_KEY}",
+        "HULL_CHAT_API_KEY": "{env:HULL_CHAT_API_KEY}"
+      }
+    },
+    "workspace": {
+      "type": "local",
+      "command": [
+        "npx",
+        "--yes",
+        "@n24q02m/workspace@latest"
+      ],
+      "environment": {
+        "MCP_TRANSPORT": "stdio",
+        "GOOGLE_OAUTH_CLIENT_ID": "{env:GOOGLE_OAUTH_CLIENT_ID}",
+        "GOOGLE_OAUTH_CLIENT_SECRET": "{env:GOOGLE_OAUTH_CLIENT_SECRET}"
+      }
+    },
+    "skret": {
+      "type": "local",
+      "command": [
+        "skret",
+        "mcp",
+        "--transport",
+        "stdio"
+      ]
+    }
+  }
+}

@@ -24,7 +24,7 @@ test('sync generates active servers in /servers/ index and omits archived plugin
   assert.ok(!existsSync(join(generatedRoot, 'mcp-core')));
 
   // Active servers exist
-  for (const srv of ['wet', 'mnemo', 'crg', 'workspace', 'notion', 'email', 'telegram']) {
+  for (const srv of ['wet', 'mnemo', 'crg', 'workspace', 'notion', 'email', 'telegram', 'skret']) {
     assert.ok(existsSync(join(generatedRoot, srv, 'index.md')), `missing ${srv}/index.md`);
   }
 });

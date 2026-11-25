@@ -1,0 +1,32 @@
+{
+  "name": "skret",
+  "description": "Cloud-provider secret manager CLI and MCP server for AWS SSM, GCP Secret Manager, Azure Key Vault, OCI Vault, and local YAML.",
+  "version": "1.41.0",
+  "author": {
+    "name": "n24q02m",
+    "url": "https://github.com/n24q02m"
+  },
+  "homepage": "https://github.com/n24q02m/skret",
+  "repository": "https://github.com/n24q02m/skret",
+  "license": "Apache-2.0",
+  "keywords": [
+    "secrets",
+    "secret-manager",
+    "aws-ssm",
+    "gcp-secret-manager",
+    "azure-key-vault",
+    "oci-vault",
+    "mcp",
+    "claude-code"
+  ],
+  "mcpServers": {
+    "skret": {
+      "command": "skret",
+      "args": [
+        "mcp",
+        "--transport",
+        "stdio"
+      ]
+    }
+  }
+}

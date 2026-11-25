@@ -119,6 +119,7 @@ test_sync_plugins() {
 }
 
 assert "workspace plugin configured for sync" contains_plugin "workspace"
+assert "skret plugin configured for sync" contains_plugin "skret"
 
 printf "%s\n" "=== has_files tests ==="
 test_has_files
