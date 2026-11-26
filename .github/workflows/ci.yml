@@ -73,7 +73,7 @@ jobs:
       # code this repository owns.
       - name: Run Python tests with coverage
         run: >-
-          uv run --no-project --python 3.13
+          uv run --no-project --python 3.14
           --with-requirements scripts/requirements-test.txt
           pytest --cov --cov-report=term --cov-report=xml
 

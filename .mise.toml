@@ -7,8 +7,8 @@
 # the authority; if a command here stops matching the workflow, change it here.
 
 [tools]
-python = "3.13"
-node = "24"
+python = "3.14"
+node = "26"
 bun = "latest"
 uv = "latest"
 
@@ -33,7 +33,7 @@ run = [
   "python scripts/validate_marketplace.py",
   "python scripts/verify_docs_current.py",
   "python scripts/verify_tool_parity.py --all --declared-only",
-  "uv run --no-project --python 3.13 --with-requirements scripts/requirements-test.txt pytest --cov --cov-report=term",
+  "uv run --no-project --python 3.14 --with-requirements scripts/requirements-test.txt pytest --cov --cov-report=term",
   "node --test docs/scripts/test-sync-plugin-docs.mjs",
 ]
 

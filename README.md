@@ -20,7 +20,6 @@
 | [email](https://github.com/n24q02m/email)                                     | IMAP/SMTP email for AI agents -- read, send, organize folders, and manage att... | MCP         |
 | [fastretrieval](https://github.com/n24q02m/fastretrieval)                     | Fast multi-model retrieval runtime: ONNX and GGUF embeddings, reranking, and ... | Tooling     |
 | [hull](https://github.com/n24q02m/hull)                                       | hull is the shared monorepo core for the wet, crg and mnemo self-hosted stack    | MCP         |
-| [jules-task-archiver](https://github.com/n24q02m/jules-task-archiver)         | Chrome Extension for bulk operations on Jules tasks via batchexecute API -- a... | Tooling     |
 | [mnemo](https://github.com/n24q02m/mnemo)                                     | Persistent AI memory with hybrid search. Open, free, unlimited.                  | MCP         |
 | [notion](https://github.com/n24q02m/notion)                                   | Markdown-first Notion for AI agents -- pages, databases, blocks, and comments... | MCP         |
 | [skret](https://github.com/n24q02m/skret)                                     | Secrets without the server.                                                      | CLI         |
@@ -163,10 +162,10 @@ Each plugin works with any MCP client. Run directly:
 **Python plugins** (uvx / pipx / docker):
 
 ```bash
-uvx --python 3.13 --from n24q02m-wet wet server start   # HTTP only: http://127.0.0.1:8000/mcp
-uvx --python 3.13 n24q02m-mnemo                         # HTTP only: http://127.0.0.1:8000/mcp
-uvx --python 3.13 n24q02m-telegram
-uvx --python 3.13 n24q02m-crg
+uvx --python 3.14 --from n24q02m-wet wet mcp            # stdio (add --http for Streamable HTTP)
+uvx --python 3.14 n24q02m-mnemo mcp                     # stdio (add --http or run bare for HTTP)
+uvx --python 3.14 n24q02m-telegram
+uvx --python 3.14 n24q02m-crg
 ```
 
 **TypeScript plugins** (npx / bunx / docker):
@@ -176,14 +175,14 @@ npx -y @n24q02m/notion
 npx -y @n24q02m/email
 ```
 
-Add to any MCP client's `settings.json` (stdio servers by command, HTTP-only servers such as wet and mnemo by URL):
+Add to any MCP client's `settings.json` (stdio by command, or Streamable HTTP via `--http` / `server start` by URL):
 
 ```json
 {
   "mcpServers": {
     "crg": {
       "command": "uvx",
-      "args": ["--python", "3.13", "n24q02m-crg"]
+      "args": ["--python", "3.14", "n24q02m-crg"]
     },
     "wet": {
       "type": "http",
