@@ -1888,7 +1888,7 @@
       "product": {
         "id": "skret",
         "name": "skret",
-        "version": "1.42.0",
+        "version": "1.43.0",
         "source_ref": "plugins/skret"
       },
       "harness": "claude-code",
@@ -1921,7 +1921,7 @@
       "product": {
         "id": "skret",
         "name": "skret",
-        "version": "1.42.0",
+        "version": "1.43.0",
         "source_ref": "plugins/skret"
       },
       "harness": "codex-cli",
@@ -1954,7 +1954,7 @@
       "product": {
         "id": "skret",
         "name": "skret",
-        "version": "1.42.0",
+        "version": "1.43.0",
         "source_ref": "plugins/skret"
       },
       "harness": "opencode",
@@ -1987,7 +1987,7 @@
       "product": {
         "id": "skret",
         "name": "skret",
-        "version": "1.42.0",
+        "version": "1.43.0",
         "source_ref": "plugins/skret"
       },
       "harness": "cursor",
@@ -2020,7 +2020,7 @@
       "product": {
         "id": "skret",
         "name": "skret",
-        "version": "1.42.0",
+        "version": "1.43.0",
         "source_ref": "plugins/skret"
       },
       "harness": "github-copilot-vscode",
@@ -2053,7 +2053,7 @@
       "product": {
         "id": "skret",
         "name": "skret",
-        "version": "1.42.0",
+        "version": "1.43.0",
         "source_ref": "plugins/skret"
       },
       "harness": "gemini-cli",
