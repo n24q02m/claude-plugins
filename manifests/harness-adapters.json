@@ -922,7 +922,7 @@
       "product": {
         "id": "telegram",
         "name": "telegram",
-        "version": "4.27.0",
+        "version": "4.28.0",
         "source_ref": "plugins/telegram"
       },
       "harness": "claude-code",
@@ -964,7 +964,7 @@
       "product": {
         "id": "telegram",
         "name": "telegram",
-        "version": "4.27.0",
+        "version": "4.28.0",
         "source_ref": "plugins/telegram"
       },
       "harness": "codex-cli",
@@ -1006,7 +1006,7 @@
       "product": {
         "id": "telegram",
         "name": "telegram",
-        "version": "4.27.0",
+        "version": "4.28.0",
         "source_ref": "plugins/telegram"
       },
       "harness": "opencode",
@@ -1048,7 +1048,7 @@
       "product": {
         "id": "telegram",
         "name": "telegram",
-        "version": "4.27.0",
+        "version": "4.28.0",
         "source_ref": "plugins/telegram"
       },
       "harness": "cursor",
@@ -1090,7 +1090,7 @@
       "product": {
         "id": "telegram",
         "name": "telegram",
-        "version": "4.27.0",
+        "version": "4.28.0",
         "source_ref": "plugins/telegram"
       },
       "harness": "github-copilot-vscode",
@@ -1132,7 +1132,7 @@
       "product": {
         "id": "telegram",
         "name": "telegram",
-        "version": "4.27.0",
+        "version": "4.28.0",
         "source_ref": "plugins/telegram"
       },
       "harness": "gemini-cli",
