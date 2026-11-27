@@ -1618,7 +1618,7 @@
       "product": {
         "id": "workspace",
         "name": "workspace",
-        "version": "0.10.0",
+        "version": "0.11.0",
         "source_ref": "plugins/workspace"
       },
       "harness": "claude-code",
@@ -1663,7 +1663,7 @@
       "product": {
         "id": "workspace",
         "name": "workspace",
-        "version": "0.10.0",
+        "version": "0.11.0",
         "source_ref": "plugins/workspace"
       },
       "harness": "codex-cli",
@@ -1708,7 +1708,7 @@
       "product": {
         "id": "workspace",
         "name": "workspace",
-        "version": "0.10.0",
+        "version": "0.11.0",
         "source_ref": "plugins/workspace"
       },
       "harness": "opencode",
@@ -1753,7 +1753,7 @@
       "product": {
         "id": "workspace",
         "name": "workspace",
-        "version": "0.10.0",
+        "version": "0.11.0",
         "source_ref": "plugins/workspace"
       },
       "harness": "cursor",
@@ -1798,7 +1798,7 @@
       "product": {
         "id": "workspace",
         "name": "workspace",
-        "version": "0.10.0",
+        "version": "0.11.0",
         "source_ref": "plugins/workspace"
       },
       "harness": "github-copilot-vscode",
@@ -1843,7 +1843,7 @@
       "product": {
         "id": "workspace",
         "name": "workspace",
-        "version": "0.10.0",
+        "version": "0.11.0",
         "source_ref": "plugins/workspace"
       },
       "harness": "gemini-cli",
