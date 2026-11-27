@@ -676,7 +676,7 @@
       "product": {
         "id": "email",
         "name": "email",
-        "version": "1.46.0",
+        "version": "1.47.0",
         "source_ref": "plugins/email"
       },
       "harness": "claude-code",
@@ -717,7 +717,7 @@
       "product": {
         "id": "email",
         "name": "email",
-        "version": "1.46.0",
+        "version": "1.47.0",
         "source_ref": "plugins/email"
       },
       "harness": "codex-cli",
@@ -758,7 +758,7 @@
       "product": {
         "id": "email",
         "name": "email",
-        "version": "1.46.0",
+        "version": "1.47.0",
         "source_ref": "plugins/email"
       },
       "harness": "opencode",
@@ -799,7 +799,7 @@
       "product": {
         "id": "email",
         "name": "email",
-        "version": "1.46.0",
+        "version": "1.47.0",
         "source_ref": "plugins/email"
       },
       "harness": "cursor",
@@ -840,7 +840,7 @@
       "product": {
         "id": "email",
         "name": "email",
-        "version": "1.46.0",
+        "version": "1.47.0",
         "source_ref": "plugins/email"
       },
       "harness": "github-copilot-vscode",
@@ -881,7 +881,7 @@
       "product": {
         "id": "email",
         "name": "email",
-        "version": "1.46.0",
+        "version": "1.47.0",
         "source_ref": "plugins/email"
       },
       "harness": "gemini-cli",
